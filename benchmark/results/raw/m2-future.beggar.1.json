@@ -1,0 +1,126 @@
+{
+ "task": "m2-future",
+ "class": "mechanical",
+ "arm": "beggar",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 31333,
+  "stop_reason": "end_turn",
+  "session_id": "eb7114fd-1513-4585-aa81-821ec8691ee4",
+  "total_cost_usd": 0.08903649999999999,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6625,
+   "cache_read_input_tokens": 54920,
+   "output_tokens": 1114,
+   "output_tokens_details": {
+    "thinking_tokens": 135
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6625,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 295,
+     "cache_read_input_tokens": 20846,
+     "cache_creation_input_tokens": 363,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 363
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1114,
+    "cacheReadInputTokens": 54920,
+    "cacheCreationInputTokens": 6625,
+    "webSearchRequests": 0,
+    "costUSD": 0.08628799999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 135,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 2371,
+    "cacheReadInputTokens": 57105,
+    "cacheCreationInputTokens": 7926,
+    "webSearchRequests": 0,
+    "costUSD": 0.0027484999999999996,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 485,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `from __future__ import annotations` to all 20 modules in `shop/carriers/` (`acme.py` through `tundra.py`), and the tests pass: 6 ran, all OK.\n\n- **Placement:** the new line goes right after each module's docstring, since Python only allows docstrings and comments before a `__future__` import. It's still the first import in every file.\n- **Nothing else changed:** the diff is exactly 20 added lines. None of the files already had a `__future__` import, and `__init__.py` was left alone.\n- **How the tests ran:** pytest isn't installed for `python3`, so I used `python3 -m unittest discover -s tests`.\n\nToken Beggar: about 1.25x less spend than claude-opus-5-5 high alone (measured, mechanical)",
+  "ttft_ms": 3428,
+  "type": "result",
+  "duration_ms": 31963,
+  "uuid": "6fe785a6-69a6-4baa-8895-4814f98f615f",
+  "ttft_stream_ms": 2119,
+  "time_to_request_ms": 176,
+  "first_content_frame_ms": 2119,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/acme.py     | 1 +\n shop/carriers/borealis.py | 1 +\n shop/carriers/cedar.py    | 1 +\n shop/carriers/delta.py    | 1 +\n shop/carriers/ember.py    | 1 +\n shop/carriers/fjord.py    | 1 +\n shop/carriers/gale.py     | 1 +\n shop/carriers/harbor.py   | 1 +\n shop/carriers/iris.py     | 1 +\n shop/carriers/juniper.py  | 1 +\n shop/carriers/kestrel.py  | 1 +\n shop/carriers/lumen.py    | 1 +\n shop/carriers/maple.py    | 1 +\n shop/carriers/nimbus.py   | 1 +\n shop/carriers/onyx.py     | 1 +\n shop/carriers/prairie.py  | 1 +\n shop/carriers/quartz.py   | 1 +\n shop/carriers/ridge.py    | 1 +\n shop/carriers/summit.py   | 1 +\n shop/carriers/tundra.py   | 1 +\n 20 files changed, 20 insertions(+)\n",
+ "workdir": "m2-future.beggar.1"
+}

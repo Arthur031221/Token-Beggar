@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "beggar",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 12250,
+  "stop_reason": "end_turn",
+  "session_id": "d0381e7b-2a55-4ec4-8987-05c16f205bdc",
+  "total_cost_usd": 0.0781882,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 5987,
+   "cache_read_input_tokens": 54341,
+   "output_tokens": 970,
+   "output_tokens_details": {
+    "thinking_tokens": 79
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5987,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 661,
+     "cache_read_input_tokens": 20271,
+     "cache_creation_input_tokens": 300,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 300
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 970,
+    "cacheReadInputTokens": 54341,
+    "cacheCreationInputTokens": 5987,
+    "webSearchRequests": 0,
+    "costUSD": 0.0781882,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 79,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: switch `Store` to SQLite in WAL mode, with `id` as the primary key.**\n\n**Why the current design breaks**\n- **Lost writes.** `save_order` (`shop/storage.py:16`) reads the whole file, changes it in memory and writes it all back, with no locking. If both processes save at once, the slower one overwrites the other's order without any error.\n- **Torn files.** `write_text` is not atomic. A crash or a read during a write can leave JSON that won't parse, and then every order is unreadable.\n- **Cost per save.** Each save parses and rewrites all 100k rows (about 10 MB), so saving N orders takes O(N\u00b2) work in total.\n\n**Why SQLite**\n- It ships with Python, so there's no server to run.\n- Its locking is built for multiple writer processes. WAL mode lets readers keep reading while one process writes, and `busy_timeout` makes the second writer wait instead of failing.\n- Each save is a single-row upsert (`INSERT \u2026 ON CONFLICT(id) DO UPDATE`) inside a transaction, so it's atomic and fast.\n- 100k rows is small for SQLite. An index on `customer` or `state` covers what reports will query.\n\nPostgres is only worth it if the writers end up on different machines.\n\n**Migration path**\n1. Keep the same `Store` interface (`load()` and `save_order()`) but back it with SQLite. `cli.py:26` is the only caller, so nothing else changes.\n2. Write a one-off import script that reads the existing JSON and inserts every row in one transaction. Check that the row counts match, then rename the JSON file to `.bak`.\n3. Add a test that runs two processes saving orders at the same time and checks that none go missing.\n4. Later, add filtered queries (for example by state or customer) so reports stop loading all 100k rows through `load()`.\n5. Once the SQLite store has run cleanly for a while, delete the JSON code and the backup.",
+  "ttft_ms": 1722,
+  "type": "result",
+  "duration_ms": 12758,
+  "uuid": "914bcb24-c4ce-4df4-a88c-af90363e1984",
+  "ttft_stream_ms": 1121,
+  "time_to_request_ms": 318,
+  "first_content_frame_ms": 1121,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.beggar.2"
+}

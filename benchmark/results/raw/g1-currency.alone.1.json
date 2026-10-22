@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 20252,
+  "stop_reason": "end_turn",
+  "session_id": "b303d99a-c4cf-407f-ae20-b27ab166a52b",
+  "total_cost_usd": 0.1436522,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11364,
+   "cache_read_input_tokens": 73941,
+   "output_tokens": 1896,
+   "output_tokens_details": {
+    "thinking_tokens": 568
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11364,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1361,
+     "cache_read_input_tokens": 23344,
+     "cache_creation_input_tokens": 810,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 810
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1896,
+    "cacheReadInputTokens": 73941,
+    "cacheCreationInputTokens": 11364,
+    "webSearchRequests": 0,
+    "costUSD": 0.1436522,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 568,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I'd add a small `Money` type and keep each cart, order and report in one currency. The two biggest risks are currencies that don't use 2 decimals, and old stored orders that have no currency field.\n\n**Today:** every amount is a bare `int` that is assumed to be USD cents with 2 decimals. Nothing in the code records which currency an amount is in.\n\n**Changes**\n- **`shop/money.py`**: Add a frozen `Money(minor: int, currency: str)` and a table of decimal places per currency (JPY 0, USD 2, KWD 3). `to_cents`, `fmt` and `percent` become currency-aware: parse and round using that currency's decimal places. Adding two `Money` values in different currencies raises an error.\n- **`shop/models.py`**: Change `Item.price_cents` to `price: Money`, or add a `currency` field defaulting to \"USD\". `Cart` gets one `currency`, and `add()` rejects items in any other currency.\n- **`shop/pricing.py`**: Return `Money`.\n- **`shop/orders.py`**: Store the currency on the order and in each line.\n- **`shop/storage.py`**: Save a `currency` field. On load, treat rows without one as \"USD\".\n- **`shop/reports.py`**: Group totals by customer and currency. Never add different currencies together.\n- **`shop/cli.py`**: Add a `--currency` option to `quote`, and print amounts with their currency.\n- **`shop/cache.py`**: Key prices by sku and currency.\n- **`shop/carriers/*`** (20 files): Rates are implicitly USD cents. Wrap them in `get()` so they return USD `Money`, rather than editing all 20 files.\n- **`tests/`**: The hard-coded integer totals need to change.\n\n**Main risks**\n1. **Unconverted ints:** a leftover plain `int` silently mixes currencies. A strict `Money` type that refuses to combine with `int` catches these mistakes.\n2. **Rounding:** `percent()` uses floats and assumes 2 decimals, which is wrong for JPY and KWD. Use `Decimal` and round to each currency's decimal places.\n3. **Exchange rates:** conversion (for example, adding USD shipping to a EUR cart) needs a dated rate source. I'd leave conversion out of the first version.\n4. **Old data:** existing JSON orders have no currency, so the \"USD\" default must be applied in exactly one place.\n5. **Tax:** `TAX_RATE` depends on where the customer is, not on the currency. Don't tie the two together.",
+  "ttft_ms": 1340,
+  "type": "result",
+  "duration_ms": 20511,
+  "uuid": "27ee6906-eafe-4bc3-b6eb-8038931a59e3",
+  "ttft_stream_ms": 816,
+  "time_to_request_ms": 91,
+  "first_content_frame_ms": 816,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.alone.1"
+}

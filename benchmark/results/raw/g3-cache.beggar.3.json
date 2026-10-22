@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "beggar",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16533,
+  "stop_reason": "end_turn",
+  "session_id": "ea3944b3-92d5-4379-b7fe-a8a21aad01ed",
+  "total_cost_usd": 0.0738868,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5302,
+   "cache_read_input_tokens": 34074,
+   "output_tokens": 1232,
+   "output_tokens_details": {
+    "thinking_tokens": 487
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5302,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1138,
+     "cache_read_input_tokens": 19489,
+     "cache_creation_input_tokens": 398,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 398
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1232,
+    "cacheReadInputTokens": 34074,
+    "cacheCreationInputTokens": 5302,
+    "webSearchRequests": 0,
+    "costUSD": 0.0738868,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 487,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read `shop/cache.py` (23 lines). Here are the problems for many threads in a long-running service:\n\n1. **Duplicate loads when many threads miss at once.** `get` checks the cache and loads in separate steps with no lock. When a key expires, every thread that misses at the same moment calls `loader` for it, so a popular SKU can flood the backend.\n   *Fix:* only one load per key at a time. Keep an in-flight map of `sku \u2192 Future` behind a `threading.Lock`. The first thread to miss creates the Future and runs `loader` outside the lock; the others wait on that Future. On an exception, give the error to all waiters, remove the in-flight entry, and cache nothing.\n\n2. **`invalidate` can be undone.** Thread A starts loading and gets the old price. Thread B calls `invalidate`. A then writes the old price back, and it is served for a full `ttl`.\n   *Fix:* keep a version number per key. `invalidate` increments it (and drops any in-flight load). A loader only stores its result if the version hasn't changed since it started.\n\n3. **Memory grows without limit.** Expired entries are never removed, so every SKU ever looked up stays in memory for the life of the process.\n   *Fix:* add a `maxsize` and evict least-recently-used entries (an `OrderedDict` under the same lock), and drop expired entries when they are found.\n\n4. **Timestamp is taken after the load.** `self.clock()` runs after `loader` returns, so a slow load stays cached longer than `ttl` from when the price was actually read.\n   *Fix:* read the clock before calling `loader`.\n\n5. **Minor: unchecked `ttl`.** A `ttl` of zero or less quietly turns caching off. Validate it in `__init__`.\n\nWhat I'd choose overall: one lock protecting the data, the in-flight map and the versions, with `loader` always run outside the lock. Alternatively, use an existing library such as `cachetools.TTLCache` with a lock and add the in-flight handling on top.",
+  "ttft_ms": 3211,
+  "type": "result",
+  "duration_ms": 16753,
+  "uuid": "c1fcfb52-6146-47bc-805b-f1f3aa9a13ec",
+  "ttft_stream_ms": 2259,
+  "time_to_request_ms": 154,
+  "first_content_frame_ms": 2260,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.beggar.3"
+}

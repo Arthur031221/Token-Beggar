@@ -1,0 +1,126 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "beggar",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 42915,
+  "stop_reason": "end_turn",
+  "session_id": "3fc5adb5-d05a-48a3-9005-d52e6c3337d8",
+  "total_cost_usd": 0.15762879999999999,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7565,
+   "cache_read_input_tokens": 55243,
+   "output_tokens": 1686,
+   "output_tokens_details": {
+    "thinking_tokens": 217
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7565,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 666,
+     "cache_read_input_tokens": 21105,
+     "cache_creation_input_tokens": 1045,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1045
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1686,
+    "cacheReadInputTokens": 55243,
+    "cacheCreationInputTokens": 7565,
+    "webSearchRequests": 0,
+    "costUSD": 0.1053126,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 217,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3032,
+    "cacheReadInputTokens": 29252,
+    "cacheCreationInputTokens": 7622,
+    "webSearchRequests": 0,
+    "costUSD": 0.0523162,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 325,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in. I ran the tests myself afterwards and all 15 pass (`python3 -m unittest discover -s tests -t .`). Nothing is committed.\n\n- **Cart:** `tier` field, default `\"standard\"`, in `shop/models.py`.\n- **Discount:** `TIER_DISCOUNTS = {\"gold\": 10.0, \"silver\": 5.0}` and `tier_discount()` in `shop/pricing.py`. Any other tier value gets nothing. One shared helper, `_bases(cart)`, works out the discounted amounts, and both `calc_total` and `calc_tax` use it, so tax is always charged on the discounted amount.\n- **Order:** it already gets its totals from `calc_total`/`calc_tax`, so the discount carries through without other changes. It also stores `order.tier` now.\n- **CLI:** `quote --tier`, default `standard`, in `shop/cli.py`.\n- **Tests:** added to `tests/test_pricing.py` and `tests/test_orders.py`, plus a new `tests/test_cli.py`. They cover the default, gold, silver and unknown tiers, tax on the discounted amount, Order, and the `--tier` option.\n\n**Choice to check:** the discount is worked out twice, once on the full subtotal and once on the taxable part, and each is rounded half-up to whole cents like the existing code. That way tax only ever applies to discounted taxable items. Because of the separate rounding, the two discounted amounts can differ by a cent from a single discount spread across both.\n\nRunning the tests also created untracked `__pycache__/` folders in `shop/` and `tests/`.\n\nToken Beggar: about 1.4x less spend than claude-opus-5-5 high alone (measured, multi_file)",
+  "ttft_ms": 1918,
+  "type": "result",
+  "duration_ms": 43873,
+  "uuid": "db4f8766-82a9-4289-baa9-7d300c06a98d",
+  "ttft_stream_ms": 911,
+  "time_to_request_ms": 294,
+  "first_content_frame_ms": 911,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 20 ++++++++++++++++----\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 32 ++++++++++++++++++++++++++++++++\n 6 files changed, 60 insertions(+), 5 deletions(-)\n",
+ "workdir": "f3-tier.beggar.1"
+}

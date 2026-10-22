@@ -1,0 +1,126 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "beggar",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 22027,
+  "stop_reason": "end_turn",
+  "session_id": "6058873f-3a48-4fe7-836f-5ae85fc68813",
+  "total_cost_usd": 0.08350689,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6388,
+   "cache_read_input_tokens": 54695,
+   "output_tokens": 1008,
+   "output_tokens_details": {
+    "thinking_tokens": 105
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6388,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 255,
+     "cache_read_input_tokens": 20645,
+     "cache_creation_input_tokens": 328,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 328
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1008,
+    "cacheReadInputTokens": 54695,
+    "cacheCreationInputTokens": 6388,
+    "webSearchRequests": 0,
+    "costUSD": 0.082227,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 105,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1184,
+    "cacheReadInputTokens": 32764,
+    "cacheCreationInputTokens": 2874,
+    "webSearchRequests": 0,
+    "costUSD": 0.00127989,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 129,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I renamed `calc_total` to `order_total` in 5 files, and all 6 tests pass.\n\n- **Definition:** `shop/pricing.py`\n- **Imports and calls in the code:** `shop/cli.py`, `shop/orders.py`\n- **Imports and calls in the tests:** `tests/test_pricing.py`, `tests/test_orders.py`\n\nA search for `calc_total` now finds nothing. None of the matches were other names that just contain `calc_total`, and there were no string, mock or comment references.\n\npytest isn't installed here, so I ran the tests with `python3 -m unittest discover -s tests -t .` instead. Nothing has been committed.\n\nToken Beggar: about 1.25x less spend than opus high alone (measured, mechanical)",
+  "ttft_ms": 2999,
+  "type": "result",
+  "duration_ms": 23037,
+  "uuid": "bd13be12-a096-4a2a-98a8-9bcfbd355e48",
+  "ttft_stream_ms": 1558,
+  "time_to_request_ms": 245,
+  "first_content_frame_ms": 1558,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.beggar.2"
+}

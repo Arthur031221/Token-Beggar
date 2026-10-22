@@ -1,0 +1,110 @@
+{
+ "task": "f1-shipping",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 41041,
+  "stop_reason": "end_turn",
+  "session_id": "c1bae564-e09e-499a-b7f2-db98722d10f4",
+  "total_cost_usd": 0.2950928,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 23711,
+   "cache_read_input_tokens": 94964,
+   "output_tokens": 4319,
+   "output_tokens_details": {
+    "thinking_tokens": 981
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23711,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 648,
+     "cache_read_input_tokens": 33195,
+     "cache_creation_input_tokens": 3306,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 3306
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 4319,
+    "cacheReadInputTokens": 94964,
+    "cacheCreationInputTokens": 23711,
+    "webSearchRequests": 0,
+    "costUSD": 0.2950928,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 981,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Orders now include shipping. All 16 tests pass: the 6 that were already there and 10 new ones in `tests/test_shipping.py`.\n\n**What changed**\n- **`shop/orders.py`**: `Order(cart, carrier=None, weight=0, zone='local')` sets `shipping_cents` using a new `shipping_cost()` helper that looks the carrier up in `shop.carriers`. It's 0 when there's no carrier. `total_cents` is now `calc_total(cart) + shipping_cents`. Tax is still charged only on the items, not on shipping.\n- **`shop/storage.py`**: `save_order` now writes a `shipping` field.\n- **`shop/reports.py`**: no code changes. It sums `total`, which now includes shipping. Old saved orders without a `shipping` field still load and appear in the report, and a test covers a file that mixes old and new orders.\n\n**One carrier needed special handling.** `maple` prices by the gram while the other 19 carriers price by the kg. Passing the weight straight through would have charged 5.00 instead of 64.94 for a 2 kg maple package, and wrongly accepted weights up to 30,000 kg. `Order` takes `weight` in kg, and I added `weight_unit = \"g\"` to `MapleCarrier` so its weight is multiplied by 1000 first. A test checks this, and another runs every carrier in the registry.\n\n**Things to be aware of**\n- Choosing a carrier with no weight (e.g. `Order(cart, carrier=\"acme\")`) raises `ValueError`, because the carriers reject weights \u2264 0. An unknown carrier name raises `KeyError`. I didn't treat either as free shipping.\n- The sales report now includes shipping in each customer's total. If you want it to show product sales only, it can subtract the `shipping` field, treating it as 0 for old orders.\n\nI haven't committed anything.",
+  "ttft_ms": 2593,
+  "type": "result",
+  "duration_ms": 41572,
+  "uuid": "0978552c-fc68-4a7d-9593-97797e2a5828",
+  "ttft_stream_ms": 1710,
+  "time_to_request_ms": 161,
+  "first_content_frame_ms": 1710,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/maple.py |  1 +\n shop/orders.py         | 20 ++++++++++++++++++--\n shop/storage.py        |  3 ++-\n 3 files changed, 21 insertions(+), 3 deletions(-)\n",
+ "workdir": "f1-shipping.alone.1"
+}

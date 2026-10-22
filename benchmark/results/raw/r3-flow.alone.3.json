@@ -1,0 +1,110 @@
+{
+ "task": "r3-flow",
+ "class": "reading",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14660,
+  "stop_reason": "end_turn",
+  "session_id": "e76ee8a1-9039-4273-aa4b-3d77ed4bebbb",
+  "total_cost_usd": 0.0990004,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 8028,
+   "cache_read_input_tokens": 70722,
+   "output_tokens": 1030,
+   "output_tokens_details": {
+    "thinking_tokens": 30
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8028,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 594,
+     "cache_read_input_tokens": 20162,
+     "cache_creation_input_tokens": 656,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 656
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1030,
+    "cacheReadInputTokens": 70722,
+    "cacheCreationInputTokens": 8028,
+    "webSearchRequests": 0,
+    "costUSD": 0.0990004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 30,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Validation and storage are separate steps, and nothing in the code connects them.\n\n**Validation: `shop/orders.py`**\n- `STATES` lists the states: `new`, `paid`, `shipped`, `cancelled`.\n- `ALLOWED` maps each state to the states it can move to: `new \u2192 {paid, cancelled}`, `paid \u2192 {shipped, cancelled}`. `shipped` and `cancelled` are terminal.\n- `Order.__init__` starts every order in `\"new\"`.\n- `Order.move(state)` checks `state in ALLOWED[self.state]`. If the move isn't allowed it raises `ValueError(\"cannot go from X to Y\")`. Otherwise it sets `self.state`. An unknown target state fails the same check.\n\n**Storage: `shop/storage.py`**\n- `Store.save_order(order)` reads the whole JSON file through `Store.load()` and drops any row with the same `id`. It then appends `{id, customer, total, tax, state}` and rewrites the file. Saving the same order again overwrites its row.\n- `Store.load()` returns `[]` if the file doesn't exist.\n\n**How they connect**\n- No code calls `save_order` after `move`. Callers have to do both, and nothing in production code does either: `shop/cli.py` only uses `Store.load()` for `report`.\n- `save_order` doesn't check the state. It writes whatever `order.state` holds, so setting `order.state` directly skips validation.\n- Only the state is saved. Line items and history aren't, and `load()` returns plain dicts, not `Order` objects.\n- Tests: `tests/test_orders.py` covers `move` (new\u2192paid\u2192shipped, then a rejected cancel).",
+  "ttft_ms": 2692,
+  "type": "result",
+  "duration_ms": 15079,
+  "uuid": "462812e1-8b49-4123-8597-5443a8f61f77",
+  "ttft_stream_ms": 1591,
+  "time_to_request_ms": 105,
+  "first_content_frame_ms": 1591,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r3-flow.alone.3"
+}

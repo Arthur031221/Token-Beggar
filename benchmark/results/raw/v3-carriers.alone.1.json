@@ -1,0 +1,110 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 17477,
+  "stop_reason": "end_turn",
+  "session_id": "5454fc34-0bca-437a-9fc8-2a42a0b9b4a8",
+  "total_cost_usd": 0.16043880000000002,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 13582,
+   "cache_read_input_tokens": 101314,
+   "output_tokens": 1574,
+   "output_tokens_details": {
+    "thinking_tokens": 370
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 13582,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 668,
+     "cache_read_input_tokens": 25567,
+     "cache_creation_input_tokens": 805,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 805
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1574,
+    "cacheReadInputTokens": 101314,
+    "cacheCreationInputTokens": 13582,
+    "webSearchRequests": 0,
+    "costUSD": 0.16043880000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 370,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found two inconsistencies. The worse one is in `maple`.\n\n**1. `shop/carriers/maple.py` expects weight in grams, while every other carrier expects kilograms.**\n\nAll 20 carriers expose the same `rate(weight, zone)` method, so a caller using `REGISTRY` can't tell from the signature that maple works differently:\n- The docstring (`maple.py:2`) says \"weight in grams\".\n- The constants are `PER_GRAMS = 3` and `MAX_GRAMS = 30000`, where the others use `PER_KG` (about 310\u2013390) and `MAX_KG` (30\u201349).\n\nThis fails silently rather than raising an error. If a caller passes 5 kg, as it would for any other carrier, maple quotes `494 + 3*5 = 509` cents. Acme quotes 2000 cents for the same parcel. The range check doesn't help either: `MAX_GRAMS = 30000` means any realistic kg value passes, so maple will always under-quote. If a caller passed grams to every carrier instead, all the other carriers would raise `ValueError`.\n\n**2. Four carriers have no `tracking_url()` method: `delta.py`, `kestrel.py`, `onyx.py` and `tundra.py`.**\n\nThe other 16 carriers define `tracking_url(code)`. Any code that loops over the registry, or calls `get(name).tracking_url(...)`, will raise `AttributeError` for these four. Nothing in `shop/` outside `carriers/` calls `tracking_url` today, so this is a latent problem rather than one that breaks anything now.\n\nApart from these, the carriers differ only in their rate numbers and TODO owners, which is expected per-carrier data. I did not edit any files.",
+  "ttft_ms": 1912,
+  "type": "result",
+  "duration_ms": 17845,
+  "uuid": "4d14ed1f-a47e-435f-b2e7-f8ed4f6683c7",
+  "ttft_stream_ms": 845,
+  "time_to_request_ms": 77,
+  "first_content_frame_ms": 845,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.alone.1"
+}

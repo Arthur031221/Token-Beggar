@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14317,
+  "stop_reason": "end_turn",
+  "session_id": "cc023c97-d5ad-4ef7-bb29-6a845d1a4a20",
+  "total_cost_usd": 0.089197,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7490,
+   "cache_read_input_tokens": 50865,
+   "output_tokens": 954,
+   "output_tokens_details": {
+    "thinking_tokens": 17
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7490,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 659,
+     "cache_read_input_tokens": 19436,
+     "cache_creation_input_tokens": 844,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 844
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 954,
+    "cacheReadInputTokens": 50865,
+    "cacheCreationInputTokens": 7490,
+    "webSearchRequests": 0,
+    "costUSD": 0.089197,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 17,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move to SQLite in WAL mode, with `id` as the primary key.**\n\n**What's wrong with `shop/storage.py` today**\n- **It loses writes.** `save_order` reads the whole file, changes it, then writes it back, with no lock. If both writer processes do this at once, the second write overwrites the first and an order silently disappears.\n- **Readers can see broken data.** `write_text` writes over the file directly, so `load()` can catch it half-written and fail to parse.\n- **It gets slow.** Every save parses and rewrites all orders, so the work grows with the order count. At 100k orders that is a multi-MB file rewritten on each save.\n\n**Why SQLite**\n- It's in the standard library, so there's no server to run.\n- Each save becomes a single upsert (`INSERT \u2026 ON CONFLICT(id) DO UPDATE`), and the database handles locking between processes.\n- WAL mode lets the report read while a write is happening.\n- 100k rows is tiny for SQLite. Postgres only makes sense once you need writers on several machines.\n\n**Migration path**\n1. Keep the `Store` interface (`load()`, `save_order()`) and add a `SqliteStore` that implements it. Today the only caller is `cli.py`'s `report`, through `Store(...).load()`.\n2. Write a one-time import script that reads the JSON file and inserts every row in one transaction, then checks that the row counts and per-customer totals in `reports.sales_by_customer` match.\n3. Stop both writers, run the import, switch them to `SqliteStore`, and restart. Rename the JSON file but keep it as a rollback copy.\n4. Set `busy_timeout` (around 5s) so a writer waits for the lock instead of failing.\n5. Later, have reports run their filters and sums in SQL instead of loading every row.\n6. Add a test with two processes saving orders at the same time and check that none are lost. The current code would fail it.",
+  "ttft_ms": 2947,
+  "type": "result",
+  "duration_ms": 14568,
+  "uuid": "c63d0490-cde1-4824-a369-922d2351c896",
+  "ttft_stream_ms": 1658,
+  "time_to_request_ms": 131,
+  "first_content_frame_ms": 1658,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.1"
+}

@@ -1,0 +1,16 @@
+{
+  "updated": "2026-10-22",
+  "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+  "efforts": ["low", "medium", "high", "xhigh", "max"],
+  "claude": [
+    {"alias": "haiku", "id": "claude-haiku-5-5", "tier": 1, "input_per_mtok": 0.10, "output_per_mtok": 0.50, "default_effort": "medium"},
+    {"alias": "sonnet", "id": "claude-sonnet-5-5", "tier": 2, "input_per_mtok": 2.0, "output_per_mtok": 10.0, "default_effort": "high"},
+    {"alias": "opus", "id": "claude-opus-5-5", "tier": 3, "input_per_mtok": 4.0, "output_per_mtok": 20.0, "default_effort": "medium"},
+    {"alias": "fable", "id": "claude-fable-5-1", "tier": 4, "input_per_mtok": 10.0, "output_per_mtok": 50.0, "default_effort": "high"}
+  ],
+  "external": [
+    {"name": "codex", "kind": "cli", "binary": "codex", "note": "OpenAI Codex CLI, headless with `codex exec`"},
+    {"name": "agy", "kind": "cli", "binary": "agy", "note": "Antigravity CLI"},
+    {"name": "gemini", "kind": "cli", "binary": "gemini", "note": "Gemini CLI, headless with `gemini -p`"}
+  ]
+}

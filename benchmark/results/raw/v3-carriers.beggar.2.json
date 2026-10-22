@@ -1,0 +1,110 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "beggar",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16722,
+  "stop_reason": "end_turn",
+  "session_id": "753228eb-3890-47e8-9b52-fc33d1646d1e",
+  "total_cost_usd": 0.1356212,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11482,
+   "cache_read_input_tokens": 80066,
+   "output_tokens": 1386,
+   "output_tokens_details": {
+    "thinking_tokens": 77
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11482,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 713,
+     "cache_read_input_tokens": 25844,
+     "cache_creation_input_tokens": 224,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 224
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1386,
+    "cacheReadInputTokens": 80066,
+    "cacheCreationInputTokens": 11482,
+    "webSearchRequests": 0,
+    "costUSD": 0.1356212,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 77,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found two inconsistencies that would break code calling the registry. I compared all 20 carrier modules line by line against `acme.py`. Apart from rates, zone factors, weight limits and TODO owners, they are identical except for the following.\n\n### 1. `shop/carriers/maple.py` takes weight in grams, not kg (this one gives wrong prices without any error)\nThe docstring says \"weight in grams\". The module defines `PER_GRAMS = 3` and `MAX_GRAMS = 30000`, while every other carrier uses `PER_KG` and `MAX_KG`. The method signature is still `rate(self, weight: float, zone=\"local\")`, the same as the others, so a caller can't tell anything is different. A caller passing kg, like it does for every other carrier, gets:\n- `get(\"maple\").rate(2.0)` \u2192 `int(494 + 3*2.0)` = **500 cents**. Priced per kg at a typical ~350/kg, that should be roughly 1,200 cents.\n- Weight validation never trips for realistic kg values, because anything up to 30000 passes.\n\nNothing raises an error, so prices come out wrong and nobody is told. This is the most dangerous one.\n\n### 2. `delta.py`, `kestrel.py`, `onyx.py`, `tundra.py` have no `tracking_url()` (this one crashes)\nThe other 16 carriers all define `tracking_url(self, code) -> str`. For these four, any generic caller such as `get(name).tracking_url(code)` raises `AttributeError`. Each of these files is 26 lines instead of 29 for that reason.\n\n### Not a problem for callers\n- The rates, zone factors and weight limits differ from carrier to carrier, which is expected for rate cards. All carriers use the same zone keys (`local`/`regional`/`national`).\n- `ember`, `iris`, `maple` and `quartz` share `owner-0` in the TODO comment with `acme`. That's cosmetic.\n\nThere are no callers of the registry elsewhere in this repo, so these are breakages for any caller rather than ones I traced to specific call sites. I didn't edit any files.",
+  "ttft_ms": 1714,
+  "type": "result",
+  "duration_ms": 17565,
+  "uuid": "ada3ef94-4b9f-4a09-b865-973a51b4e77c",
+  "ttft_stream_ms": 1347,
+  "time_to_request_ms": 263,
+  "first_content_frame_ms": 1347,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.beggar.2"
+}

@@ -1,0 +1,126 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "beggar",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 44456,
+  "stop_reason": "end_turn",
+  "session_id": "39bffba7-379c-4ddd-a6b9-9125971dd435",
+  "total_cost_usd": 0.1692101,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7265,
+   "cache_read_input_tokens": 55470,
+   "output_tokens": 1826,
+   "output_tokens_details": {
+    "thinking_tokens": 246
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7265,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 698,
+     "cache_read_input_tokens": 21342,
+     "cache_creation_input_tokens": 508,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 508
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1826,
+    "cacheReadInputTokens": 55470,
+    "cacheCreationInputTokens": 7265,
+    "webSearchRequests": 0,
+    "costUSD": 0.10575799999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 246,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 3680,
+    "cacheReadInputTokens": 43246,
+    "cacheCreationInputTokens": 8923,
+    "webSearchRequests": 0,
+    "costUSD": 0.0634521,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 274,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and I ran the full test suite: all 20 tests pass. Nothing is committed.\n\n- **Cart:** `Cart` now has a `tier` attribute that defaults to `'standard'` (`shop/models.py`).\n- **Discount:** `shop/pricing.py` has a `TIER_DISCOUNTS` table and a `tier_discount_rate()` function. Gold takes 10% off, silver 5%, and any other value nothing. One helper applies it, and both `calc_total` and `calc_tax` use that helper, so tax is worked out on the discounted amount.\n- **Order:** `Order` gets its total and tax from `calc_total` and `calc_tax`, so it picks up the discount automatically. It also stores the `tier` now (`shop/orders.py`).\n- **Command line:** `quote` takes `--tier`, defaulting to `standard` (`shop/cli.py`).\n- **Tests:** I added tier tests to `tests/test_pricing.py` and `tests/test_orders.py`, and a new `tests/test_cli.py`. They cover gold, silver, standard, an unknown tier, tax on the discounted amount, `Order` and `quote --tier`.\n\nTwo choices you may want to check:\n- **Order of discounts:** the existing bulk discounts on individual lines apply first, then the tier discount.\n- **Rounding:** the tier rate is applied once to the whole subtotal and once, separately, to the taxable part when working out tax. Both use the existing round-half-up-to-the-cent rule. Items that aren't taxable still get the tier discount. Because the two amounts are rounded separately, the tax base can differ by a cent from splitting the discount proportionally.\n\nTo run the tests: `python3 -m unittest discover -s tests -t .`\n\nToken Beggar: about 1.4x less spend than opus high alone (measured, multi_file)",
+  "ttft_ms": 1908,
+  "type": "result",
+  "duration_ms": 45657,
+  "uuid": "5b8bf991-b293-42a8-87b2-db7217458aa8",
+  "ttft_stream_ms": 994,
+  "time_to_request_ms": 313,
+  "first_content_frame_ms": 994,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 22 ++++++++++++++++------\n tests/test_orders.py  | 14 ++++++++++++++\n tests/test_pricing.py | 42 +++++++++++++++++++++++++++++++++++++++++-\n 6 files changed, 75 insertions(+), 8 deletions(-)\n",
+ "workdir": "f3-tier.beggar.2"
+}

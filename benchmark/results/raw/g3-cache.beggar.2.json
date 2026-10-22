@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "beggar",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16025,
+  "stop_reason": "end_turn",
+  "session_id": "384dacd0-ac42-44a6-8e32-af8ead4c4b6f",
+  "total_cost_usd": 0.0761448,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5292,
+   "cache_read_input_tokens": 34064,
+   "output_tokens": 1349,
+   "output_tokens_details": {
+    "thinking_tokens": 538
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5292,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1255,
+     "cache_read_input_tokens": 19479,
+     "cache_creation_input_tokens": 398,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 398
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1349,
+    "cacheReadInputTokens": 34064,
+    "cacheCreationInputTokens": 5292,
+    "webSearchRequests": 0,
+    "costUSD": 0.0761448,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 538,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read `shop/cache.py` and found these problems for heavy multi-threaded use in a long-running service:\n\n1. **Duplicate loads on a miss (cache stampede).** Nothing stops two threads from missing on the same SKU at once, so every thread that misses calls `loader` for it. When a popular SKU expires, the backend gets a burst of identical requests.\n   *Fix:* allow only one load per key at a time. Keep a map of in-flight loads, each a Future, guarded by one lock. The first thread to miss creates the Future and runs `loader` without holding the lock. Other threads wait on that Future. If the load fails, every waiting thread gets the exception, nothing is cached, and the in-flight entry is removed.\n\n2. **`invalidate` can be undone.** Thread A starts loading the old price. Thread B calls `invalidate` after a price change. A then finishes and writes the stale value back at line 18, where it stays for a full TTL.\n   *Fix:* keep a version number per key. `invalidate` increases it, and a load only stores its result if the version hasn't changed since the load started.\n\n3. **Memory grows without limit.** Expired entries are never removed. A SKU looked up once stays in `_data` for good, so memory keeps growing as the service sees more SKUs.\n   *Fix:* cap the size with an `OrderedDict` that evicts the least recently used entry, and drop expired entries when you come across them.\n\n4. **The TTL starts late (minor).** The timestamp is taken after `loader` returns, so a slow load makes the entry seem fresher than its data.\n   *Fix:* read the clock before calling `loader`.\n\n5. **Correctness depends on the GIL.** The shared state works today only because single dict operations happen to be atomic under the GIL. Once the in-flight map and versions are added, reads and writes span several steps.\n   *Fix:* do all checks and updates of the shared state under one `threading.Lock`, and never hold it while `loader` runs.\n\nOverall I'd go with one lock, one-load-per-key Futures, per-key versions and a bounded LRU. I'd skip `cachetools.TTLCache`: it doesn't prevent duplicate loads, so it would only fix problem 3.",
+  "ttft_ms": 3012,
+  "type": "result",
+  "duration_ms": 16592,
+  "uuid": "388ff227-096d-47fe-82d9-e1781e91044a",
+  "ttft_stream_ms": 2029,
+  "time_to_request_ms": 533,
+  "first_content_frame_ms": 2030,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.beggar.2"
+}

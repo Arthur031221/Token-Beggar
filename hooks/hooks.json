@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {"hooks": [{"type": "command", "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m token_beggar hook prompt", "timeout": 10}]}
+    ],
+    "PreCompact": [
+      {"hooks": [{"type": "command", "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m token_beggar hook precompact", "timeout": 20}]}
+    ],
+    "SessionStart": [
+      {"matcher": "compact", "hooks": [{"type": "command", "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m token_beggar hook sessionstart", "timeout": 10}]}
+    ]
+  }
+}

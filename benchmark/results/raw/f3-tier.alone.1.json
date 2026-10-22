@@ -1,0 +1,110 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 35498,
+  "stop_reason": "end_turn",
+  "session_id": "ccf43340-b6df-4e85-99da-a1130b949a10",
+  "total_cost_usd": 0.2707642,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 19816,
+   "cache_read_input_tokens": 144741,
+   "output_tokens": 4162,
+   "output_tokens_details": {
+    "thinking_tokens": 717
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 19816,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 775,
+     "cache_read_input_tokens": 31700,
+     "cache_creation_input_tokens": 906,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 906
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 4162,
+    "cacheReadInputTokens": 144741,
+    "cacheCreationInputTokens": 19816,
+    "webSearchRequests": 0,
+    "costUSD": 0.2707642,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 717,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in and all 15 tests pass (the 6 existing ones plus 9 new).\n\n**Changes:**\n- **`shop/models.py`**: `Cart` has a new `tier` field, which defaults to `\"standard\"`.\n- **`shop/pricing.py`**:\n  - Discount rates live in `TIER_DISCOUNTS = {\"gold\": 10.0, \"silver\": 5.0}`. Any other tier gets nothing.\n  - There's a new `calc_subtotal(cart)` that returns the subtotal after the bulk and tier discounts.\n  - `calc_tax` now taxes the amount left after the tier discount, and `calc_total` is simply `calc_subtotal + calc_tax`, so the two always agree.\n- **`shop/orders.py`**: `Order` already got its total and tax from `calc_total` and `calc_tax`, so it applies the discount automatically. I also store `order.tier` on it.\n- **`shop/cli.py`**: `shop quote a:10.00:2 --tier gold` prints `19.49`. Without `--tier` it prints `21.65`, the same as before.\n\n**How the discount is applied:**\n- The tier discount is taken off after the per-line bulk discount, so the two stack.\n- The total discount and the discount on the taxable part are each rounded half up to the cent, using the existing `percent()` helper. For example, a gold cart with a $10 taxable item and a $5 non-taxable item has a $13.50 subtotal and is taxed on $9.00.\n- Tier names must match exactly: `\"Gold\"` gets no discount.\n\n**Tests added:**\n- **Pricing**: gold, silver, the default and an unknown tier, a cart with a non-taxable item, and gold combined with the bulk discount.\n- **Orders**: a gold-tier order.\n- **CLI**: a new `tests/test_cli.py` covering `quote` with and without `--tier`.\n\nI didn't change `storage.py`, so `tier` isn't saved with orders. Saved totals already include the discount.",
+  "ttft_ms": 2186,
+  "type": "result",
+  "duration_ms": 36324,
+  "uuid": "7a2ec72b-ff94-49ab-8379-04b95731a90a",
+  "ttft_stream_ms": 971,
+  "time_to_request_ms": 98,
+  "first_content_frame_ms": 971,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 22 ++++++++++++++++++----\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 35 ++++++++++++++++++++++++++++++++++-\n 6 files changed, 64 insertions(+), 6 deletions(-)\n",
+ "workdir": "f3-tier.alone.1"
+}

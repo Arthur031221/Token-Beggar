@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14575,
+  "stop_reason": "end_turn",
+  "session_id": "a52f4c2b-962d-4511-af06-0825dcda9a42",
+  "total_cost_usd": 0.0801118,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6219,
+   "cache_read_input_tokens": 31419,
+   "output_tokens": 1203,
+   "output_tokens_details": {
+    "thinking_tokens": 459
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6219,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1127,
+     "cache_read_input_tokens": 18629,
+     "cache_creation_input_tokens": 380,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 380
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1203,
+    "cacheReadInputTokens": 31419,
+    "cacheCreationInputTokens": 6219,
+    "webSearchRequests": 0,
+    "costUSD": 0.0801118,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 459,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read `shop/cache.py` (23 lines). Here are the problems and the fix I'd choose for each.\n\n**1. Many threads load the same SKU at once (lines 14\u201318).** When an entry is missing or expired, every thread that asks for that SKU at the same moment calls `loader` itself. A popular SKU expiring can send N identical requests to the backend at once.\n*Fix:* Make sure only one load per key is running at a time. Keep a dict of in-progress loads (key \u2192 `Future`) guarded by a lock. The first thread runs the loader outside the lock; the others wait on its `Future`. If the loader raises, pass the exception to every waiter and cache nothing.\n\n**2. `invalidate` can be undone by a slow load.** Thread A starts loading the old price. Thread B updates the price and calls `invalidate`. Thread A then finishes and writes the old price back, where it stays for the full `ttl`.\n*Fix:* Keep a version number per key and increase it in `invalidate`. A load only saves its result if the version hasn't changed since it started.\n\n**3. Memory grows without limit.** Expired entries are never removed; they're only replaced if the same SKU is asked for again. In a long-running service with many SKUs, `_data` keeps growing.\n*Fix:* Cap the size with an LRU (`OrderedDict` plus `maxsize`) and drop expired entries when they're found or during writes.\n\n**4. Read-then-write steps aren't atomic.** Each dict operation is safe on its own under the GIL, but check-then-load-then-store as a whole is not. Free-threaded Python (3.13t+) also removes even that per-operation guarantee.\n*Fix:* Do all reads and writes of `_data`, the version numbers and the in-progress dict under one `threading.Lock`, and never hold it while the loader runs.\n\n**5. Minor: the timestamp is taken after the load finishes.** That makes an entry look fresher than it is by however long the load took.\n*Fix:* Record the time before calling the loader.",
+  "ttft_ms": 1988,
+  "type": "result",
+  "duration_ms": 14685,
+  "uuid": "03015ce5-a504-47d3-a1d4-3b3faee3a071",
+  "ttft_stream_ms": 1596,
+  "time_to_request_ms": 74,
+  "first_content_frame_ms": 1597,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.alone.1"
+}

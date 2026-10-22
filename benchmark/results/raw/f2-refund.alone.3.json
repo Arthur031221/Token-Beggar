@@ -1,0 +1,110 @@
+{
+ "task": "f2-refund",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 22890,
+  "stop_reason": "end_turn",
+  "session_id": "c669114e-d199-4e25-9677-5e7db715a22f",
+  "total_cost_usd": 0.22410380000000002,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 18619,
+   "cache_read_input_tokens": 116559,
+   "output_tokens": 2590,
+   "output_tokens_details": {
+    "thinking_tokens": 131
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 18619,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 465,
+     "cache_read_input_tokens": 30661,
+     "cache_creation_input_tokens": 748,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 748
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2590,
+    "cacheReadInputTokens": 116559,
+    "cacheCreationInputTokens": 18619,
+    "webSearchRequests": 0,
+    "costUSD": 0.22410380000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 131,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added the `refunded` state, and all 13 tests pass (6 existing and 7 new).\n\n**The code change** is in `shop/orders.py` only:\n- `refunded` is now one of the allowed states.\n- Paid orders can now move to `refunded` (as well as shipped or cancelled), and shipped orders can move to `refunded` (before, they couldn't move anywhere).\n- Nothing can move out of `refunded`.\n- New and cancelled orders still can't be refunded.\n\n**`sales_by_customer`** in `shop/reports.py` didn't need a change. It only counts orders that are `paid` or `shipped`, so refunded orders were already left out. I added tests so that this stays true.\n\n**I checked the other places that deal with order state.** `storage.py` saves the state as plain text, so `refunded` saves and loads without changes. `cli.py` doesn't mention any states.\n\n**New tests** in `tests/test_orders.py`:\n- Paid \u2192 refunded and shipped \u2192 refunded both work.\n- New and cancelled orders can't be refunded.\n- A refunded order can't move to any other state.\n- Every state has an entry in the table of allowed moves, so a future state can't be added without saying where it can go.\n- `sales_by_customer` leaves out refunded orders, including when a customer has only refunded orders.\n- A paid order saved to the store counts in sales, and after it is refunded and saved again it no longer counts.",
+  "ttft_ms": 2532,
+  "type": "result",
+  "duration_ms": 23156,
+  "uuid": "58d5f13d-e59f-4f6f-8ab6-9667c086cfb4",
+  "ttft_stream_ms": 1015,
+  "time_to_request_ms": 89,
+  "first_content_frame_ms": 1015,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/orders.py       | 10 ++++++--\n tests/test_orders.py | 64 +++++++++++++++++++++++++++++++++++++++++++++++++++-\n 2 files changed, 71 insertions(+), 3 deletions(-)\n",
+ "workdir": "f2-refund.alone.3"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 20905,
+  "stop_reason": "end_turn",
+  "session_id": "6e2b04ef-3cde-46fe-8555-d5c0a03b81ca",
+  "total_cost_usd": 0.1218832,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 8814,
+   "cache_read_input_tokens": 70996,
+   "output_tokens": 1857,
+   "output_tokens_details": {
+    "thinking_tokens": 397
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8814,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1034,
+     "cache_read_input_tokens": 20259,
+     "cache_creation_input_tokens": 1345,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1345
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1857,
+    "cacheReadInputTokens": 70996,
+    "cacheCreationInputTokens": 8814,
+    "webSearchRequests": 0,
+    "costUSD": 0.1218832,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 397,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff changes two lines in `shop/orders.py`. Both hunks introduce bugs. I only read the code; I did not run the tests.\n\n### Hunk 1: ID generation (`shop/orders.py:12`)\n\n```python\nself.id = len(_ids_seen)\n_ids_seen.append(self.id)\n```\n\n1. **`NameError` every time an `Order` is created (crash).** `_ids_seen` is not defined in `orders.py` and nothing else in the repo defines it. The diff doesn't add `_ids_seen = []` at module level, so `Order(cart)` raises `NameError: name '_ids_seen' is not defined`. Every caller breaks, including both tests in `tests/test_orders.py`.\n\n2. **IDs now start at 0 instead of 1000.** Even if `_ids_seen = []` were added, numbering would start at 0, not at `itertools.count(1000)`'s 1000. Anything that assumes IDs are 1000 or higher gets a different scheme. Also, `Store.save_order` (`shop/storage.py:17`) treats `id` as the key and replaces any existing row with that ID. IDs now restart at 0 on every process start, so new orders silently overwrite earlier saved orders 0, 1, 2\u2026. The old counter also reset on restart, but this change makes the overlap with previously saved rows certain from the very first order.\n\n3. **Two threads can get the same ID.** `next(itertools.count)` is a single atomic call in CPython. `len(...)` followed by a separate `append(...)` is two steps, so two threads creating orders at once can both read the same `len` and get the same ID. That leads to the same overwrite in `Store.save_order`.\n\n4. **Memory grows without limit.** Every ID ever issued is kept in a module-level list for the life of the process, just to produce a counter. The `itertools` import and `_ids` (lines 1 and 5) are also left unused.\n\n### Hunk 2: state transition check (`shop/orders.py:20`)\n\n```python\nif state not in ALLOWED.get(self.state, STATES):\n```\n\n5. **Unknown states now allow any move instead of failing.** `ALLOWED` already has a key for every state in `STATES`, so the `.get` default only applies when `self.state` holds a value that isn't a real state. That happens through a typo or direct assignment, such as `order.state = \"refunded\"` or a state loaded from stored JSON. Before, that raised `KeyError`. Now it falls back to `STATES`, so the order can move to any state, including `\"shipped\"` or `\"paid\"` straight from a corrupt state. Invalid data that used to be caught now silently passes the transition check. If an \"unknown state\" case is wanted at all, the safe default is an empty set (nothing allowed) or an explicit `ValueError`.\n\n**Net effect:** Bug 1 alone makes the change unusable, since no order can be created. Bugs 2\u20135 remain even after `_ids_seen` is defined. The simplest fix is to revert to `next(_ids)` and `ALLOWED[self.state]`.",
+  "ttft_ms": 2076,
+  "type": "result",
+  "duration_ms": 21252,
+  "uuid": "28647144-0d2b-4170-a308-530331087ace",
+  "ttft_stream_ms": 990,
+  "time_to_request_ms": 135,
+  "first_content_frame_ms": 990,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.alone.1"
+}

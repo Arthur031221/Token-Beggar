@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "beggar",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16728,
+  "stop_reason": "end_turn",
+  "session_id": "9d572e02-c50c-42e4-9368-486def88dad4",
+  "total_cost_usd": 0.12007519999999999,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 9665,
+   "cache_read_input_tokens": 54156,
+   "output_tokens": 1595,
+   "output_tokens_details": {
+    "thinking_tokens": 413
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9665,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1209,
+     "cache_read_input_tokens": 20082,
+     "cache_creation_input_tokens": 4168,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4168
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1595,
+    "cacheReadInputTokens": 54156,
+    "cacheCreationInputTokens": 9665,
+    "webSearchRequests": 0,
+    "costUSD": 0.12007519999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 413,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Multi-currency design\n\n**Core idea:** add a `Money(amount_minor: int, currency: str)` value type. Adding or comparing two different currencies raises an error. Each currency's minor-unit exponent comes from a small table (USD/EUR = 2, JPY = 0, KWD = 3).\n\n**Files to change**\n- `shop/money.py`: `to_cents`, `fmt` and `percent` all assume 100 cents per unit. Make them take the currency's exponent, and use `Decimal` instead of float for rounding.\n- `shop/models.py`: change `Item.price_cents` to `price: Money`. `Cart` gets a `currency`, and `add()` rejects items in any other currency.\n- `shop/pricing.py`: `TAX_RATE`, `BULK_DISCOUNT` and thresholds become per-currency or per-region config. Totals return `Money`.\n- `shop/orders.py`: `Order` stores the currency, and line prices keep theirs.\n- `shop/storage.py`: add a `\"currency\"` field to each row. Old rows without it are read as `\"USD\"`.\n- `shop/reports.py`: `sales_by_customer` currently adds every total together. Group by `(customer, currency)`, or convert using a stored rate. Never mix currencies silently.\n- `shop/cache.py`: key the cache on `(sku, currency)`.\n- `shop/cli.py`: add a `--currency` option to `quote`, and print the code or symbol.\n- `shop/carriers/*.py` (20 files): every rate card is in implicit cents. Give each carrier a `CURRENCY` constant and have `rate()` return `Money`. A shared base class would remove the copy-paste.\n- `tests/`: update the integer-cents assertions and add cases for JPY, KWD and mixed currencies.\n\n**Main risks**\n1. **Mixed-currency sums**: the report, cart and order totals can silently add USD to EUR. Strict `Money` arithmetic is the guard.\n2. **Minor units**: the hard-coded `100` gives wrong amounts by a factor of 100 for JPY or a factor of 10 for KWD.\n3. **Rounding**: float `percent` drifts. Fix the rounding rule (half-up or banker's) per currency.\n4. **Old data**: existing JSON files have no currency field, so migration needs a default.\n5. **Exchange rates**: if you convert, store the rate and time at order creation. Don't convert at report time.\n6. **Carrier churn**: changing 20 near-identical files risks missing one.",
+  "ttft_ms": 1975,
+  "type": "result",
+  "duration_ms": 17161,
+  "uuid": "2d5de33a-0390-497d-8736-ffc651deed1b",
+  "ttft_stream_ms": 901,
+  "time_to_request_ms": 273,
+  "first_content_frame_ms": 901,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.beggar.1"
+}

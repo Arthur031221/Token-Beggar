@@ -1,0 +1,110 @@
+{
+ "task": "m2-future",
+ "class": "mechanical",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 20059,
+  "stop_reason": "end_turn",
+  "session_id": "4ec5c024-566f-404e-950c-97dd94773ff0",
+  "total_cost_usd": 0.13735760000000002,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 11652,
+   "cache_read_input_tokens": 101508,
+   "output_tokens": 1190,
+   "output_tokens_details": {
+    "thinking_tokens": 263
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11652,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 190,
+     "cache_read_input_tokens": 24163,
+     "cache_creation_input_tokens": 279,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 279
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1190,
+    "cacheReadInputTokens": 101508,
+    "cacheCreationInputTokens": 11652,
+    "webSearchRequests": 0,
+    "costUSD": 0.13735760000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 263,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `from __future__ import annotations` as the first import in all 20 modules under `shop/carriers/`. `__init__.py` is untouched, and the change is one added line per file with nothing else modified.\n\nThe new line sits directly above `import re`, after the TODO comment and the module docstring. It can't go any higher: Python only allows a `__future__` import after the docstring, and if it came first the docstring would stop counting as one. I imported every module to confirm the docstrings still load.\n\nTests: `python3 -m unittest discover -s tests -t .` ran 6 tests and all passed.",
+  "ttft_ms": 3183,
+  "type": "result",
+  "duration_ms": 20658,
+  "uuid": "2a28c507-ce35-449c-869f-2f713a51ec69",
+  "ttft_stream_ms": 2038,
+  "time_to_request_ms": 102,
+  "first_content_frame_ms": 2038,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/acme.py     | 1 +\n shop/carriers/borealis.py | 1 +\n shop/carriers/cedar.py    | 1 +\n shop/carriers/delta.py    | 1 +\n shop/carriers/ember.py    | 1 +\n shop/carriers/fjord.py    | 1 +\n shop/carriers/gale.py     | 1 +\n shop/carriers/harbor.py   | 1 +\n shop/carriers/iris.py     | 1 +\n shop/carriers/juniper.py  | 1 +\n shop/carriers/kestrel.py  | 1 +\n shop/carriers/lumen.py    | 1 +\n shop/carriers/maple.py    | 1 +\n shop/carriers/nimbus.py   | 1 +\n shop/carriers/onyx.py     | 1 +\n shop/carriers/prairie.py  | 1 +\n shop/carriers/quartz.py   | 1 +\n shop/carriers/ridge.py    | 1 +\n shop/carriers/summit.py   | 1 +\n shop/carriers/tundra.py   | 1 +\n 20 files changed, 20 insertions(+)\n",
+ "workdir": "m2-future.alone.2"
+}

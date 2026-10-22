@@ -1,0 +1,4 @@
+#!/bin/sh
+# Wrapper so the plugin's bin/ directory puts `token-beggar` on the PATH of Claude Code's shell.
+root="$(cd "$(dirname "$0")/.." && pwd)"
+PYTHONPATH="$root${PYTHONPATH:+:$PYTHONPATH}" exec python3 -m token_beggar "$@"

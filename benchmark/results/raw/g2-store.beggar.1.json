@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "beggar",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 13584,
+  "stop_reason": "end_turn",
+  "session_id": "8a44998e-24f7-4de2-888d-d63c242a53c1",
+  "total_cost_usd": 0.0745836,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 5593,
+   "cache_read_input_tokens": 53978,
+   "output_tokens": 951,
+   "output_tokens_details": {
+    "thinking_tokens": 89
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5593,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 679,
+     "cache_read_input_tokens": 19898,
+     "cache_creation_input_tokens": 279,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 279
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 951,
+    "cacheReadInputTokens": 53978,
+    "cacheCreationInputTokens": 5593,
+    "webSearchRequests": 0,
+    "costUSD": 0.0745836,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 89,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move to SQLite in WAL mode.**\n\n**Why the current design breaks:**\n- **Lost updates.** `save_order` (`shop/storage.py:16-21`) loads the whole file, edits it and writes it back with no lock. If two writers do this at the same time, the last one to write erases the other's order.\n- **Corruption.** `write_text` truncates the file before writing it. A crash or a reader landing mid-write sees a half-written file, and `json.loads` fails.\n- **O(n) per save.** At 100k orders, every save parses and re-serialises roughly 10 MB of JSON.\n\n**Why SQLite:**\n- It's in the standard library, so there's no server to run.\n- Transactions handle locking between processes for you.\n- WAL mode lets readers keep reading while one process writes.\n- `INSERT ... ON CONFLICT(id) DO UPDATE` with `id` as the primary key replaces the filter-and-append upsert, and each save costs about the same no matter how many orders exist.\n- Use `PRAGMA busy_timeout` so the two writers wait for each other instead of failing.\n- Use INTEGER columns for `total` and `tax`; the code already stores cents.\n\nPostgres only makes sense if the writers end up on different machines. Locking the JSON file just swaps lost updates for slow saves that queue behind each other.\n\n**Migration path:**\n1. Add a SQLite-backed store with the same interface (`load()`, `save_order()`), so callers like `shop/cli.py:26` don't change.\n2. Write a one-off import script: read the JSON, insert every row in one transaction, then check the row count and the sum of totals against the JSON.\n3. Stop both writers, run the import and switch them to the new store. A short freeze avoids keeping two stores in sync.\n4. Keep the JSON file read-only as a rollback for one release, then delete it.\n5. Later, add paging or filters so `load()` doesn't pull all 100k rows into memory.",
+  "ttft_ms": 2947,
+  "type": "result",
+  "duration_ms": 14000,
+  "uuid": "21fa94c1-d26e-4e6e-b080-fc9d7bd8970b",
+  "ttft_stream_ms": 1739,
+  "time_to_request_ms": 310,
+  "first_content_frame_ms": 1739,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.beggar.1"
+}

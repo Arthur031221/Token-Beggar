@@ -1,0 +1,126 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "beggar",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 48923,
+  "stop_reason": "end_turn",
+  "session_id": "be08db97-6dbc-476a-a631-df11772a1576",
+  "total_cost_usd": 0.1909904,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 8921,
+   "cache_read_input_tokens": 55297,
+   "output_tokens": 1844,
+   "output_tokens_details": {
+    "thinking_tokens": 316
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8921,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 789,
+     "cache_read_input_tokens": 21150,
+     "cache_creation_input_tokens": 2357,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2357
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1844,
+    "cacheReadInputTokens": 55297,
+    "cacheCreationInputTokens": 8921,
+    "webSearchRequests": 0,
+    "costUSD": 0.1193314,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 316,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 4282,
+    "cacheReadInputTokens": 61360,
+    "cacheCreationInputTokens": 9070,
+    "webSearchRequests": 0,
+    "costUSD": 0.071659,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 617,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `Cart.apply_coupon(code)` and a new `shop/coupons.py`. All 12 tests pass: the 6 that were already there and 6 new ones, run with `python3 -m unittest discover -s tests -t .`. Nothing is committed.\n\n**What changed**\n- **`shop/coupons.py`** (new): defines SAVE10 (10% off) and FLAT500 (500 cents off). An unknown code raises `ValueError`.\n- **`shop/models.py`**: `Cart` now keeps a list of applied coupons. `apply_coupon` checks the code first, so a bad code raises without changing the cart.\n- **`shop/pricing.py`**: `calc_total` subtracts the coupons from the subtotal before tax, then works out tax on the reduced amount. `calc_tax` uses the same calculation, so the tax figure matches the total.\n- **`tests/test_pricing.py`**: tests for SAVE10 alone, FLAT500 alone, both together, tax on the discounted subtotal, a cart that can't go below zero, and an unknown code.\n\n**Choices you may want to change**\n- **Stacking:** each coupon is worked out on the original subtotal. With a 2000-cent cart, SAVE10 + FLAT500 takes off 200 + 500, not 10% of what's left after the 500. The subtotal never goes below 0.\n- **Same code twice:** applying a code that's already on the cart does nothing. If you want \"stack\" to include using the same code twice, it's a one-line change.\n- **Tax-free items:** in a cart with both taxed and tax-free items, the discount is shared between them in proportion to their value, so tax drops by the right share.\n- **Rounding:** it uses the rounding that `money.percent` already had (halves round up).\n\nWith no coupons applied, totals are the same as before.\n\nToken Beggar: about 1.4x less spend than claude-opus-5-5 high alone (measured, multi_file)",
+  "ttft_ms": 2537,
+  "type": "result",
+  "duration_ms": 50485,
+  "uuid": "c153a156-4591-4cdd-8396-33b535711f4b",
+  "ttft_stream_ms": 1379,
+  "time_to_request_ms": 599,
+  "first_content_frame_ms": 1379,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py        |  8 ++++++++\n shop/pricing.py       | 20 ++++++++++++++++----\n tests/test_pricing.py | 42 ++++++++++++++++++++++++++++++++++++++++++\n 3 files changed, 66 insertions(+), 4 deletions(-)\n",
+ "workdir": "c1-coupon.beggar.1"
+}

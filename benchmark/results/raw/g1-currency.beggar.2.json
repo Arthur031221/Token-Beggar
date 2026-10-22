@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "beggar",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15367,
+  "stop_reason": "end_turn",
+  "session_id": "e7c56372-191c-4ff8-89b3-d07b9b2a257c",
+  "total_cost_usd": 0.11838320000000002,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 10152,
+   "cache_read_input_tokens": 54116,
+   "output_tokens": 1316,
+   "output_tokens_details": {
+    "thinking_tokens": 103
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10152,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 924,
+     "cache_read_input_tokens": 20049,
+     "cache_creation_input_tokens": 4688,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4688
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1316,
+    "cacheReadInputTokens": 54116,
+    "cacheCreationInputTokens": 10152,
+    "webSearchRequests": 0,
+    "costUSD": 0.11838320000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 103,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Multi-currency design for this repo (I read it myself and handed nothing off, since design work stays with me).\n\n**Core idea:** replace bare integer cents with a `Money(amount_minor: int, currency: str)` value object. Every amount stays in the currency's smallest unit (yen has 0 decimal places, US dollars 2, Kuwaiti dinar 3).\n\n**Changes by file**\n- `shop/money.py`: add `Money` and a currency table giving each code's decimal places. `to_cents`, `fmt` and `percent` become currency-aware. `+` and `-` between different currencies raise an error. Swap the float maths in `percent` for `Decimal` with an explicit rounding mode.\n- `shop/models.py`: `Item.price_cents` becomes `price: Money`. `Cart` gets a `currency`, and `add` rejects items in a different currency.\n- `shop/pricing.py`: `TAX_RATE` and the bulk discount return `Money`. Tax rate probably needs to come from region or currency rather than one global.\n- `shop/orders.py`: `Order` stores the currency; line tuples carry `Money`.\n- `shop/storage.py`: write a `currency` field. Old rows have none, so they load as `\"USD\"`.\n- `shop/reports.py`: total sales per customer *per currency*. Never add across currencies unless an explicit conversion is chosen.\n- `shop/cache.py`: cache `Money` values, or the key needs the currency.\n- `shop/cli.py`: add a `--currency` flag and parse prices with that currency's decimal places.\n- `shop/carriers/*` (20 files): rates are hard-coded in cents, presumably USD. Either tag them `USD` and convert at the boundary, or leave them out of scope for now. Nothing in pricing or orders calls them today.\n- `tests/`: update the fixtures and add tests for mixing currencies, 0- and 3-decimal currencies, and loading old JSON.\n\n**Main risks**\n1. **Silent mixing:** adding yen to dollars as plain ints gives wrong numbers with no error. `Money` must refuse.\n2. **Rounding:** float `percent` plus different decimal places causes off-by-one errors in tax and discounts.\n3. **Old stored data:** JSON files with no currency field.\n4. **Exchange rates:** where they come from, how stale they can be, and who owns them. Avoid needing them at all if you can.\n5. **Scope:** the 20 carrier files are a lot of repetitive edits; doing them as a separate step is safer.",
+  "ttft_ms": 2028,
+  "type": "result",
+  "duration_ms": 15998,
+  "uuid": "6958300c-e6a0-4e01-aa28-c2107309b690",
+  "ttft_stream_ms": 1530,
+  "time_to_request_ms": 249,
+  "first_content_frame_ms": 1530,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.beggar.2"
+}

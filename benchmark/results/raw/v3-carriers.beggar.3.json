@@ -1,0 +1,110 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "beggar",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14778,
+  "stop_reason": "end_turn",
+  "session_id": "0c6542d5-6501-49f4-9488-713fc6cf50ee",
+  "total_cost_usd": 0.16080740000000002,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 14720,
+   "cache_read_input_tokens": 82977,
+   "output_tokens": 1321,
+   "output_tokens_details": {
+    "thinking_tokens": 130
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14720,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 754,
+     "cache_read_input_tokens": 29021,
+     "cache_creation_input_tokens": 285,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 285
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1321,
+    "cacheReadInputTokens": 82977,
+    "cacheCreationInputTokens": 14720,
+    "webSearchRequests": 0,
+    "costUSD": 0.16080740000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 130,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found two inconsistencies, and the most serious is in **`shop/carriers/maple.py`**. I made no edits. Nothing in the repo outside `shop/carriers/` calls the registry, so these breakages are inferred from the shared interface rather than seen in existing callers.\n\n### 1. `maple.py` expects grams; every other carrier expects kg (wrong prices, no error)\n- Its docstring reads \"weight in grams\". It uses `PER_GRAMS = 3` and `MAX_GRAMS = 30000` where the other 19 carriers use `PER_KG` and `MAX_KG`.\n- A caller using `get(name).rate(weight, zone)` passes kg, as every other carrier expects. For maple:\n  - **Prices come out far too low.** A 2 kg parcel is treated as 2 g: `rate(2)` \u2192 `int(494 + 3*2)` = **500 cents**. In grams it should be `494 + 3*2000` = 6494 cents.\n  - **The weight limit is meaningless.** `MAX_GRAMS = 30000` means maple accepts up to 30,000 kg of input. The other carriers reject anything over about 30\u201349 kg.\n- This one is the worst because nothing fails. Comparing quotes across carriers will pick maple as the cheapest every time.\n\n### 2. Four carriers have no `tracking_url` (crash)\n`delta.py`, `kestrel.py`, `onyx.py` and `tundra.py` don't define `tracking_url(code)`; the other 16 do. Any caller that loops over `REGISTRY` or does `get(name).tracking_url(code)` will raise `AttributeError` for these four.\n\n### Checked and consistent\n- Every class has `name = CARRIER` matching its registry key.\n- `rate(weight, zone=\"local\") -> int` has the same signature everywhere and returns cents.\n- All zone tables use the same keys: `local`, `regional` and `national`.\n- `label` and `valid_label` follow the same `NAME-%08d` pattern everywhere.\n\nFixes to consider: convert maple to kg (or convert at its boundary), and add `tracking_url` to the four missing carriers. A shared base class or `Protocol` would catch both problems early.",
+  "ttft_ms": 1793,
+  "type": "result",
+  "duration_ms": 15118,
+  "uuid": "06beda1e-e329-4976-8bd7-1e4ba03c6d6c",
+  "ttft_stream_ms": 931,
+  "time_to_request_ms": 223,
+  "first_content_frame_ms": 931,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.beggar.3"
+}

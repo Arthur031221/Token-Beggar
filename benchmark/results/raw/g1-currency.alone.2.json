@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15538,
+  "stop_reason": "end_turn",
+  "session_id": "930b2d2d-8ef7-400f-8b89-d15cab15b235",
+  "total_cost_usd": 0.13356400000000002,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11515,
+   "cache_read_input_tokens": 74160,
+   "output_tokens": 1329,
+   "output_tokens_details": {
+    "thinking_tokens": 69
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11515,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 803,
+     "cache_read_input_tokens": 23557,
+     "cache_creation_input_tokens": 748,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 748
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1329,
+    "cacheReadInputTokens": 74160,
+    "cacheCreationInputTokens": 11515,
+    "webSearchRequests": 0,
+    "costUSD": 0.13356400000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 69,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Multi-currency design\n\nEvery amount today is a bare `int` that means USD cents, and each module assumes this on its own.\n\n**Core change: `shop/money.py`**\n- Add a frozen `Money(amount_minor: int, currency: str)` plus a table of ISO 4217 minor units (JPY=0, USD=2, KWD=3).\n- `to_cents` and `fmt` take a currency and use its minor units instead of a hardcoded 100 and 2 decimals.\n- Adding or comparing two different currencies raises an error. Nothing converts implicitly.\n- `percent` keeps returning integer minor units. Switch it to `Decimal` with an explicit rounding mode.\n\n**Files that use money**\n- `models.py`: `Item.price_cents` becomes `price: Money`, and `Cart` gets a `currency`. `Cart.add` rejects items in a different currency.\n- `pricing.py`: `TAX_RATE` is US-only, so it becomes a per-currency/region lookup. All functions return `Money`.\n- `orders.py`: store `currency` on `Order` and keep it in each line tuple.\n- `storage.py`: write `currency` to each row. Rows without one load as `\"USD\"` so existing JSON files keep working.\n- `reports.py`: `sales_by_customer` currently adds up totals from different orders. Group by `(customer, currency)`, or convert using an explicit FX rate and record the rate and date.\n- `cli.py`: add `--currency`.\n- `cache.py`: key on `(sku, currency)`.\n- `carriers/*.py` (20 near-identical files): rates are hardcoded cents. Add a `CURRENCY` constant to each, ideally while merging them into one data-driven class.\n\n**Main risks**\n1. **Silent mixing:** `int + int` still works, so any spot you miss will add yen to dollars without an error. Using a type that fails on mismatch is the main protection.\n2. **Rounding:** `percent` rounds with float `+0.5`, which goes wrong on negative amounts and on 0- or 3-decimal currencies.\n3. **Old data:** existing JSON files have no currency field.\n4. **Exchange rates:** where they come from, how stale they can be, and that reports can't be reproduced without them.\n5. **Tests:** they assert on raw ints and will all need updating.",
+  "ttft_ms": 1408,
+  "type": "result",
+  "duration_ms": 15994,
+  "uuid": "491d1e11-ee1c-4211-8551-46ca5a6b0772",
+  "ttft_stream_ms": 899,
+  "time_to_request_ms": 182,
+  "first_content_frame_ms": 899,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.alone.2"
+}

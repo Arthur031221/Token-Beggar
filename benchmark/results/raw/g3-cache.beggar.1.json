@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "beggar",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16449,
+  "stop_reason": "end_turn",
+  "session_id": "fb281c07-6cc0-4238-a07c-498baa2a384e",
+  "total_cost_usd": 0.07277040000000001,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5300,
+   "cache_read_input_tokens": 34072,
+   "output_tokens": 1177,
+   "output_tokens_details": {
+    "thinking_tokens": 456
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5300,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1083,
+     "cache_read_input_tokens": 19487,
+     "cache_creation_input_tokens": 398,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 398
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1177,
+    "cacheReadInputTokens": 34072,
+    "cacheCreationInputTokens": 5300,
+    "webSearchRequests": 0,
+    "costUSD": 0.07277040000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 456,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Problems in `shop/cache.py`, most serious first:\n\n1. **Concurrent misses all call the loader** (`get`, lines 14\u201318). When a key expires under load, every thread that misses at the same moment calls `loader(sku)`. For a popular SKU that sends a burst of calls to the pricing backend.\n   **Fix:** make sure only one thread loads a given key. Keep a per-key \"load in progress\" marker (a Future) under a short lock. The first thread runs the loader outside the lock, and the other threads wait on its result. If the loader raises, the waiters get the same exception.\n\n2. **`invalidate` can lose to a load already in progress.** Thread A starts loading, thread B calls `invalidate` after a price change, then A finishes and writes the old price back. That stale value can then be served for a full TTL.\n   **Fix:** keep a counter per key that `invalidate` increments. The loader records the counter before it starts and only stores its result if the counter hasn't changed. `invalidate` should also drop any load in progress for that key.\n\n3. **The cache only grows.** Expired entries are never removed, so in a long-running service memory grows with every SKU ever requested.\n   **Fix:** use a size-capped LRU (an `OrderedDict` under the lock) and drop expired entries when they are looked up.\n\n4. **The timestamp is taken after the load** (line 18). A slow load makes the entry look fresher than the data is.\n   **Fix:** record the time before calling the loader.\n\n5. **A failing backend gets hit on every request.** Exceptions aren't cached, so every request retries a backend that is down.\n   **Fix:** cache the failure briefly (a few seconds), or rely on the single load from fix 1 to cap retries at one per key at a time.\n\nSingle dict operations are thread-safe on their own, but the check-then-load-then-store sequence in `get` is not. All the shared state should sit behind one lock, and the loader should never run while that lock is held.",
+  "ttft_ms": 2538,
+  "type": "result",
+  "duration_ms": 16805,
+  "uuid": "984312ec-1166-4be3-99fe-a04120d44179",
+  "ttft_stream_ms": 2276,
+  "time_to_request_ms": 299,
+  "first_content_frame_ms": 2276,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.beggar.1"
+}

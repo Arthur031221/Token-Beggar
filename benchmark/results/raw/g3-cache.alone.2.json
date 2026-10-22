@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15438,
+  "stop_reason": "end_turn",
+  "session_id": "9ff76afa-b2ed-46c3-bec3-788b24766ada",
+  "total_cost_usd": 0.0815128,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6224,
+   "cache_read_input_tokens": 31424,
+   "output_tokens": 1271,
+   "output_tokens_details": {
+    "thinking_tokens": 500
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6224,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1195,
+     "cache_read_input_tokens": 18634,
+     "cache_creation_input_tokens": 380,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 380
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1271,
+    "cacheReadInputTokens": 31424,
+    "cacheCreationInputTokens": 6224,
+    "webSearchRequests": 0,
+    "costUSD": 0.0815128,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 500,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found five problems in `shop/cache.py`. None of them crash on a single call, but they show up under concurrency or over a long uptime.\n\n1. **Memory grows forever** (lines 11 and 18). Expired entries are only replaced when someone asks for that SKU again; nothing ever removes them. Every SKU ever requested stays in `_data` for the life of the process.\n   *Fix:* cap the cache with a `maxsize` and evict the least recently used entry (an `OrderedDict` works). Also drop an expired entry when a lookup finds it.\n\n2. **Many threads load the same SKU at once** (lines 14\u201318). The check and the fill are separate steps. When a popular SKU expires, every thread that misses calls `loader`, which hits the backend with duplicate requests.\n   *Fix:* let only one load per key run at a time. Keep a map of key \u2192 in-progress future, protected by one short lock. The first thread to miss runs `loader` outside the lock; the others wait on its future.\n\n3. **`invalidate` can be undone** (line 22 vs. line 18). If thread A is in the middle of loading when B calls `invalidate`, A then stores the old value. That stale price is served for the full `ttl`, which defeats the point of invalidating.\n   *Fix:* keep a version number per key and bump it in `invalidate`. A loader only stores its result if the version hasn't changed since it started.\n\n4. **Timestamp is taken after the load** (line 18). A slow `loader` makes the value look fresher than it is, so it can be served past its real age.\n   *Fix:* read `clock()` before calling `loader`.\n\n5. **Failures aren't cached.** If `loader` raises, every request retries right away, which piles load onto a backend that is already struggling. Problem 2's fix makes this worse to leave alone, because waiting threads need to receive the error.\n   *Fix:* pass the exception to the waiting threads through the future, and optionally cache the failure for a short time.\n\nMy overall choice is one lock around the dict, single-flight futures, version numbers per key, and a bounded LRU. The loader must never run while the lock is held.",
+  "ttft_ms": 1765,
+  "type": "result",
+  "duration_ms": 15523,
+  "uuid": "a06d51c6-3744-4a4d-827b-d92a732f030d",
+  "ttft_stream_ms": 1033,
+  "time_to_request_ms": 56,
+  "first_content_frame_ms": 1034,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.alone.2"
+}

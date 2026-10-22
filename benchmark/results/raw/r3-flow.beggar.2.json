@@ -1,0 +1,126 @@
+{
+ "task": "r3-flow",
+ "class": "reading",
+ "arm": "beggar",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 24875,
+  "stop_reason": "end_turn",
+  "session_id": "b03e51e9-5b72-41a4-8bf6-bf19115eab49",
+  "total_cost_usd": 0.09517337000000002,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6882,
+   "cache_read_input_tokens": 55000,
+   "output_tokens": 1359,
+   "output_tokens_details": {
+    "thinking_tokens": 136
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6882,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 532,
+     "cache_read_input_tokens": 20950,
+     "cache_creation_input_tokens": 517,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 517
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1359,
+    "cacheReadInputTokens": 55000,
+    "cacheCreationInputTokens": 6882,
+    "webSearchRequests": 0,
+    "costUSD": 0.09326,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 136,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1954,
+    "cacheReadInputTokens": 28257,
+    "cacheCreationInputTokens": 5224,
+    "webSearchRequests": 0,
+    "costUSD": 0.0019133700000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 355,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Validation is in `shop/orders.py`:**\n- At lines 6\u20137, `STATES` lists the states (`new`, `paid`, `shipped`, `cancelled`) and `ALLOWED` maps each state to the states it can move to: `new` \u2192 `paid`/`cancelled`, `paid` \u2192 `shipped`/`cancelled`. `shipped` and `cancelled` are final.\n- `Order.__init__` (line 17) starts every order in `new`.\n- `Order.move(state)` (lines 19\u201322) raises `ValueError(\"cannot go from X to Y\")` if the target isn't in `ALLOWED[self.state]`. Otherwise it sets `self.state`.\n\n**Storage is in `shop/storage.py`:**\n- `Store.load` (line 11) reads the JSON file, or returns `[]` if the file is missing.\n- `Store.save_order` (line 16) loads every row, drops the one with the same id, appends the order's dict (including `state`), and rewrites the whole file.\n\n**Gaps:**\n- `move()` doesn't save anything. The caller has to call `save_order` separately, and only the tests (`tests/test_orders.py:20-23`) do that. `cli.py` imports `Order` but never changes its state.\n- No timestamps or transition history are kept.\n- Writes aren't atomic, and the order id counter is held in memory, so it restarts with each process.\n\nI confirmed the line numbers above. The points about the tests, `cli.py` and the id counter come from the worker's report and I didn't check them myself.\n\nToken Beggar: routed 1 subtask(s) to haiku",
+  "ttft_ms": 2573,
+  "type": "result",
+  "duration_ms": 25409,
+  "uuid": "02f38b96-12a7-4f68-9699-fcaccc531269",
+  "ttft_stream_ms": 1020,
+  "time_to_request_ms": 237,
+  "first_content_frame_ms": 1021,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r3-flow.beggar.2"
+}

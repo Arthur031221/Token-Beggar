@@ -1,0 +1,110 @@
+{
+ "task": "m2-future",
+ "class": "mechanical",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 21507,
+  "stop_reason": "end_turn",
+  "session_id": "175d71cf-7675-4a52-8c28-b6ddae182ddf",
+  "total_cost_usd": 0.1536334,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 11941,
+   "cache_read_input_tokens": 125887,
+   "output_tokens": 1644,
+   "output_tokens_details": {
+    "thinking_tokens": 361
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11941,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 306,
+     "cache_read_input_tokens": 24471,
+     "cache_creation_input_tokens": 260,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 260
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 1644,
+    "cacheReadInputTokens": 125887,
+    "cacheCreationInputTokens": 11941,
+    "webSearchRequests": 0,
+    "costUSD": 0.1536334,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 361,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `from __future__ import annotations` to all 20 carrier modules in `shop/carriers/`, leaving `__init__.py` alone. Each file gained exactly one line and nothing else changed. All 6 tests pass (run with `python3 -m unittest`, since pytest isn't installed).\n\n**Where the line goes:** each module starts with a `# TODO` comment and then a docstring. I put the new line right after the docstring, just before `import re`. That keeps it the first import, and Python requires it there: a `__future__` import has to come after the docstring. If it went at the very top, the docstring would stop being the module's `__doc__`. I checked that `__doc__` is still set correctly.\n\n**The tests don't cover carriers:** they only test the cache, orders and pricing, so none of them load a carrier module. To check the edited files directly, I imported every module in `shop/carriers` and they all load without errors.\n\nNothing is committed yet.",
+  "ttft_ms": 2416,
+  "type": "result",
+  "duration_ms": 22261,
+  "uuid": "817d1f29-d2a1-40b9-abd9-f6275a68b86a",
+  "ttft_stream_ms": 1370,
+  "time_to_request_ms": 99,
+  "first_content_frame_ms": 1370,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/acme.py     | 1 +\n shop/carriers/borealis.py | 1 +\n shop/carriers/cedar.py    | 1 +\n shop/carriers/delta.py    | 1 +\n shop/carriers/ember.py    | 1 +\n shop/carriers/fjord.py    | 1 +\n shop/carriers/gale.py     | 1 +\n shop/carriers/harbor.py   | 1 +\n shop/carriers/iris.py     | 1 +\n shop/carriers/juniper.py  | 1 +\n shop/carriers/kestrel.py  | 1 +\n shop/carriers/lumen.py    | 1 +\n shop/carriers/maple.py    | 1 +\n shop/carriers/nimbus.py   | 1 +\n shop/carriers/onyx.py     | 1 +\n shop/carriers/prairie.py  | 1 +\n shop/carriers/quartz.py   | 1 +\n shop/carriers/ridge.py    | 1 +\n shop/carriers/summit.py   | 1 +\n shop/carriers/tundra.py   | 1 +\n 20 files changed, 20 insertions(+)\n",
+ "workdir": "m2-future.alone.3"
+}

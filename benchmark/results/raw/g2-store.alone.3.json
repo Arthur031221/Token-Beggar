@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14550,
+  "stop_reason": "end_turn",
+  "session_id": "09461b59-85e3-483b-ba4d-f150bf57c531",
+  "total_cost_usd": 0.09107579999999998,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7310,
+   "cache_read_input_tokens": 50859,
+   "output_tokens": 1120,
+   "output_tokens_details": {
+    "thinking_tokens": 133
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7310,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 831,
+     "cache_read_input_tokens": 19431,
+     "cache_creation_input_tokens": 669,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 669
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1120,
+    "cacheReadInputTokens": 50859,
+    "cacheCreationInputTokens": 7310,
+    "webSearchRequests": 0,
+    "costUSD": 0.09107579999999998,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 133,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move to SQLite (stdlib `sqlite3`) in WAL mode, and keep the `Store` interface the same.**\n\n**Why the current design won't hold up**\n- **Lost updates:** `save_order` (`shop/storage.py:16`) loads the whole file, changes it in memory, and rewrites it. With two writers, each can read the same snapshot, and whichever saves last silently drops the other's order. Nothing locks the file.\n- **Corruption:** `write_text` truncates the file and then writes it, so the write isn't atomic. A crash, or a reader landing mid-write, sees half-written JSON, and `load()` fails.\n- **Cost:** every save parses and re-serializes every order. At 100k orders that's around 10 MB per write (bigger with `indent=1`), so each save gets slower as the store grows.\n\n**Why SQLite**\nIt's built into Python and needs no server. It handles locking between processes, makes each write atomic, and updates one row instead of rewriting everything. WAL mode lets readers run while a write is in progress. Set `busy_timeout` so the two writers wait for each other instead of failing. 100k rows is tiny for SQLite. Postgres would only be worth it later, if you need writers on several machines.\n\n**Migration path**\n1. **Add `SqliteStore`** with the same `load()` / `save_order()` methods. Use an `orders` table with `id` as the primary key, and implement saves as `INSERT \u2026 ON CONFLICT(id) DO UPDATE`. Run the existing tests against both stores.\n2. **Write a one-off import script** that reads the JSON file and inserts every row in a single transaction. Check that the row counts and totals match.\n3. **Cut over:** stop the writers, run the import, then point the writers and `shop report --db` at the SQLite file. Keep the JSON file as a read-only backup.\n4. **Clean up:** once it's been stable for a while, delete the JSON `Store`. Add indexes (e.g. on `customer` or `state`) when reports need them, and change `load()` so reports query only what they need instead of loading every row.",
+  "ttft_ms": 2920,
+  "type": "result",
+  "duration_ms": 14723,
+  "uuid": "0b15ab19-5ba6-43ce-a16e-b8f0196dc71d",
+  "ttft_stream_ms": 2035,
+  "time_to_request_ms": 83,
+  "first_content_frame_ms": 2035,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.3"
+}

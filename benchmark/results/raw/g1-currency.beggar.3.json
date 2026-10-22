@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "beggar",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 19873,
+  "stop_reason": "end_turn",
+  "session_id": "3996ef13-5c2e-4ed9-9a76-20c149b92d08",
+  "total_cost_usd": 0.1276432,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 10169,
+   "cache_read_input_tokens": 54136,
+   "output_tokens": 1772,
+   "output_tokens_details": {
+    "thinking_tokens": 583
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10169,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1368,
+     "cache_read_input_tokens": 20064,
+     "cache_creation_input_tokens": 4690,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4690
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1772,
+    "cacheReadInputTokens": 54136,
+    "cacheCreationInputTokens": 10169,
+    "webSearchRequests": 0,
+    "costUSD": 0.1276432,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 583,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The money code assumes US dollars with 2 decimal places, and plain ints for amounts pass through every layer. The fix is one currency-aware money type that every layer uses.\n\n**Changes by file**\n\n- **`shop/money.py`**: Add a frozen `Money(minor: int, currency: str)` type and a table of how many decimal places each currency uses (JPY 0, USD 2, KWD 3). `to_cents` and `fmt` hard-code 100 and two decimals; they need to look up the currency instead. `percent` should use `Decimal` rather than float. Adding or comparing two different currencies should raise an error.\n- **`shop/models.py`**: Change `Item.price_cents` to `price: Money`. Give `Cart` a `currency`, and make `Cart.add` reject items priced in a different currency.\n- **`shop/pricing.py`**: Return `Money`. `TAX_RATE` is one global value and probably needs to vary by region or currency.\n- **`shop/orders.py`**: Store the order's currency. Keep it in the line tuples and on the totals.\n- **`shop/storage.py`**: Save `\"currency\"` with each order. When loading old rows that lack it, default to `\"USD\"`.\n- **`shop/reports.py`**: `sales_by_customer` adds up raw ints, so totals in different currencies would be mixed together. Group by (customer, currency), or convert using exchange rates you supply.\n- **`shop/cache.py`**: Key prices on (sku, currency).\n- **`shop/cli.py`**: Add a `--currency` option to `quote` and show currencies in output.\n- **`shop/carriers/*.py` (20 files)**: Rates are bare cent values. Add a `CURRENCY` constant to each. These carriers aren't connected to orders yet, so this can wait.\n- **`tests/`**: Update tests that expect plain int results.\n\n**Main risks**\n\n1. **Silent mixing:** any spot still adding raw ints across currencies will give wrong totals without an error. Reports are the most likely place.\n2. **Rounding:** float rounding in `percent` will differ from currency rounding rules for 0- and 3-decimal currencies.\n3. **Old data:** existing JSON files have no currency field, so loading must default it.\n4. **Exchange rates:** decide early whether conversion is in scope, and where rates come from.\n5. **Size of the change:** changing `price_cents` to `Money` touches nearly every module, so it should land in one coordinated change.",
+  "ttft_ms": 2334,
+  "type": "result",
+  "duration_ms": 20318,
+  "uuid": "837d769c-b1db-4ff1-91d5-866a1da7ad57",
+  "ttft_stream_ms": 1730,
+  "time_to_request_ms": 293,
+  "first_content_frame_ms": 1731,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.beggar.3"
+}

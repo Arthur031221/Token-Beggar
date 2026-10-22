@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "beggar",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 10476,
+  "stop_reason": "end_turn",
+  "session_id": "ddaa1858-59af-4914-92c0-de80af221b1a",
+  "total_cost_usd": 0.07675399999999999,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 5930,
+   "cache_read_input_tokens": 54350,
+   "output_tokens": 921,
+   "output_tokens_details": {
+    "thinking_tokens": 45
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5930,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 645,
+     "cache_read_input_tokens": 20271,
+     "cache_creation_input_tokens": 243,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 243
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 921,
+    "cacheReadInputTokens": 54350,
+    "cacheCreationInputTokens": 5930,
+    "webSearchRequests": 0,
+    "costUSD": 0.07675399999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 45,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move orders to SQLite in WAL mode.**\n\n**Why the current design fails.** `Store.save_order` (`shop/storage.py:16`) reads the whole JSON file, rewrites the list and writes it back.\n- **Lost updates:** two writers can both load the file, and the second write silently erases the first one's order.\n- **Torn files:** `write_text` isn't atomic, so a crash or a reader arriving mid-write sees broken JSON.\n- **Slow saves:** each save is O(n). At 100k orders, that means rewriting several MB per order, roughly O(n\u00b2) in total.\n\n**Why SQLite.** It ships with Python, so there's no server to run. WAL mode lets readers keep reading while one writer commits, and two processes saving one order at a time is well within its limits. An `orders` table keyed on `id` turns `save_order` into a single `INSERT \u2026 ON CONFLICT(id) DO UPDATE` (an upsert). That makes each save atomic, O(log n), and safe against crashes. Set `busy_timeout` so the two writers wait for each other instead of failing.\n\nPostgres only becomes worth it if writers move to other machines or you need many concurrent writers. File locks on the JSON file would stop lost updates but leave the O(n) cost.\n\n**Migration path**\n1. Keep the `Store` interface (`load`, `save_order`) and add a `SqliteStore` behind it. The only caller outside `storage.py` is `shop/cli.py:26`, so the change stays small.\n2. Write a one-off import script: read the JSON, insert every row in one transaction, then check that row counts and summed totals match.\n3. Cutover: stop both writers, run the import, switch the config to SQLite, restart. Keep the JSON file read-only as a rollback.\n4. Add a test where two processes write at once and no order is lost.\n5. After a stable period, remove the JSON store.",
+  "ttft_ms": 1698,
+  "type": "result",
+  "duration_ms": 10922,
+  "uuid": "2a218d6f-68b5-40c7-a96f-bd256d10c123",
+  "ttft_stream_ms": 1024,
+  "time_to_request_ms": 355,
+  "first_content_frame_ms": 1025,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.beggar.3"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 40403,
+  "stop_reason": "end_turn",
+  "session_id": "ebd0848c-422b-4cbb-931d-a53b44364b2d",
+  "total_cost_usd": 0.2973636,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 22274,
+   "cache_read_input_tokens": 151418,
+   "output_tokens": 4442,
+   "output_tokens_details": {
+    "thinking_tokens": 761
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 22274,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 734,
+     "cache_read_input_tokens": 34491,
+     "cache_creation_input_tokens": 573,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 573
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 4442,
+    "cacheReadInputTokens": 151418,
+    "cacheCreationInputTokens": 22274,
+    "webSearchRequests": 0,
+    "costUSD": 0.2973636,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 761,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and all 16 tests pass (3 existing + 13 new).\n\n**How it works**\n- **Cart** has a new `tier` field that defaults to `\"standard\"` (`shop/models.py`).\n- **Pricing** (`shop/pricing.py`): gold takes 10% off and silver 5%. Any other value gets no discount. The discount comes off before tax:\n  - `calc_tax` now charges tax on the discounted taxable amount.\n  - `calc_total` adds the discounted subtotal and that tax.\n  - I added a `calc_subtotal` helper that returns the discounted subtotal before tax.\n- **Order** gets the discount automatically, because it already calls `calc_total` and `calc_tax`. It also now records `self.tier`.\n- **CLI**: `shop quote a:10.00:2 --tier gold` prints `19.49` (it's `21.65` without a tier).\n\n**Behaviour to know about**\n- **Bulk discount:** the 5% discount for 10+ items is applied to each line first, then the tier discount comes off the total. Gold on 10 \u00d7 $1.00 gives $8.55 before tax.\n- **Rounding:** the tier discount is worked out once on the whole subtotal and once on the taxable part, each rounded half-up to the cent. If a cart mixes taxable and non-taxable items, the two amounts can differ by a cent from a split done line by line.\n- **Unknown tiers:** a value like `--tier platinum` is accepted and simply gets no discount, as you specified. There's no error for a mistyped tier.\n- **Saved orders:** the tier isn't written to the JSON file in `Store.save_order`, because you didn't ask for that. It's a one-line change if you want it.\n\n**Tests**\n- `tests/test_pricing.py`: default tier, gold, silver, unknown tier, a mix of taxable and non-taxable items, and bulk plus tier.\n- `tests/test_orders.py`: an order built from a gold cart has the discounted total and tax.\n- `tests/test_cli.py` (new): `quote` with no tier, gold, and silver, including `--tier` placed before the items.\n\nNothing is committed yet.",
+  "ttft_ms": 2342,
+  "type": "result",
+  "duration_ms": 41220,
+  "uuid": "d03fb772-3902-4857-b426-5962b1406d11",
+  "ttft_stream_ms": 1143,
+  "time_to_request_ms": 129,
+  "first_content_frame_ms": 1143,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 25 +++++++++++++++++++------\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 38 +++++++++++++++++++++++++++++++++++++-\n 6 files changed, 68 insertions(+), 8 deletions(-)\n",
+ "workdir": "f3-tier.alone.3"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14742,
+  "stop_reason": "end_turn",
+  "session_id": "49bf6103-a83e-4288-b811-4b029c7bda43",
+  "total_cost_usd": 0.1340792,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11416,
+   "cache_read_input_tokens": 73996,
+   "output_tokens": 1396,
+   "output_tokens_details": {
+    "thinking_tokens": 68
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11416,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 852,
+     "cache_read_input_tokens": 23395,
+     "cache_creation_input_tokens": 811,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 811
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1396,
+    "cacheReadInputTokens": 73996,
+    "cacheCreationInputTokens": 11416,
+    "webSearchRequests": 0,
+    "costUSD": 0.1340792,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 68,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Multi-currency design\n\nToday every amount is a bare `int` that is assumed to be USD cents. The design adds an ISO currency code to every amount and keeps integer minor units.\n\n**Changes by file**\n\n- **`shop/money.py`**: Add a `Money(amount_minor: int, currency: str)` value type and a table of minor-unit exponents (JPY=0, USD=2, KWD=3). `to_cents` and `fmt` take the currency and stop hardcoding 2 decimals. Adding or comparing amounts in different currencies raises an error. `percent` keeps its round-half-up rule.\n- **`shop/models.py`**: Replace `Item.price_cents` with `Money`. `Cart` gets a `currency`, and `Cart.add` rejects items priced in a different currency.\n- **`shop/pricing.py`**: `TAX_RATE` is a single US rate, so it becomes a per-currency or per-region lookup. Totals return `Money`.\n- **`shop/orders.py`**: Store the currency on `Order` and keep it fixed after creation.\n- **`shop/storage.py`**: Add a `currency` field to each row. Rows with no currency load as `\"USD\"` so existing JSON files still work.\n- **`shop/reports.py`**: Group sales by (customer, currency) instead of adding mixed currencies together, unless you add FX conversion.\n- **`shop/cli.py`**: Add a `--currency` option for `quote`.\n- **`shop/carriers/*.py`** (20 near-identical files): Each rate card is implicitly USD cents. Tag each carrier's currency rather than editing all 20 by hand.\n- **`cache.py`**: Cached prices become `Money`.\n- **Tests**: Add cases for JPY and KWD and a test that mixing currencies raises.\n\n**Main risks**\n\n1. **Silent mixing**: Bare ints in reports or shipping-plus-total code would add USD to EUR without any error. A strict `Money` type is the main defence.\n2. **Rounding**: Rounding percentages for 0- and 3-decimal currencies changes totals. The existing tests pin the USD values (2165, 1028).\n3. **FX conversion**: Whether to support it is a separate decision. If you do, you need a rate source and a timestamp per order, and the rate must be fixed when the order is placed.\n4. **Data migration**: Existing order files have no currency field.\n5. **API break**: Renaming `price_cents` breaks callers, so do it in stages with a temporary alias.",
+  "ttft_ms": 1159,
+  "type": "result",
+  "duration_ms": 15347,
+  "uuid": "d8f6f738-b0f7-4123-841e-42a80595b025",
+  "ttft_stream_ms": 719,
+  "time_to_request_ms": 125,
+  "first_content_frame_ms": 720,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.alone.3"
+}
