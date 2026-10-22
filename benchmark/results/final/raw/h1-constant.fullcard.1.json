@@ -1,0 +1,132 @@
+{
+ "task": "h1-constant",
+ "class": "mechanical",
+ "arm": "fullcard",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 23701,
+  "stop_reason": "end_turn",
+  "session_id": "968c60df-eb54-4938-bb34-7d556ee073c7",
+  "total_cost_usd": 0.115432845,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 873,
+   "cache_read_input_tokens": 21682,
+   "output_tokens": 331,
+   "output_tokens_details": {
+    "thinking_tokens": 96
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 873,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 331,
+     "cache_read_input_tokens": 21682,
+     "cache_creation_input_tokens": 873,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 873
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1267,
+    "cacheReadInputTokens": 54838,
+    "cacheCreationInputTokens": 9765,
+    "webSearchRequests": 0,
+    "costUSD": 0.1144516,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 345,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 986,
+    "cacheReadInputTokens": 18127,
+    "cacheCreationInputTokens": 2451,
+    "webSearchRequests": 0,
+    "costUSD": 0.000981245,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 137,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjlor3g-b6eb34ce"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I renamed `TAX_RATE` to `SALES_TAX_PERCENT` and all 6 tests pass. Nothing is committed yet.\n\n- **Where it changed:** only `shop/pricing.py`, in three places: the definition (`SALES_TAX_PERCENT = 8.25`, value unchanged) and two uses in the tax functions.\n- **Tests:** none of the test files used the constant by name, so no test files needed changing.\n- **Leftovers:** a whole-word search for `TAX_RATE` now finds nothing, and no similarly named identifiers were left behind.\n- **Test run:** `python3 -m unittest discover -s tests -t .` ran 6 tests with no failures.",
+  "ttft_ms": 2786,
+  "type": "result",
+  "duration_ms": 5057,
+  "uuid": "b9be64c2-d112-41c7-97f7-3e6f4d2f7a99",
+  "ttft_stream_ms": 1594,
+  "time_to_request_ms": 168,
+  "first_content_frame_ms": 1594,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/pricing.py | 6 +++---\n 1 file changed, 3 insertions(+), 3 deletions(-)\n",
+ "workdir": "h1-constant.final.1",
+ "ledger": []
+}

@@ -1,0 +1,127 @@
+{
+ "task": "h4-linediscount",
+ "class": "multi_file",
+ "arm": "fullcard",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 39398,
+  "stop_reason": "end_turn",
+  "session_id": "e696f0eb-4571-4d9a-a7a1-376585af7d32",
+  "total_cost_usd": 0.18200559999999996,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 9923,
+   "cache_read_input_tokens": 55626,
+   "output_tokens": 1948,
+   "output_tokens_details": {
+    "thinking_tokens": 244
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9923,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 590,
+     "cache_read_input_tokens": 22366,
+     "cache_creation_input_tokens": 347,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 347
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1948,
+    "cacheReadInputTokens": 55626,
+    "cacheCreationInputTokens": 9923,
+    "webSearchRequests": 0,
+    "costUSD": 0.1294932,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 244,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3046,
+    "cacheReadInputTokens": 31189,
+    "cacheCreationInputTokens": 7567,
+    "webSearchRequests": 0,
+    "costUSD": 0.05251240000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 386,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Per-line discounts are in, and all 16 tests pass when I ran `python3 -m unittest discover -s tests -t .`. Nothing is committed.\n\n- **`Line`** (`shop/models.py`) has a new `discount_percent` field that defaults to 0.\n- **`Cart.add(item, qty=1, discount_percent=0)`** adds to an existing line only when the sku and the discount both match. Otherwise it starts a new line, so the same sku can appear more than once with different discounts.\n- **`pricing.line_subtotal`** (`shop/pricing.py`) takes the discount off price \u00d7 qty using `money.percent`, then applies the bulk rule to what's left. With no discount the result is the same as before.\n- **`quote`** (`shop/cli.py`) accepts `sku:price:qty` or `sku:price:qty:discount`. With three fields the discount is 0.\n- **Tests:** added to `tests/test_pricing.py`, plus new `tests/test_cart.py` and `tests/test_cli.py`. They cover the 0 default, half-up rounding, the order of discount and bulk rule, merging versus new lines in the cart, and `quote` with three and four fields. The order test uses price 105, qty 10 and 10% off: discount first gives 898, the other order would give 897.\n\n**Decision for you:** discounts aren't range-checked. A negative or over-100 discount is accepted as given, so it can raise a line's price or make it negative. I left it out because nothing else, such as qty, is validated in this code. A non-numeric discount in `quote` fails with a `ValueError`, the same as a bad qty. If you want discounts limited to 0\u2013100, it's a short addition.\n\nThe test run also left untracked `__pycache__` folders under `shop/` and `tests/`.",
+  "ttft_ms": 2568,
+  "type": "result",
+  "duration_ms": 41302,
+  "uuid": "f3dea25f-6ac2-4d41-b41a-c79d601e7de2",
+  "ttft_stream_ms": 984,
+  "time_to_request_ms": 287,
+  "first_content_frame_ms": 985,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  7 ++++---\n shop/models.py        |  7 ++++---\n shop/pricing.py       |  1 +\n tests/test_pricing.py | 25 +++++++++++++++++++++++--\n 4 files changed, 32 insertions(+), 8 deletions(-)\n",
+ "workdir": "h4-linediscount.final.3",
+ "ledger": []
+}

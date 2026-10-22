@@ -2,7 +2,8 @@
 
 alone                    no plugin
 v020                     the released v0.2.0 (commit 9b63cdb), built once from git
-final                    this tree
+final                    this tree, the mode picked from the measured ratio of the model and effort (one line card at Opus 5.5 high)
+fullcard                 this tree with the full menu forced (TOKEN_BEGGAR_MODE=full): the pass before the stand down rule
 final-no-<lever>         this tree with one lever taken out, to price that lever alone:
     bulk-agy             outside tools turned off, so bulk reading cannot go to agy
     lean-tools           the worker inherits every tool instead of the six it needs
@@ -71,7 +72,7 @@ def _ablation(lever: str) -> Path:
 def plugin_dir(arm: str) -> Path | None:
     if arm == "alone":
         return None
-    if arm == "final":
+    if arm in ("final", "fullcard"):
         return ROOT
     if arm == "v020":
         dest = BUILD / "v020"
@@ -84,7 +85,10 @@ def plugin_dir(arm: str) -> Path | None:
 
 
 def extra_env(arm: str) -> dict:
-    return {"TOKEN_BEGGAR_EXTERNAL": "none"} if arm == "final-no-bulk-agy" else {}
+    env = {"TOKEN_BEGGAR_MODE": "full"} if arm == "fullcard" or arm.startswith("final-no-") else {}  # the ablations are cut from the full card
+    if arm == "final-no-bulk-agy":
+        env["TOKEN_BEGGAR_EXTERNAL"] = "none"
+    return env
 
 
 def prepare(arms: list[str]) -> None:

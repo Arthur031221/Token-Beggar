@@ -1,0 +1,111 @@
+{
+ "task": "h6-partial",
+ "class": "design",
+ "arm": "fullcard",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 20910,
+  "stop_reason": "end_turn",
+  "session_id": "05fa39df-0cf2-4b73-b7d2-f901b60576cc",
+  "total_cost_usd": 0.15394480000000002,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 13121,
+   "cache_read_input_tokens": 78824,
+   "output_tokens": 1659,
+   "output_tokens_details": {
+    "thinking_tokens": 277
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 13121,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 922,
+     "cache_read_input_tokens": 24573,
+     "cache_creation_input_tokens": 1338,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1338
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1659,
+    "cacheReadInputTokens": 78824,
+    "cacheCreationInputTokens": 13121,
+    "webSearchRequests": 0,
+    "costUSD": 0.15394480000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 277,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Design: partial shipments and returns\n\n**Model (`shop/models.py`, `shop/orders.py`)**\n- Add `Shipment(id, order_id, carrier, label, lines: {sku: qty})` and `Return(id, order_id, lines, refund_cents, reason)`.\n- `Order` tracks `shipped_qty` and `returned_qty` per SKU. Its state is computed from those counts: `paid \u2192 partially_shipped \u2192 shipped`, plus `partially_returned` and `returned`. Update `STATES` and `ALLOWED` to match.\n- New methods: `ship(lines, carrier)` and `return_items(lines)`. They check that shipped \u2264 ordered and returned \u2264 shipped. Once anything has shipped, `cancel` is blocked.\n\n**Refund maths (`shop/pricing.py`)**\n- Add `refund_for(order, lines)`. It must reuse the per-line price the order stored and the bulk discount that applied to the original quantity, not the current price. Tax is refunded per line.\n\n**Persistence (`shop/storage.py`)**\n- `save_order` currently drops `lines`. Persist lines, shipments and returns, and give rows a schema version. Old rows load with empty shipments and returns.\n\n**Carriers (`shop/carriers/*.py`)**\n- `label(order_id)` gives one label per order. Change it to `label(order_id, shipment_seq)` in all 20 carriers. `valid_label` regexes need updating too. Four carriers (delta, kestrel, onyx, tundra) have no `tracking_url`, so add a shared base class or protocol.\n\n**Reports and CLI (`reports.py`, `cli.py`)**\n- Sales should be net of refunds, and the report must handle the new states. Add `ship` and `return` subcommands.\n\n**Main risks**\n1. **Rounding:** `percent` rounds half up on each call, so refunds summed line by line can come to more than the original tax. Cap total refunds at `total_cents`.\n2. **Bulk discount:** returning part of a \u226510 line may need the discount re-priced. This is a policy decision, not just code.\n3. **Old data:** existing JSON rows have no lines, so returns can't be checked against them.\n4. **Label change:** changing `label()` touches all 20 carrier files and any external label parsers.\n5. **Reports:** `sales_by_customer` only matches `paid` and `shipped`, so new states quietly drop out of revenue unless it's updated.\n\nThere are no carrier tests yet, so add them before the label change.",
+  "ttft_ms": 4460,
+  "type": "result",
+  "duration_ms": 21907,
+  "uuid": "12c9303f-473b-47a2-b058-54b918410eda",
+  "ttft_stream_ms": 1667,
+  "time_to_request_ms": 211,
+  "first_content_frame_ms": 1667,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h6-partial.final.3",
+ "ledger": []
+}

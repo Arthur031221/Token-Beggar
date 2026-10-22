@@ -5,7 +5,7 @@ description: Use on every non-trivial task in the coding agent, such as coding, 
 
 # Token Beggar
 
-Most prompts do not need the biggest model at the highest effort for every step. Reading files, applying edits and running tests are cheap work. Design and root-cause judgement are not. Send each part where it belongs and keep the answer quality the same. The goal is the fewest Claude tokens at the same quality.
+Most prompts do not need the biggest model at the highest effort for every step. Reading files, applying edits and running tests are cheap work. Design and root-cause judgement are not. Send each part where it belongs and keep the answer quality the same. The goal is the lowest Claude quota and spend at the same quality.
 
 A hook adds a menu to your context at the start of the session: every provider, model and effort you may use here, with what each is good and weak at. There is no fixed table. You choose per subtask, with the rules below. This file explains them.
 
@@ -38,7 +38,7 @@ Check cheaply: one test run or `git diff --stat`, not a second read of every fil
 
 ## 6. Other AIs
 
-Tools on this machine, such as agy, gemini and codex, and MCP servers that front another AI, are routes too. They use their own quota, so the work does not touch your Claude quota. Use them for bulk reading, summaries, first drafts and second opinions. Claude is the judge: treat what they return as a draft and check it. Call one with `token-beggar ask <tool> [--model <id>] [--file <path> ...] "<the whole task>"`. The command refuses files that look like secrets, applies the user's caps, and marks the tool out of quota when it says so. See [reference/other-ais.md](reference/other-ais.md).
+Tools on this machine, such as agy, gemini and codex, and MCP servers that front another AI, are routes too. They use their own quota, so the work does not touch your Claude quota. Use them when the user names one, or when one job must read more than about 100k tokens of files or logs: on a few small files the hand over costs about what it saves. Claude is the judge: treat what they return as a draft and check it. Call one with `token-beggar ask <tool> [--model <id>] [--file <path> ...] "<the whole task>"`. The command refuses files that look like secrets, applies the user's caps, and marks the tool out of quota when it says so. See [reference/other-ais.md](reference/other-ais.md).
 
 ## 7. Quota
 
@@ -57,6 +57,10 @@ The note is handed back after the compaction. `token-beggar window` shows the po
 ## 9. Footer
 
 A one-line footer with the quota multiple and the money saved is added at the end of the turn by a hook. Do not write one, and never state token counts.
+
+## When it stands down
+
+The skill acts only where the benchmark shows it saves. For the model and effort of the chat, `data/measured.json` holds the spend alone over the spend with the skill. Clearly above 1.15 it gives the full menu (`full`). About even, it gives a one-line card that sends only multi-file work to a worker (`lean`). Clearly below, as with Sonnet or Haiku as the chat model, it adds nothing and prints no footer (`off`). `TOKEN_BEGGAR_MODE=full|lean|off` forces one. If you only see a one-line card, that is why.
 
 ## What this cannot do
 

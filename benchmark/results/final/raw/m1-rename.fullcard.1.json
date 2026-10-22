@@ -1,0 +1,132 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "fullcard",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 19913,
+  "stop_reason": "end_turn",
+  "session_id": "9e1c8326-29ca-4e50-99a4-cbd454637d98",
+  "total_cost_usd": 0.10523627499999999,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 1010,
+   "cache_read_input_tokens": 21354,
+   "output_tokens": 177,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1010,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 177,
+     "cache_read_input_tokens": 21354,
+     "cache_creation_input_tokens": 1010,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1010
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 819,
+    "cacheReadInputTokens": 54494,
+    "cacheCreationInputTokens": 9574,
+    "webSearchRequests": 0,
+    "costUSD": 0.1038948,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 32,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1244,
+    "cacheReadInputTokens": 27230,
+    "cacheCreationInputTokens": 3571,
+    "webSearchRequests": 0,
+    "costUSD": 0.0013414749999999997,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 124,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjlpgrb-cad95662"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`calc_total` is now `order_total` everywhere, and the tests pass: `python3 -m unittest discover -s tests -t .` ran 6 tests, all OK.\n\nFive files changed: the definition in `shop/pricing.py`, the imports and calls in `shop/cli.py` and `shop/orders.py`, and the tests in `tests/test_pricing.py` and `tests/test_orders.py`. A search for `calc_total` now finds nothing. No similar names, docs or text strings needed changing. Nothing is committed.",
+  "ttft_ms": 2896,
+  "type": "result",
+  "duration_ms": 3260,
+  "uuid": "2dc48e0f-f868-40bf-bac3-5d8d2f9b61f6",
+  "ttft_stream_ms": 1407,
+  "time_to_request_ms": 134,
+  "first_content_frame_ms": 1407,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.final.1",
+ "ledger": []
+}

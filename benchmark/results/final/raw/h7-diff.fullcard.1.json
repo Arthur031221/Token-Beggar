@@ -1,0 +1,111 @@
+{
+ "task": "h7-diff",
+ "class": "review",
+ "arm": "fullcard",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 24577,
+  "stop_reason": "end_turn",
+  "session_id": "0be539d5-f3e7-4781-a820-806fe64e00f4",
+  "total_cost_usd": 0.16481200000000001,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 12558,
+   "cache_read_input_tokens": 101340,
+   "output_tokens": 2202,
+   "output_tokens_details": {
+    "thinking_tokens": 653
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12558,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 990,
+     "cache_read_input_tokens": 24054,
+     "cache_creation_input_tokens": 1294,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1294
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2202,
+    "cacheReadInputTokens": 101340,
+    "cacheCreationInputTokens": 12558,
+    "webSearchRequests": 0,
+    "costUSD": 0.16481200000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 653,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found three bugs, one in each file the diff touches. The two in storage and reports compound each other. I worked them out by reading the code and running the rounding numbers by hand. I didn't apply the diff, because its hunks have no line numbers and won't apply cleanly.\n\n### 1. `shop/storage.py` (`save_order`): saving an order again now adds a duplicate row\nThe old line removed any existing row with the same `order.id` before appending, so saving was an upsert. Now it only appends. Orders get saved again on each state change (`new` \u2192 `paid` \u2192 `shipped`, see `shop/orders.py:19`), so one order ends up as several rows. Those rows share an `id` but have different states.\n- `report` (`shop/cli.py`) adds up every row, so revenue is counted more than once. An order saved as `paid` and then `shipped` would be counted twice even under the old report filter.\n- No row is ever replaced, so a cancelled order still has its earlier `paid` row, and that row is still counted.\n\n### 2. `shop/money.py` (`percent`): rounds down instead of rounding half up\n`int(x)` just drops the fraction, so every result can come out up to 1 cent low. The docstring still says \"Round half up\", which is now wrong. This affects both callers in `shop/pricing.py`:\n- **Tax is undercharged:** `percent(1000, 8.25)` is 82.5, which gives 82 instead of 83. `percent(2600, 8.25)` gives 214 instead of 215.\n- **Bulk discounts come out smaller:** `percent(1999, 5.0)` is 99.95, which gives 99 instead of 100, so the customer pays 1 cent more.\n- Floating-point results that land just below a whole number (for example 57.999999\u2026) now drop to the integer below. The old `+0.5` hid that.\n\nThe existing tests in `tests/test_pricing.py` still pass, because their numbers either divide exactly (2000 \u00d7 8.25% = 165) or round down either way (78.375). So nothing catches this.\n\n### 3. `shop/reports.py` (`sales_by_customer`): unpaid orders now count as sales\nThe old filter was an allowlist (`paid`, `shipped`). The new one excludes only `cancelled`, so `new` orders, which nobody has paid for, are now added to revenue. Any future or unknown state would also be counted by default.\n\nCombined with bug 1, the report gets worse still. Each order's original `new` row now stays in the file forever and counts as revenue. A single order that went `new` \u2192 `paid` \u2192 `shipped` is therefore counted three times. A cancelled order still counts through its `new` and `paid` rows.\n\nI didn't edit any files.",
+  "ttft_ms": 1364,
+  "type": "result",
+  "duration_ms": 26016,
+  "uuid": "8d324cf6-0a5d-43d1-98be-24bba074d4cb",
+  "ttft_stream_ms": 974,
+  "time_to_request_ms": 315,
+  "first_content_frame_ms": 974,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h7-diff.final.1",
+ "ledger": []
+}

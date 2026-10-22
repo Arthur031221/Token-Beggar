@@ -109,7 +109,7 @@
   "You keep judgement and the final answer. The worker's reported check output is the check. Do not re-read or re-review what it changed: that costs more than the worker did."
  ],
  "external_rules": [
-  "With an external AI on the menu, make the ask command your FIRST action for three or more files to read, tabulate or summarise, for a first draft, and for a second opinion on a design. This beats 'stay inline'. It uses its own quota, so it saves Claude quota and money. Do not cat or read the files yourself first: pass them with --file (a directory glob works) and ask for a short answer. Its output is a draft, so skim it, then answer.",
+  "An external AI uses its own quota, so what it reads costs you no Claude quota. Use one when the user names it, or when one job must read more than about 100k tokens (dozens of files, long logs): pass the files with --file and ask for a short answer, and do not read them yourself first. On a few small files the hand over costs about what it saves, so read those inline. Its output is a draft: skim it, then answer.",
   "Do not send an external AI anything that needs this conversation, edits files, or is risky. If a call fails or the tool is out of quota, do the subtask yourself or on a worker."
  ]
 }

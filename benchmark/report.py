@@ -18,9 +18,9 @@ ROOT = Path(__file__).resolve().parent.parent
 RESULTS = ROOT / "benchmark" / "results"
 ASSETS = ROOT / "assets"
 ORDER = ["mechanical", "reading", "routine_code", "multi_file", "debugging", "design", "review"]
-LABELS = {"alone": "alone", "v020": "v0.2.0", "final": "this release"}
+LABELS = {"alone": "alone", "v020": "v0.2.0", "fullcard": "full card", "final": "this release"}
 INK, PAPER, COPPER, SAND, MUTED, SLATE = "#2b2118", "#fbf3e4", "#c8742b", "#d9c3a0", "#7a6a58", "#8a9a8c"
-COLORS = {"alone": SAND, "v020": SLATE, "final": COPPER}
+COLORS = {"alone": SAND, "v020": SLATE, "fullcard": MUTED, "final": COPPER}
 MIN_CLAIM = 1.15
 QUALITY_DROP = 0.10  # a class mean this far below the base arm is called a drop
 

@@ -1,0 +1,127 @@
+{
+ "task": "h4-linediscount",
+ "class": "multi_file",
+ "arm": "fullcard",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 48327,
+  "stop_reason": "end_turn",
+  "session_id": "f71a414e-6a35-4d9d-89f5-dddac57d1dec",
+  "total_cost_usd": 0.24010600000000004,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 13592,
+   "cache_read_input_tokens": 129123,
+   "output_tokens": 2892,
+   "output_tokens_details": {
+    "thinking_tokens": 591
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 13592,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 797,
+     "cache_read_input_tokens": 25813,
+     "cache_creation_input_tokens": 569,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 569
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 2892,
+    "cacheReadInputTokens": 129123,
+    "cacheCreationInputTokens": 13592,
+    "webSearchRequests": 0,
+    "costUSD": 0.1924486,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 591,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2655,
+    "cacheReadInputTokens": 30839,
+    "cacheCreationInputTokens": 7203,
+    "webSearchRequests": 0,
+    "costUSD": 0.0476574,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 238,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added per-line discounts, and the full suite passes: 15 tests, OK, run with `python3 -m unittest discover -s tests -t .`. Nothing is committed.\n\n**What changed:**\n- **`shop/models.py`:** `Line` has a new `discount_percent` field that defaults to 0. `Cart.add(item, qty=1, discount_percent=0)` merges into an existing line only when both the SKU and the discount match; otherwise it starts a new line.\n- **`shop/pricing.py`:** `line_subtotal` takes the line discount off first with `money.percent` (round half up), then applies the bulk rule to what's left. Whether the bulk rule applies still depends on `qty`.\n- **`shop/cli.py`:** `quote` accepts `sku:price:qty[:discount]`, and three-field input works as before. A discount that isn't a whole number (`abc`, or `1.5`), or a fifth field, raises `ValueError`, the same way other bad input already fails.\n- **Tests:** I added cases to `tests/test_pricing.py` and created `tests/test_cart.py` and `tests/test_cli.py`. They cover:\n  - the discount being applied before the bulk rule;\n  - rounding half up;\n  - the default of 0 changing nothing;\n  - merging versus starting a new line;\n  - the CLI with three and four fields, a bad discount, and too many fields.\n\n**Decisions for you:**\n- **No range check:** a discount outside 0\u2013100 is accepted, since the spec didn't ask for a limit.\n- **Orders don't record the discount:** `shop/orders.py:14` saves each order's lines as `(sku, qty, price_cents)`. The order's total and tax are correct, because they're calculated from the cart, but the saved lines lose the discount. Two discounted lines for the same SKU would look identical there. I left this alone as outside the request; say if you want the discount added to those saved lines.\n- **`Cart.remove(sku)`** now deletes every line with that SKU, whatever its discount.",
+  "ttft_ms": 2222,
+  "type": "result",
+  "duration_ms": 50397,
+  "uuid": "ce6dbaa6-c9b4-4337-b393-3881aa18fcf3",
+  "ttft_stream_ms": 1094,
+  "time_to_request_ms": 260,
+  "first_content_frame_ms": 1095,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  9 ++++++---\n shop/models.py        |  7 ++++---\n shop/pricing.py       |  1 +\n tests/test_pricing.py | 20 +++++++++++++++++++-\n 4 files changed, 30 insertions(+), 7 deletions(-)\n",
+ "workdir": "h4-linediscount.final.1",
+ "ledger": []
+}

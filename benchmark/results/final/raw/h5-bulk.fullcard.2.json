@@ -1,0 +1,111 @@
+{
+ "task": "h5-bulk",
+ "class": "debugging",
+ "arm": "fullcard",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 18339,
+  "stop_reason": "end_turn",
+  "session_id": "c79db1d3-0811-419f-bd15-9ea41b53ca93",
+  "total_cost_usd": 0.1338654,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 11235,
+   "cache_read_input_tokens": 101227,
+   "output_tokens": 1185,
+   "output_tokens_details": {
+    "thinking_tokens": 296
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11235,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 291,
+     "cache_read_input_tokens": 23619,
+     "cache_creation_input_tokens": 406,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 406
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1185,
+    "cacheReadInputTokens": 101227,
+    "cacheCreationInputTokens": 11235,
+    "webSearchRequests": 0,
+    "costUSD": 0.1338654,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 296,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Fixed. The bug was an off-by-one in `shop/pricing.py:10`. The check `line.qty > BULK_THRESHOLD` (threshold 10) only gave the discount from 11 units up, but the policy says 10 or more. I changed it to `>=`, a one-character fix. No other code compares against the threshold.\n\nAll 6 tests pass with `python3 -m unittest -v`. I didn't run the tests before the fix, but `test_bulk_discount` already covers exactly 10 units: it expects 1028 (1000 \u2212 5% = 950, plus 78 tax). Under the old check, 10 units got no discount and came to 1083, so that test was catching this bug.\n\nThe change isn't committed.",
+  "ttft_ms": 2406,
+  "type": "result",
+  "duration_ms": 20101,
+  "uuid": "2c23277e-68c5-4711-8909-dba6ee63af77",
+  "ttft_stream_ms": 2069,
+  "time_to_request_ms": 226,
+  "first_content_frame_ms": 2070,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/pricing.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n",
+ "workdir": "h5-bulk.final.2",
+ "ledger": []
+}

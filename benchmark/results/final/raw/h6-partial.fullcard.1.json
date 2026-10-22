@@ -1,0 +1,111 @@
+{
+ "task": "h6-partial",
+ "class": "design",
+ "arm": "fullcard",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 22607,
+  "stop_reason": "end_turn",
+  "session_id": "080e7744-b662-4e7e-a23c-38a5412c5342",
+  "total_cost_usd": 0.1643814,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 13967,
+   "cache_read_input_tokens": 80467,
+   "output_tokens": 1826,
+   "output_tokens_details": {
+    "thinking_tokens": 497
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 13967,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 799,
+     "cache_read_input_tokens": 26199,
+     "cache_creation_input_tokens": 558,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 558
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1826,
+    "cacheReadInputTokens": 80467,
+    "cacheCreationInputTokens": 13967,
+    "webSearchRequests": 0,
+    "costUSD": 0.1643814,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 497,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Design: partial shipments and returns\n\n**What has to change**\n\n- **`shop/orders.py`**: `Order.lines` holds plain `(sku, qty, price)` tuples, and the order has one `state` value. Add per-line quantities for shipped and returned, plus `Shipment(id, carrier, label, {sku: qty})` and `Return(id, {sku: qty}, refund_cents)` records. Add new states `partially_shipped` and `partially_returned`/`returned`, and work out the state from those quantities instead of setting it by hand. Enforce `returned \u2264 shipped \u2264 ordered` for every SKU.\n- **`shop/pricing.py`**: Add a refund calculation for a subset of lines. It has to reuse `line_subtotal` and the tax rules, but it must not re-price returned units at a lower quantity.\n- **`shop/storage.py`**: Right now `save_order` writes only totals and state, so lines are lost. Persist lines, shipments and returns, and add a schema version so existing JSON files still load.\n- **`shop/reports.py`**: `sales_by_customer` counts only `paid`/`shipped`. Change it to net revenue (total minus refunds) and include the new states.\n- **`shop/carriers/*`**: `label(order_id)` allows one label per order. Change it to `label(order_id, shipment_seq)` in all 20 carriers. Delta, Kestrel, Onyx and Tundra have one fewer method than the others, so check them.\n- **`shop/cli.py`**, tests: add `ship` and `return` commands, and tests for each.\n\n**Main risks**\n\n1. **Refund rounding.** Bulk discount and tax are rounded once for the whole order. Refunding line by line can add up to more than the customer paid, so cap total refunds at `total_cents`.\n2. **Bulk discount clawback.** If returns drop a line below 10 units, decide the policy first: keep the original price or recompute it.\n3. **Label format change.** Carrier `valid_label` regexes and any labels already issued will break.\n4. **Storage migration.** Old rows have no line data, so partial operations can't be done on existing orders.\n5. **Concurrency.** `Store` rewrites the whole file on every save. Concurrent shipping or returns can lose updates.",
+  "ttft_ms": 3327,
+  "type": "result",
+  "duration_ms": 23812,
+  "uuid": "07c6af7e-83e9-4e91-b2b2-5fa5cae4e320",
+  "ttft_stream_ms": 1556,
+  "time_to_request_ms": 265,
+  "first_content_frame_ms": 1557,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h6-partial.final.1",
+ "ledger": []
+}
