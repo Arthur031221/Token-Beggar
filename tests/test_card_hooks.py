@@ -62,6 +62,33 @@ class CardTests(Isolated):
         self.assertNotIn("claude sonnet (", text)
 
 
+class ModeHookTests(Isolated):
+    def prompt(self, mode, session="m1", model="claude-opus-5-5"):
+        text = "Refactor the whole payments module and add tests please"
+        path = write_transcript(self.tmp / f"{session}.jsonl", [user(text)])
+        with mock.patch.dict("os.environ", {"TOKEN_BEGGAR_MODE": mode}):
+            return run_hook("prompt", {"prompt": text, "session_id": session, "cwd": str(self.tmp), "transcript_path": path})[1]
+
+    def test_off_adds_no_card_and_no_reminder(self):
+        self.assertEqual(self.prompt("off"), "")
+        self.assertEqual(self.prompt("off"), "")
+
+    def test_lean_is_one_short_card_for_multi_file_work_and_no_reminders(self):
+        first = json.loads(self.prompt("lean"))["hookSpecificOutput"]["additionalContext"]
+        self.assertIn(card.MARKER, first)
+        self.assertIn("three or more files", first)
+        self.assertNotIn("Menu:", first)
+        self.assertLess(len(first), 800)
+        self.assertEqual(self.prompt("lean"), "")
+
+    def test_lean_names_a_worker_one_tier_below_the_ceiling(self):
+        text = card.lean(OPUS_HIGH, inventory.load())
+        self.assertIn("model sonnet, effort medium", text)
+
+    def test_full_is_the_whole_menu(self):
+        self.assertIn("Menu:", json.loads(self.prompt("full"))["hookSpecificOutput"]["additionalContext"])
+
+
 class HookTests(Isolated):
     def prompt(self, text="Refactor the whole payments module and add tests please", session="s1"):
         path = write_transcript(self.tmp / f"{session}.jsonl", [user(text)])

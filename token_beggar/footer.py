@@ -6,6 +6,7 @@ the skill) for this model, effort and kind of task (data/measured.json). The dol
 from the transcript (main chain plus every subagent, each at its model's price), times (ratio - 1)."""
 
 import json
+import os
 import re
 from collections import Counter
 
@@ -13,6 +14,8 @@ from . import catalog, external, paths, usage
 from . import ceiling as ceiling_mod
 
 MIN_CLAIM = 1.15  # below this the benchmark cannot tell a saving from run to run spread
+FLOOR = 0.95  # below this the skill costs more than working alone by more than the spread, so it stands down
+MODES = ("off", "lean", "full")
 KINDS = {
     "edit": "exact edits",
     "read": "read and answer",
@@ -92,6 +95,38 @@ def ratio_for(model_id: str, effort: str, kind: str, data: dict | None = None, p
     return None
 
 
+def overall(model_id: str, effort: str, data: dict | None = None) -> float | None:
+    """The spend alone over the spend with the skill for this model and effort, every kind of task added up. The nearest measured
+    effort of the same model stands in when this one was not run."""
+    efforts = (_measured("overall") if data is None else data).get(model_id) or {}
+    if effort in efforts:
+        return efforts[effort]["ratio"]
+    if not efforts:
+        return None
+    want = catalog.effort_rank(effort)
+    near = min(efforts, key=lambda e: abs(catalog.effort_rank(e) - want))
+    return efforts[near]["ratio"]
+
+
+def mode(model_id: str | None, effort: str, data: dict | None = None, pool: dict | None = None) -> str:
+    """How much of the skill acts for this ceiling model and effort, from what was measured.
+
+    off   the measured spend is clearly higher with the skill than without: no card, no delegation, no footer
+    lean  about even overall: a one line card that only sends multi-file work to a worker, where the skill won
+    full  a saving clear of the run to run spread: the whole menu and rules
+    TOKEN_BEGGAR_MODE overrides it, for benchmarks and for anyone who wants the full menu anyway. An unmeasured model gets full."""
+    forced = os.environ.get("TOKEN_BEGGAR_MODE")
+    if forced in MODES:
+        return forced
+    ratio = overall(model_id, effort, data) if model_id else None
+    if ratio is None:
+        return "full"
+    if ratio >= MIN_CLAIM:
+        return "full"
+    feature = ((((pool if pool is not None else pooled()) or {}).get(model_id) or {}).get("feature") or {}).get("ratio") or 0
+    return "lean" if ratio >= FLOOR and feature >= 1.0 else "off"
+
+
 # ---- what was used --------------------------------------------------------------------------------------------------------
 
 
@@ -122,6 +157,8 @@ def build(payload: dict, items: list[dict], complete: bool = True) -> str | None
     top = ceiling_mod.resolve(payload.get("transcript_path"), payload.get("cwd"))
     effort = ((payload.get("effort") or {}).get("level")) or top["effort"]
     model = catalog.find(top["model"])
+    if mode(model.id if model else None, effort, pool=pooled()) == "off":
+        return None
     name = usage.display_name(model)
     prompt = usage.prompt_text(window)
     edited = usage.edited_files(window)

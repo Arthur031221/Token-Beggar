@@ -137,8 +137,23 @@ def do_fit() -> None:
                     ratios.append(here["alone_cost"] / mid["alone_cost"])
         if ratios:
             base[effort] = round(sorted(ratios)[len(ratios) // 2], 2)
+    overall: dict = {}  # the spend of every kind added up at one model and effort: what decides whether the skill acts at all
+    for model, efforts in matrix.items():
+        for effort, by_kind in efforts.items():
+            cells = [c for c in by_kind.values() if c.get("status") == "measured"]
+            if cells:
+                overall.setdefault(model, {})[effort] = {
+                    "ratio": round(sum(c["alone_cost"] for c in cells) / sum(c["with_cost"] for c in cells), 2),
+                    "runs_per_arm": len(cells),
+                    "source": "matrix",
+                }
     path = ROOT / "data" / "measured.json"
     data = json.loads(path.read_text())
+    for model, efforts in data.get("overall", {}).items():  # a larger benchmark at the same model and effort replaces the one-run cells
+        for effort, cell in efforts.items():
+            if cell.get("source") != "matrix":
+                overall.setdefault(model, {})[effort] = cell
+    data["overall"] = overall
     data["matrix"] = matrix
     data["pooled"] = pooled
     data["effort_cost_x"] = base

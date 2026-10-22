@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 from token_beggar import footer, transcript, usage
@@ -91,6 +92,55 @@ class RatioTests(Isolated):
         self.assertIsNone(footer.ratio_for("claude-opus-5-5", "high", "design", MATRIX))
 
 
+OVERALL = {
+    "claude-opus-5-5": {"high": {"ratio": 1.05}, "max": {"ratio": 1.3}, "low": {"ratio": 0.8}},
+    "claude-sonnet-5-5": {"high": {"ratio": 1.0}},
+}
+POOL = {"claude-opus-5-5": {"feature": {"ratio": 1.7}}, "claude-sonnet-5-5": {"feature": {"ratio": 0.6}}}
+
+
+class ModeTests(Isolated):
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(os.environ.pop, "TOKEN_BEGGAR_MODE", None)
+        os.environ.pop("TOKEN_BEGGAR_MODE")
+
+    def mode(self, model, effort):
+        return footer.mode(model, effort, OVERALL, POOL)
+
+    def test_a_clear_saving_gets_the_full_menu(self):
+        self.assertEqual(self.mode("claude-opus-5-5", "max"), "full")
+
+    def test_about_even_gets_the_one_line_card_when_multi_file_work_wins(self):
+        self.assertEqual(self.mode("claude-opus-5-5", "high"), "lean")
+
+    def test_a_clear_loss_stands_down(self):
+        self.assertEqual(self.mode("claude-opus-5-5", "low"), "off")
+
+    def test_even_overall_with_no_multi_file_win_stands_down(self):
+        self.assertEqual(self.mode("claude-sonnet-5-5", "high"), "off")
+
+    def test_an_unmeasured_model_keeps_the_full_menu(self):
+        self.assertEqual(self.mode("claude-unknown", "high"), "full")
+        self.assertEqual(footer.mode(None, "high", OVERALL, POOL), "full")
+
+    def test_an_unmeasured_effort_uses_the_nearest_one(self):
+        data = {"claude-opus-5-5": {"low": {"ratio": 0.8}, "max": {"ratio": 1.3}}}
+        self.assertEqual(footer.mode("claude-opus-5-5", "xhigh", data, POOL), "full")  # the nearest measured effort is max
+        self.assertEqual(footer.mode("claude-opus-5-5", "medium", data, POOL), "off")  # the nearest is low
+
+    def test_the_environment_forces_a_mode(self):
+        os.environ["TOKEN_BEGGAR_MODE"] = "off"
+        self.assertEqual(self.mode("claude-opus-5-5", "max"), "off")
+
+    def test_the_shipped_data_stands_down_for_sonnet_and_haiku_and_acts_for_fable(self):
+        for effort in ("low", "high", "max"):
+            self.assertEqual(footer.mode("claude-sonnet-5-5", effort), "off")
+            self.assertEqual(footer.mode("claude-haiku-5-5", effort), "off")
+            self.assertEqual(footer.mode("claude-fable-5-1", effort), "full")
+        self.assertEqual(footer.mode("claude-opus-5-5", "high"), "lean")
+
+
 class UsageTests(Isolated):
     def test_a_message_logged_per_block_counts_once(self):
         a = with_id(assistant("x", tokens=500), "same")
@@ -154,6 +204,10 @@ class FooterTests(Isolated):
         self.assertTrue(line.startswith("Token Beggar: about 4.0x less quota than Opus 5.5 high alone, saved about $0.06 (est.)"), line)
         self.assertIn("routed 1: haiku low x1", line)
         self.assertNotIn("token", line.split("|")[0].replace("Token Beggar", ""))
+
+    def test_the_footer_is_silent_where_the_skill_stands_down(self):
+        os.environ["TOKEN_BEGGAR_MODE"] = "off"
+        self.assertIsNone(self.build(self.reply("Summarise every module")))
 
     def test_the_dollars_price_each_model_at_its_own_rate(self):
         call, result = dispatch("c1", "ag1")

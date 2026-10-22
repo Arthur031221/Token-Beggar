@@ -85,7 +85,7 @@ def _hook() -> tuple[str, str]:
     payload = {"prompt": "Rename calc_total to order_total across the repo", "session_id": "doctor", "cwd": os.getcwd()}
     with tempfile.TemporaryDirectory() as scratch:
         env = {k: v for k, v in os.environ.items() if k != "TOKEN_BEGGAR"}
-        env.update(CLAUDE_PLUGIN_ROOT=str(paths.PACKAGE_ROOT), TOKEN_BEGGAR_HOME=scratch, TOKEN_BEGGAR_OFFLINE="1")
+        env.update(CLAUDE_PLUGIN_ROOT=str(paths.PACKAGE_ROOT), TOKEN_BEGGAR_HOME=scratch, TOKEN_BEGGAR_OFFLINE="1", TOKEN_BEGGAR_MODE="full")  # full, so the check does not depend on the ceiling of this shell
         try:
             done = subprocess.run(["sh", "-c", command], input=json.dumps(payload), capture_output=True, text=True, timeout=10, env=env, cwd=scratch)
         except (OSError, subprocess.TimeoutExpired) as error:

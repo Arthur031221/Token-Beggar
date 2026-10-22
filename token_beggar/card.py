@@ -98,5 +98,20 @@ def build(ceiling: dict, inventory: dict, caps: dict | None = None) -> str:
     return "\n".join(lines)
 
 
+def lean(ceiling: dict, inventory: dict) -> str:
+    """The one line card for a ceiling where the measured saving is about even overall: only multi-file work leaves the chat."""
+    top = catalog.find(ceiling.get("model"))
+    gone = unavailable(inventory)
+    lower = [m for m in catalog.models() if top and m.tier < top.tier and m.alias not in gone]
+    pick = lower[-1] if lower else top
+    effort = catalog.cap_effort("medium", ceiling["effort"])
+    where = f"model {pick.alias}, effort {effort}" if pick else "a model no higher than your own"
+    return (
+        f"{MARKER} Work inline. The one exception: a change that spans three or more files goes to ONE token-beggar:beggar-worker "
+        f"Agent call as your first action ({where}), with the goal, exact paths, the check to run and 'report under 150 words'. "
+        "Then answer from its report without re-reading what it changed. A one-line footer is added for you. Do not write one."
+    )
+
+
 def reminder() -> str:
     return "Token Beggar: split this prompt into subtasks and pick each route from the menu given earlier in this session."

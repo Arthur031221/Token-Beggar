@@ -59,6 +59,19 @@ def _weekly_refresh() -> None:
     )
 
 
+def _mode(top: dict) -> str:
+    model = catalog.find(top["model"])
+    return footer.mode(model.id if model else None, top["effort"], pool=footer.pooled())
+
+
+def _card(top: dict, inventory_: dict, caps: dict) -> str | None:
+    """The card for this ceiling, by how much the skill acts here. None when it stands down."""
+    mode = _mode(top)
+    if mode == "off":
+        return None
+    return card.lean(top, inventory_) if mode == "lean" else card.build(top, inventory_, caps)
+
+
 def _compaction_text(payload: dict, top: dict, items: list[dict] | None = None) -> list[str]:
     """The note request near the compaction point, and the one-time word after a deferral."""
     if not payload.get("transcript_path"):
@@ -91,12 +104,15 @@ def on_prompt(payload: dict) -> None:
         before = external.load_caps(session_id)
         caps = external.save_caps(session_id, external.parse_caps(prompt))
         signature = f"{top['model']}|{top['effort']}"
+        mode = _mode(top)
         if _carded_ceiling(session_id) == signature:
-            parts.append(card.reminder())
-            if caps != before:
-                parts.append("User caps now: " + (", ".join(f"{t} {c}" for t, c in caps.items()) or "none") + ". Honour them.")
+            if mode == "full":
+                parts.append(card.reminder())
+                if caps != before:
+                    parts.append("User caps now: " + (", ".join(f"{t} {c}" for t, c in caps.items()) or "none") + ". Honour them.")
         else:  # first prompt, or the model or effort changed since the last card
-            parts.append(card.build(top, inventory.load(payload.get("cwd")), caps))
+            if mode != "off":
+                parts.append(_card(top, inventory.load(payload.get("cwd")), caps))
             _carded_ceiling(session_id, signature)
     parts += _compaction_text(payload, top)
     if parts:
@@ -203,8 +219,8 @@ def on_session_start(payload: dict) -> None:
     session_id = payload.get("session_id", "unknown")
     note = compact.on_session_start(payload)
     top = _top(payload)
-    text = card.build(top, inventory.load(payload.get("cwd")), external.load_caps(session_id))
-    _emit("SessionStart", text + ("\n\n" + note if note else ""))
+    text = _card(top, inventory.load(payload.get("cwd")), external.load_caps(session_id))
+    _emit("SessionStart", "\n\n".join(part for part in (text, note) if part))
     _carded_ceiling(session_id, f"{top['model']}|{top['effort']}")
 
 
