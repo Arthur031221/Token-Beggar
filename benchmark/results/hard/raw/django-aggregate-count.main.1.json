@@ -1,0 +1,116 @@
+{
+ "task": "django-aggregate-count",
+ "arm": "main",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 188850,
+  "stop_reason": "end_turn",
+  "session_id": "c6de225b-a0a1-4fa3-9584-254c26701a3e",
+  "total_cost_usd": 0.8960920000000002,
+  "usage": {
+   "input_tokens": 50,
+   "cache_creation_input_tokens": 38693,
+   "cache_read_input_tokens": 935640,
+   "output_tokens": 19961,
+   "output_tokens_details": {
+    "thinking_tokens": 9458
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 38693,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1029,
+     "cache_read_input_tokens": 51375,
+     "cache_creation_input_tokens": 214,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 214
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 50,
+    "outputTokens": 19961,
+    "cacheReadInputTokens": 935640,
+    "cacheCreationInputTokens": 38693,
+    "webSearchRequests": 0,
+    "costUSD": 0.8960920000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 9458,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 33,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I changed `count()` and `aggregate()` so they leave out annotations that nothing in the query uses. `Book.objects.annotate(Count('chapters')).count()` no longer computes that count. The related test suites pass. I tried the full Django suite twice: the parallel run printed nothing I could check, and the serial run was killed by its 10-minute time limit, so that run is unverified.\n\n**What the SQL looks like now:**\n- **Unused aggregate annotation:** `annotate(Count(\"authors\")).count()` still needs a subquery to keep one row per book, but the inner query now only selects and groups by `id`. The `COUNT(authors)` column is gone.\n- **Unused non-aggregate or window annotation:** `annotate(x=F(\"pages\") * 2).count()` and `annotate(rn=Window(RowNumber())).count()` now run as a plain `SELECT COUNT(*) FROM book`, with no subquery.\n- **Annotations that are still needed are kept:** those used by the aggregate itself (`aggregate(Sum(\"alias\"))`), by `values()` grouping, by aggregate filters (HAVING), or by filters on window functions.\n\n**Code changes:**\n- `django/db/models/expressions.py` and `django/db/models/sql/where.py`: added `get_refs()`, which returns the annotation aliases an expression refers to.\n- `django/db/models/sql/query.py`, `get_aggregation()`:\n  - A subquery is now only needed when there is an existing aggregate, a HAVING or window-function filter, an annotation the new aggregates refer to, or the existing reasons (slicing, distinct, set operations, `values()` grouping). Unused plain annotations no longer force one.\n  - Inside the subquery, any annotation that isn't needed is dropped from the SELECT. When the query uses distinct or filters on a window function, nothing is dropped.\n  - Without a subquery, only the requested aggregates are selected.\n\nOne deliberate limit: when an aggregate refers to an existing plain annotation, I keep the old subquery approach rather than writing the annotation into the outer aggregate. Some databases, such as SQL Server, reject subqueries inside an aggregate. The unused annotations in that inner query are still dropped.\n\n**Tests:** I added 7 tests to `tests/aggregation/tests.py`, covering annotations being dropped (checked against the generated SQL) and the needed ones being kept. Four of them fail without the library change, as expected. These suites all pass: aggregation, aggregation_regress, annotations, expressions, expressions_window, queries, lookup, ordering, db_functions, many_to_one, many_to_many, prefetch_related, generic_relations, custom_lookups and model_fields. Everything ran on SQLite only, and flake8 and black aren't installed in the venv, so I didn't run them.\n\nI didn't add a release note in `docs/releases/`. Nothing is committed.",
+  "ttft_ms": 6080,
+  "type": "result",
+  "duration_ms": 911343,
+  "uuid": "d78ff9f0-1513-4f39-a77d-e0a5f44c9865",
+  "ttft_stream_ms": 1863,
+  "time_to_request_ms": 1147,
+  "first_content_frame_ms": 1864,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

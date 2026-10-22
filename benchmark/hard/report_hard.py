@@ -132,11 +132,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="hard")
     ap.add_argument("--base", default="alone")
-    ap.add_argument("--arms", default="alone,main,sized")
+    ap.add_argument("--arms", default="alone,main,verify")
     ap.add_argument("--blind", default="")
     args = ap.parse_args()
     arms = args.arms.split(",")
-    label = {"alone": "Without Token Beggar", "main": "v0.2.0 (previous release)", "sized": "v0.3.0 (this release)"}
+    label = {"alone": "Without Token Beggar", "main": "v0.2.0 (previous release)", "sized": "Size-aware draft (first wording, not shipped)", "verify": "v0.3.0 (this release)"}
     rows = [r for r in load(args.out) if r["arm"] in arms]
     blind = json.loads(Path(args.blind).read_text()) if args.blind else {}
     summary = summarise(rows, args.base, arms, blind)

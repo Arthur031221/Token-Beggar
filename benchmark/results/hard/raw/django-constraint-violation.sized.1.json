@@ -1,0 +1,116 @@
+{
+ "task": "django-constraint-violation",
+ "arm": "sized",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 127961,
+  "stop_reason": "end_turn",
+  "session_id": "6692172d-76e4-467e-bf1b-0828a8a1e590",
+  "total_cost_usd": 0.8479464000000001,
+  "usage": {
+   "input_tokens": 36,
+   "cache_creation_input_tokens": 46824,
+   "cache_read_input_tokens": 746752,
+   "output_tokens": 16193,
+   "output_tokens_details": {
+    "thinking_tokens": 2601
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 46824,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 773,
+     "cache_read_input_tokens": 59317,
+     "cache_creation_input_tokens": 403,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 403
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 36,
+    "outputTokens": 16193,
+    "cacheReadInputTokens": 746752,
+    "cacheCreationInputTokens": 46824,
+    "webSearchRequests": 0,
+    "costUSD": 0.8479464000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2601,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 18,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added a `violation_error_code` option to `BaseConstraint`, `CheckConstraint`, `UniqueConstraint` and the Postgres `ExclusionConstraint`. When a constraint fails validation, the `ValidationError` it raises now carries that code. The tests pass on SQLite, but the Postgres tests were skipped, so the `ExclusionConstraint` changes haven't been run.\n\n**Code** (`django/db/models/constraints.py`, `django/contrib/postgres/constraints.py`)\n- The option defaults to `None`, so existing constraints raise errors exactly as before.\n- It is included in `deconstruct()` only when set, so existing migrations won't see a change and `clone()` keeps it.\n- It is also included in `__eq__` and in `__repr__`, matching how `violation_error_message` is handled.\n- Every place a constraint raises its violation message now passes `code=self.violation_error_code`.\n- **One exception, kept on purpose:** a `UniqueConstraint` with `fields` and no `condition` still raises Django's standard unique error, with code `unique` or `unique_together`. That case already ignores `violation_error_message`, so I made it ignore the code too, for backward compatibility. The docs and a test state this.\n\n**Docs:** I documented the new option in `docs/ref/models/constraints.txt` and `docs/ref/contrib/postgres/constraints.txt`, including when it was added and the exception above, and added notes to `docs/releases/5.0.txt`.\n\n**Tests** (`tests/constraints/tests.py`, `tests/postgres_tests/test_constraints.py`)\n- New tests cover the default and custom code, `deconstruct()` and `clone()`, `__eq__` and `__repr__`, and that `validate()` raises the custom code. That includes check constraints, conditional and expression-based unique constraints, and exclusion constraints.\n- One test confirms the fields-only unique constraint still raises `unique_together`.\n\n**Results:** `constraints`, `postgres_tests.test_constraints`, `validation`, `migrations.test_autodetector` and `migrations.test_operations` all pass (501 tests). black is clean; flake8 isn't installed, so I couldn't run it.\n\nNothing is committed.",
+  "ttft_ms": 2037,
+  "type": "result",
+  "duration_ms": 143061,
+  "uuid": "326c659b-0f78-4b41-917a-affcef46603d",
+  "ttft_stream_ms": 923,
+  "time_to_request_ms": 330,
+  "first_content_frame_ms": 923,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 8,
+  "f2p_total": 8,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

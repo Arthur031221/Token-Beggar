@@ -1,0 +1,116 @@
+{
+ "task": "django-prefetch-sliced",
+ "arm": "main",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 82474,
+  "stop_reason": "end_turn",
+  "session_id": "d2a89d7d-1d15-4f32-9d12-9bdee12582d4",
+  "total_cost_usd": 0.4472607999999999,
+  "usage": {
+   "input_tokens": 26,
+   "cache_creation_input_tokens": 23151,
+   "cache_read_input_tokens": 361944,
+   "output_tokens": 9478,
+   "output_tokens_details": {
+    "thinking_tokens": 2820
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23151,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 792,
+     "cache_read_input_tokens": 35393,
+     "cache_creation_input_tokens": 654,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 654
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 26,
+    "outputTokens": 9478,
+    "cacheReadInputTokens": 361944,
+    "cacheCreationInputTokens": 23151,
+    "webSearchRequests": 0,
+    "costUSD": 0.4472607999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2820,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 20,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`Prefetch()` now accepts sliced querysets for reverse foreign keys and many-to-many relations, in both directions. The slice is applied to each parent object, not to the whole queryset. The issue's example now gives each category its own first three posts. Nothing is committed.\n\n**How it works** (in `django/db/models/fields/related_descriptors.py`): a new helper, `_filter_prefetch_queryset()`, handles the filtering for both relation types. When the queryset is sliced, it removes the slice and instead numbers the related rows separately for each parent object with a `ROW_NUMBER()` window function. It then keeps only the rows whose number falls inside the slice. The numbering follows the queryset's ordering (explicit `order_by()`, `Meta.ordering`, or `reverse()`). This builds on the window-function filtering added in the latest commit (f387d024fc).\n\n**Databases without window functions:** a sliced prefetch raises `NotSupportedError(\"Prefetching from a limited queryset is only supported on backends that support window functions.\")`. Before, it failed with the confusing \"Cannot filter a query once a slice has been taken\" error.\n\n**Tests:** I added `PrefetchLimitTests` to `tests/prefetch_related/tests.py`. It covers forward and reverse many-to-many, reverse foreign key, `[:n]` and `[n:]` slices, reversed ordering, and the unsupported-database error.\n- The new tests fail on the original code and pass with the fix.\n- The unsupported-database test is skipped on SQLite, which supports window functions. I ran it once separately with that support switched off, and it passed.\n- These suites all pass: `prefetch_related`, `many_to_one`, `many_to_many`, `m2m_through`, `m2m_regress`, `generic_relations`, `expressions_window`, `queries`, `multiple_database` and `known_related_objects`. I only ran them on SQLite.\n\n**Not covered:**\n- Sliced prefetches on generic relations (`GenericRelation`) still fail as before.\n- I didn't add documentation or a release note. The `Prefetch` docs should probably mention slicing support and the window-function requirement.",
+  "ttft_ms": 5594,
+  "type": "result",
+  "duration_ms": 92609,
+  "uuid": "bd6038ab-af90-40f8-8ae5-8cb08e3050ec",
+  "ttft_stream_ms": 991,
+  "time_to_request_ms": 251,
+  "first_content_frame_ms": 991,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 4,
+  "f2p_total": 4,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

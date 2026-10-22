@@ -1,0 +1,116 @@
+{
+ "task": "django-constraint-violation",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 126829,
+  "stop_reason": "end_turn",
+  "session_id": "edf19873-f64d-4295-92fe-ba17936b47fa",
+  "total_cost_usd": 0.9080112000000001,
+  "usage": {
+   "input_tokens": 38,
+   "cache_creation_input_tokens": 53885,
+   "cache_read_input_tokens": 915996,
+   "output_tokens": 14679,
+   "output_tokens_details": {
+    "thinking_tokens": 2176
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 53885,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 861,
+     "cache_read_input_tokens": 65876,
+     "cache_creation_input_tokens": 905,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 905
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 38,
+    "outputTokens": 14679,
+    "cacheReadInputTokens": 915996,
+    "cacheCreationInputTokens": 53885,
+    "webSearchRequests": 0,
+    "costUSD": 0.9080112000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2176,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 20,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've added a `violation_error_code` parameter to `BaseConstraint`. The issue text calls it a second `violation_error_message`, but it clearly means a code. `CheckConstraint`, `UniqueConstraint` and Postgres's `ExclusionConstraint` all accept it, and when set, the `ValidationError` they raise from `validate()` carries that code. The SQLite test run passes. The Postgres-specific tests were skipped because there's no PostgreSQL or driver in this environment; I checked `ExclusionConstraint`'s `repr`, `deconstruct()`, `clone()` and equality with a quick script instead. Nothing is committed.\n\n**How it works**\n- The default is `None`, so existing errors keep having no code.\n- The code is included in `deconstruct()`, so migrations and `clone()` keep it. It is also compared in `__eq__` and shown in `__repr__` (just before `violation_error_message`).\n- The code isn't added to the deprecated positional-argument path; only `name` and `violation_error_message` can still be passed positionally.\n\n**Limitation:** a `UniqueConstraint` with `fields` and no `condition` still raises Django's standard \"already exists\" error, with code `unique` or `unique_together`. That case already ignored `violation_error_message` for backward compatibility, so it ignores the new code too, and the docs say so.\n\n**Tests**\n- `tests/constraints/tests.py`: default and custom code, clone, deconstruct, eq and repr for all three classes, plus `validate()` checks for `CheckConstraint` and for `UniqueConstraint` with expressions and with a condition.\n- `tests/postgres_tests/test_constraints.py`: the same kinds of checks for `ExclusionConstraint`.\n- Run: `constraints`, `postgres_tests.test_constraints`, `validation`, `model_forms`, `migrations.test_autodetector` and `migrations.test_operations` all pass.\n\n**Docs:** I documented the parameter in `docs/ref/models/constraints.txt` and `docs/ref/contrib/postgres/constraints.txt`, and added entries to `docs/releases/5.0.txt`.\n\n`black --check` reports one formatting difference in `tests/postgres_tests/test_constraints.py`. It was there before my change, so I left it alone.",
+  "ttft_ms": 2050,
+  "type": "result",
+  "duration_ms": 141134,
+  "uuid": "913d4e1e-5db9-4e4c-abf5-c1c9afd69bcc",
+  "ttft_stream_ms": 1459,
+  "time_to_request_ms": 135,
+  "first_content_frame_ms": 1460,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 8,
+  "f2p_total": 8,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

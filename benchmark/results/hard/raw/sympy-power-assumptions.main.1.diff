@@ -1,0 +1,102 @@
+diff --git a/sympy/core/assumptions.py b/sympy/core/assumptions.py
+index ce4dd30f2..443e792cf 100644
+--- a/sympy/core/assumptions.py
++++ b/sympy/core/assumptions.py
+@@ -162,7 +162,7 @@
+ 
+ _assume_rules = FactRules([
+ 
+-    'integer        ->  rational',
++    'integer        ->  rational & finite',
+     'rational       ->  real',
+     'rational       ->  algebraic',
+     'algebraic      ->  complex',
+diff --git a/sympy/core/tests/test_assumptions.py b/sympy/core/tests/test_assumptions.py
+index 4db1c1c24..027609e17 100644
+--- a/sympy/core/tests/test_assumptions.py
++++ b/sympy/core/tests/test_assumptions.py
+@@ -98,26 +98,26 @@ def test_infinity():
+     oo = S.Infinity
+ 
+     assert oo.is_commutative is True
+-    assert oo.is_integer is None
++    assert oo.is_integer is False
+     assert oo.is_rational is None
+     assert oo.is_algebraic is None
+     assert oo.is_transcendental is None
+     assert oo.is_real is True
+     assert oo.is_complex is True
+-    assert oo.is_noninteger is None
++    assert oo.is_noninteger is True
+     assert oo.is_irrational is None
+     assert oo.is_imaginary is False
+     assert oo.is_positive is True
+     assert oo.is_negative is False
+     assert oo.is_nonpositive is False
+     assert oo.is_nonnegative is True
+-    assert oo.is_even is None
+-    assert oo.is_odd is None
++    assert oo.is_even is False
++    assert oo.is_odd is False
+     assert oo.is_finite is False
+     assert oo.is_infinite is True
+     assert oo.is_comparable is True
+     assert oo.is_prime is False
+-    assert oo.is_composite is None
++    assert oo.is_composite is False
+     assert oo.is_number is True
+ 
+ 
+@@ -125,21 +125,21 @@ def test_neg_infinity():
+     mm = S.NegativeInfinity
+ 
+     assert mm.is_commutative is True
+-    assert mm.is_integer is None
++    assert mm.is_integer is False
+     assert mm.is_rational is None
+     assert mm.is_algebraic is None
+     assert mm.is_transcendental is None
+     assert mm.is_real is True
+     assert mm.is_complex is True
+-    assert mm.is_noninteger is None
++    assert mm.is_noninteger is True
+     assert mm.is_irrational is None
+     assert mm.is_imaginary is False
+     assert mm.is_positive is False
+     assert mm.is_negative is True
+     assert mm.is_nonpositive is True
+     assert mm.is_nonnegative is False
+-    assert mm.is_even is None
+-    assert mm.is_odd is None
++    assert mm.is_even is False
++    assert mm.is_odd is False
+     assert mm.is_finite is False
+     assert mm.is_infinite is True
+     assert mm.is_comparable is True
+@@ -1062,3 +1062,26 @@ def test_issue_16313():
+     assert (l*x).is_real is False
+     assert (l*x*x).is_real is None  # since x*x can be a real number
+     assert (-x).is_positive is False
++
++def test_integer_implies_finite():
++    for kwargs in [dict(integer=True), dict(even=True), dict(odd=True),
++                   dict(prime=True), dict(composite=True), dict(zero=True)]:
++        assert Symbol('x', **kwargs).is_finite is True
++    assert Symbol('x', infinite=True).is_integer is False
++    assert Symbol('x', infinite=True).is_even is False
++    assert Symbol('x', infinite=True).is_odd is False
++    assert S.ComplexInfinity.is_integer is False
++    raises(InconsistentAssumptions, lambda: Symbol('x', integer=True,
++                                                   infinite=True))
++    raises(InconsistentAssumptions, lambda: Symbol('x', even=True,
++                                                   finite=False))
++
++    n = Symbol('n', integer=True)
++    m = Symbol('m', integer=True, nonnegative=True)
++    p = Symbol('p', even=True, positive=True)
++    assert (n**m).is_integer is True
++    assert (n**m).is_finite is True
++    assert (p**m).is_even is None  # p**0 is odd
++    assert (p**p).is_even is True
++    assert (p**p).is_finite is True
++    assert Pow(0, -1, evaluate=False).is_integer is False

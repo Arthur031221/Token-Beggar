@@ -98,7 +98,7 @@ def build(ceiling: dict, inventory: dict, caps: dict | None = None) -> str:
     return "\n".join(lines)
 
 
-GROW_STEPS = 8  # tool calls in one reply after which a task that started small is treated as large
+GROW_STEPS = 5  # tool calls in one reply after which a task that started small is treated as large
 GROW_CONTEXT = 80_000  # or a main context this long: every later turn re-reads what the chat model has already read
 
 
@@ -132,14 +132,17 @@ def sized(ceiling: dict, inventory: dict) -> str:
         ]
     )
     return (
-        f"{MARKER} Before you read any code, size the task: files you will probably touch, steps, how much code or log you must read, "
-        "whether there will be an edit and test loop. "
-        "SMALL (about 3 steps or fewer, 1 or 2 files, or a one-shot answer): do it inline, dispatch nothing. "
-        f"LARGE (several files, unfamiliar code to explore, a test loop, big reads): send the exploring of unfamiliar code, mechanical edits across files, "
-        f"run-the-tests-and-fix-the-simple-failure loops and digesting of logs or errors to token-beggar:beggar-worker Agent calls ({_worker_pick(ceiling, inventory)}). "
-        "Related jobs go to ONE worker as a numbered list; independent workers go out in one message. "
-        "Tell each the goal, exact paths, the check to run and 'report under 150 words'. "
-        "You keep the plan, the root cause, design trade-offs, the review of the diff and the answer; do not re-read what a worker read. "
+        f"{MARKER} Size the task before you read any code. "
+        "LARGE if any of these hold: the prompt is an issue or a bug to fix in a repository you have not read this session, you expect more than "
+        f"about {GROW_STEPS} tool calls, it touches more than one file, or it needs an edit and test loop. If unsure, it is LARGE. "
+        "SMALL only for a one-shot answer or an edit to one named file: do it inline, dispatch nothing. "
+        f"LARGE: send ONE token-beggar:beggar-worker Agent call ({_worker_pick(ceiling, inventory)}) the reproduce, explore, fix and "
+        "run-the-tests steps as a numbered list, with the goal, exact paths and the check to run. "
+        "It reports under 150 words: root cause, files changed, the test command and the last lines of its output. "
+        "Before you answer you must yourself read the whole `git diff` (the diff, not the files), run the target test and the tests of that module, "
+        "and check that the root cause matches the diff. If a test fails or they do not match, send one follow-up worker with the failure, "
+        "or fix it inline if it takes about 3 steps. Independent jobs go out in one message. "
+        "You keep the plan, the root cause, design trade-offs and the answer. "
         f"If a small task grows past about {GROW_STEPS} steps, switch to this for the rest. "
         + (outside + " " if outside else "")
         + "A one-line footer is added for you after a large task. Do not write one."
@@ -150,9 +153,9 @@ def sized(ceiling: dict, inventory: dict) -> str:
 def grown() -> str:
     """Said once in a reply that has passed the step or context limit without a worker."""
     return (
-        f"Token Beggar: this task is no longer small (more than {GROW_STEPS} steps, or a long context). For the rest of it, send exploring, "
-        "mechanical edits, test and fix loops and log digestion to token-beggar:beggar-worker Agent calls with the goal, exact paths, "
-        "the check to run and 'report under 150 words'. Keep the plan, the root cause and the final review."
+        f"Token Beggar: this task is no longer small (more than {GROW_STEPS} steps, or a long context). Dispatch the rest now: one "
+        "token-beggar:beggar-worker Agent call with the goal, exact paths, the check to run and 'report under 150 words'. "
+        "Keep the plan and the root cause, and before you answer read the whole `git diff` and run the tests yourself."
     )
 
 

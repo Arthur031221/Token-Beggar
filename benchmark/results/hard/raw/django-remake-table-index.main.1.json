@@ -1,0 +1,116 @@
+{
+ "task": "django-remake-table-index",
+ "arm": "main",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 78813,
+  "stop_reason": "end_turn",
+  "session_id": "8140be0d-4609-456f-bde6-e8bfdad05944",
+  "total_cost_usd": 0.548584,
+  "usage": {
+   "input_tokens": 34,
+   "cache_creation_input_tokens": 32691,
+   "cache_read_input_tokens": 579200,
+   "output_tokens": 8554,
+   "output_tokens_details": {
+    "thinking_tokens": 2054
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 32691,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 909,
+     "cache_read_input_tokens": 45166,
+     "cache_creation_input_tokens": 421,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 421
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 34,
+    "outputTokens": 8554,
+    "cacheReadInputTokens": 579200,
+    "cacheCreationInputTokens": 32691,
+    "webSearchRequests": 0,
+    "costUSD": 0.548584,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2054,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 22,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the bug: changing `db_collation` on a primary key (or other unique field) now carries the new collation to every foreign key column that points at it. I only ran the tests on SQLite; nothing ran against MySQL, Oracle or PostgreSQL, so the exact MySQL statements in the issue weren't tested.\n\n**What was wrong:** two separate gaps.\n1. A `ForeignKey` (including `OneToOneField` and the hidden many-to-many link table columns) never took on its target column's collation. So even newly created tables got FK columns with no `COLLATE`.\n2. When a key's collation changed but its type didn't, Django didn't treat it as a change that affects foreign keys. It left the FK constraints in place and didn't update the columns that refer to the key.\n\n**Changes:**\n- **`django/db/models/fields/related.py`**: `ForeignKey.db_parameters()` now returns the target field's collation. Newly created FK columns get the right `COLLATE`.\n- **`django/db/backends/base/schema.py`**, in `_alter_field()`:\n  - A collation change on a primary key or unique field now counts as a change that affects foreign keys. Incoming FK constraints are dropped and recreated, as they already were for a type change.\n  - When the referencing columns are updated, a changed collation is applied with a collation ALTER (which also covers the type). This produces SQL of the form the issue asks for, e.g. `MODIFY account_id varchar(22) NOT NULL COLLATE utf8_bin`. Otherwise it does the usual type change.\n- **`django/db/backends/sqlite3/schema.py`**: tables whose FKs point at the field are now rebuilt when its collation changes, not just its type.\n\n**Test:** I added `test_alter_field_pk_fk_db_collation` in `tests/migrations/test_operations.py`. It sets a collation on a `CharField` primary key referenced by a `ForeignKey`, a `ManyToManyField` and a nullable `OneToOneField`. It then checks that each referencing column gets the collation, that the FK constraints still exist, and that both are back to no collation after the migration is reversed. Without the library change it fails for all three referencing tables (`None != 'nocase'`); with it, it passes.\n\nThe schema, migrations, model_fields, invalid_models_tests, inspectdb, backends, field_deconstruction, many_to_one and one_to_one suites all pass: 1948 tests, 198 skipped.\n\nNothing is committed. A guard blocked `git stash`, so for the without-fix check I reverse-applied the library diff and then put it back. `git status` afterwards shows the four changed files as expected.",
+  "ttft_ms": 8837,
+  "type": "result",
+  "duration_ms": 112757,
+  "uuid": "5f5f97ef-da63-42a9-ba02-321aefdd6e72",
+  "ttft_stream_ms": 1189,
+  "time_to_request_ms": 356,
+  "first_content_frame_ms": 1189,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

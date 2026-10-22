@@ -1,0 +1,116 @@
+{
+ "task": "sphinx-include-source-read",
+ "arm": "sized",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 133212,
+  "stop_reason": "end_turn",
+  "session_id": "c1a7a8d0-8a55-4538-8b26-dd8ec43c6708",
+  "total_cost_usd": 0.5773974,
+  "usage": {
+   "input_tokens": 40,
+   "cache_creation_input_tokens": 30628,
+   "cache_read_input_tokens": 622467,
+   "output_tokens": 10386,
+   "output_tokens_details": {
+    "thinking_tokens": 3672
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 30628,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 855,
+     "cache_read_input_tokens": 42302,
+     "cache_creation_input_tokens": 1116,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1116
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 40,
+    "outputTokens": 10386,
+    "cacheReadInputTokens": 622467,
+    "cacheCreationInputTokens": 30628,
+    "webSearchRequests": 0,
+    "costUSD": 0.5773974,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3672,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 24,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Fixed: `source-read` handlers now change the text of files pulled in with `.. include::`, so the reproduction in the issue renders `REPLACED` in both places.\n\n**Why it happened:** the handler was being called for `something-to-include.rst`, but only because that file is also a document in its own right. When `index.rst` included it, docutils read the file from disk again and put the raw lines into the parser without any event. So the handler's change only applied to the standalone copy.\n\n**The fix** (`sphinx/directives/other.py`): when at least one `source-read` handler is connected, Sphinx's `Include` directive now catches the included text just before it goes into the parser, while the include runs:\n- It emits `source-read` with the text and parses whatever the handler leaves in `source[0]`.\n- The two marker lines docutils adds at the end of every include are kept out of the text handlers see.\n- The docname passed is the included file's docname. If that file isn't a document itself (e.g. a `.txt` or `.inc` file), it's the docname of the page being read.\n- `:literal:` / `:code:` includes and docutils' built-in `<...>` includes don't emit the event, since they aren't parsed as Sphinx reST.\n- The hook is removed as soon as the include finishes, so nothing else that inserts input into the parser triggers the event.\n\nOne thing to know: a file that is both a standalone document and included somewhere now triggers `source-read` once for each. A handler that keeps per-docname state should expect to be called more than once for that docname.\n\n**Tests:** a new test project `tests/roots/test-directive-include/` (nested includes: `index.rst` \u2192 `bar.txt` \u2192 `baz/baz.rst` \u2192 `foo.rst`) and three tests in `tests/test_directive_other.py`:\n- The event fires for included reST, with `:start-line:` applied, and doesn't fire for a `:literal:` include.\n- A replacement made in a handler reaches the parsed output through nested includes.\n- A full HTML build shows the replaced text, which is the issue's scenario.\n\nAll three fail without the fix and pass with it. In the full test suite, 2003 tests pass and 12 fail. The 12 are in Pygments-dependent HTML/LaTeX output, lualatex, Cython autodoc and translation tests; none involve includes. I ran the 5 of them that are in the include-related test files without my change and they fail the same way. I didn't run ruff or mypy, because neither is installed in `.venv`.\n\nI also added a line to `CHANGES`. Nothing is committed.",
+  "ttft_ms": 5816,
+  "type": "result",
+  "duration_ms": 595070,
+  "uuid": "bc2c6e84-0ded-45fa-8335-9b3f5f9537c6",
+  "ttft_stream_ms": 4918,
+  "time_to_request_ms": 135,
+  "first_content_frame_ms": 4918,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

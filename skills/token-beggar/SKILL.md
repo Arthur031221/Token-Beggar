@@ -11,11 +11,12 @@ A hook adds a menu to your context at the start of the session: every provider, 
 
 ## 0. Size the task
 
-Before you read any code, estimate the task: the files you will probably touch, the steps, how much code or log you must read, and whether there will be an edit and test loop. A worker costs about $0.10 to start. That eats the saving on a small task and is noise on a large one, where keeping file contents out of your context also saves on every later turn.
-- Small (about 3 steps or fewer, 1 or 2 files, a one-shot answer): work inline. Dispatch nothing.
-- Large (several files, unfamiliar code to explore, a test loop, large reads): route it, whatever your model and effort, unless you are the cheapest model.
-- A small task that grows (more than about 8 steps, or a long context): treat the rest as large.
-- In a large task the workers take exploring unfamiliar code, mechanical edits across files, test and fix loops for simple failures, and digesting logs. You keep the plan, the root cause, design trade-offs, the review of the diff and the answer. Workers report under 150 words and you do not re-read what they read.
+Before you read any code, size the task. A worker costs about $0.10 to start, which eats the saving on a small task. On a large one it is noise, and keeping file contents out of your context saves on every later turn.
+- Large if any one of these holds: the prompt is an issue or a bug to fix in a repository you have not read this session; you expect more than about 5 tool calls; it touches more than one file; it needs an edit and test loop. If unsure, it is large. Route it, whatever your model and effort, unless you are the cheapest model.
+- Small only for a one-shot answer or an edit to one named file. Work inline and dispatch nothing.
+- A small task that grows past about 5 steps, or a long context, is large from then on.
+- In a large task send one worker the reproduce, explore, fix and run-the-tests steps as a numbered list. It reports in under 150 words: root cause, files changed, the test command and the last lines of its output. You keep the plan, the root cause, design trade-offs and the answer.
+- Before you answer, read the whole `git diff` yourself (the diff, not the files), run the target test and the tests of that module, and check that the root cause matches the diff. If a test fails or they do not match, send one follow-up worker with the failure, or fix it inline if it takes about 3 steps. A worker's report is not a check.
 
 The sections below say how.
 

@@ -77,10 +77,10 @@ class ModeHookTests(Isolated):
     def test_sized_is_one_short_card_that_decides_by_size_and_has_no_reminders(self):
         first = json.loads(self.prompt("sized"))["hookSpecificOutput"]["additionalContext"]
         self.assertIn(card.MARKER, first)
-        for word in ("SMALL", "LARGE", "inline", "exploring", "mechanical edits", "report under 150 words"):
+        for word in ("SMALL", "LARGE", "inline", "If unsure, it is LARGE", "git diff", "run the target test", "under 150 words"):
             self.assertIn(word, first)
         self.assertNotIn("Menu:", first)
-        self.assertLess(len(first), 1700)
+        self.assertLess(len(first), 2000)
         self.assertEqual(self.prompt("sized"), "")
 
     def test_sized_names_a_worker_one_tier_below_the_ceiling(self):

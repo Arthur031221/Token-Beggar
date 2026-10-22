@@ -1,0 +1,121 @@
+{
+ "task": "sympy-power-assumptions",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 136331,
+  "stop_reason": "end_turn",
+  "session_id": "4ef4031d-9360-40d3-8d1a-6c6553701a18",
+  "total_cost_usd": 0.8232632,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 1557,
+   "cache_read_input_tokens": 51560,
+   "output_tokens": 198,
+   "output_tokens_details": {
+    "thinking_tokens": 38
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1557,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 4,
+     "output_tokens": 198,
+     "cache_read_input_tokens": 51560,
+     "cache_creation_input_tokens": 1557,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1557
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 76,
+    "outputTokens": 11752,
+    "cacheReadInputTokens": 1330756,
+    "cacheCreationInputTokens": 40221,
+    "webSearchRequests": 0,
+    "costUSD": 0.8232632,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3817,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvk4k3gj-175fe9df"
+  },
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "That notification is about my first test attempt, which used pytest. It hit its time limit and was stopped, so it only covered sympy/core and sympy/assumptions. I'm not re-running it, because the `bin/test` runs I did afterwards cover those packages and more. They also report SymPy's expected-failure and skipped tests correctly, which pytest does not. Nothing changes from my summary above: the fix and tests are in place, and the only regression the change caused (in `Idx`) is fixed.",
+  "ttft_ms": 1405,
+  "type": "result",
+  "duration_ms": 3147,
+  "uuid": "6ef968f0-144c-4136-b20e-a021ffde7436",
+  "ttft_stream_ms": 1171,
+  "time_to_request_ms": 148,
+  "first_content_frame_ms": 1171,
+  "queued_turn_count": 0,
+  "result_index": 2
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

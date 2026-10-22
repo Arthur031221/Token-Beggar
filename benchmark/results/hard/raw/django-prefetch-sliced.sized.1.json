@@ -1,0 +1,116 @@
+{
+ "task": "django-prefetch-sliced",
+ "arm": "sized",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 70442,
+  "stop_reason": "end_turn",
+  "session_id": "88ce0520-92be-46b6-8b05-ab8925730b31",
+  "total_cost_usd": 0.40546759999999993,
+  "usage": {
+   "input_tokens": 24,
+   "cache_creation_input_tokens": 22827,
+   "cache_read_input_tokens": 324378,
+   "output_tokens": 7894,
+   "output_tokens_details": {
+    "thinking_tokens": 1911
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 22827,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 853,
+     "cache_read_input_tokens": 34342,
+     "cache_creation_input_tokens": 1381,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1381
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 24,
+    "outputTokens": 7894,
+    "cacheReadInputTokens": 324378,
+    "cacheCreationInputTokens": 22827,
+    "webSearchRequests": 0,
+    "costUSD": 0.40546759999999993,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1911,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 14,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Your example now works: `Prefetch('post_set', queryset=Post.objects.all()[:3], to_attr='example_posts')` fetches at most three posts per category, in one extra query. The new tests and the related test suites pass on SQLite; I didn't commit anything.\n\n**How it works** (`django/db/models/fields/related_descriptors.py`)\n\nI added a helper, `_filter_prefetch_queryset()`, used for prefetching reverse foreign keys (like `post_set`) and many-to-many relations in both directions. For a normal queryset it applies the same `field__in=instances` filter as before. For a sliced queryset it:\n- numbers the related rows separately for each parent object, using a `ROW_NUMBER()` window function ordered by the queryset's own ordering;\n- turns the slice `[low:high]` into a filter on that number (greater than `low`, at most `high`);\n- removes the original LIMIT/OFFSET, which would otherwise apply to all parents combined rather than to each one.\n\nThis builds on the recent commit that allows filtering against window functions (`f387d024fc`).\n\n**Limits**\n- **Database support:** on databases without window functions, prefetching with a slice raises a clear `NotSupportedError` instead of the old `AssertionError`.\n- **Not covered:** forward foreign keys and one-to-one relations aren't changed, since each instance has only one related object. Generic relations aren't covered either; they still raise the old error.\n\n**Tests** (`tests/prefetch_related/tests.py`, new class `PrefetchLimitTests`)\nEach test checks that the sliced prefetch gives the same result as slicing the full prefetch for each parent. The cases are:\n- many-to-many in both directions and reverse foreign key;\n- a slice with only an upper bound (`[:2]`);\n- reversed ordering;\n- the error on databases without window functions.\n\nThat last test is skipped on SQLite, which supports window functions. I ran it once with the feature flag mocked off and it passed, then restored the file.\n\nThe test run covered `prefetch_related`, `many_to_many`, `many_to_one`, `known_related_objects`, `generic_relations`, `expressions_window` and `m2m_through`.\n\n**Docs:** I added a short section with an example and a `versionchanged:: 4.2` note to the `Prefetch` docs in `docs/ref/models/querysets.txt`, and a release note in `docs/releases/4.2.txt`.",
+  "ttft_ms": 3404,
+  "type": "result",
+  "duration_ms": 85100,
+  "uuid": "01e6e37c-50ba-4dd4-8de9-53ce0b4b8445",
+  "ttft_stream_ms": 1419,
+  "time_to_request_ms": 650,
+  "first_content_frame_ms": 1419,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 4,
+  "f2p_total": 4,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

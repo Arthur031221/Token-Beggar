@@ -1,0 +1,116 @@
+{
+ "task": "pytest-mark-mro",
+ "arm": "sized",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 61206,
+  "stop_reason": "end_turn",
+  "session_id": "4b2760ab-ceb5-4af6-8d24-28415d128304",
+  "total_cost_usd": 0.3651232,
+  "usage": {
+   "input_tokens": 30,
+   "cache_creation_input_tokens": 19255,
+   "cache_read_input_tokens": 392116,
+   "output_tokens": 6627,
+   "output_tokens_details": {
+    "thinking_tokens": 1006
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 19255,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 962,
+     "cache_read_input_tokens": 31422,
+     "cache_creation_input_tokens": 623,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 623
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 30,
+    "outputTokens": 6627,
+    "cacheReadInputTokens": 392116,
+    "cacheCreationInputTokens": 19255,
+    "webSearchRequests": 0,
+    "costUSD": 0.3651232,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1006,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 20,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the issue: a class that inherits from several marked classes now gets the marks of every class in its MRO, so `test_dings` in the issue's example now has both `foo` and `bar`. Nothing is committed.\n\n**Cause:** `get_unpacked_marks` in `src/_pytest/mark/structures.py` read the marks with `getattr(obj, \"pytestmark\")`. That only returns the first `pytestmark` attribute found in the MRO, so marks on any other base class were dropped.\n\n**Fix:**\n- **Reading marks:** for classes, `get_unpacked_marks` now reads `pytestmark` from each class's own `__dict__` along the whole `__mro__` and combines them. Subclass marks come first, then base classes in MRO order. A new keyword-only option, `consider_mro=False`, returns only the marks put directly on that class. Functions and other objects behave as before.\n- **Storing marks:** `store_mark` now uses `consider_mro=False`, so a decorated class's `pytestmark` holds only its own marks. Before, it also copied in the inherited ones, which would now be counted twice.\n\n**Behaviour changes:**\n- Marks inherited from base classes are now listed subclass first; before, the order was reversed.\n- A class's `pytestmark` attribute no longer includes its base classes' marks.\n- The issue's metaclass workaround, which builds `pytestmark` as a metaclass property, is no longer used for classes because marks are now read from each class's own `__dict__`. Classes using it still get all their marks, since the workaround stores them on each class.\n\nI described these changes in `changelog/7792.bugfix.rst`.\n\n**Tests:** I added `test_mark_decorator_multiple_baseclasses_merged` in `testing/test_mark.py`. It covers single inheritance, multiple inheritance with and without a mark on the test class, and checks the exact order and that no mark is repeated. It fails without the fix and passes with it.\n- `testing/test_mark.py`, `testing/python/collect.py` and `testing/test_unittest.py` all pass: 231 passed, 9 skipped, 1 xfailed.\n- I ran the full suite with and without the fix. Two modules can't be collected here: `testing/test_junitxml.py` needs `xmlschema`, which isn't installed, and `testing/python/metafunc.py` fails on import with an `AttributeError`. I left both out. The rest of the suite already had about 40 failures before my change, and the list of failures is identical with my change, except that the new test only fails without the fix.\n\nI didn't add anything to `AUTHORS` because that list is for human contributors. If you'll submit this as a PR, add your own name there.",
+  "ttft_ms": 1516,
+  "type": "result",
+  "duration_ms": 584218,
+  "uuid": "d2fa9596-9820-4661-81a4-d54d3d43b3dd",
+  "ttft_stream_ms": 922,
+  "time_to_request_ms": 234,
+  "first_content_frame_ms": 922,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

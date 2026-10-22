@@ -1,0 +1,132 @@
+{
+ "task": "django-constraint-violation",
+ "arm": "main",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 131922,
+  "stop_reason": "end_turn",
+  "session_id": "00a3c9f0-ec8d-424a-851b-4ec3ad049b69",
+  "total_cost_usd": 0.43765450000000006,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 9447,
+   "cache_read_input_tokens": 54482,
+   "output_tokens": 2512,
+   "output_tokens_details": {
+    "thinking_tokens": 302
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9447,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 709,
+     "cache_read_input_tokens": 21956,
+     "cache_creation_input_tokens": 387,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 387
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 2512,
+    "cacheReadInputTokens": 54482,
+    "cacheCreationInputTokens": 9447,
+    "webSearchRequests": 0,
+    "costUSD": 0.1367364,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 302,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 26,
+    "outputTokens": 15388,
+    "cacheReadInputTokens": 383736,
+    "cacheCreationInputTokens": 43445,
+    "webSearchRequests": 0,
+    "costUSD": 0.30091809999999997,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 164,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added a `violation_error_code` parameter to constraints. When a constraint's `validate()` raises a `ValidationError`, that error now carries the code you pass. The tests pass on SQLite, but the PostgreSQL tests were skipped, so `ExclusionConstraint` is untested. I didn't commit.\n\nThe issue text says \"violation_error_message\" for the new parameter, but that one already exists; it clearly means a new parameter for the code. Usage: `CheckConstraint(check=..., name=..., violation_error_code=\"my_code\")`.\n\n**Library code:**\n- `django/db/models/constraints.py`: `BaseConstraint`, `CheckConstraint` and `UniqueConstraint` accept the new keyword-only argument, which defaults to `None`. It is also handled in `deconstruct()`, `__eq__` and `__repr__`, the same way as `violation_error_message`.\n- `django/contrib/postgres/constraints.py`: the same change for `ExclusionConstraint`.\n\n**One case doesn't use the custom code:** a `UniqueConstraint` defined only by `fields`, with no condition, still raises Django's standard unique error with its own `unique` / `unique_together` code. Your custom message is ignored in that case too, so I kept it the same way. The custom code applies when the constraint uses expressions or a condition.\n\n**Docs:** I documented the parameter in `docs/ref/models/constraints.txt` and `docs/ref/contrib/postgres/constraints.txt`, marked as new in 5.0, and added release notes to `docs/releases/5.0.txt`.\n\n**Tests:** I added tests for deconstruct, equality, repr and the error code raised by `validate()` in `tests/constraints/tests.py` and `tests/postgres_tests/test_constraints.py`. Running both modules gives 139 tests, all OK, with 58 skipped. The skips include every PostgreSQL test, because only SQLite is set up here, so the new `ExclusionConstraint` tests need a PostgreSQL run before they count as checked. flake8 isn't installed in the virtualenv, so I didn't run lint either.",
+  "ttft_ms": 4588,
+  "type": "result",
+  "duration_ms": 141657,
+  "uuid": "b8877715-ad37-4b3c-9331-8d1f93a2589b",
+  "ttft_stream_ms": 1890,
+  "time_to_request_ms": 193,
+  "first_content_frame_ms": 1890,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 8,
+  "f2p_total": 8,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

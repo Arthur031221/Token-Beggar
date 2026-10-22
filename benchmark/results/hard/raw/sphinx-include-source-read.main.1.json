@@ -1,0 +1,132 @@
+{
+ "task": "sphinx-include-source-read",
+ "arm": "main",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 79752,
+  "stop_reason": "end_turn",
+  "session_id": "21991eec-0659-40df-a921-83c532727071",
+  "total_cost_usd": 0.33289549999999996,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 14542,
+   "cache_read_input_tokens": 61217,
+   "output_tokens": 5738,
+   "output_tokens_details": {
+    "thinking_tokens": 2322
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14542,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 731,
+     "cache_read_input_tokens": 26806,
+     "cache_creation_input_tokens": 632,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 632
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 5738,
+    "cacheReadInputTokens": 61217,
+    "cacheCreationInputTokens": 14542,
+    "webSearchRequests": 0,
+    "costUSD": 0.24336339999999998,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2322,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 3580,
+    "cacheReadInputTokens": 57571,
+    "cacheCreationInputTokens": 19182,
+    "webSearchRequests": 0,
+    "costUSD": 0.0895321,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Text pulled in by `.. include::` now goes through `source-read` handlers before Sphinx parses it. I rebuilt the example from the issue: `index.html` now shows `<p>REPLACED</p>` twice and contains no `&REPLACE_ME;`.\n\n**Cause:** Sphinx already ran `source-read` on the included file, but only when reading that file as its own document. The include directive (which comes from docutils) reads the file from disk again and inserts the raw text, so the handler's changes were lost.\n\n**Fix** (in `Include.run()` in `sphinx/directives/other.py`): just before the included text is inserted into the including document, Sphinx now runs `source-read` on it. The handler receives the included file's own docname (e.g. `baz/baz`). Details:\n- Docutils adds two marker lines to the end of included text; these are kept out of what the handler sees.\n- The new step only runs when an extension has registered a `source-read` handler.\n- Files included with `:literal:` (and code-type includes) are not passed to the handler.\n\n**Tests:**\n- **New test project:** `tests/roots/test-directive-include/` (`foo.rst`, `text.txt`, `baz/baz.rst`, which itself includes `foo.rst`).\n- **New tests in `tests/test_directive_other.py`:**\n  - `test_include_source_read_event` checks which docnames reach the handler and what text each one gets.\n  - `test_include_source_read_event_nested_includes` checks that a replacement made by the handler shows up in the final document, including through a nested include.\n- **Results:** 51 passed and 2 failed across `test_directive_other.py`, `test_directive_code.py` and `test_util_docutils.py`. The two failures, `test_literal_include_linenos` and `test_linenothreshold` in `test_directive_code.py`, fail the same way without this change.\n- **Not run:** ruff, because it isn't installed in the venv.\n\nI also added a `CHANGES` entry under \"Bugs fixed\", citing #10678 as the issue number. Check that number before using it, because the issue text you gave me doesn't include it. Nothing is committed.",
+  "ttft_ms": 22088,
+  "type": "result",
+  "duration_ms": 102519,
+  "uuid": "0a57e4f6-4d09-4493-aa2a-8669e201d5e1",
+  "ttft_stream_ms": 936,
+  "time_to_request_ms": 289,
+  "first_content_frame_ms": 936,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

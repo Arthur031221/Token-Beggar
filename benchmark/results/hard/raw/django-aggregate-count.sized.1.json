@@ -1,0 +1,116 @@
+{
+ "task": "django-aggregate-count",
+ "arm": "sized",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 228167,
+  "stop_reason": "end_turn",
+  "session_id": "4c3f1a60-fb8e-4031-b5bb-41e40d4e2920",
+  "total_cost_usd": 0.9847596,
+  "usage": {
+   "input_tokens": 42,
+   "cache_creation_input_tokens": 47276,
+   "cache_read_input_tokens": 901318,
+   "output_tokens": 21306,
+   "output_tokens_details": {
+    "thinking_tokens": 11329
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 47276,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 926,
+     "cache_read_input_tokens": 59438,
+     "cache_creation_input_tokens": 734,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 734
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 42,
+    "outputTokens": 21306,
+    "cacheReadInputTokens": 901318,
+    "cacheCreationInputTokens": 47276,
+    "webSearchRequests": 0,
+    "costUSD": 0.9847596,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 11329,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 23,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the issue: `count()` and `aggregate()` now leave out annotations that nothing uses. Before, any existing annotation stayed in the generated SQL and forced a subquery. All aggregation, annotation, query and expression tests pass. The full suite has 7 failures (in `mail`, `admin_scripts`, `test_utils` and `utils_tests`), but those same 7 fail without my change too.\n\n**Library changes**\n- **New helper:** `get_refs()` returns the annotation names an expression points to. I added it to expressions and to the where-clause classes in `django/db/models/sql/where.py`.\n- **`Query.get_aggregation()`** in `django/db/models/sql/query.py`:\n  - **When a subquery is used:** it's now only needed for real aggregation, meaning existing aggregate or window annotations, a `HAVING` or window filter, slicing, `distinct()`, `values()` grouping, or set operations like `union()`. An annotation like `F(\"pages\") * 2` no longer forces one.\n  - **No subquery:** existing annotations are dropped. If a requested aggregate refers to one, its expression is written straight into the aggregate. One exception: an aggregate over an annotation that contains a subquery still uses the subquery form, because most databases can't aggregate over a subquery directly.\n  - **With a subquery:** the inner query keeps only the annotations that the requested aggregates or the `GROUP BY` refer to. Grouping by primary key stays, so a query like `Book.objects.annotate(Count('chapters')).count()` still returns the right number. The inner query still selects everything when it uses `distinct()`, a window filter or a set operation, because dropping columns there could change the result.\n\nWhat the issue's examples now produce:\n- `Book.objects.annotate(Count('chapters')).count()` still runs as a grouped subquery, but the inner `COUNT(chapters)` is gone.\n- `Book.objects.annotate(x=F('pages') * 2).count()` is now a single plain `SELECT COUNT(*)` with no subquery.\n\nThe join an unused annotation needed is still in the query, so the row count can't change. That means the speed-up comes from leaving out the expensive expressions, not the joins.\n\n**Tests:** I added 8 tests at the end of `tests/aggregation/tests.py`. With the library change removed, the 4 that check the generated SQL fail. The other 4 check results stay correct for:\n- `values()` grouping, including by an annotation\n- filtering on an annotation alias\n- ordering plus slicing\n- an aggregate over a subquery annotation, alone and inside `Coalesce`\n\nI also added a line to `docs/releases/4.2.txt`. Nothing is committed. I couldn't run black or flake8 because they aren't installed in `.venv`.",
+  "ttft_ms": 13713,
+  "type": "result",
+  "duration_ms": 935869,
+  "uuid": "3c287ffe-16b4-4b8a-b235-7e846c549c95",
+  "ttft_stream_ms": 2334,
+  "time_to_request_ms": 433,
+  "first_content_frame_ms": 2335,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

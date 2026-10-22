@@ -3,7 +3,8 @@
 alone                    no plugin
 v020                     the released v0.2.0 (commit 9b63cdb), built once from git
 main                     main before the size aware strategy (commit b761ce6), built once from git (hard task benchmark)
-sized                    this tree, the size aware strategy (hard task benchmark), copied once so later edits do not leak in
+sized                    the first wording of the size aware card (hard task benchmark), not shipped: it judged every real issue small and routed 1 run in 26
+verify                   this tree, the size aware card with the large task triggers and the required review of the diff (hard task benchmark), copied once
 final                    this tree, the mode picked from the measured ratio of the model and effort (one line card at Opus 5.5 high)
 fullcard                 this tree with the full menu forced (TOKEN_BEGGAR_MODE=full): the pass before the stand down rule
 final-no-<lever>         this tree with one lever taken out, to price that lever alone:
@@ -81,8 +82,11 @@ def plugin_dir(arm: str) -> Path | None:
         return None
     if arm in ("final", "fullcard"):
         return ROOT
-    if arm == "sized":  # a snapshot, so editing the tree during a long benchmark cannot leak into the arm
+    if arm == "sized":  # built from git at the commit that held the first wording
         dest = BUILD / "sized"
+        return dest if dest.exists() else _from_git("c605b3e", "sized")
+    if arm == "verify":  # a snapshot, so editing the tree during a long benchmark cannot leak into the arm
+        dest = BUILD / "verify"
         return dest if dest.exists() else _copy_tree(dest)
     if arm == "main":
         dest = BUILD / "main"

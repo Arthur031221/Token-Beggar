@@ -1,50 +1,61 @@
 {
  "tasks": [
   "click-format-filename",
+  "django-aggregate-count",
+  "django-constraint-violation",
+  "django-prefetch-sliced",
+  "django-remake-table-index",
   "jinja-namespace-tuple",
   "md-backslash-smarty",
   "md-footnote-order",
   "packaging-extras-marker",
+  "pylint-pyreverse-hints",
+  "pylint-regexp-csv",
+  "pytest-mark-mro",
   "rich-inspect-methods",
+  "sphinx-include-source-read",
+  "sphinx-property-type",
   "structlog-exception-outside",
+  "sympy-permutation-subclass",
+  "sympy-power-assumptions",
   "werkzeug-rule-methods"
  ],
  "arms": {
   "alone": {
-   "runs": 16,
-   "cost": 0.6071348625,
-   "resolved": 0.6875,
-   "f2p": 0.75,
+   "runs": 32,
+   "cost": 0.669200875,
+   "resolved": 0.625,
+   "f2p": 0.7473958333333334,
    "regressions": 0,
-   "seconds": 125.0934375,
-   "turns": 22.6875,
+   "seconds": 148.25490625,
+   "turns": 21.8125,
    "blind": null
   },
   "main": {
-   "runs": 13,
-   "cost": 0.4460613461538462,
-   "resolved": 0.5384615384615384,
-   "f2p": 0.7384615384615384,
+   "runs": 28,
+   "cost": 0.4640302035714286,
+   "resolved": 0.5714285714285714,
+   "f2p": 0.7345238095238095,
    "regressions": 0,
-   "seconds": 102.59992307692308,
-   "turns": 14.153846153846153,
-   "multiple": 1.3885177837699676,
-   "low": 1.2779064064326986,
-   "high": 1.4915862283893133,
+   "seconds": 187.99017857142857,
+   "turns": 14.25,
+   "multiple": 1.4967346130408272,
+   "low": 1.4536751380370807,
+   "high": 1.5424014606960703,
    "claim": true,
    "blind": null
   },
   "sized": {
-   "runs": 13,
-   "cost": 0.662793046153846,
-   "resolved": 0.6153846153846154,
-   "f2p": 0.8269230769230769,
+   "runs": 26,
+   "cost": 0.6601520461538463,
+   "resolved": 0.6538461538461539,
+   "f2p": 0.8352564102564102,
    "regressions": 0,
-   "seconds": 132.68384615384613,
-   "turns": 24.384615384615383,
-   "multiple": 0.9496306856192499,
-   "low": 0.8507116191262304,
-   "high": 1.0582489850303258,
+   "seconds": 240.43061538461538,
+   "turns": 22.923076923076923,
+   "multiple": 1.041705588891122,
+   "low": 1.0046249275682,
+   "high": 1.0776086443804247,
    "claim": false,
    "blind": null
   }
@@ -52,13 +63,13 @@
  "per_task": {
   "click-format-filename": {
    "alone": {
-    "runs": 2,
-    "cost": 0.7678113999999998,
+    "runs": 3,
+    "cost": 0.7521323333333333,
     "resolved": 1.0,
     "f2p": 1.0,
     "regressions": 0,
-    "seconds": 148.13549999999998,
-    "turns": 31.0
+    "seconds": 154.3613333333333,
+    "turns": 31.333333333333332
    },
    "main": {
     "runs": 2,
@@ -68,9 +79,9 @@
     "regressions": 0,
     "seconds": 65.229,
     "turns": 2.0,
-    "multiple": 3.1888583491777114,
-    "low": 2.8709770020398766,
-    "high": 3.5130667413848924
+    "multiple": 3.1237403753532624,
+    "low": 2.8992671299953408,
+    "high": 3.4445079620977817
    },
    "sized": {
     "runs": 1,
@@ -80,9 +91,149 @@
     "regressions": 0,
     "seconds": 130.207,
     "turns": 27.0,
-    "multiple": 1.1443028187464956,
+    "multiple": 1.120935621825506,
     "low": 1.040384735185314,
     "high": 1.2482209023076773
+   }
+  },
+  "django-aggregate-count": {
+   "alone": {
+    "runs": 1,
+    "cost": 0.8556542000000003,
+    "resolved": 0.0,
+    "f2p": 0.6666666666666666,
+    "regressions": 0,
+    "seconds": 96.408,
+    "turns": 4.0
+   },
+   "main": {
+    "runs": 1,
+    "cost": 0.8960920000000002,
+    "resolved": 0.0,
+    "f2p": 0.6666666666666666,
+    "regressions": 0,
+    "seconds": 911.343,
+    "turns": 33.0,
+    "multiple": 0.9548731603451431,
+    "low": 0.9548731603451431,
+    "high": 0.9548731603451431
+   },
+   "sized": {
+    "runs": 1,
+    "cost": 0.9847596,
+    "resolved": 0.0,
+    "f2p": 0.6666666666666666,
+    "regressions": 0,
+    "seconds": 935.869,
+    "turns": 23.0,
+    "multiple": 0.8688965306862714,
+    "low": 0.8688965306862714,
+    "high": 0.8688965306862714
+   }
+  },
+  "django-constraint-violation": {
+   "alone": {
+    "runs": 1,
+    "cost": 0.9080112000000001,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 141.134,
+    "turns": 20.0
+   },
+   "main": {
+    "runs": 1,
+    "cost": 0.43765450000000006,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 141.657,
+    "turns": 3.0,
+    "multiple": 2.074721498350868,
+    "low": 2.074721498350868,
+    "high": 2.074721498350868
+   },
+   "sized": {
+    "runs": 1,
+    "cost": 0.8479464000000001,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 143.061,
+    "turns": 18.0,
+    "multiple": 1.0708356094205955,
+    "low": 1.0708356094205955,
+    "high": 1.0708356094205955
+   }
+  },
+  "django-prefetch-sliced": {
+   "alone": {
+    "runs": 1,
+    "cost": 0.903639,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 210.635,
+    "turns": 27.0
+   },
+   "main": {
+    "runs": 1,
+    "cost": 0.4472607999999999,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 92.609,
+    "turns": 20.0,
+    "multiple": 2.0203849744936293,
+    "low": 2.0203849744936293,
+    "high": 2.0203849744936293
+   },
+   "sized": {
+    "runs": 1,
+    "cost": 0.40546759999999993,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 85.1,
+    "turns": 14.0,
+    "multiple": 2.2286342977835965,
+    "low": 2.2286342977835965,
+    "high": 2.2286342977835965
+   }
+  },
+  "django-remake-table-index": {
+   "alone": {
+    "runs": 1,
+    "cost": 0.8479362000000003,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 226.175,
+    "turns": 28.0
+   },
+   "main": {
+    "runs": 1,
+    "cost": 0.548584,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 112.757,
+    "turns": 22.0,
+    "multiple": 1.5456816093797856,
+    "low": 1.5456816093797856,
+    "high": 1.5456816093797856
+   },
+   "sized": {
+    "runs": 1,
+    "cost": 0.9019746000000002,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 210.256,
+    "turns": 36.0,
+    "multiple": 0.9400887785531877,
+    "low": 0.9400887785531877,
+    "high": 0.9400887785531877
    }
   },
   "jinja-namespace-tuple": {
@@ -108,16 +259,16 @@
     "high": 0.8668202447469343
    },
    "sized": {
-    "runs": 0,
-    "cost": 0.0,
-    "resolved": 0.0,
-    "f2p": 0.0,
+    "runs": 1,
+    "cost": 0.5588257999999999,
+    "resolved": 1.0,
+    "f2p": 1.0,
     "regressions": 0,
-    "seconds": 0.0,
-    "turns": 0.0,
-    "multiple": 0.0,
-    "low": 0.0,
-    "high": 0.0
+    "seconds": 163.216,
+    "turns": 30.0,
+    "multiple": 0.9157125529995215,
+    "low": 0.9008513923301322,
+    "high": 0.9410549763450438
    }
   },
   "md-backslash-smarty": {
@@ -131,16 +282,16 @@
     "turns": 27.0
    },
    "main": {
-    "runs": 2,
-    "cost": 0.6397105000000001,
+    "runs": 3,
+    "cost": 0.6712266666666666,
     "resolved": 1.0,
     "f2p": 1.0,
     "regressions": 0,
-    "seconds": 114.48150000000001,
-    "turns": 22.0,
-    "multiple": 1.0796447247101097,
-    "low": 0.8002591797383347,
-    "high": 1.314445562990987
+    "seconds": 124.654,
+    "turns": 25.666666666666668,
+    "multiple": 1.028952067855866,
+    "low": 0.787060477075301,
+    "high": 1.271024934574497
    },
    "sized": {
     "runs": 2,
@@ -192,37 +343,142 @@
   },
   "packaging-extras-marker": {
    "alone": {
-    "runs": 1,
-    "cost": 0.5507770000000001,
+    "runs": 2,
+    "cost": 0.5832336,
     "resolved": 1.0,
     "f2p": 1.0,
     "regressions": 0,
-    "seconds": 124.699,
-    "turns": 14.0
+    "seconds": 141.353,
+    "turns": 14.5
    },
    "main": {
-    "runs": 2,
-    "cost": 0.33839045,
-    "resolved": 0.5,
-    "f2p": 0.95,
+    "runs": 3,
+    "cost": 0.36155693333333333,
+    "resolved": 0.6666666666666666,
+    "f2p": 0.9666666666666667,
     "regressions": 0,
-    "seconds": 87.553,
+    "seconds": 94.58333333333333,
     "turns": 3.0,
-    "multiple": 1.6276375411894752,
-    "low": 1.5527126809036556,
-    "high": 1.710159885512621
+    "multiple": 1.6131169014598716,
+    "low": 1.4116466566823211,
+    "high": 1.849210876668656
+   },
+   "sized": {
+    "runs": 2,
+    "cost": 0.6180722,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 122.10849999999999,
+    "turns": 13.0,
+    "multiple": 0.9436334460601853,
+    "low": 0.8515087856866345,
+    "high": 1.044747535971992
+   }
+  },
+  "pylint-pyreverse-hints": {
+   "alone": {
+    "runs": 1,
+    "cost": 1.2472634,
+    "resolved": 0.0,
+    "f2p": 0.0,
+    "regressions": 0,
+    "seconds": 254.486,
+    "turns": 37.0
+   },
+   "main": {
+    "runs": 1,
+    "cost": 0.35109039999999997,
+    "resolved": 0.0,
+    "f2p": 0.8,
+    "regressions": 0,
+    "seconds": 103.36,
+    "turns": 4.0,
+    "multiple": 3.5525420233649228,
+    "low": 3.5525420233649228,
+    "high": 3.5525420233649228
    },
    "sized": {
     "runs": 1,
-    "cost": 0.6468247999999999,
+    "cost": 0.9265712000000002,
+    "resolved": 0.0,
+    "f2p": 0.8,
+    "regressions": 0,
+    "seconds": 212.391,
+    "turns": 23.0,
+    "multiple": 1.3461063758510947,
+    "low": 1.3461063758510947,
+    "high": 1.3461063758510947
+   }
+  },
+  "pylint-regexp-csv": {
+   "alone": {
+    "runs": 1,
+    "cost": 0.39095,
     "resolved": 1.0,
     "f2p": 1.0,
     "regressions": 0,
-    "seconds": 130.826,
-    "turns": 14.0,
-    "multiple": 0.8515087856866345,
-    "low": 0.8515087856866345,
-    "high": 0.8515087856866345
+    "seconds": 109.448,
+    "turns": 12.0
+   },
+   "main": {
+    "runs": 1,
+    "cost": 0.1982972,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 61.034,
+    "turns": 2.0,
+    "multiple": 1.971535654562949,
+    "low": 1.971535654562949,
+    "high": 1.971535654562949
+   },
+   "sized": {
+    "runs": 1,
+    "cost": 0.5829084,
+    "resolved": 0.0,
+    "f2p": 0.5,
+    "regressions": 0,
+    "seconds": 468.669,
+    "turns": 24.0,
+    "multiple": 0.6706885678779033,
+    "low": 0.6706885678779033,
+    "high": 0.6706885678779033
+   }
+  },
+  "pytest-mark-mro": {
+   "alone": {
+    "runs": 1,
+    "cost": 0.3904052,
+    "resolved": 0.0,
+    "f2p": 0.0,
+    "regressions": 0,
+    "seconds": 391.166,
+    "turns": 19.0
+   },
+   "main": {
+    "runs": 1,
+    "cost": 0.21541500000000002,
+    "resolved": 0.0,
+    "f2p": 0.0,
+    "regressions": 0,
+    "seconds": 79.077,
+    "turns": 2.0,
+    "multiple": 1.812339902049532,
+    "low": 1.812339902049532,
+    "high": 1.812339902049532
+   },
+   "sized": {
+    "runs": 1,
+    "cost": 0.3651232,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 584.218,
+    "turns": 20.0,
+    "multiple": 1.0692423817495027,
+    "low": 1.0692423817495027,
+    "high": 1.0692423817495027
    }
   },
   "rich-inspect-methods": {
@@ -236,39 +492,109 @@
     "turns": 20.0
    },
    "main": {
-    "runs": 1,
-    "cost": 0.5318809999999999,
+    "runs": 2,
+    "cost": 0.4605064,
     "resolved": 0.0,
     "f2p": 0.0,
     "regressions": 0,
-    "seconds": 100.044,
-    "turns": 27.0,
-    "multiple": 0.8762350977004255,
-    "low": 0.7695179936865579,
-    "high": 0.9368163179357789
+    "seconds": 86.82,
+    "turns": 23.5,
+    "multiple": 1.012044132285675,
+    "low": 0.8204689896173519,
+    "high": 1.2738967448389809
+   },
+   "sized": {
+    "runs": 2,
+    "cost": 0.4867756,
+    "resolved": 0.0,
+    "f2p": 0.0,
+    "regressions": 0,
+    "seconds": 55.093,
+    "turns": 13.0,
+    "multiple": 0.9574284331424994,
+    "low": 0.817764841877736,
+    "high": 1.1268490276299576
+   }
+  },
+  "sphinx-include-source-read": {
+   "alone": {
+    "runs": 1,
+    "cost": 0.6721583999999999,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 227.17,
+    "turns": 28.0
+   },
+   "main": {
+    "runs": 1,
+    "cost": 0.33289549999999996,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 102.519,
+    "turns": 3.0,
+    "multiple": 2.019127323739732,
+    "low": 2.019127323739732,
+    "high": 2.019127323739732
    },
    "sized": {
     "runs": 1,
-    "cost": 0.5336398,
-    "resolved": 0.0,
-    "f2p": 0.0,
+    "cost": 0.5773974,
+    "resolved": 1.0,
+    "f2p": 1.0,
     "regressions": 0,
-    "seconds": 106.063,
-    "turns": 25.0,
-    "multiple": 0.8733471528922693,
-    "low": 0.7669817730986332,
-    "high": 0.9337287061422329
+    "seconds": 595.07,
+    "turns": 24.0,
+    "multiple": 1.1641174691815377,
+    "low": 1.1641174691815377,
+    "high": 1.1641174691815377
+   }
+  },
+  "sphinx-property-type": {
+   "alone": {
+    "runs": 1,
+    "cost": 0.7973226000000002,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 191.477,
+    "turns": 24.0
+   },
+   "main": {
+    "runs": 1,
+    "cost": 0.6667534000000002,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 173.019,
+    "turns": 22.0,
+    "multiple": 1.1958283227352122,
+    "low": 1.1958283227352122,
+    "high": 1.1958283227352122
+   },
+   "sized": {
+    "runs": 1,
+    "cost": 0.9097728,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 683.803,
+    "turns": 39.0,
+    "multiple": 0.8763974917693739,
+    "low": 0.8763974917693739,
+    "high": 0.8763974917693739
    }
   },
   "structlog-exception-outside": {
    "alone": {
-    "runs": 0,
-    "cost": 0.0,
+    "runs": 3,
+    "cost": 0.6670875333333334,
     "resolved": 0.0,
-    "f2p": 0.0,
+    "f2p": 0.75,
     "regressions": 0,
-    "seconds": 0.0,
-    "turns": 0.0
+    "seconds": 123.62133333333334,
+    "turns": 24.666666666666668
    },
    "main": {
     "runs": 1,
@@ -278,9 +604,9 @@
     "regressions": 0,
     "seconds": 104.803,
     "turns": 32.0,
-    "multiple": 0.0,
-    "low": 0.0,
-    "high": 0.0
+    "multiple": 1.1491127556024094,
+    "low": 0.920729892304194,
+    "high": 1.2860240058981192
    },
    "sized": {
     "runs": 3,
@@ -290,6 +616,76 @@
     "regressions": 0,
     "seconds": 111.378,
     "turns": 29.666666666666668,
+    "multiple": 1.1307962371406464,
+    "low": 0.9093806229566807,
+    "high": 1.2899444431946439
+   }
+  },
+  "sympy-permutation-subclass": {
+   "alone": {
+    "runs": 1,
+    "cost": 0.5259398000000002,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 195.732,
+    "turns": 14.0
+   },
+   "main": {
+    "runs": 1,
+    "cost": 0.5081928,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 347.929,
+    "turns": 18.0,
+    "multiple": 1.0349217855900363,
+    "low": 1.0349217855900363,
+    "high": 1.0349217855900363
+   },
+   "sized": {
+    "runs": 1,
+    "cost": 0.4576656,
+    "resolved": 1.0,
+    "f2p": 1.0,
+    "regressions": 0,
+    "seconds": 327.139,
+    "turns": 15.0,
+    "multiple": 1.1491792260550064,
+    "low": 1.1491792260550064,
+    "high": 1.1491792260550064
+   }
+  },
+  "sympy-power-assumptions": {
+   "alone": {
+    "runs": 1,
+    "cost": 0.8232632,
+    "resolved": 0.0,
+    "f2p": 0.0,
+    "regressions": 0,
+    "seconds": 3.147,
+    "turns": 1.0
+   },
+   "main": {
+    "runs": 1,
+    "cost": 0.6888729999999998,
+    "resolved": 0.0,
+    "f2p": 0.0,
+    "regressions": 0,
+    "seconds": 1381.236,
+    "turns": 25.0,
+    "multiple": 1.1950870479754616,
+    "low": 1.1950870479754616,
+    "high": 1.1950870479754616
+   },
+   "sized": {
+    "runs": 0,
+    "cost": 0.0,
+    "resolved": 0.0,
+    "f2p": 0.0,
+    "regressions": 0,
+    "seconds": 0.0,
+    "turns": 0.0,
     "multiple": 0.0,
     "low": 0.0,
     "high": 0.0
@@ -306,16 +702,16 @@
     "turns": 18.5
    },
    "main": {
-    "runs": 1,
-    "cost": 0.4409784,
+    "runs": 2,
+    "cost": 0.40631865,
     "resolved": 0.0,
     "f2p": 0.5,
     "regressions": 0,
-    "seconds": 132.285,
-    "turns": 6.0,
-    "multiple": 1.1841081105106281,
+    "seconds": 114.21600000000001,
+    "turns": 5.5,
+    "multiple": 1.2851147738357567,
     "low": 1.083449892330327,
-    "high": 1.2847663286909292
+    "high": 1.5243929312603575
    },
    "sized": {
     "runs": 2,
@@ -333,19 +729,19 @@
  },
  "rep_spread": {
   "alone": {
-   "1": 0.7142857142857143,
-   "2": 0.6666666666666666,
-   "3": 0.6666666666666666
+   "1": 0.631578947368421,
+   "2": 0.6,
+   "3": 0.625
   },
   "main": {
-   "1": 0.4,
-   "2": 0.4,
-   "3": 1.0
+   "1": 0.5882352941176471,
+   "2": 0.42857142857142855,
+   "3": 0.75
   },
   "sized": {
-   "1": 0.5,
-   "2": 0.6666666666666666,
-   "3": 0.75
+   "1": 0.625,
+   "2": 0.8,
+   "3": 0.6
   }
  }
 }

@@ -1,0 +1,121 @@
+{
+ "task": "django-aggregate-count",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 182463,
+  "stop_reason": "end_turn",
+  "session_id": "d7b857be-af59-4c0d-8cf9-9b7e79ef27a0",
+  "total_cost_usd": 0.8556542000000003,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 4417,
+   "cache_read_input_tokens": 205583,
+   "output_tokens": 1592,
+   "output_tokens_details": {
+    "thinking_tokens": 86
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 4417,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 929,
+     "cache_read_input_tokens": 53389,
+     "cache_creation_input_tokens": 758,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 758
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 50,
+    "outputTokens": 17010,
+    "cacheReadInputTokens": 926231,
+    "cacheCreationInputTokens": 41251,
+    "webSearchRequests": 0,
+    "costUSD": 0.8556542000000003,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 8272,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvk4ukff-1ca3bd6a"
+  },
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`count()` and `aggregate()` now leave out annotations that nothing uses, so `Book.objects.annotate(Count('chapters')).count()` no longer computes `COUNT(chapters)`. Across the full test suite (16,092 tests), the only failures are 7 in mail, admin_scripts and HTML-utils tests. They fail the same way with my change removed, so they come from this environment, not from this fix. Nothing is committed.\n\n**How it works** (`Query.get_aggregation()` in `django/db/models/sql/query.py`):\n- **Subquery only when needed.** Before, any existing annotation forced the count to be wrapped in a subquery. Now that only happens for an existing aggregate, a filter on an aggregate (HAVING), a filter on a window function, or the cases that already needed it (slicing, `distinct()`, `values()` grouping, set operations). So `Book.objects.annotate(name_lower=Lower(\"name\")).count()` is now a plain `SELECT COUNT(*)` with no `LOWER()`.\n- **When the subquery is needed,** the inner query only selects annotations that the requested aggregates or the `GROUP BY` refer to. For `annotate(Count('chapters')).count()`, the join and the `GROUP BY` primary key stay, because without them the joined rows would be counted more than once and the count would be wrong. Only the unused `COUNT(chapters)` column is dropped.\n- **When no subquery is needed,** an aggregate over a plain annotation (e.g. `aggregate(Sum(\"double_pages\"))`) gets the annotation's expression inlined, and the other annotations are dropped.\n- **Kept as before:**\n  - With `distinct()` or a filter on a window function, the inner query still selects everything, because those results depend on the selected columns.\n  - Filters and ordering still work after an annotation is dropped from the SELECT: filters already carry their own copy of the expression, and ordering falls back to the full annotation list.\n\nTo find which annotations an aggregate uses, I added a small `get_refs()` method to expressions (`django/db/models/expressions.py`) and to `WhereNode` (`django/db/models/sql/where.py`).\n\n**Tests:** I added 7 tests to `tests/aggregation/tests.py`. They check the generated SQL for:\n- a plain annotation that should be dropped;\n- an unused `alias()` aggregate and an unused `annotate()` aggregate;\n- an aggregate that is referenced and kept, next to one that isn't;\n- a plain annotation inlined into an aggregate;\n- a count filtered on an aggregate annotation;\n- a count grouped by an annotation via `values()`.\n\nFive of them fail without the library change. The other two pass either way and are there to catch regressions.",
+  "ttft_ms": 3018,
+  "type": "result",
+  "duration_ms": 96408,
+  "uuid": "7569653e-e291-40d3-9c6e-36fdaff25ba6",
+  "ttft_stream_ms": 1810,
+  "time_to_request_ms": 52,
+  "first_content_frame_ms": 1811,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}
