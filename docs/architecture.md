@@ -14,7 +14,7 @@ prompt -> UserPromptSubmit hook -> menu + decision rules in context
 
 The host agent gives a plugin hooks, skills and agents but no hook that can change the model of the chat itself. So Token Beggar works through the levers that exist: the Agent tool takes a `model` and an `effort` on every call, and a shell command can call another tool's CLI.
 
-There is no routing table. `data/profiles.json` holds a capability score and a price for every Claude model, a profile of what each external tool is good and weak at, and the decision rules (size, ambiguity, risk, how much has to be read, whether a test can verify the result). `card.py` renders the combinations that are available right now into the menu, and the chat model does the choosing. The v0.1 fixed table is kept in the benchmark as an arm so the two can be compared.
+There is no routing table. `data/profiles.json` holds a capability score and a price for every host model, a profile of what each external tool is good and weak at, and the decision rules (size, ambiguity, risk, how much has to be read, whether a test can verify the result). `card.py` renders the combinations that are available right now into the menu, and the chat model does the choosing. The v0.1 fixed table is kept in the benchmark as an arm so the two can be compared.
 
 ## Parts
 
@@ -50,7 +50,7 @@ The Stop hook reads the transcript of the reply that just ended. The count is th
 
 The ratio comes from `data/measured.json`: the pooled ratio of the chat model and the kind of task (edit, read, bulk read, function, feature, bug fix, review, design, chosen by rules on the prompt and the edits made). Below 1.15 the footer doesn't claim a saving. A model or effort that wasn't run carries the nearest measured ratio and says `interpolated`.
 
-The host can run the Stop hook before it has written the final message. The hook compares `last_assistant_message` with the transcript and waits up to `TOKEN_BEGGAR_SETTLE` seconds (default 4). If the message is still missing the footer says "at least". Before that wait existed the footer undercounted a real run by the size of the last message (49k against 69.9k); it now agrees with the agent's own total (86k against 85.8k).
+The host can run the Stop hook before it has written the final message. The hook compares `last_assistant_message` with the transcript and waits up to `TOKEN_BEGGAR_SETTLE` seconds (default 4). If the message is still missing the footer says "at least". Before that wait existed the footer undercounted a real run by the size of the last message (49k against 69.9k). It now agrees with the agent's own total (86k against 85.8k).
 
 ## Modes
 

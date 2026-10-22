@@ -18,7 +18,7 @@
 
 ## Editing the router
 
-- `data/profiles.json`: the capability and price of each Claude model, what each outside tool is good and weak at, and the decision rules the menu prints. Change a rule here, then run the benchmark (see CONTRIBUTING).
+- `data/profiles.json`: the capability and price of each host model, what each outside tool is good and weak at, and the decision rules the menu prints. Change a rule here, then run the benchmark (see CONTRIBUTING).
 - `data/models.json`: model ids, tiers and list prices. Refreshed weekly.
 - `data/measured.json`: the benchmark numbers the footer quotes (the pooled ratios, the interpolated cells, the router comparison, the outside tool results).
 - `agents/beggar-worker.md`: the worker. It defaults to haiku at low effort. The caller overrides model and effort per call.
@@ -29,8 +29,8 @@ Say it in a prompt: "agy max flash" keeps agy to its flash models, "agy max medi
 
 ## Quota
 
-If a Claude model hits its limit, run `token-beggar exhausted <alias>`. It leaves the menu until the mark expires. For an outside tool, `token-beggar ask` reads the reset time from the usage-limit error (five hours when the text has none, a day for a login problem), marks that tool or model, and the next menu leaves it out.
+If a host model hits its limit, run `token-beggar exhausted <alias>`. It leaves the menu until the mark expires. For an outside tool, `token-beggar ask` reads the reset time from the usage-limit error (five hours when the text has none, a day for a login problem), marks that tool or model, and the next menu leaves it out.
 
 ## Outside tools
 
-`token-beggar inventory --refresh` lists `agy`, `gemini` and `codex` when they are on the PATH, the models `agy models` reports, and MCP servers found in your settings. Nothing is sent to them unless the chat model decides a subtask suits them, and files that look like secrets are refused. The prior is the host's own models first, then Codex, then Gemini. The Gemini CLI has to be logged in; if it isn't, the call fails with a login message and the tool is left off the menu for a day.
+`token-beggar inventory --refresh` lists `agy`, `gemini` and `codex` when they are on the PATH, the models `agy models` reports, and MCP servers found in your settings. Nothing is sent to them unless the chat model decides a subtask suits them, and files that look like secrets are refused. The prior is the host's own models first, then Codex, then Gemini. The Gemini CLI has to be logged in. If it isn't, the call fails with a login message and the tool is left off the menu for a day.

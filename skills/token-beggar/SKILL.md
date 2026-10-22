@@ -5,7 +5,7 @@ description: Use on every non-trivial task in the coding agent, such as coding, 
 
 # Token Beggar
 
-Most prompts do not need the biggest model at the highest effort for every step. Reading files, applying edits and running tests are cheap work. Design and root-cause judgement are not. Send each part where it belongs and keep the answer quality the same. The goal is the lowest Claude quota and spend at the same quality.
+Most prompts do not need the biggest model at the highest effort for every step. Reading files, applying edits and running tests are cheap work. Design and root-cause judgement are not. Send each part where it belongs and keep the answer quality the same. The goal is the lowest quota use and spend at the same quality.
 
 A hook adds a menu to your context at the start of the session: every provider, model and effort you may use here, with what each is good and weak at. There is no fixed table. You choose per subtask, with the rules below. This file explains them.
 
@@ -30,7 +30,7 @@ The model and effort of this chat are the upper limit for models of the same ven
 
 ## 4. Dispatch
 
-Claude workers: call the Agent tool with `subagent_type: "token-beggar:beggar-worker"`, set `model` and `effort` on that call, and `run_in_background: false`. Independent subtasks go out in one message so they run in parallel. Write the prompt so the worker needs nothing else: the goal, exact file paths, what to change, the check to run, and "report under 150 words with exact names and paths". Do not ask it to paste files back. Delegate first: exploring the code yourself before handing it over pays the big model for the reading you meant to avoid.
+Host workers: call the Agent tool with `subagent_type: "token-beggar:beggar-worker"`, set `model` and `effort` on that call, and `run_in_background: false`. Independent subtasks go out in one message so they run in parallel. Write the prompt so the worker needs nothing else: the goal, exact file paths, what to change, the check to run, and "report under 150 words with exact names and paths". Do not ask it to paste files back. Delegate first: exploring the code yourself before handing it over pays the big model for the reading you meant to avoid.
 
 ## 5. Check the result
 
@@ -38,11 +38,11 @@ Check cheaply: one test run or `git diff --stat`, not a second read of every fil
 
 ## 6. Other AIs
 
-Tools on this machine, such as agy, gemini and codex, and MCP servers that front another AI, are routes too. They use their own quota, so the work does not touch your Claude quota. Use them when the user names one, or when one job must read more than about 100k tokens of files or logs: on a few small files the hand over costs about what it saves. Claude is the judge: treat what they return as a draft and check it. Call one with `token-beggar ask <tool> [--model <id>] [--file <path> ...] "<the whole task>"`. The command refuses files that look like secrets, applies the user's caps, and marks the tool out of quota when it says so. See [reference/other-ais.md](reference/other-ais.md).
+Tools on this machine, such as agy, gemini and codex, and MCP servers that front another AI, are routes too. They use their own quota, so the work does not touch your host quota. Use them when the user names one, or when one job must read more than about 100k tokens of files or logs: on a few small files the hand over costs about what it saves. You are the judge: treat what they return as a draft and check it. Call one with `token-beggar ask <tool> [--model <id>] [--file <path> ...] "<the whole task>"`. The command refuses files that look like secrets, applies the user's caps, and marks the tool out of quota when it says so. See [reference/other-ais.md](reference/other-ais.md).
 
 ## 7. Quota
 
-If a Claude dispatch fails with a usage limit, run `token-beggar exhausted <alias>`; the menu then leaves that model off for a while. For external tools `ask` does this by itself from the error text. `token-beggar exhausted --clear` resets it.
+If a dispatch to a host model fails with a usage limit, run `token-beggar exhausted <alias>`. The menu then leaves that model off for a while. For external tools `ask` does this by itself from the error text. `token-beggar exhausted --clear` resets it.
 
 ## 8. Context and compaction
 
