@@ -209,6 +209,11 @@ class FooterTests(Isolated):
         os.environ["TOKEN_BEGGAR_MODE"] = "off"
         self.assertIsNone(self.build(self.reply("Summarise every module")))
 
+    def test_in_lean_mode_only_a_feature_gets_a_multiple(self):
+        os.environ["TOKEN_BEGGAR_MODE"] = "lean"
+        line = self.build(self.reply("Summarise every module"))
+        self.assertTrue(line.startswith("Token Beggar: no measurable saving over Opus 5.5 high alone"), line)
+
     def test_the_dollars_price_each_model_at_its_own_rate(self):
         call, result = dispatch("c1", "ag1")
         path = write_transcript(self.tmp / "p.jsonl", [user("Summarise every module"), call, result, assistant("done", tokens=0)])

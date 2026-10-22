@@ -157,7 +157,8 @@ def build(payload: dict, items: list[dict], complete: bool = True) -> str | None
     top = ceiling_mod.resolve(payload.get("transcript_path"), payload.get("cwd"))
     effort = ((payload.get("effort") or {}).get("level")) or top["effort"]
     model = catalog.find(top["model"])
-    if mode(model.id if model else None, effort, pool=pooled()) == "off":
+    shown = mode(model.id if model else None, effort, pool=pooled())
+    if shown == "off":
         return None
     name = usage.display_name(model)
     prompt = usage.prompt_text(window)
@@ -171,6 +172,8 @@ def build(payload: dict, items: list[dict], complete: bool = True) -> str | None
     detail = f"{KINDS[kind]} | routed {sum(int(r.rsplit('x', 1)[1]) for r in routed)}: {', '.join(routed)}"
     if outside:
         detail += " | outside AI calls cost no Claude quota"
+    if shown == "lean" and kind != "feature":  # the lean card only sends multi-file work out, so no other kind has a measured saving
+        return f"Token Beggar: no measurable saving over {name} {effort} alone for this kind (est.) | {detail}"
     found = ratio_for(model.id, effort, kind, pool=pooled()) if model else None
     if not found:
         unmeasured = f"no measured ratio for {name} {effort} on this kind"

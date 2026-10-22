@@ -2,7 +2,7 @@
 
 48 to 48 runs per arm, Opus 5.5 at high effort as the chat model.
 
-| group | cost per task this release | final-no-bulk-agy cost | final-no-bulk-agy multiple (95% interval) | saved per task | quality (base / arm) | seconds (base / arm) | final-no-lean-tools cost | final-no-lean-tools multiple (95% interval) | saved per task | quality (base / arm) | seconds (base / arm) | final-no-batch cost | final-no-batch multiple (95% interval) | saved per task | quality (base / arm) | seconds (base / arm) | final-no-short-output cost | final-no-short-output multiple (95% interval) | saved per task | quality (base / arm) | seconds (base / arm) |
+| group | cost per task full card | final-no-bulk-agy cost | final-no-bulk-agy multiple (95% interval) | saved per task | quality (base / arm) | seconds (base / arm) | final-no-lean-tools cost | final-no-lean-tools multiple (95% interval) | saved per task | quality (base / arm) | seconds (base / arm) | final-no-batch cost | final-no-batch multiple (95% interval) | saved per task | quality (base / arm) | seconds (base / arm) | final-no-short-output cost | final-no-short-output multiple (95% interval) | saved per task | quality (base / arm) | seconds (base / arm) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | all | $0.138 | $0.131 | no claim (1.05x, 1.02 to 1.09) | $0.007 | 0.97 / 0.98 | 19 / 21 | $0.149 | no claim (0.93x, 0.88 to 0.97) | $-0.011 | 0.97 / 0.98 | 19 / 26 | $0.143 | no claim (0.97x, 0.93 to 1.01) | $-0.005 | 0.97 / 0.98 | 19 / 21 | $0.141 | no claim (0.98x, 0.95 to 1.01) | $-0.003 | 0.97 / 0.98 | 19 / 25 |
 | seen tasks | $0.139 | $0.136 | no claim (1.03x, 0.99 to 1.07) | $0.004 | 0.97 / 0.98 | 19 / 21 | $0.155 | no claim (0.90x, 0.85 to 0.95) | $-0.015 | 0.97 / 0.98 | 19 / 26 | $0.146 | no claim (0.96x, 0.91 to 1.00) | $-0.007 | 0.97 / 0.98 | 19 / 18 | $0.146 | no claim (0.96x, 0.92 to 0.99) | $-0.006 | 0.97 / 0.97 | 19 / 25 |
@@ -16,9 +16,6 @@
 
 | task | arm | cost | quality | turns | seconds |
 |---|---|---|---|---|---|
-| h1-constant | final | $0.115 | 1.00 | 1 | 5.1 |
-| h1-constant | final | $0.101 | 1.00 | 2 | 24.5 |
-| h1-constant | final | $0.110 | 1.00 | 1 | 5.5 |
 | h1-constant | final-no-batch | $0.098 | 1.00 | 2 | 18.9 |
 | h1-constant | final-no-batch | $0.106 | 1.00 | 1 | 4.0 |
 | h1-constant | final-no-batch | $0.094 | 1.00 | 2 | 21.5 |
@@ -31,9 +28,9 @@
 | h1-constant | final-no-short-output | $0.104 | 1.00 | 2 | 27.6 |
 | h1-constant | final-no-short-output | $0.101 | 1.00 | 2 | 26.3 |
 | h1-constant | final-no-short-output | $0.099 | 1.00 | 2 | 26.4 |
-| m1-rename | final | $0.105 | 1.00 | 1 | 3.3 |
-| m1-rename | final | $0.094 | 1.00 | 2 | 19.0 |
-| m1-rename | final | $0.125 | 1.00 | 2 | 9.7 |
+| h1-constant | fullcard | $0.115 | 1.00 | 1 | 5.1 |
+| h1-constant | fullcard | $0.101 | 1.00 | 2 | 24.5 |
+| h1-constant | fullcard | $0.110 | 1.00 | 1 | 5.5 |
 | m1-rename | final-no-batch | $0.105 | 1.00 | 3 | 20.5 |
 | m1-rename | final-no-batch | $0.098 | 1.00 | 2 | 22.2 |
 | m1-rename | final-no-batch | $0.090 | 1.00 | 2 | 15.7 |
@@ -46,9 +43,9 @@
 | m1-rename | final-no-short-output | $0.101 | 1.00 | 2 | 26.1 |
 | m1-rename | final-no-short-output | $0.111 | 1.00 | 1 | 2.9 |
 | m1-rename | final-no-short-output | $0.110 | 1.00 | 3 | 35.7 |
-| m2-future | final | $0.111 | 1.00 | 1 | 5.5 |
-| m2-future | final | $0.114 | 1.00 | 1 | 6.0 |
-| m2-future | final | $0.130 | 1.00 | 2 | 8.7 |
+| m1-rename | fullcard | $0.105 | 1.00 | 1 | 3.3 |
+| m1-rename | fullcard | $0.094 | 1.00 | 2 | 19.0 |
+| m1-rename | fullcard | $0.125 | 1.00 | 2 | 9.7 |
 | m2-future | final-no-batch | $0.112 | 1.00 | 1 | 5.1 |
 | m2-future | final-no-batch | $0.110 | 1.00 | 1 | 5.0 |
 | m2-future | final-no-batch | $0.136 | 1.00 | 3 | 12.0 |
@@ -61,9 +58,9 @@
 | m2-future | final-no-short-output | $0.115 | 1.00 | 2 | 40.5 |
 | m2-future | final-no-short-output | $0.121 | 1.00 | 1 | 5.0 |
 | m2-future | final-no-short-output | $0.106 | 1.00 | 2 | 37.9 |
-| m3-todo | final | $0.112 | 1.00 | 1 | 4.0 |
-| m3-todo | final | $0.119 | 1.00 | 1 | 4.5 |
-| m3-todo | final | $0.109 | 1.00 | 2 | 43.5 |
+| m2-future | fullcard | $0.111 | 1.00 | 1 | 5.5 |
+| m2-future | fullcard | $0.114 | 1.00 | 1 | 6.0 |
+| m2-future | fullcard | $0.130 | 1.00 | 2 | 8.7 |
 | m3-todo | final-no-batch | $0.116 | 1.00 | 1 | 4.1 |
 | m3-todo | final-no-batch | $0.115 | 1.00 | 1 | 4.4 |
 | m3-todo | final-no-batch | $0.115 | 1.00 | 1 | 3.7 |
@@ -76,9 +73,9 @@
 | m3-todo | final-no-short-output | $0.132 | 1.00 | 2 | 8.1 |
 | m3-todo | final-no-short-output | $0.105 | 1.00 | 2 | 28.5 |
 | m3-todo | final-no-short-output | $0.106 | 1.00 | 2 | 30.0 |
-| h2-grams | final | $0.084 | 1.00 | 2 | 4.7 |
-| h2-grams | final | $0.084 | 1.00 | 2 | 7.8 |
-| h2-grams | final | $0.084 | 1.00 | 2 | 5.6 |
+| m3-todo | fullcard | $0.112 | 1.00 | 1 | 4.0 |
+| m3-todo | fullcard | $0.119 | 1.00 | 1 | 4.5 |
+| m3-todo | fullcard | $0.109 | 1.00 | 2 | 43.5 |
 | h2-grams | final-no-batch | $0.083 | 1.00 | 2 | 6.0 |
 | h2-grams | final-no-batch | $0.083 | 1.00 | 2 | 6.4 |
 | h2-grams | final-no-batch | $0.084 | 1.00 | 2 | 6.4 |
@@ -91,9 +88,9 @@
 | h2-grams | final-no-short-output | $0.084 | 1.00 | 2 | 5.9 |
 | h2-grams | final-no-short-output | $0.083 | 1.00 | 2 | 5.4 |
 | h2-grams | final-no-short-output | $0.083 | 1.00 | 2 | 6.2 |
-| r1-tracking | final | $0.117 | 1.00 | 3 | 8.9 |
-| r1-tracking | final | $0.116 | 1.00 | 3 | 8.8 |
-| r1-tracking | final | $0.103 | 1.00 | 4 | 9.5 |
+| h2-grams | fullcard | $0.084 | 1.00 | 2 | 4.7 |
+| h2-grams | fullcard | $0.084 | 1.00 | 2 | 7.8 |
+| h2-grams | fullcard | $0.084 | 1.00 | 2 | 5.6 |
 | r1-tracking | final-no-batch | $0.100 | 1.00 | 3 | 8.7 |
 | r1-tracking | final-no-batch | $0.164 | 1.00 | 3 | 10.7 |
 | r1-tracking | final-no-batch | $0.120 | 1.00 | 3 | 9.1 |
@@ -106,9 +103,9 @@
 | r1-tracking | final-no-short-output | $0.112 | 1.00 | 3 | 7.7 |
 | r1-tracking | final-no-short-output | $0.120 | 1.00 | 3 | 11.9 |
 | r1-tracking | final-no-short-output | $0.110 | 1.00 | 3 | 9.5 |
-| r2-toprate | final | $0.084 | 1.00 | 2 | 4.4 |
-| r2-toprate | final | $0.085 | 1.00 | 2 | 5.2 |
-| r2-toprate | final | $0.085 | 1.00 | 2 | 6.5 |
+| r1-tracking | fullcard | $0.117 | 1.00 | 3 | 8.9 |
+| r1-tracking | fullcard | $0.116 | 1.00 | 3 | 8.8 |
+| r1-tracking | fullcard | $0.103 | 1.00 | 4 | 9.5 |
 | r2-toprate | final-no-batch | $0.082 | 1.00 | 2 | 3.6 |
 | r2-toprate | final-no-batch | $0.083 | 1.00 | 2 | 5.2 |
 | r2-toprate | final-no-batch | $0.083 | 1.00 | 2 | 5.2 |
@@ -121,9 +118,9 @@
 | r2-toprate | final-no-short-output | $0.082 | 1.00 | 2 | 7.2 |
 | r2-toprate | final-no-short-output | $0.082 | 1.00 | 2 | 3.7 |
 | r2-toprate | final-no-short-output | $0.082 | 1.00 | 2 | 9.8 |
-| r3-flow | final | $0.117 | 0.75 | 4 | 15.9 |
-| r3-flow | final | $0.107 | 0.50 | 3 | 22.8 |
-| r3-flow | final | $0.117 | 0.50 | 4 | 18.1 |
+| r2-toprate | fullcard | $0.084 | 1.00 | 2 | 4.4 |
+| r2-toprate | fullcard | $0.085 | 1.00 | 2 | 5.2 |
+| r2-toprate | fullcard | $0.085 | 1.00 | 2 | 6.5 |
 | r3-flow | final-no-batch | $0.119 | 1.00 | 5 | 17.4 |
 | r3-flow | final-no-batch | $0.157 | 0.75 | 7 | 28.0 |
 | r3-flow | final-no-batch | $0.115 | 0.50 | 4 | 14.7 |
@@ -136,9 +133,9 @@
 | r3-flow | final-no-short-output | $0.131 | 0.75 | 6 | 13.5 |
 | r3-flow | final-no-short-output | $0.115 | 0.50 | 4 | 17.0 |
 | r3-flow | final-no-short-output | $0.130 | 0.75 | 4 | 27.4 |
-| c1-coupon | final | $0.178 | 1.00 | 1 | 7.6 |
-| c1-coupon | final | $0.208 | 1.00 | 2 | 22.8 |
-| c1-coupon | final | $0.193 | 1.00 | 1 | 7.8 |
+| r3-flow | fullcard | $0.117 | 0.75 | 4 | 15.9 |
+| r3-flow | fullcard | $0.107 | 0.50 | 3 | 22.8 |
+| r3-flow | fullcard | $0.117 | 0.50 | 4 | 18.1 |
 | c1-coupon | final-no-batch | $0.208 | 1.00 | 3 | 72.0 |
 | c1-coupon | final-no-batch | $0.172 | 1.00 | 2 | 54.6 |
 | c1-coupon | final-no-batch | $0.206 | 1.00 | 2 | 62.9 |
@@ -151,9 +148,9 @@
 | c1-coupon | final-no-short-output | $0.178 | 1.00 | 2 | 45.8 |
 | c1-coupon | final-no-short-output | $0.204 | 1.00 | 1 | 7.6 |
 | c1-coupon | final-no-short-output | $0.185 | 1.00 | 1 | 6.6 |
-| c2-split | final | $0.140 | 1.00 | 2 | 43.6 |
-| c2-split | final | $0.137 | 1.00 | 2 | 30.2 |
-| c2-split | final | $0.138 | 1.00 | 1 | 5.3 |
+| c1-coupon | fullcard | $0.178 | 1.00 | 1 | 7.6 |
+| c1-coupon | fullcard | $0.208 | 1.00 | 2 | 22.8 |
+| c1-coupon | fullcard | $0.193 | 1.00 | 1 | 7.8 |
 | c2-split | final-no-batch | $0.144 | 1.00 | 1 | 5.6 |
 | c2-split | final-no-batch | $0.130 | 1.00 | 2 | 27.2 |
 | c2-split | final-no-batch | $0.148 | 1.00 | 1 | 5.1 |
@@ -166,9 +163,9 @@
 | c2-split | final-no-short-output | $0.161 | 1.00 | 1 | 5.7 |
 | c2-split | final-no-short-output | $0.154 | 1.00 | 1 | 6.1 |
 | c2-split | final-no-short-output | $0.143 | 1.00 | 2 | 37.0 |
-| c3-json | final | $0.132 | 1.00 | 2 | 29.7 |
-| c3-json | final | $0.141 | 1.00 | 1 | 5.2 |
-| c3-json | final | $0.133 | 1.00 | 2 | 25.0 |
+| c2-split | fullcard | $0.140 | 1.00 | 2 | 43.6 |
+| c2-split | fullcard | $0.137 | 1.00 | 2 | 30.2 |
+| c2-split | fullcard | $0.138 | 1.00 | 1 | 5.3 |
 | c3-json | final-no-batch | $0.139 | 1.00 | 1 | 3.2 |
 | c3-json | final-no-batch | $0.138 | 1.00 | 1 | 4.2 |
 | c3-json | final-no-batch | $0.133 | 1.00 | 2 | 39.2 |
@@ -181,9 +178,9 @@
 | c3-json | final-no-short-output | $0.167 | 1.00 | 3 | 45.4 |
 | c3-json | final-no-short-output | $0.156 | 1.00 | 2 | 46.5 |
 | c3-json | final-no-short-output | $0.140 | 1.00 | 2 | 35.7 |
-| h3-clamp | final | $0.126 | 1.00 | 2 | 46.8 |
-| h3-clamp | final | $0.128 | 1.00 | 2 | 30.0 |
-| h3-clamp | final | $0.139 | 1.00 | 1 | 4.0 |
+| c3-json | fullcard | $0.132 | 1.00 | 2 | 29.7 |
+| c3-json | fullcard | $0.141 | 1.00 | 1 | 5.2 |
+| c3-json | fullcard | $0.133 | 1.00 | 2 | 25.0 |
 | h3-clamp | final-no-batch | $0.130 | 1.00 | 2 | 44.3 |
 | h3-clamp | final-no-batch | $0.128 | 1.00 | 2 | 42.9 |
 | h3-clamp | final-no-batch | $0.120 | 1.00 | 2 | 27.3 |
@@ -196,9 +193,9 @@
 | h3-clamp | final-no-short-output | $0.128 | 1.00 | 2 | 35.3 |
 | h3-clamp | final-no-short-output | $0.138 | 1.00 | 1 | 3.3 |
 | h3-clamp | final-no-short-output | $0.139 | 1.00 | 1 | 3.7 |
-| f1-shipping | final | $0.198 | 1.00 | 1 | 9.4 |
-| f1-shipping | final | $0.214 | 1.00 | 2 | 62.7 |
-| f1-shipping | final | $0.189 | 1.00 | 2 | 47.2 |
+| h3-clamp | fullcard | $0.126 | 1.00 | 2 | 46.8 |
+| h3-clamp | fullcard | $0.128 | 1.00 | 2 | 30.0 |
+| h3-clamp | fullcard | $0.139 | 1.00 | 1 | 4.0 |
 | f1-shipping | final-no-batch | $0.325 | 1.00 | 1 | 6.3 |
 | f1-shipping | final-no-batch | $0.229 | 1.00 | 4 | 83.6 |
 | f1-shipping | final-no-batch | $0.187 | 1.00 | 1 | 6.1 |
@@ -211,9 +208,9 @@
 | f1-shipping | final-no-short-output | $0.196 | 1.00 | 2 | 47.0 |
 | f1-shipping | final-no-short-output | $0.299 | 1.00 | 1 | 8.0 |
 | f1-shipping | final-no-short-output | $0.212 | 1.00 | 2 | 62.9 |
-| f2-refund | final | $0.164 | 1.00 | 3 | 43.5 |
-| f2-refund | final | $0.182 | 1.00 | 2 | 10.7 |
-| f2-refund | final | $0.158 | 1.00 | 1 | 8.0 |
+| f1-shipping | fullcard | $0.198 | 1.00 | 1 | 9.4 |
+| f1-shipping | fullcard | $0.214 | 1.00 | 2 | 62.7 |
+| f1-shipping | fullcard | $0.189 | 1.00 | 2 | 47.2 |
 | f2-refund | final-no-batch | $0.160 | 1.00 | 1 | 5.7 |
 | f2-refund | final-no-batch | $0.180 | 1.00 | 2 | 10.8 |
 | f2-refund | final-no-batch | $0.166 | 1.00 | 2 | 8.6 |
@@ -226,9 +223,9 @@
 | f2-refund | final-no-short-output | $0.182 | 1.00 | 2 | 12.1 |
 | f2-refund | final-no-short-output | $0.153 | 1.00 | 2 | 36.7 |
 | f2-refund | final-no-short-output | $0.151 | 1.00 | 1 | 5.7 |
-| f3-tier | final | $0.179 | 1.00 | 1 | 7.5 |
-| f3-tier | final | $0.198 | 1.00 | 2 | 46.7 |
-| f3-tier | final | $0.187 | 1.00 | 2 | 52.9 |
+| f2-refund | fullcard | $0.164 | 1.00 | 3 | 43.5 |
+| f2-refund | fullcard | $0.182 | 1.00 | 2 | 10.7 |
+| f2-refund | fullcard | $0.158 | 1.00 | 1 | 8.0 |
 | f3-tier | final-no-batch | $0.176 | 1.00 | 2 | 48.3 |
 | f3-tier | final-no-batch | $0.202 | 1.00 | 1 | 6.5 |
 | f3-tier | final-no-batch | $0.196 | 1.00 | 1 | 6.5 |
@@ -241,9 +238,9 @@
 | f3-tier | final-no-short-output | $0.198 | 1.00 | 2 | 50.1 |
 | f3-tier | final-no-short-output | $0.186 | 1.00 | 2 | 50.7 |
 | f3-tier | final-no-short-output | $0.207 | 1.00 | 2 | 65.4 |
-| h4-linediscount | final | $0.240 | 1.00 | 6 | 50.4 |
-| h4-linediscount | final | $0.217 | 1.00 | 1 | 7.8 |
-| h4-linediscount | final | $0.182 | 1.00 | 3 | 41.3 |
+| f3-tier | fullcard | $0.179 | 1.00 | 1 | 7.5 |
+| f3-tier | fullcard | $0.198 | 1.00 | 2 | 46.7 |
+| f3-tier | fullcard | $0.187 | 1.00 | 2 | 52.9 |
 | h4-linediscount | final-no-batch | $0.260 | 1.00 | 2 | 57.3 |
 | h4-linediscount | final-no-batch | $0.218 | 1.00 | 3 | 85.0 |
 | h4-linediscount | final-no-batch | $0.192 | 1.00 | 2 | 58.5 |
@@ -256,3 +253,6 @@
 | h4-linediscount | final-no-short-output | $0.173 | 1.00 | 2 | 48.5 |
 | h4-linediscount | final-no-short-output | $0.192 | 1.00 | 2 | 50.5 |
 | h4-linediscount | final-no-short-output | $0.202 | 1.00 | 2 | 65.3 |
+| h4-linediscount | fullcard | $0.240 | 1.00 | 6 | 50.4 |
+| h4-linediscount | fullcard | $0.217 | 1.00 | 1 | 7.8 |
+| h4-linediscount | fullcard | $0.182 | 1.00 | 3 | 41.3 |
