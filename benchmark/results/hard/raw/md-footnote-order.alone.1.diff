@@ -1,0 +1,407 @@
+diff --git a/docs/changelog.md b/docs/changelog.md
+index 3d54e6e..6a74fb2 100644
+--- a/docs/changelog.md
++++ b/docs/changelog.md
+@@ -12,6 +12,13 @@ See the [Contributing Guide](contributing.md) for details.
+ 
+ ## [Unreleased]
+ 
++### Changed
++
++* Footnotes are now numbered and ordered by the order in which they are first
++  referenced in the document rather than the order in which they are defined.
++  A new configuration option for the footnotes extension, `USE_DEFINITION_ORDER`,
++  has been added to restore the previous behavior.
++
+ ### Fixed
+ 
+ * Fix handling of incomplete HTML tags in code spans in Python 3.14.
+diff --git a/docs/extensions/footnotes.md b/docs/extensions/footnotes.md
+index e841a32..8e224ce 100644
+--- a/docs/extensions/footnotes.md
++++ b/docs/extensions/footnotes.md
+@@ -60,6 +60,14 @@ is indented consistently and any errors are more easily discernible by the autho
+     A final paragraph.
+ ```
+ 
++Footnotes are numbered and listed in the order in which they are first
++referenced in the document, regardless of the order in which their content is
++defined. Footnotes which are only referenced from within other footnotes follow
++those referenced in the body of the document, and any footnotes which are defined
++but never referenced are listed last, in the order they were defined. To number
++footnotes in the order of their definitions instead, set the
++`USE_DEFINITION_ORDER` option to `True`.
++
+ Usage
+ -----
+ 
+@@ -98,6 +106,11 @@ The following options are provided to configure the output:
+ * **`SEPARATOR`**:
+     The text string used to set the footnote separator. Defaults to `:`.
+ 
++* **`USE_DEFINITION_ORDER`**:
++    Whether to number and order footnotes by the order in which their content is
++    defined rather than by the order in which they are first referenced in the
++    document. Defaults to `False`.
++
+ A trivial example:
+ 
+ ```python
+diff --git a/markdown/extensions/footnotes.py b/markdown/extensions/footnotes.py
+index 30c0811..369db2e 100644
+--- a/markdown/extensions/footnotes.py
++++ b/markdown/extensions/footnotes.py
+@@ -26,12 +26,15 @@ from ..treeprocessors import Treeprocessor
+ from ..postprocessors import Postprocessor
+ from .. import util
+ from collections import OrderedDict
++from typing import Iterator
+ import re
+ import copy
+ import xml.etree.ElementTree as etree
+ 
+ FN_BACKLINK_TEXT = util.STX + "zz1337820767766393qq" + util.ETX
+ NBSP_PLACEHOLDER = util.STX + "qq3936677670287331zz" + util.ETX
++FN_NUMBER_PLACEHOLDER = util.STX + "qq7330258916zz{}" + util.ETX
++RE_FN_NUMBER = re.compile(re.escape(util.STX) + r'qq7330258916zz(\d+)' + re.escape(util.ETX))
+ RE_REF_ID = re.compile(r'(fnref)(\d+)')
+ 
+ 
+@@ -61,6 +64,10 @@ class FootnoteExtension(Extension):
+             ],
+             'SEPARATOR': [
+                 ':', 'Footnote separator.'
++            ],
++            'USE_DEFINITION_ORDER': [
++                False, 'Order footnotes by the order of their definitions rather than '
++                'by the order of their first reference in the document.'
+             ]
+         }
+         """ Default configuration options. """
+@@ -70,6 +77,9 @@ class FootnoteExtension(Extension):
+         self.unique_prefix = 0
+         self.found_refs: dict[str, int] = {}
+         self.used_refs: set[str] = set()
++        # Maps the index of a footnote's definition to its number in the output.
++        self.footnote_numbers: dict[int, int] = {}
++        self.footnotes_div: etree.Element | None = None
+ 
+         self.reset()
+ 
+@@ -89,6 +99,11 @@ class FootnoteExtension(Extension):
+         # `codehilite`) so they can run on the the contents of the div.
+         md.treeprocessors.register(FootnoteTreeprocessor(self), 'footnote', 50)
+ 
++        # Insert a tree-processor that will run after inline is done.
++        # In this tree-processor we number the footnotes in the order in which
++        # they are referenced and sort the footnote div accordingly.
++        md.treeprocessors.register(FootnoteReorderingProcessor(self), 'footnote-reorder', 19)
++
+         # Insert a tree-processor that will run after inline is done.
+         # In this tree-processor we want to check our duplicate footnote tracker
+         # And add additional `backrefs` to the footnote pointing back to the
+@@ -104,6 +119,8 @@ class FootnoteExtension(Extension):
+         self.unique_prefix += 1
+         self.found_refs = {}
+         self.used_refs = set()
++        self.footnote_numbers = {}
++        self.footnotes_div = None
+ 
+     def unique_ref(self, reference: str, found: bool = False) -> str:
+         """ Get a unique reference if there are duplicates. """
+@@ -317,14 +334,93 @@ class FootnoteInlineProcessor(InlineProcessor):
+             sup.set('id', self.footnotes.makeFootnoteRefId(id, found=True))
+             a.set('href', '#' + self.footnotes.makeFootnoteId(id))
+             a.set('class', 'footnote-ref')
+-            a.text = self.footnotes.getConfig("SUPERSCRIPT_TEXT").format(
+-                list(self.footnotes.footnotes.keys()).index(id) + 1
+-            )
++            index = list(self.footnotes.footnotes.keys()).index(id)
++            if self.footnotes.getConfig("USE_DEFINITION_ORDER"):
++                number = str(index + 1)
++            else:
++                # The number is not known until all references in the document
++                # have been found. Use a placeholder which is replaced later.
++                number = FN_NUMBER_PLACEHOLDER.format(index)
++            a.text = self.footnotes.getConfig("SUPERSCRIPT_TEXT").format(number)
+             return sup, m.start(0), m.end(0)
+         else:
+             return None, None, None
+ 
+ 
++class FootnoteReorderingProcessor(Treeprocessor):
++    """ Number and sort footnotes by the order in which they are first referenced. """
++
++    def __init__(self, footnotes: FootnoteExtension):
++        self.footnotes = footnotes
++
++    def iter_refs(self, element: etree.Element, fn_ids: dict[str, str]) -> Iterator[str]:
++        """ Yield ids of footnotes referenced in `element` in document order, skipping the footnote div. """
++        stack = [iter(element)]
++        while stack:
++            child = next(stack[-1], None)
++            if child is None:
++                stack.pop()
++                continue
++            if child is self.footnotes.footnotes_div:
++                continue
++            if child.tag == 'a' and child.get('class') == 'footnote-ref':
++                href = child.get('href', '')
++                if href.startswith('#') and href[1:] in fn_ids:
++                    yield fn_ids[href[1:]]
++            stack.append(iter(child))
++
++    def get_order(self, root: etree.Element, items: dict[str, etree.Element]) -> list[str]:
++        """ Return footnote ids in the order they are first referenced. """
++        fn_ids = {self.footnotes.makeFootnoteId(id): id for id in self.footnotes.footnotes}
++        order: list[str] = []
++
++        def collect(element: etree.Element) -> None:
++            for id in self.iter_refs(element, fn_ids):
++                if id not in order:
++                    order.append(id)
++
++        collect(root)
++        # Footnotes referenced from within other footnotes follow those referenced from the
++        # body. Unreferenced footnotes are placed last in the order of their definition.
++        unreferenced = iter(self.footnotes.footnotes)
++        index = 0
++        while True:
++            if index == len(order):
++                id = next((id for id in unreferenced if id not in order), None)
++                if id is None:
++                    break
++                order.append(id)
++            li = items.get(order[index])
++            if li is not None:
++                collect(li)
++            index += 1
++        return order
++
++    def run(self, root: etree.Element) -> None:
++        keys = list(self.footnotes.footnotes.keys())
++        self.footnotes.footnote_numbers = {index: index + 1 for index in range(len(keys))}
++        div = self.footnotes.footnotes_div
++        if self.footnotes.getConfig("USE_DEFINITION_ORDER") or div is None:
++            return
++        ol = div.find('ol')
++        if ol is None:
++            return
++        li_ids = {self.footnotes.makeFootnoteId(id): id for id in keys}
++        items = {li_ids[li.get('id', '')]: li for li in ol if li.get('id', '') in li_ids}
++        order = self.get_order(root, items)
++        positions = {id: index for index, id in enumerate(keys)}
++        self.footnotes.footnote_numbers = {positions[id]: number for number, id in enumerate(order, start=1)}
++
++        # Sort the list items and update the backlink titles to match the new numbers.
++        others = [li for li in ol if li.get('id', '') not in li_ids]
++        ol[:] = [items[id] for id in order if id in items] + others
++        backlink_title = self.footnotes.getConfig("BACKLINK_TITLE").replace("%d", "{}")
++        for index, li in enumerate(ol, start=1):
++            for link in li.iter('a'):
++                if link.get('class') == 'footnote-backref':
++                    link.set('title', backlink_title.format(index))
++
++
+ class FootnotePostTreeprocessor(Treeprocessor):
+     """ Amend footnote div with duplicates. """
+ 
+@@ -386,6 +482,7 @@ class FootnoteTreeprocessor(Treeprocessor):
+ 
+     def run(self, root: etree.Element) -> None:
+         footnotesDiv = self.footnotes.makeFootnotesDiv(root)
++        self.footnotes.footnotes_div = footnotesDiv
+         if footnotesDiv is not None:
+             result = self.footnotes.findFootnotesPlaceholder(root)
+             if result:
+@@ -407,6 +504,11 @@ class FootnotePostprocessor(Postprocessor):
+         self.footnotes = footnotes
+ 
+     def run(self, text: str) -> str:
++        def number(m: re.Match[str]) -> str:
++            index = int(m.group(1))
++            return str(self.footnotes.footnote_numbers.get(index, index + 1))
++
++        text = RE_FN_NUMBER.sub(number, text)
+         text = text.replace(
+             FN_BACKLINK_TEXT, self.footnotes.getConfig("BACKLINK_TEXT")
+         )
+diff --git a/tests/test_syntax/extensions/test_footnotes.py b/tests/test_syntax/extensions/test_footnotes.py
+index 6f504e3..ca20c84 100644
+--- a/tests/test_syntax/extensions/test_footnotes.py
++++ b/tests/test_syntax/extensions/test_footnotes.py
+@@ -336,3 +336,174 @@ class TestFootnotes(TestCase):
+             '</div>',
+             extension_configs={'footnotes': {'SUPERSCRIPT_TEXT': '[{}]'}}
+         )
++
++    def test_reference_order(self):
++        """Test that footnotes are numbered and ordered by first reference, not definition."""
++
++        self.assertMarkdownRenders(
++            self.dedent(
++                """
++                First[^second] and second[^first].
++
++                [^first]: Defined first
++                [^second]: Defined second
++                """
++            ),
++            '<p>First<sup id="fnref:second"><a class="footnote-ref" href="#fn:second">1</a></sup> and '
++            'second<sup id="fnref:first"><a class="footnote-ref" href="#fn:first">2</a></sup>.</p>\n'
++            '<div class="footnote">\n'
++            '<hr />\n'
++            '<ol>\n'
++            '<li id="fn:second">\n'
++            '<p>Defined second&#160;<a class="footnote-backref" href="#fnref:second"'
++            ' title="Jump back to footnote 1 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '<li id="fn:first">\n'
++            '<p>Defined first&#160;<a class="footnote-backref" href="#fnref:first"'
++            ' title="Jump back to footnote 2 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '</ol>\n'
++            '</div>'
++        )
++
++    def test_use_definition_order(self):
++        """Test that `USE_DEFINITION_ORDER` restores ordering by definition."""
++
++        self.assertMarkdownRenders(
++            self.dedent(
++                """
++                First[^second] and second[^first].
++
++                [^first]: Defined first
++                [^second]: Defined second
++                """
++            ),
++            '<p>First<sup id="fnref:second"><a class="footnote-ref" href="#fn:second">2</a></sup> and '
++            'second<sup id="fnref:first"><a class="footnote-ref" href="#fn:first">1</a></sup>.</p>\n'
++            '<div class="footnote">\n'
++            '<hr />\n'
++            '<ol>\n'
++            '<li id="fn:first">\n'
++            '<p>Defined first&#160;<a class="footnote-backref" href="#fnref:first"'
++            ' title="Jump back to footnote 1 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '<li id="fn:second">\n'
++            '<p>Defined second&#160;<a class="footnote-backref" href="#fnref:second"'
++            ' title="Jump back to footnote 2 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '</ol>\n'
++            '</div>',
++            extension_configs={'footnotes': {'USE_DEFINITION_ORDER': True}}
++        )
++
++    def test_reference_order_nested_blocks(self):
++        """Test that references in nested blocks are ordered by their position in the document."""
++
++        self.assertMarkdownRenders(
++            self.dedent(
++                """
++                * Item[^a]
++
++                > Quote[^b]
++
++                Paragraph[^c]
++
++                [^c]: C
++                [^b]: B
++                [^a]: A
++                """
++            ),
++            '<ul>\n'
++            '<li>Item<sup id="fnref:a"><a class="footnote-ref" href="#fn:a">1</a></sup></li>\n'
++            '</ul>\n'
++            '<blockquote>\n'
++            '<p>Quote<sup id="fnref:b"><a class="footnote-ref" href="#fn:b">2</a></sup></p>\n'
++            '</blockquote>\n'
++            '<p>Paragraph<sup id="fnref:c"><a class="footnote-ref" href="#fn:c">3</a></sup></p>\n'
++            '<div class="footnote">\n'
++            '<hr />\n'
++            '<ol>\n'
++            '<li id="fn:a">\n'
++            '<p>A&#160;<a class="footnote-backref" href="#fnref:a"'
++            ' title="Jump back to footnote 1 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '<li id="fn:b">\n'
++            '<p>B&#160;<a class="footnote-backref" href="#fnref:b"'
++            ' title="Jump back to footnote 2 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '<li id="fn:c">\n'
++            '<p>C&#160;<a class="footnote-backref" href="#fnref:c"'
++            ' title="Jump back to footnote 3 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '</ol>\n'
++            '</div>'
++        )
++
++    def test_reference_order_nested_and_unreferenced(self):
++        """
++        Test that footnotes referenced only from other footnotes follow those referenced
++        in the body, and unreferenced footnotes come last in definition order.
++        """
++
++        self.assertMarkdownRenders(
++            self.dedent(
++                """
++                Paragraph[^b] and[^a] again[^b].
++
++                [^unused]: Unused
++                [^nested]: Nested
++                [^a]: A
++                [^b]: B[^nested]
++                """
++            ),
++            '<p>Paragraph<sup id="fnref:b"><a class="footnote-ref" href="#fn:b">1</a></sup> '
++            'and<sup id="fnref:a"><a class="footnote-ref" href="#fn:a">2</a></sup> '
++            'again<sup id="fnref2:b"><a class="footnote-ref" href="#fn:b">1</a></sup>.</p>\n'
++            '<div class="footnote">\n'
++            '<hr />\n'
++            '<ol>\n'
++            '<li id="fn:b">\n'
++            '<p>B<sup id="fnref:nested"><a class="footnote-ref" href="#fn:nested">3</a></sup>&#160;'
++            '<a class="footnote-backref" href="#fnref:b"'
++            ' title="Jump back to footnote 1 in the text">&#8617;</a>'
++            '<a class="footnote-backref" href="#fnref2:b"'
++            ' title="Jump back to footnote 1 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '<li id="fn:a">\n'
++            '<p>A&#160;<a class="footnote-backref" href="#fnref:a"'
++            ' title="Jump back to footnote 2 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '<li id="fn:nested">\n'
++            '<p>Nested&#160;<a class="footnote-backref" href="#fnref:nested"'
++            ' title="Jump back to footnote 3 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '<li id="fn:unused">\n'
++            '<p>Unused&#160;<a class="footnote-backref" href="#fnref:unused"'
++            ' title="Jump back to footnote 4 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '</ol>\n'
++            '</div>'
++        )
++
++    def test_reference_order_superscript_html(self):
++        """Test reference ordering with raw HTML in the superscript text configuration."""
++
++        self.assertMarkdownRenders(
++            'paragraph[^2][^1]\n\n[^1]: One\n[^2]: Two',
++            '<p>paragraph<sup id="fnref:2"><a class="footnote-ref" href="#fn:2"><b>1</b></a></sup>'
++            '<sup id="fnref:1"><a class="footnote-ref" href="#fn:1"><b>2</b></a></sup></p>\n'
++            '<div class="footnote">\n'
++            '<hr />\n'
++            '<ol>\n'
++            '<li id="fn:2">\n'
++            '<p>Two&#160;<a class="footnote-backref" href="#fnref:2"'
++            ' title="Jump back to footnote 1 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '<li id="fn:1">\n'
++            '<p>One&#160;<a class="footnote-backref" href="#fnref:1"'
++            ' title="Jump back to footnote 2 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '</ol>\n'
++            '</div>',
++            extension_configs={'footnotes': {'SUPERSCRIPT_TEXT': '<b>{}</b>'}}
++        )

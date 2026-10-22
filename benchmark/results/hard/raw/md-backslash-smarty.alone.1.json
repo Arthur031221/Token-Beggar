@@ -1,0 +1,116 @@
+{
+ "task": "md-backslash-smarty",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 127157,
+  "stop_reason": "end_turn",
+  "session_id": "f075411a-e673-4ed1-8a2a-babe2bd0e1d9",
+  "total_cost_usd": 0.7204619999999999,
+  "usage": {
+   "input_tokens": 58,
+   "cache_creation_input_tokens": 36362,
+   "cache_read_input_tokens": 1018270,
+   "output_tokens": 11284,
+   "output_tokens_details": {
+    "thinking_tokens": 3482
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 36362,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 909,
+     "cache_read_input_tokens": 47927,
+     "cache_creation_input_tokens": 1225,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1225
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 58,
+    "outputTokens": 11284,
+    "cacheReadInputTokens": 1018270,
+    "cacheCreationInputTokens": 36362,
+    "webSearchRequests": 0,
+    "costUSD": 0.7204619999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3482,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 31,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the bug: `![x\\\"x](x)` with `-x smarty` now outputs `<p><img alt=\"x&quot;x\" src=\"x\" /></p>`, which matches the unescaped case. Nothing is committed.\n\n**Cause:** a backslash escape is replaced by a placeholder during parsing. The placeholder was turned back into the real character by `UnescapePostprocessor`, which runs on the final HTML text. By then the serializer had already escaped attribute values, so a raw `\"` ended up inside `alt=\"\u2026\"`. Smarty triggers this because it adds `\"` and `'` to the characters that can be escaped. Link titles had the same bug: `[a](x \"t\\\"q\")` produced `title=\"t\"q\"`.\n\n**Fix (`markdown/treeprocessors.py`):** I added an `UnescapeTreeprocessor`, registered as `'unescape'` at priority 0. It restores the escaped characters in element text, tails and attribute values *before* serialization, so the serializer then escapes them properly. I left the old `UnescapePostprocessor` registered as a fallback: it no longer finds anything in the tree, but it still catches stashed content, and any extension that refers to `md.postprocessors['unescape']` keeps working.\n\n**One visible change in output:** `\\>` now comes out as `&gt;` instead of a raw `>`. It's equivalent HTML, but it changed one expected line in the existing fixture `tests/basic/backlash-escapes.html`, which I updated.\n\n**Tests:**\n- New `tests/test_syntax/extensions/test_smarty.py`: escaped `\"` in an image alt (inline and reference style) and in a link title, escaped `'` in an alt, escaped quotes in text, and normal smart quotes.\n- New `test_escaped_chars_in_alt` in `tests/test_syntax/inline/test_images.py`, covering core behavior without smarty.\n- Without the fix, 4 of the new tests fail; with it, they all pass.\n- Full suite (`.venv/bin/python -m unittest discover tests`): 8 failures. They are the same 8 failures, in the HTML-block and md_in_html tests, that occur without my change.\n- `.venv/bin/python -m pytest tests` doesn't get as far as running anything: collection stops on a `PytestCollectionWarning` about `TestSuite` in `test_md_in_html.py`. That happens without my change too, which is why I used unittest.\n\n**Docs:** I added the new treeprocessor to the table in `docs/extensions/api.md` and a bug-fix entry to `docs/change_log/release-3.4.md`.",
+  "ttft_ms": 2698,
+  "type": "result",
+  "duration_ms": 135964,
+  "uuid": "ee15ddf6-70dc-45bf-8a74-224de8242309",
+  "ttft_stream_ms": 1487,
+  "time_to_request_ms": 222,
+  "first_content_frame_ms": 1488,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

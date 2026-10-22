@@ -2,6 +2,8 @@
 
 alone                    no plugin
 v020                     the released v0.2.0 (commit 9b63cdb), built once from git
+main                     main before the size aware strategy (commit b761ce6), built once from git (hard task benchmark)
+sized                    this tree, the size aware strategy (hard task benchmark), copied once so later edits do not leak in
 final                    this tree, the mode picked from the measured ratio of the model and effort (one line card at Opus 5.5 high)
 fullcard                 this tree with the full menu forced (TOKEN_BEGGAR_MODE=full): the pass before the stand down rule
 final-no-<lever>         this tree with one lever taken out, to price that lever alone:
@@ -20,6 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BUILD = Path(os.environ.get("TB_ARMS", "/tmp/tb-arms"))
 V020_COMMIT = "9b63cdb"
+MAIN_COMMIT = "b761ce6"  # main before the size aware strategy: model based modes, lean card at Opus 5.5 high
 LEVERS = ("bulk-agy", "lean-tools", "batch", "short-output", "early")
 
 
@@ -43,14 +46,18 @@ def _drop_rule(path: Path, start: str) -> None:
     path.write_text("".join(kept))
 
 
-def _v020() -> Path:
-    dest = BUILD / "v020"
+def _from_git(commit: str, name: str) -> Path:
+    dest = BUILD / name
     if dest.exists():
         shutil.rmtree(dest)
     dest.mkdir(parents=True)
-    archive = subprocess.run(["git", "archive", V020_COMMIT], cwd=ROOT, capture_output=True, check=True).stdout
+    archive = subprocess.run(["git", "archive", commit], cwd=ROOT, capture_output=True, check=True).stdout
     subprocess.run(["tar", "-x", "-C", str(dest)], input=archive, check=True)
     return dest
+
+
+def _v020() -> Path:
+    return _from_git(V020_COMMIT, "v020")
 
 
 def _ablation(lever: str) -> Path:
@@ -74,6 +81,12 @@ def plugin_dir(arm: str) -> Path | None:
         return None
     if arm in ("final", "fullcard"):
         return ROOT
+    if arm == "sized":  # a snapshot, so editing the tree during a long benchmark cannot leak into the arm
+        dest = BUILD / "sized"
+        return dest if dest.exists() else _copy_tree(dest)
+    if arm == "main":
+        dest = BUILD / "main"
+        return dest if dest.exists() else _from_git(MAIN_COMMIT, "main")
     if arm == "v020":
         dest = BUILD / "v020"
         return dest if dest.exists() else _v020()

@@ -1,0 +1,116 @@
+{
+ "task": "click-completion-close",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 85507,
+  "stop_reason": "end_turn",
+  "session_id": "38458f24-d9a7-42f3-92f1-d7922dad42d6",
+  "total_cost_usd": 0.45675200000000005,
+  "usage": {
+   "input_tokens": 34,
+   "cache_creation_input_tokens": 23759,
+   "cache_read_input_tokens": 483020,
+   "output_tokens": 8497,
+   "output_tokens_details": {
+    "thinking_tokens": 2331
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23759,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 665,
+     "cache_read_input_tokens": 36235,
+     "cache_creation_input_tokens": 314,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 314
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 34,
+    "outputTokens": 8497,
+    "cacheReadInputTokens": 483020,
+    "cacheCreationInputTokens": 23759,
+    "webSearchRequests": 0,
+    "costUSD": 0.45675200000000005,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2331,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 19,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the bug: shell completion now closes every context it creates, so files opened by `click.File` options are closed and no longer cause a `ResourceWarning`. The full test suite passes, and nothing is committed.\n\n**The fix** (`src/click/shell_completion.py`)\n- **`_resolve_context`**: when it creates a context for a subcommand, it now tells the parent context to close that child when the parent closes. This also covers chained commands, where earlier subcommands in the chain aren't ancestors of the final context. If an error happens partway through, it closes everything created so far before re-raising.\n- **`ShellComplete.get_completions`**: after computing completions, it closes the top-level context in a `try/finally`, which closes the whole tree. Files are closed only *after* completion finishes, so a custom `shell_complete` callback that reads an open file option still works.\n\n**Tests** (`tests/test_shell_completion.py::test_files_closed`)\n- One version uses a normal group and one uses chained commands, with `File` options on the group and on its subcommands.\n- It checks that the files are still open inside the completion callback and closed once completion returns.\n- Both versions fail on the original code and pass with the fix.\n\n**Test results**\n- With the fix, the full suite gives 616 passed, 21 skipped and 1 xfailed.\n- To get that run, I had to ignore one pytest warning (`-W \"ignore::pytest.PytestRemovedIn10Warning\"`). Without it, `tests/test_basic.py` won't even load: the installed pytest deprecates the way that file uses `parametrize`, and the project turns warnings into errors. This isn't related to this change.\n\nI also added an entry to `CHANGES.rst` citing `:issue:`2644``. I took that number from memory as the upstream issue, so please check it before merging.",
+  "ttft_ms": 2373,
+  "type": "result",
+  "duration_ms": 90677,
+  "uuid": "994abe72-007e-434e-aee8-d292d7adbaf7",
+  "ttft_stream_ms": 1473,
+  "time_to_request_ms": 227,
+  "first_content_frame_ms": 1474,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

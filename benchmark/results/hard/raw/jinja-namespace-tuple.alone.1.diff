@@ -1,0 +1,222 @@
+diff --git a/CHANGES.rst b/CHANGES.rst
+index 521f5a0..e66bd4c 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -13,6 +13,8 @@ Unreleased
+     :issue:`1792`, :ghsa:`gmj6-6f8f-6699`
+ -   Sandbox does not allow ``clear`` and ``pop`` on known mutable sequence
+     types. :issue:`2032`
++-   Allow namespace attributes as targets in multi-variable (tuple)
++    assignments, such as ``{% set ns.a, ns.b = 1, 2 %}``.
+ -   Calling sync ``render`` for an async template uses ``asyncio.run``.
+     :pr:`1952`
+ -   Avoid unclosed ``auto_aiter`` warnings. :pr:`1960`
+diff --git a/src/jinja2/compiler.py b/src/jinja2/compiler.py
+index ca07907..c55406f 100644
+--- a/src/jinja2/compiler.py
++++ b/src/jinja2/compiler.py
+@@ -1579,8 +1579,35 @@ class CodeGenerator(NodeVisitor):
+         if frame.require_output_check:
+             self.outdent()
+ 
++    def _check_namespace_refs(self, target: nodes.Expr, frame: Frame) -> None:
++        """``a.b`` is allowed as an assignment target and is parsed as an
++        NSRef, but it is only valid if ``a`` is a Namespace object. Emit a
++        check for each referenced name before the assignment code. This can't
++        be done in :meth:`visit_NSRef` since the ref may be in the middle of a
++        tuple target.
++        """
++        seen_refs: t.Set[str] = set()
++        nsrefs = [target] if isinstance(target, nodes.NSRef) else []
++        nsrefs.extend(target.find_all(nodes.NSRef))
++
++        for nsref in nsrefs:
++            # Only check each name once, for `ns.a, ns.b = c, d`.
++            if nsref.name in seen_refs:
++                continue
++
++            seen_refs.add(nsref.name)
++            ref = frame.symbols.ref(nsref.name)
++            self.writeline(f"if not isinstance({ref}, Namespace):")
++            self.indent()
++            self.writeline(
++                "raise TemplateRuntimeError"
++                '("cannot assign attribute on non-namespace object")'
++            )
++            self.outdent()
++
+     def visit_Assign(self, node: nodes.Assign, frame: Frame) -> None:
+         self.push_assign_tracking()
++        self._check_namespace_refs(node.target, frame)
+         self.newline(node)
+         self.visit(node.target, frame)
+         self.write(" = ")
+@@ -1598,6 +1625,7 @@ class CodeGenerator(NodeVisitor):
+         self.enter_frame(block_frame)
+         self.buffer(block_frame)
+         self.blockvisit(node.body, block_frame)
++        self._check_namespace_refs(node.target, frame)
+         self.newline(node)
+         self.visit(node.target, frame)
+         self.write(" = (Markup if context.eval_ctx.autoescape else identity)(")
+@@ -1639,16 +1667,11 @@ class CodeGenerator(NodeVisitor):
+     def visit_NSRef(self, node: nodes.NSRef, frame: Frame) -> None:
+         # NSRefs can only be used to store values; since they use the normal
+         # `foo.bar` notation they will be parsed as a normal attribute access
+-        # when used anywhere but in a `set` context
++        # when used anywhere but in a `set` context. The check that the name
++        # refers to a Namespace is emitted by `_check_namespace_refs`, as this
++        # may be called in the middle of a tuple.
+         ref = frame.symbols.ref(node.name)
+-        self.writeline(f"if not isinstance({ref}, Namespace):")
+-        self.indent()
+-        self.writeline(
+-            "raise TemplateRuntimeError"
+-            '("cannot assign attribute on non-namespace object")'
+-        )
+-        self.outdent()
+-        self.writeline(f"{ref}[{node.attr!r}]")
++        self.write(f"{ref}[{node.attr!r}]")
+ 
+     def visit_Const(self, node: nodes.Const, frame: Frame) -> None:
+         val = node.as_const(frame.eval_ctx)
+diff --git a/src/jinja2/parser.py b/src/jinja2/parser.py
+index 22f3f81..1fe56cd 100644
+--- a/src/jinja2/parser.py
++++ b/src/jinja2/parser.py
+@@ -487,21 +487,18 @@ class Parser:
+         """
+         target: nodes.Expr
+ 
+-        if with_namespace and self.stream.look().type == "dot":
+-            token = self.stream.expect("name")
+-            next(self.stream)  # dot
+-            attr = self.stream.expect("name")
+-            target = nodes.NSRef(token.value, attr.value, lineno=token.lineno)
+-        elif name_only:
++        if name_only:
+             token = self.stream.expect("name")
+             target = nodes.Name(token.value, "store", lineno=token.lineno)
+         else:
+             if with_tuple:
+                 target = self.parse_tuple(
+-                    simplified=True, extra_end_rules=extra_end_rules
++                    simplified=True,
++                    extra_end_rules=extra_end_rules,
++                    with_namespace=with_namespace,
+                 )
+             else:
+-                target = self.parse_primary()
++                target = self.parse_primary(with_namespace=with_namespace)
+ 
+             target.set_ctx("store")
+ 
+@@ -643,10 +640,20 @@ class Parser:
+             node = self.parse_filter_expr(node)
+         return node
+ 
+-    def parse_primary(self) -> nodes.Expr:
++    def parse_primary(self, with_namespace: bool = False) -> nodes.Expr:
++        """Parse a name or literal value. If ``with_namespace`` is enabled, also
++        parse namespace attr refs, for use in assignments.
++        """
+         token = self.stream.current
+         node: nodes.Expr
+         if token.type == "name":
++            if with_namespace and self.stream.look().type == "dot":
++                # If namespace attributes are allowed at this point, and the
++                # next token is a dot, produce a namespace reference.
++                next(self.stream)  # name
++                next(self.stream)  # dot
++                attr = self.stream.expect("name")
++                return nodes.NSRef(token.value, attr.value, lineno=token.lineno)
+             if token.value in ("true", "false", "True", "False"):
+                 node = nodes.Const(token.value in ("true", "True"), lineno=token.lineno)
+             elif token.value in ("none", "None"):
+@@ -683,6 +690,7 @@ class Parser:
+         with_condexpr: bool = True,
+         extra_end_rules: t.Optional[t.Tuple[str, ...]] = None,
+         explicit_parentheses: bool = False,
++        with_namespace: bool = False,
+     ) -> t.Union[nodes.Tuple, nodes.Expr]:
+         """Works like `parse_expression` but if multiple expressions are
+         delimited by a comma a :class:`~jinja2.nodes.Tuple` node is created.
+@@ -701,10 +709,16 @@ class Parser:
+         `explicit_parentheses` is true if the parsing was triggered by an
+         expression in parentheses.  This is used to figure out if an empty
+         tuple is a valid expression or not.
++
++        If `with_namespace` is true, namespace attribute references such as
++        ``ns.attr`` are allowed as items. This is used for assignment targets.
+         """
+         lineno = self.stream.current.lineno
+         if simplified:
+-            parse = self.parse_primary
++
++            def parse() -> nodes.Expr:
++                return self.parse_primary(with_namespace=with_namespace)
++
+         elif with_condexpr:
+             parse = self.parse_expression
+         else:
+diff --git a/tests/test_core_tags.py b/tests/test_core_tags.py
+index 4bb95e0..54bf7d8 100644
+--- a/tests/test_core_tags.py
++++ b/tests/test_core_tags.py
+@@ -5,6 +5,7 @@ from jinja2 import Environment
+ from jinja2 import TemplateRuntimeError
+ from jinja2 import TemplateSyntaxError
+ from jinja2 import UndefinedError
++from jinja2.utils import Namespace
+ 
+ 
+ @pytest.fixture
+@@ -538,6 +539,48 @@ class TestSet:
+         )
+         assert tmpl.render() == "13|37"
+ 
++    def test_namespace_set_tuple(self, env_trim):
++        tmpl = env_trim.from_string(
++            "{% set ns = namespace(a=12, b=36) %}"
++            "{% set ns.a, ns.b = ns.a + 1, ns.b + 1 %}"
++            "{{ ns.a }}|{{ ns.b }}"
++        )
++        assert tmpl.render() == "13|37"
++
++    def test_namespace_set_tuple_swap(self, env_trim):
++        tmpl = env_trim.from_string(
++            "{% set ns = namespace(a=1, b=2) %}"
++            "{% set ns.a, ns.b = ns.b, ns.a %}"
++            "{{ ns.a }}|{{ ns.b }}"
++        )
++        assert tmpl.render() == "2|1"
++
++    def test_namespace_set_tuple_mixed(self, env_trim):
++        tmpl = env_trim.from_string(
++            "{% set ns = namespace(a=1) %}"
++            "{% set other = namespace() %}"
++            "{% set x, ns.a, other.b = 'x', 13, 37 %}"
++            "{{ x }}|{{ ns.a }}|{{ other.b }}"
++        )
++        assert tmpl.render() == "x|13|37"
++
++    def test_namespace_set_tuple_loop(self, env_trim):
++        tmpl = env_trim.from_string(
++            '{% set full = namespace(id="", prev_id="") %}'
++            "{% for id in ids %}"
++            '{% set full.prev_id, full.id = full.id, full.id + "/" + id %}'
++            "{% endfor %}"
++            "{{ full.prev_id }}|{{ full.id }}"
++        )
++        assert tmpl.render(ids=["a", "b", "c"]) == "/a/b|/a/b/c"
++
++    def test_namespace_set_tuple_invalid(self, env_trim):
++        tmpl = env_trim.from_string("{% set ns.a, foo.b = 1, 2 %}")
++        exc_info = pytest.raises(
++            TemplateRuntimeError, tmpl.render, ns=Namespace(), foo={}
++        )
++        assert "non-namespace object" in exc_info.value.message
++
+     def test_block_escaping_filtered(self):
+         env = Environment(autoescape=True)
+         tmpl = env.from_string(

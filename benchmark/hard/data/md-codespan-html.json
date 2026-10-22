@@ -1,0 +1,58 @@
+{
+ "id": "md-codespan-html",
+ "repo": "Python-Markdown/markdown",
+ "pr": 1072,
+ "issue": 1066,
+ "install": "-e . pytest pyyaml",
+ "tests": [
+  "tests"
+ ],
+ "run": [
+  "tests"
+ ],
+ "pr_url": "https://github.com/Python-Markdown/markdown/pull/1072",
+ "pr_title": "Properly parse unclosed tags in code spans",
+ "issue_url": "https://github.com/Python-Markdown/markdown/issues/1066",
+ "issue_title": "unclosed tag in code span",
+ "issue_body": "Hello,\r\n\r\nI'm facing a problem, not sure where the problem really is (I'm not a Python developer), but I managed to create a little use case showing it.\r\n\r\nUsing fresh install mkdocs (1.1.2) and markdown 3.3.3 (problem is not here with markdown 3.2.2) \r\n\r\nThis `.md` file works\r\n```md\r\nA text\r\n\r\nAnother text `<?php`.\r\n\r\n<div>\r\nhello\r\n</div>\r\n```\r\n\r\nAdding a new line, and it no longer works with error `AttributeError: 'NoneType' object has no attribute 'end'`\r\n\r\n```md\r\nA text\r\n\r\nNew line\r\n\r\nAnother text `<?php`.\r\n\r\n<div>\r\nhello\r\n</div>\r\n```\r\n\r\nIt also fails with other combinations of `code` tags containing HTML and/or PHP. But this one is the smaller use case I've found.\r\n\r\nThanks!\r\n",
+ "exclude": [],
+ "base": "82ac9056350e67411cdb1da34363950b1e18a271",
+ "fix": "1279074ea97807c0131a2b82893189bc07bf2dd8",
+ "files_changed": [
+  "docs/change_log/index.md",
+  "markdown/extensions/md_in_html.py",
+  "markdown/htmlparser.py",
+  "tests/test_syntax/blocks/test_html_blocks.py"
+ ],
+ "fail_to_pass": [],
+ "pass_to_pass": [],
+ "reference_failing_after_fix": [
+  "tests/test_apis.py",
+  "tests/test_extensions.py",
+  "tests/test_legacy.py",
+  "tests/test_meta.py",
+  "tests/test_syntax/blocks/test_blockquotes.py",
+  "tests/test_syntax/blocks/test_code_blocks.py",
+  "tests/test_syntax/blocks/test_headers.py",
+  "tests/test_syntax/blocks/test_hr.py",
+  "tests/test_syntax/blocks/test_html_blocks.py",
+  "tests/test_syntax/blocks/test_paragraphs.py",
+  "tests/test_syntax/extensions/test_abbr.py",
+  "tests/test_syntax/extensions/test_admonition.py",
+  "tests/test_syntax/extensions/test_attr_list.py",
+  "tests/test_syntax/extensions/test_code_hilite.py",
+  "tests/test_syntax/extensions/test_def_list.py",
+  "tests/test_syntax/extensions/test_fenced_code.py",
+  "tests/test_syntax/extensions/test_footnotes.py",
+  "tests/test_syntax/extensions/test_legacy_attrs.py",
+  "tests/test_syntax/extensions/test_legacy_em.py",
+  "tests/test_syntax/extensions/test_md_in_html.py",
+  "tests/test_syntax/extensions/test_tables.py",
+  "tests/test_syntax/extensions/test_toc.py",
+  "tests/test_syntax/inline/test_emphasis.py",
+  "tests/test_syntax/inline/test_entities.py",
+  "tests/test_syntax/inline/test_images.py",
+  "tests/test_syntax/inline/test_links.py",
+  "tests/test_syntax/inline/test_raw_html.py"
+ ]
+}

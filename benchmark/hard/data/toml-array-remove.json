@@ -1,0 +1,40 @@
+{
+ "id": "toml-array-remove",
+ "repo": "sdispater/tomlkit",
+ "pr": 409,
+ "issue": 408,
+ "install": "-e . pytest pyyaml",
+ "tests": [
+  "tests"
+ ],
+ "run": [
+  "tests"
+ ],
+ "pr_url": "https://github.com/python-poetry/tomlkit/pull/409",
+ "pr_title": "Fix removal of items from `Array`s",
+ "issue_url": "https://github.com/python-poetry/tomlkit/issues/408",
+ "issue_title": "Invalid serialization after removal of array item part deux",
+ "issue_body": "Removal of items from an array may leave the comma:\n\n```python\n>>> from tomlkit import parse\n>>> doc = parse('''x = [\n... \"one\" # comment one\n... , # comment two\n... ]''')\n>>> print(doc)\n{'x': [\n    (<Whitespace '\\n'>, 'one', <Comment 'comment one'>),\n    (<Whitespace '\\n'>, <Null>, <Whitespace ','>, <Comment 'comment two'>),\n    (<Whitespace '\\n'>,)\n]}\n>>> doc[\"x\"].remove('one')\n>>> print(doc)\n{'x': [\n    (<Whitespace '\\n'>, <Null>, <Whitespace ','>, <Comment 'comment two'>),\n    (<Whitespace '\\n'>,)\n]}\n>>> print(doc.as_string())\nx = [\n, # comment two\n]\n```\n",
+ "exclude": [],
+ "base": "f0c50e0a4371df420bb7e7e61af099ac6f3c8e51",
+ "fix": "832e85579ea9029aae53ebbb1812c537abf9dd03",
+ "files_changed": [
+  "tests/test_items.py",
+  "tomlkit/items.py",
+  "tomlkit/parser.py"
+ ],
+ "fail_to_pass": [],
+ "pass_to_pass": [],
+ "reference_failing_after_fix": [
+  "tests/test_api.py",
+  "tests/test_build.py",
+  "tests/test_items.py",
+  "tests/test_parser.py",
+  "tests/test_toml_document.py",
+  "tests/test_toml_file.py",
+  "tests/test_toml_spec_tests.py",
+  "tests/test_toml_tests.py",
+  "tests/test_utils.py",
+  "tests/test_write.py"
+ ]
+}

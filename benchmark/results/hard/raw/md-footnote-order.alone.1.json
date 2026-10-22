@@ -1,0 +1,116 @@
+{
+ "task": "md-footnote-order",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 234116,
+  "stop_reason": "end_turn",
+  "session_id": "53c4ca19-6faa-4028-9184-e9ea82c6e368",
+  "total_cost_usd": 0.9761278000000002,
+  "usage": {
+   "input_tokens": 40,
+   "cache_creation_input_tokens": 46849,
+   "cache_read_input_tokens": 851879,
+   "output_tokens": 21540,
+   "output_tokens_details": {
+    "thinking_tokens": 10176
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 46849,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 998,
+     "cache_read_input_tokens": 58695,
+     "cache_creation_input_tokens": 944,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 944
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 40,
+    "outputTokens": 21540,
+    "cacheReadInputTokens": 851879,
+    "cacheCreationInputTokens": 46849,
+    "webSearchRequests": 0,
+    "costUSD": 0.9761278000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 10176,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 21,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Footnotes are now numbered and listed in the order they're first referenced, so your example gives 1 then 2. All 1061 tests pass, and the 5 new tests fail on the original code. Nothing is committed.\n\nOn your worry about breaking things: I made reference order the default and added a `USE_DEFINITION_ORDER` option (default `False`). Setting it to `True` brings back the old behaviour exactly. It's documented in `docs/extensions/footnotes.md`, with a \"Changed\" entry in `docs/changelog.md`.\n\n**Why it needed more than a one-line fix.** The library's inline step doesn't visit the document from top to bottom. A reference in a paragraph gets handled before one in an earlier list item, so simply numbering each reference as it was found would still be wrong. Instead, in `markdown/extensions/footnotes.py`:\n\n- **Placeholders first:** each reference gets a placeholder where its number will go, because the final number isn't known yet.\n- **A new reordering step** (`FootnoteReorderingProcessor`) runs once all references have been found. It reads the document from top to bottom, then sorts the footnote list and fixes the \"Jump back to footnote N\" titles. It runs before the existing duplicate-reference step, so the extra back-links for repeated references get the right titles.\n- **The final step** swaps the placeholders for the real numbers. This also works when `SUPERSCRIPT_TEXT` contains raw HTML such as `<b>{}</b>`.\n\n**Ordering rules:**\n- Footnotes referenced in the body come first, in the order they first appear.\n- Next come footnotes referenced only from inside other footnotes.\n- Footnotes that are defined but never referenced come last, in definition order.\n- If you call `convert()` several times without `reset()`, footnotes from earlier runs are still rendered, but they now come after the current document's own footnotes.\n\n**Tests:** the 5 new tests in `tests/test_syntax/extensions/test_footnotes.py` cover your example, the `USE_DEFINITION_ORDER` option, references inside a list and a blockquote, references inside footnotes plus repeated and unused footnotes, and HTML in `SUPERSCRIPT_TEXT`. I also checked it alongside the `toc` and `extra` extensions and the footnotes place marker.\n\n**Two things about running checks here:**\n- `.venv/bin/python -m pytest tests` fails while collecting `test_md_in_html.py`, on the unchanged code too. I ran the full suite with `python -m unittest discover tests`; the footnotes test file runs fine under pytest.\n- flake8 and mypy aren't installed in the venv, so I only checked line length (the 119-character limit in `tox.ini`) by hand.",
+  "ttft_ms": 5293,
+  "type": "result",
+  "duration_ms": 237500,
+  "uuid": "1d594ead-6e0e-44b8-9495-0ca384e77781",
+  "ttft_stream_ms": 4228,
+  "time_to_request_ms": 153,
+  "first_content_frame_ms": 4228,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

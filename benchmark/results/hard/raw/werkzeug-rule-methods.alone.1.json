@@ -1,0 +1,116 @@
+{
+ "task": "werkzeug-rule-methods",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 107495,
+  "stop_reason": "end_turn",
+  "session_id": "34298fde-7ba6-43ec-960a-fbdafc8b5d5b",
+  "total_cost_usd": 0.5665542,
+  "usage": {
+   "input_tokens": 26,
+   "cache_creation_input_tokens": 32287,
+   "cache_read_input_tokens": 461971,
+   "output_tokens": 10788,
+   "output_tokens_details": {
+    "thinking_tokens": 3722
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 32287,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1244,
+     "cache_read_input_tokens": 44662,
+     "cache_creation_input_tokens": 415,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 415
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 26,
+    "outputTokens": 10788,
+    "cacheReadInputTokens": 461971,
+    "cacheCreationInputTokens": 32287,
+    "webSearchRequests": 0,
+    "costUSD": 0.5665542,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3722,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 21,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The duplicate check now takes methods into account. Two rules with the same path but no methods in common are allowed, and sharing any method still raises `DuplicateRuleError`. The full test suite passes (977 tests). I couldn't run a type checker because there isn't one in `.venv`. Nothing is committed.\n\n## Changes\n\n- **`src/werkzeug/routing/rules.py`**: added a new method, `Rule.is_duplicate(other)`. Two rules are duplicates if they have:\n  - the same compiled path and subdomain/host,\n  - the same websocket mode,\n  - and at least one method in common (`methods=None` counts as sharing every method).\n- **`__eq__` is back to its old behaviour.** #3038 had changed `==` to compare compiled parts and websocket mode. As the issue says, `==` is used elsewhere: `provides_defaults_for` uses `self != rule`. Since the duplicate check no longer uses `==`, I restored the long-standing comparison of path traces. That change hasn't been released, so no released behaviour changes.\n- **`matcher.py`**: the matcher now calls `rule.is_duplicate(existing)` instead of `rule == existing`.\n- **Docs**: updated `docs/routing.rst`, the `DuplicateRuleError` docstring and `CHANGES.rst`. `is_duplicate` is listed in the API docs, marked as new in 3.2.\n\n**On `strict_slashes` and `merge_slashes`:**\n- **`merge_slashes`** was already handled. A rule's slashes are merged before its parts are built, so `/a//b` with merging on duplicates `/a/b`, and with merging off it's a different path.\n- **`strict_slashes`** is deliberately ignored. A branch `/a/` and a leaf `/a` already have different parts, so they never count as duplicates. Two rules with exactly the same path both match that path, so whichever comes second is hidden for it whatever its `strict_slashes` setting. That fits the issue's rule that any overlap is a duplicate.\n\n## Tests\nI added tests to `tests/test_routing.py` for:\n- different methods on the same path (allowed, and each one matches correctly);\n- shared methods, including `HEAD` being added automatically with `GET` and `None` matching everything;\n- websocket mode with a shared method;\n- different `strict_slashes`, and branch vs. leaf;\n- `merge_slashes` on and off;\n- `is_duplicate` called directly.\n\nAgainst the old library code, `test_no_duplicate_disjoint_methods` and `test_is_duplicate` fail. The other new tests already pass there and are there to lock in the existing slash handling.\n\n## Why `Rule.methods` can be `None`\nThis is on purpose: `None` means \"every method is allowed\". The `Rule` docstring already said so (\"If not specified, all methods are allowed\"). Werkzeug has never defaulted to `GET`; frameworks like Flask add that default themselves. The `None` checks around the code (matcher, `suitable_for`, `__repr__`, exceptions) are how \"any method\" works. The `None` checks around the code (matcher, `suitable_for`, `__repr__`, exceptions) are how \"any method\" works. A set of every HTTP method couldn't replace `None`, because a `None` rule also accepts custom methods. I added \"`rule.methods` is `None`\" to the `methods` parameter docs to make this clearer.\n\n**Decision for you:** I made `is_duplicate` public so that subclasses can override it, for example if they match on extra attributes. If you'd rather not add public API, it can be renamed to `_is_duplicate`; only the matcher and one test call it.",
+  "ttft_ms": 2664,
+  "type": "result",
+  "duration_ms": 122801,
+  "uuid": "fda61be5-e346-48c3-8be2-69c94710ab74",
+  "ttft_stream_ms": 1333,
+  "time_to_request_ms": 48,
+  "first_content_frame_ms": 1333,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,116 @@
+{
+ "task": "jinja-namespace-tuple",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 112028,
+  "stop_reason": "end_turn",
+  "session_id": "5e872448-6b84-4bb9-98f4-1ba8a6abe0d4",
+  "total_cost_usd": 0.5258858000000001,
+  "usage": {
+   "input_tokens": 32,
+   "cache_creation_input_tokens": 28461,
+   "cache_read_input_tokens": 507949,
+   "output_tokens": 9824,
+   "output_tokens_details": {
+    "thinking_tokens": 2319
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 28461,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 749,
+     "cache_read_input_tokens": 40947,
+     "cache_creation_input_tokens": 304,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 304
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 32,
+    "outputTokens": 9824,
+    "cacheReadInputTokens": 507949,
+    "cacheCreationInputTokens": 28461,
+    "webSearchRequests": 0,
+    "costUSD": 0.5258858000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2319,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 29,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the bug: `{% set ns.a, ns.b = ... %}` now works, and namespace attributes can be mixed with plain names (e.g. `{% set x, ns.a = 1, 2 %}`). The full test suite passes (911 tests), and a quick manual check rendered correctly in both normal and async mode. Nothing is committed.\n\n**Cause:** there were two problems.\n1. **Parser:** a `name.attr` target was only recognized when it was the whole target, so the parser stopped at the first comma. That's the `expected token 'end of statement block', got ','` error.\n2. **Compiler:** even once parsing worked, the code that writes a namespace assignment also wrote the \"is this really a namespace?\" check right there, over several lines. Inside a tuple target that would have produced invalid Python.\n\n**Changes:**\n- **`src/jinja2/parser.py`:** `parse_primary` and `parse_tuple` take a new `with_namespace` flag, and `parse_assign_target` passes it on. Each item of a tuple target can now be a namespace attribute. The old single-target special case went away because it's covered by the new path.\n- **`src/jinja2/compiler.py`:** a new helper, `_check_namespace_refs`, writes the namespace check before the assignment, once per namespace name. Both `{% set %}` and `{% set %}...{% endset %}` use it. The namespace-attribute visitor now only writes the target itself.\n- **`tests/test_core_tags.py`:** new tests cover:\n  - assigning two attributes at once;\n  - swapping two attributes;\n  - mixing plain names with attributes of different namespaces;\n  - the loop example from the issue;\n  - the \"non-namespace object\" error when one of the targets isn't a namespace.\n- **`CHANGES.rst`:** added an entry under 3.1.5. I didn't know the GitHub issue number, so it has no `:issue:` reference; add one if you want it.\n\nOne behaviour to know about: the right-hand side is fully evaluated before anything is assigned, as in Python. So `ns.a, ns.b = ns.b, ns.a` swaps the values, and the issue's example gives `full.prev_id == \"/a/b\"` and `full.id == \"/a/b/c\"`.",
+  "ttft_ms": 3301,
+  "type": "result",
+  "duration_ms": 114106,
+  "uuid": "8e6ff496-2985-4bab-aa8a-45040fa8d940",
+  "ttft_stream_ms": 2577,
+  "time_to_request_ms": 110,
+  "first_content_frame_ms": 2577,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

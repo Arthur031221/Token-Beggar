@@ -1,0 +1,177 @@
+diff --git a/CHANGES.rst b/CHANGES.rst
+index 540bbe2..fbc330e 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -75,6 +75,8 @@ Unreleased
+     :issue:`2705`
+ -   Show correct value for flag default when using ``default_map``.
+     :issue:`2632`
++-   Contexts created during shell completion are closed properly, fixing a
++    ``ResourceWarning`` when using ``click.File``. :issue:`2644`
+ 
+ 
+ Version 8.1.7
+diff --git a/src/click/shell_completion.py b/src/click/shell_completion.py
+index 6fd9e54..361eef6 100644
+--- a/src/click/shell_completion.py
++++ b/src/click/shell_completion.py
+@@ -271,8 +271,14 @@ class ShellComplete:
+         :param incomplete: Value being completed. May be empty.
+         """
+         ctx = _resolve_context(self.cli, self.ctx_args, self.prog_name, args)
+-        obj, incomplete = _resolve_incomplete(ctx, args, incomplete)
+-        return obj.shell_complete(ctx, incomplete)
++
++        # Closing the root context closes every context created while
++        # resolving, releasing resources such as files opened by File.
++        try:
++            obj, incomplete = _resolve_incomplete(ctx, args, incomplete)
++            return obj.shell_complete(ctx, incomplete)
++        finally:
++            ctx.find_root().close()
+ 
+     def format_completion(self, item: CompletionItem) -> str:
+         """Format a completion item into the form recognized by the
+@@ -539,49 +545,62 @@ def _resolve_context(
+     traversing the complete arguments. This only follows the commands,
+     it doesn't trigger input prompts or callbacks.
+ 
++    The returned context is not closed. Closing its root context closes
++    every context created here.
++
+     :param cli: Command being called.
+     :param prog_name: Name of the executable in the shell.
+     :param args: List of complete args before the incomplete value.
+     """
+     ctx_args["resilient_parsing"] = True
+-    ctx = cli.make_context(prog_name, args.copy(), **ctx_args)
+-    args = ctx._protected_args + ctx.args
++    root_ctx = ctx = cli.make_context(prog_name, args.copy(), **ctx_args)
+ 
+-    while args:
+-        command = ctx.command
+-
+-        if isinstance(command, Group):
+-            if not command.chain:
+-                name, cmd, args = command.resolve_command(ctx, args)
++    try:
++        args = ctx._protected_args + ctx.args
+ 
+-                if cmd is None:
+-                    return ctx
++        while args:
++            command = ctx.command
+ 
+-                ctx = cmd.make_context(name, args, parent=ctx, resilient_parsing=True)
+-                args = ctx._protected_args + ctx.args
+-            else:
+-                sub_ctx = ctx
+-
+-                while args:
++            if isinstance(command, Group):
++                if not command.chain:
+                     name, cmd, args = command.resolve_command(ctx, args)
+ 
+                     if cmd is None:
+                         return ctx
+ 
+                     sub_ctx = cmd.make_context(
+-                        name,
+-                        args,
+-                        parent=ctx,
+-                        allow_extra_args=True,
+-                        allow_interspersed_args=False,
+-                        resilient_parsing=True,
++                        name, args, parent=ctx, resilient_parsing=True
+                     )
+-                    args = sub_ctx.args
+-
+-                ctx = sub_ctx
+-                args = [*sub_ctx._protected_args, *sub_ctx.args]
+-        else:
+-            break
++                    ctx.call_on_close(sub_ctx.close)
++                    ctx = sub_ctx
++                    args = ctx._protected_args + ctx.args
++                else:
++                    sub_ctx = ctx
++
++                    while args:
++                        name, cmd, args = command.resolve_command(ctx, args)
++
++                        if cmd is None:
++                            return ctx
++
++                        sub_ctx = cmd.make_context(
++                            name,
++                            args,
++                            parent=ctx,
++                            allow_extra_args=True,
++                            allow_interspersed_args=False,
++                            resilient_parsing=True,
++                        )
++                        ctx.call_on_close(sub_ctx.close)
++                        args = sub_ctx.args
++
++                    ctx = sub_ctx
++                    args = [*sub_ctx._protected_args, *sub_ctx.args]
++            else:
++                break
++    except BaseException:
++        root_ctx.close()
++        raise
+ 
+     return ctx
+ 
+diff --git a/tests/test_shell_completion.py b/tests/test_shell_completion.py
+index 3e7a2bd..29c05d9 100644
+--- a/tests/test_shell_completion.py
++++ b/tests/test_shell_completion.py
+@@ -414,3 +414,47 @@ def test_add_completion_class_decorator():
+     # Using `add_completion_class` as a decorator adds the new shell immediately
+     assert "mysh" in click.shell_completion._available_shells
+     assert click.shell_completion._available_shells["mysh"] is MyshComplete
++
++
++@pytest.mark.parametrize("chain", [False, True])
++def test_files_closed(tmp_path, chain):
++    """File options opened while resolving the context are closed after
++    completion, but are still open while completing.
++    """
++    path = tmp_path / "config"
++    path.write_text("")
++    files = []
++
++    class RecordFile(File):
++        def convert(self, value, param, ctx):
++            rv = super().convert(value, param, ctx)
++            files.append(rv)
++            return rv
++
++    def complete(ctx, param, incomplete):
++        assert files and not any(f.closed for f in files)
++        return ["done"]
++
++    cli = Group(
++        "cli",
++        chain=chain,
++        params=[Option(["--a"], type=RecordFile())],
++        commands=[
++            Command("x", params=[Option(["--b"], type=RecordFile())]),
++            Command(
++                "y",
++                params=[
++                    Option(["--c"], type=RecordFile()),
++                    Argument(["d"], shell_complete=complete),
++                ],
++            ),
++        ],
++    )
++    args = ["--a", str(path), "y", "--c", str(path)]
++
++    if chain:
++        args[2:2] = ["x", "--b", str(path)]
++
++    assert _get_words(cli, args, "") == ["done"]
++    assert len(files) == (3 if chain else 2)
++    assert all(f.closed for f in files)
