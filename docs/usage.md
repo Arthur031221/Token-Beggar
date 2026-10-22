@@ -13,6 +13,10 @@ Nothing is fixed in advance. The chat model splits the prompt into subtasks and 
 
 Chat, one line answers and anything under about three tool calls stay inline. A worker starts with its own base context, so tiny jobs would cost more as workers.
 
+## When it stands down
+
+Where the benchmark measured no saving, the skill does nothing. For the model and effort of the chat, `data/measured.json` holds the cost with the skill over the cost alone. At or above 1.15 the whole menu is used (`full`). From 0.95 up, a one line card sends only multi-file changes to a worker (`lean`). Below that there is no card, no delegation and no footer (`off`). `TOKEN_BEGGAR_MODE=full|lean|off` forces a mode. In the measured data, Fable and Opus at max effort get `full`, Opus at the other efforts gets `lean`, and Sonnet and Haiku get `off`.
+
 ## The ceiling
 
 The model and effort of your chat cap what the same vendor's models get routed to. Opus at high effort never sends work to Opus at max or to Fable. Outside tools on your machine (`agy`, `gemini`, `codex`) are not capped, unless you say so in the prompt: "agy max flash".

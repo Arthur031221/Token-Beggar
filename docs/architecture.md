@@ -52,12 +52,24 @@ The ratio comes from `data/measured.json`: the pooled ratio of the chat model an
 
 The host can run the Stop hook before it has written the final message. The hook compares `last_assistant_message` with the transcript and waits up to `TOKEN_BEGGAR_SETTLE` seconds (default 4). If the message is still missing the footer says "at least". Before that wait existed the footer undercounted a real run by the size of the last message (49k against 69.9k); it now agrees with the agent's own total (86k against 85.8k).
 
+## Modes
+
+`footer.mode` reads `data/measured.json` for the chat model and effort and returns how much the skill acts. `overall` holds the measured price-weighted cost ratio per model and effort.
+
+| Mode | When | What the hooks do |
+| --- | --- | --- |
+| `full` | ratio at or above 1.15 (a saving clear of the run-to-run spread), or a model that was not measured | the whole menu, the reminder after it and the footer |
+| `lean` | ratio from 0.95 to 1.15 and a measured multi-file saving | a one line card that sends changes to three or more files to one worker, and a footer only for that kind |
+| `off` | anything lower | no card, no delegation, no footer |
+
+`TOKEN_BEGGAR_MODE` forces one of the three. The compaction guard runs in every mode. `token-beggar doctor` forces `full` for its own hook check so the result does not depend on the ceiling.
+
 ## Compaction guard
 
 Works without any setting. `compact.py` finds the compaction point as the context window of the model minus 33k tokens, the host's default. `CLAUDE_CODE_AUTO_COMPACT_WINDOW` (clamped to 100k to 1M) and `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` are read when set. `token-beggar window` prints the point and where it came from.
 
 - Every prompt and after every tool call (`PostToolUse`): at 87.5 percent of the point, or 30k tokens before it if that is earlier, a notice asks the chat model to judge where it is and to save a note with `token-beggar note` (`--mid-step`, `--clean` or `--phase-done`, plus optional `--progress` and `--needs-early-detail`). The extra margin is there because one large tool result can jump a small margin in a single call.
-- On a long context (150k, or 40 percent of a small point, never under 60k), once per stage, the notice asks the model whether a phase just finished. If so it saves a `--phase-done` note and suggests `/compact` to the user in one line. A hook cannot start a compaction, and the host reads its window setting only at startup, so a lower point cannot be set from inside a session. Suggesting is the one honest way to compact early.
+- With `TOKEN_BEGGAR_EARLY=1` (off by default, because the long-session benchmark measured no saving and a quality loss), on a long context (150k, or 40 percent of a small point, never under 60k), once per stage, the notice asks the model whether a phase just finished. If so it saves a `--phase-done` note and suggests `/compact` to the user in one line. A hook cannot start a compaction, and the host reads its window setting only at startup, so a lower point cannot be set from inside a session. Suggesting is the one honest way to compact early.
 - `PreCompact`: writes the mechanical extract (request, files changed, last commands, open todos, where the last turn stopped) to `handoff/<session>.md` so a note exists even if the model wrote none. For an automatic compaction, when the note says mid-step (or the model's note is missing and there are unverified edits), it exits with code 2, which makes the host postpone the compaction. Up to 3 times, each lifting the point by 5 percent of the window: 3 when the step is far from done or needs early detail, 1 when nearly done. Never past `blocked - 5k` where `blocked` is the level where the host refuses requests.
 - A point the user set (`CLAUDE_CODE_AUTO_COMPACT_WINDOW`, `autoCompactWindow`, `modelSettings.autoCompactWindow`, `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`) is never moved: no deferral, no suggestions. The notes are still written and restored. Token Beggar writes no settings.
 - `SessionStart` on `compact`: puts the note and the menu back in front of the model. The model's note comes after the extract, and a note written more than 15k tokens of context before the compaction is labelled as old.
