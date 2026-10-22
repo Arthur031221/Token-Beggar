@@ -22,7 +22,7 @@ fi
 if want 2; then
 echo '$ # a multi-file prompt arrives on Opus high; the hook adds this card (lean mode)'
 printf '%s' '{"prompt":"Add a coupon discount to the cart, billing and invoice modules and run the tests","session_id":"demo","cwd":"'"$work"'","transcript_path":""}' |
-  tb hook prompt | python3 -c 'import json,sys; print(json.load(sys.stdin)["hookSpecificOutput"]["additionalContext"])' | fold -s -w 104
+  tb hook prompt | python3 -c 'import json,sys; print(json.load(sys.stdin)["hookSpecificOutput"]["additionalContext"])' | fold -s -w 90
 echo
 fi
 
