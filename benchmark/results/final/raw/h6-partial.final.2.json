@@ -1,0 +1,111 @@
+{
+ "task": "h6-partial",
+ "class": "design",
+ "arm": "final",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 22851,
+  "stop_reason": "end_turn",
+  "session_id": "39d59979-785b-4422-aa90-890c958efbf1",
+  "total_cost_usd": 0.15007379999999998,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11913,
+   "cache_read_input_tokens": 74389,
+   "output_tokens": 1993,
+   "output_tokens_details": {
+    "thinking_tokens": 726
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11913,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1403,
+     "cache_read_input_tokens": 23040,
+     "cache_creation_input_tokens": 1663,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1663
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1993,
+    "cacheReadInputTokens": 74389,
+    "cacheCreationInputTokens": 11913,
+    "webSearchRequests": 0,
+    "costUSD": 0.15007379999999998,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 726,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Design: partial shipments and returns\n\n**Data model** (`shop/models.py`, `shop/orders.py`)\n- `Order.lines` holds `(sku, qty, price)` tuples. Make it a per-line record that also tracks `shipped_qty`, `returned_qty` and the line's charged subtotal and tax, so refunds use what was actually charged.\n- Add `Shipment` (id, carrier, `{sku: qty}`, label) and `Return` (id, `{sku: qty}`, refund_cents). Add `Order.ship(...)` and `Order.return_items(...)`, which check quantities: you can't ship more than was ordered or return more than was shipped.\n- Add `partially_shipped` and `returned` states. These should be computed from the quantities, not set by hand with `move()`. Right now `ALLOWED` makes `shipped` a final state, so returns have no way in.\n\n**Pricing** (`shop/pricing.py`): add a `refund_for(line, qty)` function.\n\n**Storage** (`shop/storage.py`): `save_order` currently saves only totals and state, not the lines. It needs to save lines, shipments and returns, and fill in defaults when loading older rows.\n\n**Reports** (`shop/reports.py`): `sales_by_customer` only counts `paid`/`shipped`. Include the new states and subtract refunds.\n\n**Carriers**: `label(order_id)` makes one label per order, so a second shipment would reuse the label. Pass a shipment id instead. That keeps all 20 carrier files unchanged, as long as the id fits the 8-digit `valid_label` format.\n\n**CLI/tests**: add `ship`/`return` commands and tests for each of the above.\n\n**Main risks**\n1. **Refund rounding:** the bulk discount and tax are rounded per line or per cart. Several partial refunds could add up to more than was charged, so cap them.\n2. **Bulk discount policy:** if a return drops a line below 10 units, do you take back the discount? This is a business decision.\n3. **ID collisions:** `itertools.count(1000)` restarts every time the process starts, so ids already collide with stored orders. Shipment ids would make this worse. Fix it first.\n4. **Old saved data:** stored rows have no line details, so returns on existing orders can't be priced accurately.",
+  "ttft_ms": 1965,
+  "type": "result",
+  "duration_ms": 24883,
+  "uuid": "a727f025-06e3-4cb9-90a5-3c4563c756e5",
+  "ttft_stream_ms": 1562,
+  "time_to_request_ms": 325,
+  "first_content_frame_ms": 1562,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h6-partial.final.2",
+ "ledger": []
+}

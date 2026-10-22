@@ -1,0 +1,111 @@
+{
+ "task": "h7-diff",
+ "class": "review",
+ "arm": "final",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 24473,
+  "stop_reason": "end_turn",
+  "session_id": "932af876-e238-4305-9fa5-2492cc3b9d3c",
+  "total_cost_usd": 0.149845,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 10763,
+   "cache_read_input_tokens": 95905,
+   "output_tokens": 2226,
+   "output_tokens_details": {
+    "thinking_tokens": 601
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10763,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1209,
+     "cache_read_input_tokens": 22907,
+     "cache_creation_input_tokens": 646,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 646
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2226,
+    "cacheReadInputTokens": 95905,
+    "cacheCreationInputTokens": 10763,
+    "webSearchRequests": 0,
+    "costUSD": 0.149845,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 601,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found three bugs, one in each hunk. The last two make each other worse. I didn't edit anything. The current tests pass, and I checked that they would also pass with the patch applied, so none of these bugs would be caught.\n\n### 1. `shop/storage.py` \u2013 `save_order` now adds a duplicate row on every save\nBefore, `save_order` removed any existing row with the same `id` and then appended the new one, so saving an order again replaced it. With the filter gone, `rows = self.load()` keeps the old row and appends another. An order is normally saved more than once as it moves through `new \u2192 paid \u2192 shipped` (`orders.py:19`), so the file ends up with several rows for one order id, each with a different `state`. Anything that reads the file now sees the same order several times, and a cancelled order still has its older `new`/`paid` rows.\n\n### 2. `shop/money.py` \u2013 `percent` truncates instead of rounding half up\n`int(x + 0.5)` was changed to `int(x)`, so every fraction is now rounded down. The docstring still says \"Round half up, in cents\", which no longer matches. `percent` is used for both tax and the bulk discount in `pricing.py`:\n- **Tax is under-charged by up to 1\u00a2.** For example, 8.25% of 1234\u00a2 is 101.805: it was 102, now 101. For 1999\u00a2 it was 165, now 164. This affects both `calc_total` and `calc_tax`.\n- **The bulk discount is too small by up to 1\u00a2,** so bulk customers pay more. 5% of 1010\u00a2 is 50.5: it was 51, now 50. For 1990\u00a2 it was 100, now 99.\n- The current tests in `test_pricing.py` happen to use amounts that come out exact (2000\u00a2 gives exactly 165, and 950\u00a2 gives 78.375, which is 78 either way). That's why they don't catch this.\n\n### 3. `shop/reports.py` \u2013 `sales_by_customer` now counts unpaid orders\nChanging the condition from \"state is paid or shipped\" to \"state is not cancelled\" adds `new` (unpaid) orders to sales. It also counts any unexpected or misspelled state. The report now shows money that was never collected.\n\n**How 1 and 3 combine:** because of bug 1, a single order that went `new \u2192 paid \u2192 shipped` leaves three rows. The new report filter counts all three, so that order's total is reported 3\u00d7. Even with the old filter it would have been counted twice (once as `paid`, once as `shipped`). A cancelled order's earlier `new`/`paid` rows are also still counted. Revenue in `shop report` is inflated as a result.",
+  "ttft_ms": 1569,
+  "type": "result",
+  "duration_ms": 25931,
+  "uuid": "d2e5a8ff-2cb4-4a5d-ae6b-fc5883a40390",
+  "ttft_stream_ms": 1004,
+  "time_to_request_ms": 217,
+  "first_content_frame_ms": 1005,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h7-diff.final.1",
+ "ledger": []
+}

@@ -1,0 +1,111 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15394,
+  "stop_reason": "end_turn",
+  "session_id": "fe5e8678-5c5c-492e-b6f4-f16a0f793789",
+  "total_cost_usd": 0.083863,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6574,
+   "cache_read_input_tokens": 31775,
+   "output_tokens": 1245,
+   "output_tokens_details": {
+    "thinking_tokens": 506
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6574,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1170,
+     "cache_read_input_tokens": 18985,
+     "cache_creation_input_tokens": 379,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 379
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1245,
+    "cacheReadInputTokens": 31775,
+    "cacheCreationInputTokens": 6574,
+    "webSearchRequests": 0,
+    "costUSD": 0.083863,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 506,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read `shop/cache.py`. The individual dict operations won't corrupt anything, but every multi-step sequence in it can race.\n\n**Problems**\n\n1. **Cache stampede.** When an entry is missing or expired, every thread that asks for it calls `loader(sku)` at the same moment. For a popular SKU, that sends N identical requests to the backend just as the entry expires.\n2. **`invalidate` can be undone.** Thread A starts loading, thread B calls `invalidate(sku)`, then A finishes and writes its stale value back (line 18). The invalidation is silently lost for a full TTL.\n3. **Memory grows without limit.** Expired entries are never removed, and there is no size cap. In a long-running service with many SKUs, the dict keeps growing.\n4. **Failures aren't shared.** If the loader raises, nothing is recorded, so every concurrent and later caller retries straight away. A failing backend gets hammered.\n5. **The timestamp is taken after the load** (line 18). With a slow loader, an entry can be served for longer than `ttl` after the data was actually read. Taking the time before calling the loader is more accurate.\n\n**Fix I'd choose**\n\n- Add one `threading.Lock` that guards `_data` plus a new `_inflight: dict[sku, Future]`.\n- In `get`, under the lock: return a fresh hit if there is one. Otherwise, join the existing in-flight future, or register a new one and become its \"leader\".\n- The leader calls the loader **outside** the lock, then stores the result or exception on the future so all waiters get the same outcome. Optionally, cache errors for a short time.\n- Keep a per-key generation counter. `invalidate` bumps it, and the leader only writes its value if the generation hasn't changed since the load started. This fixes problem 2.\n- Store entries in an `OrderedDict` used as an LRU with a `maxsize`. Evict the oldest entries on insert and drop expired ones as they are found.\n- Record the time before calling the loader.",
+  "ttft_ms": 3159,
+  "type": "result",
+  "duration_ms": 16502,
+  "uuid": "98f59183-8af1-4dea-a2ba-696fa2a4b419",
+  "ttft_stream_ms": 2439,
+  "time_to_request_ms": 778,
+  "first_content_frame_ms": 2440,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.final.3",
+ "ledger": []
+}

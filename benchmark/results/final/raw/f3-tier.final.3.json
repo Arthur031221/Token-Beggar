@@ -1,0 +1,127 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 55214,
+  "stop_reason": "end_turn",
+  "session_id": "9d079c1a-157b-4843-867a-d338e584bdcf",
+  "total_cost_usd": 0.29203370000000006,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 19426,
+   "cache_read_input_tokens": 88713,
+   "output_tokens": 2928,
+   "output_tokens_details": {
+    "thinking_tokens": 685
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 19426,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 643,
+     "cache_read_input_tokens": 29855,
+     "cache_creation_input_tokens": 2361,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2361
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2928,
+    "cacheReadInputTokens": 88713,
+    "cacheCreationInputTokens": 19426,
+    "webSearchRequests": 0,
+    "costUSD": 0.23174260000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 685,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 3595,
+    "cacheReadInputTokens": 21491,
+    "cacheCreationInputTokens": 8872,
+    "webSearchRequests": 0,
+    "costUSD": 0.0602911,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Carts now have a `tier` setting, default `'standard'`. Gold takes 10% off the subtotal, silver 5%, and any other value takes nothing off. All 16 tests pass (`python3 -m unittest discover -s tests -t .`, \"Ran 16 tests \u2026 OK\"). Nothing is committed.\n\n**How it works**\n- **`shop/models.py`**: added `tier: str = \"standard\"` to `Cart`.\n- **`shop/pricing.py`**: added a `TIER_DISCOUNTS` table (`gold: 10.0`, `silver: 5.0`) and a `tier_discount(cents, tier)` helper. `calc_total` and `calc_tax` now take the tier discount off both the subtotal and the taxable amount before working out tax. It comes after the existing 10+ item bulk discount, so the two stack.\n- **`shop/orders.py`**: `Order` already got its totals from `calc_total` and `calc_tax`, so it picks up the discount without changes. It also records `self.tier` now.\n- **`shop/cli.py`**: `shop quote --tier gold a:10.00:2` prints `19.49`, compared with `21.65` for standard.\n\n**Tests**\n- **`tests/test_pricing.py`** (6 new): gold, silver, an unknown tier, the default tier, a cart mixing taxable and untaxable items, and gold together with the bulk discount.\n- **`tests/test_orders.py`** (1 new): a gold order stores its tier and has a lower total than a standard one.\n- **`tests/test_cli.py`** (new file, 3 tests): `quote` output for standard, gold and silver.\n\n**Rounding:** the discount is rounded separately on the subtotal and on the taxable amount, each to the nearest cent. When a cart mixes taxable and untaxable items, the tax can be based on a figure up to 1 cent off.",
+  "ttft_ms": 3828,
+  "type": "result",
+  "duration_ms": 59031,
+  "uuid": "b529afff-04c2-4675-bff4-aa726805f1d3",
+  "ttft_stream_ms": 1848,
+  "time_to_request_ms": 841,
+  "first_content_frame_ms": 1849,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 15 ++++++++++++---\n tests/test_orders.py  | 13 ++++++++++++-\n tests/test_pricing.py | 30 ++++++++++++++++++++++++++++++\n 6 files changed, 58 insertions(+), 5 deletions(-)\n",
+ "workdir": "f3-tier.final.3",
+ "ledger": []
+}

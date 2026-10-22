@@ -1,0 +1,127 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "final",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 66174,
+  "stop_reason": "end_turn",
+  "session_id": "d5539550-49b7-4a1c-abc1-d7f682ca8682",
+  "total_cost_usd": 0.2133437,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 10854,
+   "cache_read_input_tokens": 53504,
+   "output_tokens": 2155,
+   "output_tokens_details": {
+    "thinking_tokens": 509
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10854,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 584,
+     "cache_read_input_tokens": 21663,
+     "cache_creation_input_tokens": 1981,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1981
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 2155,
+    "cacheReadInputTokens": 53504,
+    "cacheCreationInputTokens": 10854,
+    "webSearchRequests": 0,
+    "costUSD": 0.1406568,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 509,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 4496,
+    "cacheReadInputTokens": 57054,
+    "cacheCreationInputTokens": 8799,
+    "webSearchRequests": 0,
+    "costUSD": 0.0726869,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 487,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and the full test suite passes: `python3 -m unittest` reports \"Ran 13 tests \u2026 OK\". pytest and a plain `python` command aren't installed here, so the tests ran with `python3` and unittest. Nothing is committed.\n\n**What changed**\n- **`shop/models.py`**: `Cart` has a new `tier` field that defaults to `\"standard\"`. It comes after the existing fields, so code that builds a `Cart` positionally still works.\n- **`shop/pricing.py`**: gold takes 10% off, silver 5%, and any other value nothing. Both `calc_total` and `calc_tax` take the discount off before working out tax, so the tax is on the discounted taxable amount.\n- **`shop/orders.py`**: no edit was needed. `Order` already calls `calc_total(cart)` and `calc_tax(cart)`, so it picks up the tier, and a test confirms it.\n- **`shop/cli.py`**: `quote` has a new `--tier` option, defaulting to `standard`.\n\n**Tests added**\n- **`tests/test_pricing.py`**: gold, silver, standard and an unknown tier, plus a cart mixing taxable and non-taxable items.\n- **`tests/test_orders.py`**: an order on the gold tier.\n- **`tests/test_cli.py`** (new): `quote --tier gold`, and `quote` with no tier given.\n\n**Rounding:** the discount is taken off the subtotal and the taxable amount separately, using the existing `percent()` helper, which rounds half up. Because each is rounded on its own, the two discounts can differ by a cent from a strict proportional split. Totals for standard-tier carts are exactly as before.",
+  "ttft_ms": 6013,
+  "type": "result",
+  "duration_ms": 68537,
+  "uuid": "4ec250ab-4d53-475f-be5e-bb4f15d96104",
+  "ttft_stream_ms": 2123,
+  "time_to_request_ms": 201,
+  "first_content_frame_ms": 2124,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/pricing.py       |  9 +++++++++\n tests/test_orders.py  |  7 +++++++\n tests/test_pricing.py | 27 +++++++++++++++++++++++++++\n 5 files changed, 46 insertions(+), 1 deletion(-)\n",
+ "workdir": "f3-tier.final.2",
+ "ledger": []
+}

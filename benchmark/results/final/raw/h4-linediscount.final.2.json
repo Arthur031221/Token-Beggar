@@ -1,0 +1,127 @@
+{
+ "task": "h4-linediscount",
+ "class": "multi_file",
+ "arm": "final",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 43111,
+  "stop_reason": "end_turn",
+  "session_id": "a6df5c12-8f6b-4e69-b6d1-90158f6b59fe",
+  "total_cost_usd": 0.16770649999999998,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 8038,
+   "cache_read_input_tokens": 31879,
+   "output_tokens": 1600,
+   "output_tokens_details": {
+    "thinking_tokens": 207
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8038,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 570,
+     "cache_read_input_tokens": 19089,
+     "cache_creation_input_tokens": 1739,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1739
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1600,
+    "cacheReadInputTokens": 31879,
+    "cacheCreationInputTokens": 8038,
+    "webSearchRequests": 0,
+    "costUSD": 0.1026958,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 207,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 3922,
+    "cacheReadInputTokens": 44882,
+    "cacheCreationInputTokens": 8513,
+    "webSearchRequests": 0,
+    "costUSD": 0.06501069999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 285,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Per-line discounts are in, and the full test suite passes: `python3 -m unittest discover` ran 14 tests, all OK. Nothing is committed.\n\n**What changed:**\n- **`shop/models.py`**: `Line` has a new `discount_percent` field that defaults to 0. `Cart.add(item, qty=1, discount_percent=0)` adds to an existing line only when both the sku and the discount match. Otherwise it starts a new line.\n- **`shop/pricing.py`**: `line_subtotal` takes the discount off first, using `money.percent` (which already rounds half up). It then applies the existing bulk rule (5% off when qty \u2265 10) to the discounted amount. Lines with no discount price exactly as before.\n- **`shop/cli.py`**: `quote` accepts `sku:price:qty` or `sku:price:qty:discount`. Any other number of fields fails with the same `ValueError` as before.\n- **`tests/test_pricing.py`**: eight new tests. They cover discount-before-bulk ordering, half-up rounding on a discounted line, merging versus starting a new line, the default of 0, the 3- and 4-field CLI forms, and malformed CLI input.\n\n**Choices you may want to revisit:**\n- Discounts aren't range-checked, so a value below 0 or above 100 is accepted. `Cart.add` had no input checks before, not even on qty, so I didn't add one only for the discount.\n- The CLI reads the discount as a float, so values like `12.5` work.\n\nRunning the tests left untracked `__pycache__` directories in the repo, which you may want to delete or add to `.gitignore`.",
+  "ttft_ms": 3566,
+  "type": "result",
+  "duration_ms": 45311,
+  "uuid": "f7ffc024-3847-4006-84c3-591489197d90",
+  "ttft_stream_ms": 1534,
+  "time_to_request_ms": 508,
+  "first_content_frame_ms": 1534,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 11 ++++++++---\n shop/models.py        |  7 ++++---\n shop/pricing.py       |  1 +\n tests/test_pricing.py | 53 +++++++++++++++++++++++++++++++++++++++++++++++++++\n 4 files changed, 66 insertions(+), 6 deletions(-)\n",
+ "workdir": "h4-linediscount.final.2",
+ "ledger": []
+}

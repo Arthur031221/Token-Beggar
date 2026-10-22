@@ -1,0 +1,127 @@
+{
+ "task": "h4-linediscount",
+ "class": "multi_file",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 43321,
+  "stop_reason": "end_turn",
+  "session_id": "237058c5-5404-40c4-ace9-649c17db861c",
+  "total_cost_usd": 0.20592370000000002,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11816,
+   "cache_read_input_tokens": 74290,
+   "output_tokens": 2414,
+   "output_tokens_details": {
+    "thinking_tokens": 619
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11816,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 818,
+     "cache_read_input_tokens": 21525,
+     "cache_creation_input_tokens": 3081,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 3081
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2414,
+    "cacheReadInputTokens": 74290,
+    "cacheCreationInputTokens": 11816,
+    "webSearchRequests": 0,
+    "costUSD": 0.157698,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 619,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2724,
+    "cacheReadInputTokens": 31422,
+    "cacheCreationInputTokens": 7131,
+    "webSearchRequests": 0,
+    "costUSD": 0.04822570000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 340,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Per-line discounts are in. I checked the worker's changes myself and they match what you asked for. All 13 tests pass (`python3 -m unittest`), and nothing is committed.\n\n**What changed (4 files):**\n- **`shop/models.py`**: `Line` has a new `discount_percent` field that defaults to 0. `Cart.add(item, qty=1, discount_percent=0)` adds to an existing line only when both the sku and the discount match; otherwise it starts a new line.\n- **`shop/pricing.py`**: `line_subtotal` takes the line discount off first with `money.percent` (round half up), then applies the bulk rule to what's left. Lines with no discount price exactly as before.\n- **`shop/cli.py`**: `quote` accepts `sku:price:qty` or `sku:price:qty:discount`.\n- **`tests/test_pricing.py`**: 7 new tests:\n  - one where the order of the two discounts changes the result: price 333 \u00d7 10 at 15% off gives 2688 (doing the bulk discount first would give 2689), and the 499.5 step rounds up;\n  - lines with no discount are unchanged;\n  - same sku and discount merge into one line;\n  - same sku with a different discount makes a new line;\n  - CLI quotes with 3 and 4 fields;\n  - a bad discount is rejected.\n\n**Choices you may want to revisit:**\n- **Discount must be 0\u2013100:** the CLI only accepts a whole-number discount from 0 to 100, and rejects more than four fields. Anything else raises `ValueError`. Bad input already fails that way elsewhere, but the range check is new behaviour.\n- **Discount type:** `Line.discount_percent` is a `float`, while the CLI passes a whole number. `10 == 10.0`, so lines still merge correctly.\n- **`Cart.remove(sku)`:** it still removes every line with that sku, whatever the discount.\n\nRunning the tests left untracked `__pycache__/` folders behind.",
+  "ttft_ms": 3716,
+  "type": "result",
+  "duration_ms": 45556,
+  "uuid": "5cbc4265-ea1d-415b-8d8f-9284e0a57af1",
+  "ttft_stream_ms": 872,
+  "time_to_request_ms": 228,
+  "first_content_frame_ms": 872,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 11 ++++++++---\n shop/models.py        |  7 ++++---\n shop/pricing.py       |  1 +\n tests/test_pricing.py | 52 +++++++++++++++++++++++++++++++++++++++++++++++++--\n 4 files changed, 63 insertions(+), 8 deletions(-)\n",
+ "workdir": "h4-linediscount.final.3",
+ "ledger": []
+}

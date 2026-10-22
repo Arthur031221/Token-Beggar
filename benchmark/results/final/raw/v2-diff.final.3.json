@@ -1,0 +1,111 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 18212,
+  "stop_reason": "end_turn",
+  "session_id": "5bfe05c6-0aa6-4147-91d0-107b6a509ddb",
+  "total_cost_usd": 0.11869579999999999,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 8770,
+   "cache_read_input_tokens": 72219,
+   "output_tokens": 1703,
+   "output_tokens_details": {
+    "thinking_tokens": 458
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8770,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1149,
+     "cache_read_input_tokens": 20795,
+     "cache_creation_input_tokens": 765,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 765
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1703,
+    "cacheReadInputTokens": 72219,
+    "cacheCreationInputTokens": 8770,
+    "webSearchRequests": 0,
+    "costUSD": 0.11869579999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 458,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces three bugs in `shop/orders.py`. The first breaks every order.\n\n**1. `_ids_seen` is never defined, so creating any order crashes (`shop/orders.py:12`)**\nThe diff replaces `next(_ids)` with `len(_ids_seen)` and `_ids_seen.append(...)`, but nothing in the diff or the repo defines `_ids_seen`. Line 5 still defines only `_ids = itertools.count(1000)`. Every `Order(cart)` call will raise `NameError: name '_ids_seen' is not defined`. Both tests in `tests/test_orders.py` build an order through `make()`, so both will fail. `_ids` and the `itertools` import are also left unused.\n\n**2. Even if `_ids_seen = []` were added, the new ID scheme is worse**\n- **IDs start at 0 instead of 1000.** The numbering changes, and the first order gets ID `0`, which is falsy. Any `if order.id:` check, or any code relying on IDs being \u2265 1000, will misbehave.\n- **Duplicate IDs under concurrency.** Reading `len(...)` and then calling `append(...)` are two separate steps. Two threads can read the same length and get the same ID. `next(itertools.count())` is effectively atomic in CPython. With duplicates, `Store.save_order` (`shop/storage.py:17`) matches rows by `id`, so one order silently overwrites the other in storage.\n- **Memory grows forever.** Every ID ever issued stays in a module-level list that is never cleared, only to work out the next integer. The counter used constant memory.\n\n**3. The state machine now allows any move from an unknown state (`shop/orders.py:20`)**\n`ALLOWED.get(self.state, STATES)` means that if `self.state` isn't a key in `ALLOWED`, every state in `STATES` is allowed. Before, `ALLOWED[self.state]` raised `KeyError`, so an invalid state stopped the operation loudly. Now an order with a bad state (a typo, a value set directly, or a future state added to `STATES` but not to `ALLOWED`) can move anywhere, including straight to `\"shipped\"`, with no error. Moving to its own current state is also allowed, since `STATES` lists every state. This doesn't change the four known states, because they all have entries in `ALLOWED`. So the change adds nothing for valid orders and only weakens validation for invalid ones.",
+  "ttft_ms": 1869,
+  "type": "result",
+  "duration_ms": 19305,
+  "uuid": "798f808b-2e17-4b5a-a40d-a75d165459a2",
+  "ttft_stream_ms": 895,
+  "time_to_request_ms": 250,
+  "first_content_frame_ms": 896,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.final.3",
+ "ledger": []
+}

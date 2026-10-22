@@ -1,0 +1,111 @@
+{
+ "task": "c3-json",
+ "class": "routine_code",
+ "arm": "final",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 13809,
+  "stop_reason": "end_turn",
+  "session_id": "ff242cc5-7f63-4656-b5dd-a9987b474c2a",
+  "total_cost_usd": 0.116565,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 9804,
+   "cache_read_input_tokens": 72805,
+   "output_tokens": 1177,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9804,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 180,
+     "cache_read_input_tokens": 21076,
+     "cache_creation_input_tokens": 1518,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1518
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1177,
+    "cacheReadInputTokens": 72805,
+    "cacheCreationInputTokens": 9804,
+    "webSearchRequests": 0,
+    "costUSD": 0.116565,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`shop quote --json a:10.00:2` now prints `{\"total_cents\": 2165}`. Without the flag it still prints `21.65`. All 8 tests pass.\n\n- **`shop/cli.py`:** added the `--json` flag to the `quote` subcommand. The total is calculated once, then printed either as JSON or in the usual format.\n- **`tests/test_cli.py`** (new): two tests. One parses the `--json` output and checks the value. The other checks that the default output is still exactly `21.65`.\n\nI haven't committed anything.",
+  "ttft_ms": 2888,
+  "type": "result",
+  "duration_ms": 15228,
+  "uuid": "606eaa53-b6cf-4474-beb9-803986c3449d",
+  "ttft_stream_ms": 1641,
+  "time_to_request_ms": 327,
+  "first_content_frame_ms": 1642,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py | 8 +++++++-\n 1 file changed, 7 insertions(+), 1 deletion(-)\n",
+ "workdir": "c3-json.final.2",
+ "ledger": []
+}

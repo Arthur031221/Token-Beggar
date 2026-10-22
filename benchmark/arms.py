@@ -85,7 +85,8 @@ def plugin_dir(arm: str) -> Path | None:
 
 
 def extra_env(arm: str) -> dict:
-    env = {"TOKEN_BEGGAR_MODE": "full"} if arm == "fullcard" or arm.startswith("final-no-") else {}  # the ablations are cut from the full card
+    # the lever ablations are cut from the full card, except early compaction, which belongs to every mode
+    env = {"TOKEN_BEGGAR_MODE": "full"} if arm == "fullcard" or (arm.startswith("final-no-") and arm != "final-no-early") else {}
     if arm == "final-no-bulk-agy":
         env["TOKEN_BEGGAR_EXTERNAL"] = "none"
     return env

@@ -1,0 +1,111 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 11786,
+  "stop_reason": "end_turn",
+  "session_id": "27bb1c0b-310b-4ed1-bd95-de1c06e59dea",
+  "total_cost_usd": 0.0874406,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7194,
+   "cache_read_input_tokens": 51523,
+   "output_tokens": 978,
+   "output_tokens_details": {
+    "thinking_tokens": 43
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7194,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 727,
+     "cache_read_input_tokens": 19743,
+     "cache_creation_input_tokens": 241,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 241
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 978,
+    "cacheReadInputTokens": 51523,
+    "cacheCreationInputTokens": 7194,
+    "webSearchRequests": 0,
+    "costUSD": 0.0874406,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 43,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the single JSON file with SQLite in WAL mode, and keep the `Store` interface the same.**\n\n**Why the current design breaks**\n- **Lost updates.** `save_order` (`shop/storage.py:16`) reads the whole file, changes it and writes it back. When two writers do this at the same time, the second write silently drops the first writer's order. Nothing locks the file.\n- **Torn files.** `write_text` isn't atomic. A crash or a reader running mid-write leaves invalid JSON, and then `load()` fails for everyone.\n- **Slow saves.** Each save parses and rewrites every order. At 100k orders that's roughly 10 MB per save, so the cost grows with the size of the file.\n\n**Why SQLite**\n- It's in the standard library, so there's no server to run and nothing new to install.\n- Its file locking handles two writer processes safely. With WAL mode, readers don't block writers.\n- `INSERT ... ON CONFLICT(id) DO UPDATE` makes a save a single-row write, instead of rewriting the whole file.\n- 100k rows is small for it. Add an index on `customer` or `state` if reports filter by them.\n- Set a `busy_timeout` of a few seconds so a writer waits for the lock instead of failing at once.\n\nPostgres would only be worth it if the writers end up on different machines or you need many more than two.\n\n**Migration path**\n1. Add `SqliteStore` alongside `Store`, with the same `load()` and `save_order()`. Store totals as integer cents, as now.\n2. Write a one-off import script: read `orders.json` and insert every row in one transaction. Run it twice to confirm it's safe to repeat, then check that row counts and summed totals match the JSON.\n3. Stop both writers, run the import, and point `cli.py`'s `--db` at the new file. `cli.py:26` is the only place that calls `load()`.\n4. Keep the JSON file read-only as a rollback for a release, then delete `Store`.\n5. Add a test that runs two processes saving orders at the same time and asserts that none are lost.",
+  "ttft_ms": 1452,
+  "type": "result",
+  "duration_ms": 12660,
+  "uuid": "f41c6cc5-0f7a-4ae5-b430-bb80c0d80ad7",
+  "ttft_stream_ms": 866,
+  "time_to_request_ms": 166,
+  "first_content_frame_ms": 867,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.final.3",
+ "ledger": []
+}

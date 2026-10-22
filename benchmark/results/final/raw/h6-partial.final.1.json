@@ -1,0 +1,111 @@
+{
+ "task": "h6-partial",
+ "class": "design",
+ "arm": "final",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 26352,
+  "stop_reason": "end_turn",
+  "session_id": "be6161be-1c9f-40ba-bb0b-62b4bb9f0285",
+  "total_cost_usd": 0.1672096,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 12927,
+   "cache_read_input_tokens": 99668,
+   "output_tokens": 2191,
+   "output_tokens_details": {
+    "thinking_tokens": 755
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12927,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 875,
+     "cache_read_input_tokens": 24688,
+     "cache_creation_input_tokens": 1029,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1029
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2191,
+    "cacheReadInputTokens": 99668,
+    "cacheCreationInputTokens": 12927,
+    "webSearchRequests": 0,
+    "costUSD": 0.1672096,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 755,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Design: partial shipments and returns\n\n**What changes, by file**\n\n- **`shop/models.py`**: Add a `Shipment` dataclass (id, order_id, carrier, label, `{sku: qty}`) and a `Return` dataclass (id, order_id, `{sku: qty}`, refund_cents, reason).\n- **`shop/orders.py`**: Track shipped and returned quantity for each line. Add `ship(lines, carrier)` and `return_items(lines)`, and stop either from going past the ordered (or shipped) quantity. Add the states `partially_shipped`, `partially_returned` and `returned`. Today `shipped` is a final state, so `ALLOWED` must allow moving from it to the return states. Cancelling must be blocked once anything has shipped.\n- **`shop/pricing.py`**: Add `refund_for(order, lines)`. Refund the bulk-discounted price actually paid, not the list price, and include the matching share of tax.\n- **`shop/storage.py`**: `save_order` currently drops the order lines entirely. It needs to save lines, shipments and returns, and fill defaults when loading older rows that lack these fields.\n- **`shop/reports.py`**: Count the new states and report net sales (total minus refunds).\n- **`shop/carriers/*` (20 files)**: `label(order_id)` gives one label per order, so a second shipment would get a duplicate. Change it to `label(order_id, seq)` and update the `valid_label` regexes. `delta`, `kestrel`, `onyx` and `tundra` have no `tracking_url`. This copied code would be easier to change as one shared base class.\n- **`shop/cli.py`**: Add `ship` and `return` subcommands.\n- **`tests/`**: Add tests for partial ship and return flows, refund rounding, loading old data and labels.\n\n**Main risks**\n\n1. **Refund rounding:** tax is rounded once over the whole order. Rounding each refund separately can add up to more than the tax collected, so cap refunds at what's left to refund.\n2. **Bulk discount:** returning part of a line with 10 or more units shouldn't change the discount on the units the customer keeps.\n3. **Duplicate IDs:** `itertools.count(1000)` restarts in every process, so stored orders and shipments can end up with the same ID.\n4. **Concurrent writes:** `Store` rewrites the whole JSON file, so two updates at the same time can lose one.\n5. **Changing the label format** could break labels already printed or validated.",
+  "ttft_ms": 2869,
+  "type": "result",
+  "duration_ms": 27734,
+  "uuid": "55e3fe88-e707-4c26-b603-57f7b7e590f7",
+  "ttft_stream_ms": 1489,
+  "time_to_request_ms": 163,
+  "first_content_frame_ms": 1491,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h6-partial.final.1",
+ "ledger": []
+}

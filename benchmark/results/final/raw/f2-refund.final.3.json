@@ -1,0 +1,111 @@
+{
+ "task": "f2-refund",
+ "class": "multi_file",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 29706,
+  "stop_reason": "end_turn",
+  "session_id": "c756a0b5-de87-4db0-b0cd-161119c27056",
+  "total_cost_usd": 0.1694554,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 11783,
+   "cache_read_input_tokens": 94957,
+   "output_tokens": 2808,
+   "output_tokens_details": {
+    "thinking_tokens": 616
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11783,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 410,
+     "cache_read_input_tokens": 22051,
+     "cache_creation_input_tokens": 2522,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2522
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2808,
+    "cacheReadInputTokens": 94957,
+    "cacheCreationInputTokens": 11783,
+    "webSearchRequests": 0,
+    "costUSD": 0.1694554,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 616,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added the `refunded` state, and the full test suite passes: 12 tests, including 6 new ones.\n\n**What changed:**\n- **`shop/orders.py`**: `refunded` is now in `STATES`. In `ALLOWED`, `paid` and `shipped` can move to `refunded`, and `refunded` can't move anywhere.\n- **`shop/reports.py`**: no change needed. `sales_by_customer` only counts orders in `paid` or `shipped`, so refunded orders are already left out. I added a test to lock that in.\n- **I checked the other places that touch order state**: `storage.py` saves whatever the state is, and the CLI and README don't list states, so none of them needed changes.\n\n**New tests (in `tests/test_orders.py`):**\n- `paid` \u2192 `refunded` and `paid` \u2192 `shipped` \u2192 `refunded` both work.\n- `new` and `cancelled` orders can't be refunded.\n- A refunded order can't move to any state.\n- Every state in `STATES` has an entry in `ALLOWED`, so a new state can't be added to one and missed in the other.\n- `sales_by_customer` leaves out refunded and cancelled orders and still adds up paid and shipped ones.\n\nNothing is committed yet.",
+  "ttft_ms": 3818,
+  "type": "result",
+  "duration_ms": 30911,
+  "uuid": "d8060e1e-5c77-455c-99d1-c59b8915aa8b",
+  "ttft_stream_ms": 2531,
+  "time_to_request_ms": 328,
+  "first_content_frame_ms": 2532,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/orders.py       | 10 ++++++++--\n tests/test_orders.py | 47 ++++++++++++++++++++++++++++++++++++++++++++++-\n 2 files changed, 54 insertions(+), 3 deletions(-)\n",
+ "workdir": "f2-refund.final.3",
+ "ledger": []
+}

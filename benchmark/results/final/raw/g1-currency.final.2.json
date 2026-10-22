@@ -1,0 +1,111 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "final",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16326,
+  "stop_reason": "end_turn",
+  "session_id": "2f6d0c93-5bbb-4c7c-a211-eb44b92c26b3",
+  "total_cost_usd": 0.1294256,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 11637,
+   "cache_read_input_tokens": 51328,
+   "output_tokens": 1302,
+   "output_tokens_details": {
+    "thinking_tokens": 105
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11637,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 865,
+     "cache_read_input_tokens": 19555,
+     "cache_creation_input_tokens": 4872,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4872
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1302,
+    "cacheReadInputTokens": 51328,
+    "cacheCreationInputTokens": 11637,
+    "webSearchRequests": 0,
+    "costUSD": 0.1294256,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 105,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Today every amount is a bare `int` in cents, and the code assumes USD with 2 decimal places. Here is the design.\n\n**Core change:** add a `Money(amount_minor: int, currency: str)` value type in `shop/money.py`. It holds a table of decimal places per currency (JPY 0, USD 2, KWD 3). Adding or comparing two different currencies raises an error.\n\n**Per file:**\n- `money.py`: `to_cents` becomes `parse(amount, currency)` and `fmt` becomes `fmt(money)`. Both read the decimal places from the table, not a fixed 100. `percent` keeps one rounding rule but works on `Money`.\n- `models.py`: `Item.price_cents` becomes `price: Money`. `Cart` gets a `currency` field, and `add()` rejects items in a different currency.\n- `pricing.py`: totals return `Money`. `TAX_RATE` depends on the region, not the currency. Decide that now, even if you keep a single rate.\n- `orders.py`: store `currency` next to `total`/`tax`.\n- `storage.py`: write `currency` to each row. Rows without it load as `\"USD\"`.\n- `reports.py`: group totals by `(customer, currency)`. Never add totals across currencies.\n- `cache.py`: key the cache by `(sku, currency)`.\n- `cli.py`: add a `--currency` flag, default `USD`.\n- `carriers/*.py` (20 files): rates are hard-coded US cents. Tag each card with its currency, and only convert at the edge if you ever need to.\n- Tests: add cases for JPY and KWD, mixed-currency errors, and loading old JSON.\n\n**Main risks:**\n1. **Silent unit bugs:** any leftover raw `int` is read as cents. Make `Money` strict, with no implicit `int` conversion.\n2. **Existing data:** stored JSON has no currency field. The USD default must be explicit and tested.\n3. **Exchange rates:** keep conversion out of scope. If it's added later, it needs a dated rate source and a rounding policy.\n4. **Rounding:** `percent` rounds half up with floats. Move it to `Decimal` before 3-decimal currencies amplify the errors.\n5. **Size of the change:** the change touches nearly every file. Land `Money` first while still accepting `int`, then migrate.",
+  "ttft_ms": 2701,
+  "type": "result",
+  "duration_ms": 18021,
+  "uuid": "c19dbb8a-707f-4f58-9ad7-a2e94bae4fcc",
+  "ttft_stream_ms": 2351,
+  "time_to_request_ms": 748,
+  "first_content_frame_ms": 2351,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.final.2",
+ "ledger": []
+}

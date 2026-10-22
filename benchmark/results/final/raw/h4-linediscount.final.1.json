@@ -1,0 +1,127 @@
+{
+ "task": "h4-linediscount",
+ "class": "multi_file",
+ "arm": "final",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 39311,
+  "stop_reason": "end_turn",
+  "session_id": "76a90426-55d3-4c2f-84c1-692036580be0",
+  "total_cost_usd": 0.1638108,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 8624,
+   "cache_read_input_tokens": 52746,
+   "output_tokens": 1851,
+   "output_tokens_details": {
+    "thinking_tokens": 401
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8624,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 545,
+     "cache_read_input_tokens": 20866,
+     "cache_creation_input_tokens": 548,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 548
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1851,
+    "cacheReadInputTokens": 52746,
+    "cacheCreationInputTokens": 8624,
+    "webSearchRequests": 0,
+    "costUSD": 0.1165852,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 401,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2690,
+    "cacheReadInputTokens": 30496,
+    "cacheCreationInputTokens": 6904,
+    "webSearchRequests": 0,
+    "costUSD": 0.0472256,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 381,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Lines can now carry a per-line discount, and the full suite passes (`python3 -m unittest`, 14 tests, OK). I ran the suite myself to confirm. A subagent wrote the code and tests, and I haven't reviewed them line by line.\n\n- **`shop/models.py`**: `Line` has `discount_percent`, defaulting to 0. `Cart.add(item, qty=1, discount_percent=0)` merges into an existing line only when both the sku and the discount match; otherwise it starts a new line.\n- **`shop/pricing.py`**: `line_subtotal` applies the line discount first with `money.percent`, then the bulk rule. `money.percent` already rounds half up, so it wasn't changed.\n- **`shop/cli.py`**: `quote` accepts `sku:price:qty` or `sku:price:qty:discount`.\n- **`tests/test_line_discount.py`** (new): covers the default of 0, discount applied before the bulk rule, rounding half up, merging versus a new line, and the CLI with 3 and 4 fields.\n\nChoices you may want to revisit:\n- In the CLI, the discount is read as a decimal number, so `12.5` works. The CLI raises `ValueError` if the spec has a field count other than 3 or 4, or if the discount is outside 0\u2013100.\n- `Cart.add` and `Line` don't check the discount range; only the CLI does.\n\nRunning the tests left `__pycache__/` folders in `shop/`, `shop/carriers/` and `tests/`. Nothing is committed.",
+  "ttft_ms": 3414,
+  "type": "result",
+  "duration_ms": 41583,
+  "uuid": "e4568e32-f244-4af0-894d-c5e13433f557",
+  "ttft_stream_ms": 810,
+  "time_to_request_ms": 220,
+  "first_content_frame_ms": 810,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py     | 12 +++++++++---\n shop/models.py  |  7 ++++---\n shop/pricing.py |  2 ++\n 3 files changed, 15 insertions(+), 6 deletions(-)\n",
+ "workdir": "h4-linediscount.final.1",
+ "ledger": []
+}

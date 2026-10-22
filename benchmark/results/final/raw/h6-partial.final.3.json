@@ -1,0 +1,111 @@
+{
+ "task": "h6-partial",
+ "class": "design",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 18962,
+  "stop_reason": "end_turn",
+  "session_id": "f8709021-7511-456d-829c-1875dd6c7e07",
+  "total_cost_usd": 0.13195420000000002,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 10846,
+   "cache_read_input_tokens": 74371,
+   "output_tokens": 1514,
+   "output_tokens_details": {
+    "thinking_tokens": 228
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10846,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 822,
+     "cache_read_input_tokens": 23006,
+     "cache_creation_input_tokens": 630,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 630
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1514,
+    "cacheReadInputTokens": 74371,
+    "cacheCreationInputTokens": 10846,
+    "webSearchRequests": 0,
+    "costUSD": 0.13195420000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 228,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The order is the unit of shipping today. `shop/orders.py` has one state machine (new \u2192 paid \u2192 shipped), and every carrier makes one label per order ID.\n\n**Changes**\n\n- **`shop/models.py`**: add `Shipment(id, order_id, carrier, label, lines: [(sku, qty)])` and `Return(id, order_id, lines, refund_cents)`.\n- **`shop/orders.py`**:\n  - Keep per-line `shipped_qty` and `returned_qty`.\n  - Add `ship(lines, carrier)` and `return_items(lines)`. Both check that quantities never go above what was ordered or shipped.\n  - Add `partially_shipped` and `partially_returned`/`returned`, and have `state` follow from the line quantities instead of being set by hand.\n  - Only allow cancelling the part that hasn't shipped yet.\n- **`shop/pricing.py`**: add `refund_for(order, lines)`. It has to reuse the bulk discount and tax from the original order, not today's prices.\n- **`shop/storage.py`**: `save_order` drops `lines`, so they're lost on reload. Store lines, shipments and returns, and add a `load_order`.\n- **`shop/carriers/*` (all 20)**: `label(order_id)` gives one label per order. Change it to `label(shipment_id)` with a small shared base or adapter, so you don't hand-edit 20 files.\n- **`shop/reports.py`**: sales only count `paid`/`shipped`. Count the new states and subtract refunds.\n- **`shop/cli.py`**: add `ship` and `return` commands.\n- **`tests/`**: add order, pricing and storage tests.\n\n**Main risks**\n\n1. **Refund rounding.** Tax and the bulk discount are rounded once on the whole order. Refunding line by line can add up to more than was charged. Split the tax across lines and cap total refunds at `total_cents`.\n2. **Bulk discount clawback.** If a return takes a line below 10 units, decide whether the refund keeps the discounted price. It should.\n3. **Existing data.** Old JSON rows have no lines, so they need a migration or must be read-only.\n4. **ID collisions.** `itertools.count(1000)` restarts at 1000 on every run, so order and shipment IDs repeat across runs once they're saved.\n5. **Reports.** If the new states aren't added there, revenue silently drops out of the sales report.",
+  "ttft_ms": 2023,
+  "type": "result",
+  "duration_ms": 21057,
+  "uuid": "964eb11c-fa3e-4b51-bda6-2213abcb9d2a",
+  "ttft_stream_ms": 1692,
+  "time_to_request_ms": 380,
+  "first_content_frame_ms": 1693,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h6-partial.final.3",
+ "ledger": []
+}

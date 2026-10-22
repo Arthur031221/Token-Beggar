@@ -1,0 +1,111 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "final",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15707,
+  "stop_reason": "end_turn",
+  "session_id": "7ff2acf4-aeeb-4a84-821e-f29db13b0266",
+  "total_cost_usd": 0.1215884,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 10925,
+   "cache_read_input_tokens": 51322,
+   "output_tokens": 1195,
+   "output_tokens_details": {
+    "thinking_tokens": 93
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10925,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 838,
+     "cache_read_input_tokens": 19549,
+     "cache_creation_input_tokens": 4166,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4166
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1195,
+    "cacheReadInputTokens": 51322,
+    "cacheCreationInputTokens": 10925,
+    "webSearchRequests": 0,
+    "costUSD": 0.1215884,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 93,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read the code but didn't change it. Today every amount is a bare `int` that is assumed to be USD cents with 2 decimals.\n\n**Design: amounts carry a currency, and nothing mixes currencies silently.**\n\n1. **`shop/money.py`**: Add a frozen `Money(amount_minor: int, currency: str)` type and a table of how many decimals each currency uses (JPY 0, USD 2, KWD 3). `to_cents`, `fmt` and `percent` become currency-aware. Adding or comparing two different currencies raises an error.\n2. **`shop/models.py`**: `Item.price_cents` becomes `price: Money`. `Cart` gets a `currency`, and `add()` rejects items in any other currency.\n3. **`shop/pricing.py`**: Tax and bulk discount work on `Money`. `TAX_RATE` is a single US-style rate today, so decide whether tax varies by currency or region.\n4. **`shop/orders.py`**: `Order` stores its currency. Line tuples keep a currency for each price.\n5. **`shop/storage.py`**: Add a `currency` field to each saved row. Old rows without one load as `\"USD\"`.\n6. **`shop/reports.py`**: `sales_by_customer` groups by (customer, currency), or converts using a dated FX rate. Don't sum across currencies.\n7. **`shop/cli.py`**: Add a `--currency` flag to `quote`.\n8. **`shop/cache.py`**: Cache keys become `(sku, currency)`.\n9. **`shop/carriers/*.py`** (20 files): Each rate card is in USD cents. Add a `CURRENCY` constant to each carrier rather than converting.\n\n**Main risks**\n- **Rounding:** `percent` uses floats and assumes 2 decimals, so 0- and 3-decimal currencies will round wrongly. Switch to `Decimal`.\n- **Mixing currencies:** any place that sums plain ints across currencies gives wrong totals with no error. The type has to make that impossible.\n- **Exchange rates:** you need a rate source, a timestamp for each order, and a rule for which rate a refund uses.\n- **Migration:** existing JSON files and callers that pass plain ints break.\n- **Tests:** the three test files hard-code cents and will need rewriting.",
+  "ttft_ms": 2486,
+  "type": "result",
+  "duration_ms": 16761,
+  "uuid": "c6968c82-d812-4e57-b424-5be033761e34",
+  "ttft_stream_ms": 2104,
+  "time_to_request_ms": 243,
+  "first_content_frame_ms": 2104,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.final.1",
+ "ledger": []
+}

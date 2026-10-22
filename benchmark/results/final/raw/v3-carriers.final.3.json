@@ -1,0 +1,111 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 12492,
+  "stop_reason": "end_turn",
+  "session_id": "b4c24cc3-1cc8-446e-a313-fc6fad370648",
+  "total_cost_usd": 0.1645624,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 16010,
+   "cache_read_input_tokens": 79752,
+   "output_tokens": 1025,
+   "output_tokens_details": {
+    "thinking_tokens": 83
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 16010,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 597,
+     "cache_read_input_tokens": 28550,
+     "cache_creation_input_tokens": 250,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 250
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1025,
+    "cacheReadInputTokens": 79752,
+    "cacheCreationInputTokens": 16010,
+    "webSearchRequests": 0,
+    "costUSD": 0.1645624,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 83,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found two inconsistencies that would break callers of the registry. No code outside `shop/carriers/` calls the registry yet, so neither one fails today, but each will fail once a caller treats all carriers the same way.\n\n**1. `shop/carriers/maple.py` takes weight in grams, not kg.**\nEvery other carrier documents \"weight in kg\" and defines `PER_KG` and `MAX_KG`. Maple says \"weight in grams\" and uses `PER_GRAMS = 3` and `MAX_GRAMS = 30000` (`maple.py:2`, `maple.py:8`, `maple.py:10`). The `rate(weight, zone)` signature is the same, so nothing raises an error. The prices are just wrong, in both directions:\n- A 2 kg parcel passed as `2` is priced as 2 grams: `int((494 + 3*2) * 1.0)` = 500 cents, which undercharges.\n- If a caller converts the weight to grams, the same weight sent to any other carrier gets a `ValueError`, because 2000 is far over every `MAX_KG` limit.\n\nThis is the worse of the two problems because it gives wrong answers without any error.\n\n**2. Four carriers have no `tracking_url()` method: `shop/carriers/delta.py`, `kestrel.py`, `onyx.py` and `tundra.py`.**\nThe other 16 carriers define `tracking_url(code)`. Code like `get(name).tracking_url(code)` will raise `AttributeError` for these four.\n\nEverything else matches across all 20 modules: the `rate`, `label` and `valid_label` signatures, the zone keys, the label format and the `name` attribute. The individual rates and weight limits differ, but that's expected for different carriers. I didn't edit anything.",
+  "ttft_ms": 2309,
+  "type": "result",
+  "duration_ms": 14838,
+  "uuid": "797a57bf-aece-4458-8bed-f3298d479f5e",
+  "ttft_stream_ms": 1259,
+  "time_to_request_ms": 316,
+  "first_content_frame_ms": 1260,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.final.3",
+ "ledger": []
+}

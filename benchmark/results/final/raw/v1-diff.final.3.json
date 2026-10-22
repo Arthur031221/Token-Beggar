@@ -1,0 +1,111 @@
+{
+ "task": "v1-diff",
+ "class": "review",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 21193,
+  "stop_reason": "end_turn",
+  "session_id": "511248a7-1d1f-4f20-bf23-d141c8d706d6",
+  "total_cost_usd": 0.1428824,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 10567,
+   "cache_read_input_tokens": 95032,
+   "output_tokens": 1965,
+   "output_tokens_details": {
+    "thinking_tokens": 500
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10567,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 915,
+     "cache_read_input_tokens": 22460,
+     "cache_creation_input_tokens": 897,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 897
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1965,
+    "cacheReadInputTokens": 95032,
+    "cacheCreationInputTokens": 10567,
+    "webSearchRequests": 0,
+    "costUSD": 0.1428824,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 500,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces three bugs, one per hunk. `git apply` won't accept the diff because its hunk headers have no line numbers, so I didn't run the tests against it. I worked out each failure by hand from the code and tests. On the current code, all 6 tests pass.\n\n### 1. Bulk discount no longer applies at exactly the threshold (`shop/pricing.py`, `line_subtotal`)\n`>= BULK_THRESHOLD` was changed to `> BULK_THRESHOLD`. A line with exactly 10 units now gets no 5% discount; before, 10 units qualified.\n- Customers ordering exactly 10 units are overcharged.\n- `tests/test_pricing.py::test_bulk_discount` breaks. That test uses 10 \u00d7 100\u00a2: it expects 950 + 78 tax = 1028, but it would now get 1000 + 83 = 1083.\n\n### 2. `calc_tax` now taxes the pre-discount amount (`shop/pricing.py`, `calc_tax`)\n`calc_tax` used to call `line_subtotal(l)`. Now it uses the raw `price_cents * qty`, which skips the bulk discount. `calc_total` still taxes the discounted subtotal, so the two functions now disagree.\n- `Order.__init__` (`shop/orders.py:15-16`) stores both values. Any order with a bulk line ends up with a `tax_cents` that doesn't match the tax inside `total_cents`.\n- Example: 20 \u00d7 100\u00a2. `calc_total` taxes 1900 \u2192 157\u00a2. `calc_tax` taxes 2000 \u2192 165\u00a2.\n- Tax is charged on money the customer never paid. The discount logic is also duplicated now, so the two paths can drift further apart.\n\n### 3. Cache TTL is 1000\u00d7 too long (`shop/cache.py`, `PriceCache.get`)\n`ttl` is in seconds (per the docstring), and the default clock is `time.monotonic`, which also returns seconds. Comparing elapsed seconds against `self.ttl * 1000` wrongly treats it as a seconds-to-milliseconds conversion.\n- The default 60s TTL becomes 60,000s (about 16.7 hours), so stale prices are served long after they should expire.\n- `tests/test_cache.py::test_hit_and_expiry` breaks. At `now = 11` with `ttl = 10`, the entry should have expired and called the loader again. Instead, 11 < 10000 counts as a hit, and `len(calls)` stays at 1.",
+  "ttft_ms": 2489,
+  "type": "result",
+  "duration_ms": 23891,
+  "uuid": "5d39b6c9-1854-4fd1-8cf2-d3b1832e8293",
+  "ttft_stream_ms": 1658,
+  "time_to_request_ms": 672,
+  "first_content_frame_ms": 1659,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v1-diff.final.3",
+ "ledger": []
+}
