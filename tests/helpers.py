@@ -21,7 +21,11 @@ class Isolated(unittest.TestCase):
         self.tmp = Path(tmp.name)
         env = {k: v for k, v in os.environ.items() if k not in ENV_KEYS}
         env.update(
-            TOKEN_BEGGAR_HOME=str(self.tmp / "tb"), CLAUDE_CONFIG_DIR=str(self.tmp / "claude"), TOKEN_BEGGAR_OFFLINE="1", TOKEN_BEGGAR_MODE="full"
+            TOKEN_BEGGAR_HOME=str(self.tmp / "tb"),
+            CLAUDE_CONFIG_DIR=str(self.tmp / "claude"),
+            TOKEN_BEGGAR_OFFLINE="1",
+            TOKEN_BEGGAR_MODE="full",
+            TOKEN_BEGGAR_EARLY="1",
         )
         patcher = mock.patch.dict(os.environ, env, clear=True)
         patcher.start()

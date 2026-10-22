@@ -46,10 +46,10 @@ If a Claude dispatch fails with a usage limit, run `token-beggar exhausted <alia
 
 ## 8. Context and compaction
 
-The skill picks the compaction moment unless the user has set one. When the context nears the compaction point, or a phase has just finished on a long context, a hook asks you to save a note: `token-beggar note --mid-step | --clean | --phase-done` with the goal, decisions and why, open threads, file paths and next steps on stdin. Optional flags: `--progress 0..1` (how far the current step is) and `--needs-early-detail` (later work depends on early details).
+The skill picks the compaction moment unless the user has set one. When the context nears the compaction point, a hook asks you to save a note: `token-beggar note --mid-step | --clean | --phase-done` with the goal, decisions and why, open threads, file paths and next steps on stdin. Optional flags: `--progress 0..1` (how far the current step is) and `--needs-early-detail` (later work depends on early details).
 
 - Mid-step: the compaction is deferred, longer when the step is far from done or needs early detail, shorter when it is nearly done, always below the host's blocking level.
-- On a long context (about 150k, or 40 percent of a small point, never under 60k) a hook asks once whether a phase just finished. If it did and the rest does not need its raw details, save `--phase-done` and tell the user in one line that now is a good moment to type `/compact`. A hook cannot start a compaction, so you suggest it. If the next work needs the details, save `--needs-early-detail` and say nothing.
+- Early compaction is off by default. With `TOKEN_BEGGAR_EARLY=1`, on a long context (about 150k, or 40 percent of a small point, never under 60k) a hook asks once whether a phase just finished. If it did and the rest does not need its raw details, save `--phase-done` and tell the user in one line that now is a good moment to type `/compact`. A hook cannot start a compaction, so you suggest it. If the next work needs the details, save `--needs-early-detail` and say nothing. The long-session benchmark found no saving from it, so it stays opt in.
 - If the user set `CLAUDE_CODE_AUTO_COMPACT_WINDOW`, `autoCompactWindow` or `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`, the point is theirs: no deferral and no suggestions.
 
 The note is handed back after the compaction. `token-beggar window` shows the point in use and who chose it. Token Beggar writes no settings: the host reads its window only at startup, so a change made mid-session would not take effect.

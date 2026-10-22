@@ -122,6 +122,8 @@ ENVIRONMENT = [
     ("CLAUDE_CODE_SESSION_ID", "set by Claude Code; `token-beggar note`, `ask` and `cap` use it"),
     ("TOKEN_BEGGAR", "off disables the hooks for this process"),
     ("TOKEN_BEGGAR_HOME", "state directory"),
+    ("TOKEN_BEGGAR_MODE", "off, lean or full: force how much the skill acts, instead of reading the measured ratio for the ceiling"),
+    ("TOKEN_BEGGAR_EARLY", "1 turns on the early /compact suggestion at a finished phase (off by default, not measured to save)"),
     ("TOKEN_BEGGAR_OFFLINE", "1 never fetches the models page and never lists external models"),
     ("TOKEN_BEGGAR_EXTERNAL", "comma list of the external AIs routing may use, for example agy; none turns them all off"),
     ("TOKEN_BEGGAR_EXTERNAL_TIMEOUT", "seconds an external AI call may run (default 600)"),

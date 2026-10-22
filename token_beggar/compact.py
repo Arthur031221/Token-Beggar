@@ -163,6 +163,11 @@ def verdict(session_id: str, items: list[dict]) -> tuple[bool, str]:
     return (True, reason) if reason else (False, "no unfinished edits found")
 
 
+def early_enabled() -> bool:
+    """The early suggestion is opt in: the long-session benchmark measured it at no saving and a quality loss (see the README)."""
+    return os.environ.get("TOKEN_BEGGAR_EARLY", "").lower() in ("1", "on", "true", "yes")
+
+
 def early_point(point: dict) -> int:
     return min(EARLY_CEILING, max(EARLY_FLOOR, int(EARLY_FRACTION * point["threshold"])))
 
@@ -235,7 +240,7 @@ def early_notice(session_id: str, used: int, point: dict) -> str | None:
     """On a long context, once per stage: ask the model whether a phase just finished, and if so to suggest /compact to the user.
     Compacting at a clean boundary drops the raw reading the finished phase needed and keeps what the next phase needs, so every
     later turn re-reads less."""
-    if point["user_set"] or used < early_point(point) or used >= warn_point(point["threshold"]):
+    if not early_enabled() or point["user_set"] or used < early_point(point) or used >= warn_point(point["threshold"]):
         return None
     state = _state(session_id)
     last = state.get("suggested_at", -(10**9))

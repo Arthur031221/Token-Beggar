@@ -81,7 +81,8 @@ def _compaction_text(payload: dict, top: dict, items: list[dict] | None = None) 
     parts = []
     if not point["disabled"]:
         used = transcript.tail_context_tokens(payload["transcript_path"])
-        if used >= min(compact.warn_point(point["threshold"]), compact.early_point(point)):  # only parse the whole transcript when it is near
+        near = compact.early_point(point) if compact.early_enabled() else point["threshold"]
+        if used >= min(compact.warn_point(point["threshold"]), near):  # only parse the whole transcript when it is near
             items = items or transcript.entries(payload["transcript_path"])
             notice = compact.usage_notice(session_id, items, point)
             if notice:

@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import os
 import unittest
 from unittest import mock
 
@@ -258,6 +259,11 @@ class DynamicPointTests(Isolated):
     def test_no_early_suggestion_when_the_user_chose_the_point(self):
         self.settings(env={"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "400000"})
         self.assertIsNone(compact.early_notice("s1", 160_000, compact.resolve(None, OPUS)))
+
+    def test_the_early_suggestion_is_off_unless_asked_for(self):
+        with mock.patch.dict(os.environ, {"TOKEN_BEGGAR_EARLY": ""}):
+            self.assertFalse(compact.early_enabled())
+            self.assertIsNone(compact.early_notice("s1", 160_000, compact.resolve(None, OPUS)))
 
     def test_the_new_note_fields_round_trip(self):
         handoff.write_model("s1", "n", mid_step=False, used=5, progress=0.5, phase_done=True, needs_detail=True)
