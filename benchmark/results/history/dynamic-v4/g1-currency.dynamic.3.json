@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 19161,
+  "stop_reason": "end_turn",
+  "session_id": "3511b0d5-a9c1-4115-9020-8824d44db476",
+  "total_cost_usd": 0.1259854,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 10004,
+   "cache_read_input_tokens": 55147,
+   "output_tokens": 1745,
+   "output_tokens_details": {
+    "thinking_tokens": 534
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10004,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1305,
+     "cache_read_input_tokens": 20584,
+     "cache_creation_input_tokens": 4006,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4006
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1745,
+    "cacheReadInputTokens": 55147,
+    "cacheCreationInputTokens": 10004,
+    "webSearchRequests": 0,
+    "costUSD": 0.1259854,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 534,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "# Multi-currency design\n\n**Core idea:** stop passing bare `int` cents around. Every amount becomes a value holding minor units plus an ISO currency code. Adding or comparing two different currencies should raise an error.\n\n**Changes, file by file**\n- `shop/money.py`: add a `Money` type and a table of decimal places per currency (JPY 0, USD 2, KWD 3). `to_cents`, `fmt` and `percent` currently assume 2 decimals (`//100`, the `len(frac) > 2` check); they need to take the currency into account.\n- `shop/models.py`: replace `Item.price_cents` with `price: Money`. Give `Cart` a `currency`, and have `add()` reject items priced in a different currency.\n- `shop/pricing.py`: return `Money`. `TAX_RATE` is really set by jurisdiction, not currency, so make it a parameter rather than tying it to currency.\n- `shop/orders.py`: store the currency on the `Order` and in each line tuple.\n- `shop/storage.py`: save a `currency` field. Old rows without one are treated as USD when loaded.\n- `shop/reports.py`: `sales_by_customer` adds up totals without checking currency. Group by `(customer, currency)`, or convert using a stored FX rate.\n- `shop/cache.py`: cache prices by `(sku, currency)`.\n- `shop/cli.py`: add a `--currency` flag to `quote`.\n- `shop/carriers/*` (20 files): the rates are implicitly USD cents. Tag the currency once in `carriers/__init__.py` instead of editing each file.\n- `tests/`: add cases for zero- and three-decimal currencies, mixed-currency carts, and loading old JSON files.\n\n**Main risks**\n1. **Silent mixing:** report totals that combine EUR and USD look valid but are wrong. This is the biggest risk.\n2. **Rounding:** `percent` rounds in float and assumes 2 decimals. JPY and KWD amounts will be off unless rounding uses `Decimal` and the currency's decimal places.\n3. **Existing data:** orders already saved have no currency. A wrong default misstates historical revenue.\n4. **FX timing:** if you convert, record the rate used on each order. Otherwise reports change when rates change.\n5. **Shipping vs. cart:** carrier rates are in USD while carts may not be, so shipping needs an explicit conversion step.",
+  "ttft_ms": 1551,
+  "type": "result",
+  "duration_ms": 19747,
+  "uuid": "bad0d72e-a5b0-4ffa-9228-30c8189d83e8",
+  "ttft_stream_ms": 1082,
+  "time_to_request_ms": 209,
+  "first_content_frame_ms": 1083,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.3"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": "sonnet-xhigh",
+ "top": "claude-sonnet-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 9431,
+  "stop_reason": "end_turn",
+  "session_id": "78152539-afc5-4735-8e21-48a5845884bf",
+  "total_cost_usd": 0.0477285,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 8037,
+   "cache_read_input_tokens": 52985,
+   "output_tokens": 1027,
+   "output_tokens_details": {
+    "thinking_tokens": 97
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8037,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 654,
+     "cache_read_input_tokens": 20527,
+     "cache_creation_input_tokens": 300,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 300
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1027,
+    "cacheReadInputTokens": 52985,
+    "cacheCreationInputTokens": 8037,
+    "webSearchRequests": 0,
+    "costUSD": 0.0477285,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 97,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the JSON file with SQLite, in WAL mode, using the stdlib `sqlite3` module.**\n\n**Why the current design fails**\n- `save_order` reads the whole file, rewrites the whole file, and does it with no lock. Two writer processes will race and lose orders. Both load the same snapshot, and the second write silently erases the first order.\n- `write_text` isn't atomic. A crash mid-write leaves a truncated file that `load()` can't parse.\n- Each save is O(n). At 100k orders that's roughly 10 MB parsed and rewritten per order. A batch of inserts becomes O(n\u00b2).\n\n**Why SQLite**\n- It handles 100k rows easily, and two writer processes are well within what it supports. WAL mode lets readers (the `cli.py` report) run alongside a writer.\n- Cross-process locking and crash-safe transactions come built in.\n- It needs no server and no new dependency.\n- Postgres is only worth it if you later need writers on multiple machines. Don't pay that cost now.\n\n**Design notes**\n- Use a primary key on `id` and an upsert for `save_order`.\n- Set a busy timeout so one writer waits for the other instead of erroring.\n- Keep `Store`'s public interface (`load`, `save_order`) unchanged. The only caller today is `cli.py:26`, so the blast radius is small.\n\n**Migration path**\n1. **Stopgap, if needed this week:** add a file lock around read-modify-write and write to a temp file, then `os.replace`. This fixes the races but not the O(n) cost.\n2. Add a SQLite-backed `Store` with the same interface and a one-off importer that reads the existing JSON.\n3. Run the importer, compare row counts and totals against the JSON, then switch `cli.py` over. Keep the JSON file as a backup for a release.\n4. Add a concurrency test: two processes inserting 1,000 orders each, then assert that all 2,000 are present.",
+  "ttft_ms": 1414,
+  "type": "result",
+  "duration_ms": 10375,
+  "uuid": "9b69b82d-dffa-4fae-8182-6d6a9b0e302d",
+  "ttft_stream_ms": 838,
+  "time_to_request_ms": 190,
+  "first_content_frame_ms": 839,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.sonnet-xhigh"
+}

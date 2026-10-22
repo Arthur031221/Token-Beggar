@@ -1,0 +1,110 @@
+{
+ "task": "r1-tracking",
+ "class": "reading",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 8419,
+  "stop_reason": "end_turn",
+  "session_id": "c180ee4b-f808-4c1d-b1be-4ce35cc74557",
+  "total_cost_usd": 0.110033,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 10803,
+   "cache_read_input_tokens": 59025,
+   "output_tokens": 589,
+   "output_tokens_details": {
+    "thinking_tokens": 83
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10803,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 17,
+     "cache_read_input_tokens": 24464,
+     "cache_creation_input_tokens": 926,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 926
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 589,
+    "cacheReadInputTokens": 59025,
+    "cacheCreationInputTokens": 10803,
+    "webSearchRequests": 0,
+    "costUSD": 0.110033,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 83,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "delta, kestrel, onyx, tundra",
+  "ttft_ms": 1684,
+  "type": "result",
+  "duration_ms": 9001,
+  "uuid": "42b823ef-e2c7-418b-a568-5d73e8f6453e",
+  "ttft_stream_ms": 1438,
+  "time_to_request_ms": 189,
+  "first_content_frame_ms": 1439,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r1-tracking.dynamic.3"
+}

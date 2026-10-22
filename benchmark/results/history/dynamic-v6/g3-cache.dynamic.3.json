@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14732,
+  "stop_reason": "end_turn",
+  "session_id": "5516dd5d-28d8-4899-b36f-03c6e7b8550e",
+  "total_cost_usd": 0.0763544,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5489,
+   "cache_read_input_tokens": 34232,
+   "output_tokens": 1279,
+   "output_tokens_details": {
+    "thinking_tokens": 548
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5489,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1154,
+     "cache_read_input_tokens": 19646,
+     "cache_creation_input_tokens": 429,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 429
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1279,
+    "cacheReadInputTokens": 34232,
+    "cacheCreationInputTokens": 5489,
+    "webSearchRequests": 0,
+    "costUSD": 0.0763544,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 548,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read `shop/cache.py` (23 lines). These are the problems I'd fix, in order of priority:\n\n1. **The cache grows forever.** Expired entries are never removed, and every SKU ever requested stays in `_data`. In a long-running service that's a memory leak. **Fix:** cap the size with an LRU (`OrderedDict` plus a `maxsize`), and drop expired entries when they're found.\n\n2. **Many threads can load the same SKU at once.** When a popular key expires, every thread that misses at that moment calls `loader` in parallel and hammers the backend (a \"stampede\"). **Fix:** single-flight. On a miss, the first thread registers an in-flight `Future` for that key under a short lock, then runs `loader` outside the lock. Other threads wait on that `Future`. If the load fails, every waiter gets the exception.\n\n3. **`invalidate` can be undone by a slow load.** Thread A starts loading the old price. The price changes and `invalidate` runs. A then writes the stale value back, and it is served for a full `ttl`. **Fix:** keep a version number per key. `invalidate` increments it (and cancels any in-flight load), and a load only stores its result if the version hasn't changed since it started.\n\n4. **The read-then-write in `get` isn't protected.** It relies on single dict operations being atomic under the GIL, which isn't a safe assumption on free-threaded Python. **Fix:** one `threading.Lock` around all reads and writes of the dict, never held while `loader` runs.\n\n5. **The timestamp is taken after the load finishes.** With a slow `loader`, the value is effectively older than its recorded age. **Fix:** read `clock()` before calling `loader`.\n\n6. **Failures aren't cached.** If the backend is down, every request calls it again. **Fix:** a short negative TTL or backoff, or optionally keep serving the stale value while the error lasts.",
+  "ttft_ms": 1063,
+  "type": "result",
+  "duration_ms": 15161,
+  "uuid": "3930174d-3052-46da-9329-d40b16ba9fa3",
+  "ttft_stream_ms": 815,
+  "time_to_request_ms": 177,
+  "first_content_frame_ms": 815,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.3"
+}

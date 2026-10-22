@@ -10,5 +10,6 @@ You receive one self-contained subtask from a larger job. Do exactly that task a
 - Read only the files you need. Prefer Grep and line ranges over whole-file reads.
 - Make the edits requested. Do not refactor beyond them.
 - Run the tests or the check named in the task before you report. If none is named, say so.
-- Report in under 150 words: what you changed or found, the file paths, and the result of the check. Do not paste file contents back.
+- Report in under 150 words: what you changed or found, the exact file paths and names, and the result of the check. Copy names and paths exactly as they appear. Do not paste file contents back.
+- List what you saw. Do not draw conclusions the task did not ask for.
 - If the task is ambiguous or you could not finish, say exactly what is missing instead of guessing.

@@ -1,0 +1,120 @@
+{
+ "task": "a1-rates",
+ "class": "bulk-read",
+ "arm": "final",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 12497,
+  "stop_reason": "end_turn",
+  "session_id": "119efc4b-1d41-4a3c-9d50-a2d33477b241",
+  "total_cost_usd": 0.1397584,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 13095,
+   "cache_read_input_tokens": 54372,
+   "output_tokens": 1205,
+   "output_tokens_details": {
+    "thinking_tokens": 267
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 13095,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 429,
+     "cache_read_input_tokens": 21250,
+     "cache_creation_input_tokens": 4635,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4635
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1205,
+    "cacheReadInputTokens": 54372,
+    "cacheCreationInputTokens": 13095,
+    "webSearchRequests": 0,
+    "costUSD": 0.1397584,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 267,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Here are all 20 carrier modules, sorted by BASE_RATE (in cents), highest first:\n\n```\nKestrel Freight   845  kg\nIris Freight      796  kg\nJuniper Freight   783  kg\nTundra Freight    778  kg\nHarbor Freight    734  kg\nRidge Freight     729  kg\nSummit Freight    716  kg\nFjord Freight     685  kg\nGale Freight      672  kg\nQuartz Freight    667  kg\nEmber Freight     623  kg\nOnyx Freight      618  kg\nPrairie Freight   605  kg\nCedar Freight     574  kg\nDelta Freight     561  kg\nNimbus Freight    556  kg\nBorealis Freight  512  kg\nLumen Freight     507  kg\nMaple Freight     494  grams\nAcme Freight      450  kg\n```\n\nMaple is the only carrier that quotes by grams; it uses `MAX_GRAMS` and `PER_GRAMS`. I checked every line against the source. Each module sets `BASE_RATE` once and never changes it, and its docstring and `rate()` code agree on the unit.",
+  "ttft_ms": 2759,
+  "type": "result",
+  "duration_ms": 28627,
+  "uuid": "92e38b69-bce3-43e8-96bd-4ebe808ce4c3",
+  "ttft_stream_ms": 948,
+  "time_to_request_ms": 283,
+  "first_content_frame_ms": 948,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "a1-rates.final.2",
+ "ledger": [
+  {
+   "t": 1792679585.5005417,
+   "kind": "external",
+   "tool": "agy",
+   "model": "gemini-3.8-flash-medium",
+   "tokens": 14222,
+   "source": "reported"
+  }
+ ]
+}

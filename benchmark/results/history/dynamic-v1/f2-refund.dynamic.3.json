@@ -1,0 +1,110 @@
+{
+ "task": "f2-refund",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 30596,
+  "stop_reason": "end_turn",
+  "session_id": "54e4a832-d1e0-4c3b-889b-8a674793f6a0",
+  "total_cost_usd": 0.1836988,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 14635,
+   "cache_read_input_tokens": 78334,
+   "output_tokens": 2546,
+   "output_tokens_details": {
+    "thinking_tokens": 265
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14635,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 523,
+     "cache_read_input_tokens": 25126,
+     "cache_creation_input_tokens": 2299,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2299
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2546,
+    "cacheReadInputTokens": 78334,
+    "cacheCreationInputTokens": 14635,
+    "webSearchRequests": 0,
+    "costUSD": 0.1836988,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 265,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added the `refunded` state, and all 12 tests pass (5 existing, 7 new).\n\n**Change** \u2014 `shop/orders.py:6`\n- `refunded` is now in `STATES`.\n- In `ALLOWED`, `paid` and `shipped` can both move to `refunded`. `refunded` has no outgoing moves, so it's terminal. Shipped orders used to be terminal; now they can be refunded and nothing else.\n\n**What didn't need changing**\n- `sales_by_customer` (`shop/reports.py:9`) already counts only `paid` and `shipped` orders, so refunded orders were left out already. I didn't change it; a new test now checks this.\n- Storage saves the state as a plain string, so refunded orders save and load with no code change.\n- The CLI has no command that changes order state.\n- None of the 20 carrier modules refer to order state.\n\n**New tests** \u2014 in `tests/test_orders.py`, which now also imports `ALLOWED`, `STATES` and `sales_by_customer`:\n- Refunding works from `paid` and from `shipped`.\n- Refunding is rejected from `new` and from `cancelled`.\n- A refunded order can't move to any state, `refunded` included.\n- Every state in `STATES` has an entry in `ALLOWED`, so a new state can't be added to one without the other.\n- `sales_by_customer` leaves out refunded rows. This covers a customer who has only refunded orders, so they don't show up in the result at all.\n\nI haven't committed anything.",
+  "ttft_ms": 3605,
+  "type": "result",
+  "duration_ms": 31674,
+  "uuid": "90bc06cf-c65a-44db-87cf-72ac4ef54df8",
+  "ttft_stream_ms": 2652,
+  "time_to_request_ms": 247,
+  "first_content_frame_ms": 2652,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/orders.py       | 10 ++++++++--\n tests/test_orders.py | 47 ++++++++++++++++++++++++++++++++++++++++++++++-\n 2 files changed, 54 insertions(+), 3 deletions(-)\n",
+ "workdir": "f2-refund.dynamic.3"
+}

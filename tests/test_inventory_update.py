@@ -17,6 +17,22 @@ class InventoryTests(Isolated):
             found = inventory.discover()
         self.assertEqual([e["name"] for e in found["external"]], ["codex"])
 
+    def test_an_mcp_server_that_fronts_another_ai_is_a_route(self):
+        project = self.tmp / "proj"
+        project.mkdir()
+        (project / ".mcp.json").write_text(json.dumps({"mcpServers": {"codex-cli": {}, "postgres": {}}}))
+        with mock.patch("shutil.which", return_value=None):
+            found = inventory.discover(str(project))
+        mcp = [e for e in found["external"] if e["kind"] == "mcp"]
+        self.assertIn("codex-cli", [e["name"] for e in mcp])
+        self.assertNotIn("postgres", [e["name"] for e in found["external"]])
+
+    def test_the_external_list_can_be_limited_by_environment(self):
+        with mock.patch("shutil.which", return_value="/bin/x"), mock.patch.dict("os.environ", {"TOKEN_BEGGAR_EXTERNAL": "agy"}):
+            self.assertEqual([e["name"] for e in inventory.discover()["external"]], ["agy"])
+        with mock.patch("shutil.which", return_value="/bin/x"), mock.patch.dict("os.environ", {"TOKEN_BEGGAR_EXTERNAL": "none"}):
+            self.assertEqual(inventory.discover()["external"], [])
+
     def test_denied_models_leave_the_inventory(self):
         self.settings(deniedModels=["claude-fable-5-1"])
         self.assertNotIn("fable", inventory.discover()["claude"])

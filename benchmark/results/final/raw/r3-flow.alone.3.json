@@ -1,0 +1,111 @@
+{
+ "task": "r3-flow",
+ "class": "reading",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14596,
+  "stop_reason": "end_turn",
+  "session_id": "e0b13af6-1943-474d-b56d-c2919b7f93e7",
+  "total_cost_usd": 0.12450820000000001,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 10112,
+   "cache_read_input_tokens": 97361,
+   "output_tokens": 1205,
+   "output_tokens_details": {
+    "thinking_tokens": 49
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10112,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 584,
+     "cache_read_input_tokens": 22698,
+     "cache_creation_input_tokens": 204,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 204
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1205,
+    "cacheReadInputTokens": 97361,
+    "cacheCreationInputTokens": 10112,
+    "webSearchRequests": 0,
+    "costUSD": 0.12450820000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 49,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Order state changes are checked in memory, and saving is a separate step you have to call yourself.\n\n**Validation: `shop/orders.py`**\n- `STATES` (line 6) lists the states: `new`, `paid`, `shipped`, `cancelled`.\n- `ALLOWED` (line 7) maps each state to the states it can move to: `new \u2192 paid/cancelled` and `paid \u2192 shipped/cancelled`. `shipped` and `cancelled` are final.\n- `Order.__init__` starts every order as `\"new\"`.\n- `Order.move(state)` (line 19) raises `ValueError(\"cannot go from X to Y\")` if the move isn't in `ALLOWED[self.state]`. Otherwise it sets `self.state`.\n\n**Storage: `shop/storage.py`**\n- `Store` keeps all orders in one JSON file.\n- `Store.save_order(order)` loads every row, drops the one with the same `id`, appends a new row (`id`, `customer`, `total`, `tax`, `state`) and rewrites the whole file.\n- `Store.load()` returns the rows, or `[]` if the file doesn't exist.\n\n**Gaps**\n- Nothing in the repo calls both `move` and `save_order`, so a state change isn't saved unless the caller saves it.\n- Storage doesn't check anything. Loaded rows are plain dicts, not `Order` objects, so nothing re-checks the saved state.\n- `save_order` reads and rewrites the whole file with no locking, so two concurrent saves could lose one write.\n\n**Consumers**\n- `shop/reports.py:9` only counts orders in `paid` or `shipped`.\n- `tests/test_orders.py:20-23` tests that moving a shipped order to `cancelled` is rejected.",
+  "ttft_ms": 1631,
+  "type": "result",
+  "duration_ms": 14789,
+  "uuid": "974c7913-48d6-4477-9bda-73ad63964928",
+  "ttft_stream_ms": 1083,
+  "time_to_request_ms": 88,
+  "first_content_frame_ms": 1084,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r3-flow.alone.3",
+ "ledger": []
+}

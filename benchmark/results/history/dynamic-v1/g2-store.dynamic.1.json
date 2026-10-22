@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 12528,
+  "stop_reason": "end_turn",
+  "session_id": "e9542516-476d-44fd-83c4-0ae8d08e26c8",
+  "total_cost_usd": 0.09305959999999999,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 8026,
+   "cache_read_input_tokens": 53238,
+   "output_tokens": 909,
+   "output_tokens_details": {
+    "thinking_tokens": 37
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8026,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 680,
+     "cache_read_input_tokens": 20614,
+     "cache_creation_input_tokens": 202,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 202
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 909,
+    "cacheReadInputTokens": 53238,
+    "cacheCreationInputTokens": 8026,
+    "webSearchRequests": 0,
+    "costUSD": 0.09305959999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 37,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the JSON file with SQLite in WAL mode.** It's in the standard library, needs no server, and handles two writers safely.\n\n**Why the current design fails** (`shop/storage.py:16-21`):\n- **Lost updates.** `save_order` reads the whole file, changes it and writes it all back, with no lock. If both processes do this at the same time, the second write wipes out the first one's order.\n- **Torn files.** `write_text` overwrites the file in place. A crash or a read halfway through a write leaves invalid JSON, and `load()` then fails for every caller.\n- **Slow.** Each save re-reads and rewrites every order, so at 100k orders that's roughly 10 MB per save, and the cost keeps growing.\n\n**Why SQLite:** each write is atomic and only changes one row, a primary key on `id` makes upserts cheap, and WAL lets readers (like `reports`) keep reading while a write is happening. It allows one writer at a time, which is fine for two processes if you set a `busy_timeout` so the other one waits instead of erroring. Postgres would be overkill unless the writers end up on different machines. Never put SQLite on a network filesystem.\n\n**Migration path:**\n1. Keep the `Store` interface (`load`, `save_order`) and add a `SqliteStore` behind it. Store money as integer cents, as now. Add an index on `state` and `customer` if reports filter on them.\n2. Write a one-off import script that reads the JSON, inserts the rows in a single transaction, and checks that the row count and the sum of totals match.\n3. Cutover: stop both writers, run the import, switch the config (`cli.py:26`'s `args.db`) to point at SQLite, restart. Keep the JSON file as a read-only backup.\n4. Add a test that runs two processes saving at the same time and checks no orders go missing.\n5. Later, switch callers from `load()` (fetch all) to queries, so reports stop pulling every order into memory.",
+  "ttft_ms": 2016,
+  "type": "result",
+  "duration_ms": 13647,
+  "uuid": "bf327dcf-0194-49ec-b189-4fff942f6eaf",
+  "ttft_stream_ms": 1514,
+  "time_to_request_ms": 342,
+  "first_content_frame_ms": 1515,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.1"
+}

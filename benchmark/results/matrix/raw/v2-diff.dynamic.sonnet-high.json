@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "sonnet-high",
+ "top": "claude-sonnet-5-5",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14635,
+  "stop_reason": "end_turn",
+  "session_id": "06e7b3fe-7847-4fe4-8266-dfed667417e9",
+  "total_cost_usd": 0.0518035,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 8396,
+   "cache_read_input_tokens": 52775,
+   "output_tokens": 1293,
+   "output_tokens_details": {
+    "thinking_tokens": 316
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8396,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1007,
+     "cache_read_input_tokens": 20350,
+     "cache_creation_input_tokens": 836,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 836
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1293,
+    "cacheReadInputTokens": 52775,
+    "cacheCreationInputTokens": 8396,
+    "webSearchRequests": 0,
+    "costUSD": 0.0518035,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 316,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces two bugs. I only read it against `shop/orders.py` and `tests/test_orders.py`, and did not run anything.\n\n**1. `Order.__init__` raises `NameError` (`shop/orders.py:12`)**\n- The diff replaces `next(_ids)` with `len(_ids_seen)` and `_ids_seen.append(...)`. It never defines `_ids_seen`, and nothing else in the repo does.\n- Every `Order(cart)` now fails with `NameError: name '_ids_seen' is not defined`. This breaks `tests/test_orders.py` (both tests construct an `Order`) and any other code path that creates an order.\n- If someone did add `_ids_seen = []`, the change would still break behaviour:\n  - IDs would start at 0 instead of 1000, because the old counter was `itertools.count(1000)`. Any stored or displayed IDs, or code relying on the 1000+ range, would change.\n  - The ID would be derived from list length instead of an atomic counter. It would produce duplicate IDs if the list were ever trimmed or reset, and two threads could read the same length before either appends.\n  - `_ids` and the `itertools` import would be left unused.\n\n**2. `Order.move` fails open on unknown states (`shop/orders.py:20`)**\n- `ALLOWED.get(self.state, STATES)` falls back to the full `STATES` tuple when the current state isn't a key in `ALLOWED`. The original `ALLOWED[self.state]` raised `KeyError` in that case.\n- An order with a corrupt or unexpected state, for example one set directly or loaded from storage, can now move to any state. That includes leaving `shipped` or `cancelled`, which are meant to be terminal.\n- The state machine's guard is silently bypassed. The error is no longer visible, and a corrupt order gets \"repaired\" by an arbitrary transition.\n- Through `move()` alone this is hard to reach, since every state `move()` can set is a key in `ALLOWED`. It is still a regression in the safety check. If a fallback was wanted, it should be `set()` so it fails closed, not `STATES`.",
+  "ttft_ms": 2134,
+  "type": "result",
+  "duration_ms": 15989,
+  "uuid": "58d356cb-029e-42f3-87d4-d9a873467c7c",
+  "ttft_stream_ms": 1930,
+  "time_to_request_ms": 246,
+  "first_content_frame_ms": 1930,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.sonnet-high"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "alone",
+ "rep": "fable-max",
+ "top": "claude-fable-5-1",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 67175,
+  "stop_reason": "end_turn",
+  "session_id": "43693e40-fbfb-4db4-be3e-07540d676e1c",
+  "total_cost_usd": 0.56818175,
+  "usage": {
+   "input_tokens": 194,
+   "cache_creation_input_tokens": 16850,
+   "cache_read_input_tokens": 154167,
+   "output_tokens": 3814,
+   "output_tokens_details": {
+    "thinking_tokens": 1284
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 16850,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 337,
+     "cache_read_input_tokens": 27255,
+     "cache_creation_input_tokens": 2385,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2385
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 194,
+    "outputTokens": 3814,
+    "cacheReadInputTokens": 154167,
+    "cacheCreationInputTokens": 16850,
+    "webSearchRequests": 0,
+    "costUSD": 0.56818175,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 1284,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 19,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The rename is done and all tests pass.\n\n**What changed.** Every reference to `calc_total` is now `order_total`. The definition lives in `shop/pricing.py:15`, and its callers in the orders module, the CLI, and both test files were updated to match. A repo-wide search including hidden and ignored files finds no remaining occurrences.\n\n| | Before | After |\n|---|---|---|\n| Tests run | 6 | 6 |\n| Result | OK | OK |\n\nThe diff touches 5 files with 11 one-for-one line substitutions and nothing else. The sibling function `calc_tax` was left alone since the request covered only `calc_total`. Changes are in the working tree and not committed.",
+  "ttft_ms": 6600,
+  "type": "result",
+  "duration_ms": 67680,
+  "uuid": "a72040ab-0e25-49aa-bebe-2e8920d6c525",
+  "ttft_stream_ms": 3957,
+  "time_to_request_ms": 186,
+  "first_content_frame_ms": 3957,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.alone.fable-max"
+}

@@ -1,0 +1,112 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 55448,
+  "stop_reason": "end_turn",
+  "session_id": "3c1dd5cb-54a3-4383-a209-33fe74c33d22",
+  "total_cost_usd": 0.2483634,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 7330,
+   "cache_read_input_tokens": 34307,
+   "output_tokens": 2054,
+   "output_tokens_details": {
+    "thinking_tokens": 542
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7330,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 730,
+     "cache_read_input_tokens": 19720,
+     "cache_creation_input_tokens": 2197,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2197
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 6336,
+    "cacheReadInputTokens": 81087,
+    "cacheCreationInputTokens": 16676,
+    "webSearchRequests": 0,
+    "costUSD": 0.2483634,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 936,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `Cart.apply_coupon(code)`, put the coupons in `shop/coupons.py`, and updated `calc_total` to apply them. The full suite passes: `python3 -m unittest discover -s tests -t . -v` ran 14 tests and all passed. Nothing is committed yet.\n\n**Changes:**\n- **`shop/coupons.py`** (new): `SAVE10` takes 10% off and `FLAT500` takes 500 cents off. An unknown code raises `ValueError`, and the cart is left unchanged.\n- **`shop/models.py`**: `Cart` has a new `coupons` list and the `apply_coupon` method. One side effect: comparing two carts and printing a cart now include the coupons.\n- **`shop/pricing.py`**: `calc_total` and `calc_tax` now share a helper that subtracts the coupons before tax is calculated.\n- **`tests/test_coupons.py`** (new): 8 tests covering each coupon alone, both together with tax, an unknown code, the total stopping at 0, and applying the same code twice.\n\n**Decisions you may want to change:**\n- **Order of discounts:** the cart already had a bulk discount. Coupons are worked out on the subtotal *after* that discount and before tax. Each coupon is calculated from that same amount, so the order you apply them in doesn't matter. The subtotal never goes below 0.\n- **Rounding:** `SAVE10` uses the existing `money.percent` function, which rounds half up to whole cents.\n- **Tax:** tax is charged on the discounted amount, so `calc_tax` and `Order.tax_cents` now include coupons too. If a cart has both taxed and untaxed items, the discount comes off the taxed part in proportion to its share of the subtotal. The task didn't say how to handle this, so it's my choice.\n- **Same code twice:** applying a code that's already on the cart is ignored without an error. That matches how `Cart.add` handles repeated items. If you'd rather it raise an error, it's a one-line change.",
+  "ttft_ms": 5748,
+  "type": "result",
+  "duration_ms": 57039,
+  "uuid": "d72d308a-0430-42f0-b115-99bfce22b2dc",
+  "ttft_stream_ms": 1128,
+  "time_to_request_ms": 322,
+  "first_content_frame_ms": 1128,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py  |  9 +++++++++\n shop/pricing.py | 24 +++++++++++++++++++++---\n 2 files changed, 30 insertions(+), 3 deletions(-)\n",
+ "workdir": "c1-coupon.dynamic.3"
+}

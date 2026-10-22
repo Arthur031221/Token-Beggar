@@ -1,0 +1,110 @@
+{
+ "task": "r2-toprate",
+ "class": "reading",
+ "arm": "dynamic",
+ "rep": "haiku-low",
+ "top": "claude-haiku-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 4618,
+  "stop_reason": "end_turn",
+  "session_id": "7058fe26-4244-4937-8025-0aa430e86476",
+  "total_cost_usd": 0.00238734,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 9194,
+   "cache_read_input_tokens": 33114,
+   "output_tokens": 434,
+   "output_tokens_details": {
+    "thinking_tokens": 225
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9194,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 135,
+     "cache_read_input_tokens": 20324,
+     "cache_creation_input_tokens": 1660,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1660
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 434,
+    "cacheReadInputTokens": 33114,
+    "cacheCreationInputTokens": 9194,
+    "webSearchRequests": 0,
+    "costUSD": 0.00238734,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 225,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Kestrel has the highest `BASE_RATE` at 845, in `shop/carriers/kestrel.py`, ahead of Iris (796) and Juniper (783).",
+  "ttft_ms": 2276,
+  "type": "result",
+  "duration_ms": 5379,
+  "uuid": "fee1bf6c-20af-466f-9333-9bfa3a7c5f4c",
+  "ttft_stream_ms": 1627,
+  "time_to_request_ms": 161,
+  "first_content_frame_ms": 1627,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r2-toprate.dynamic.haiku-low"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "v1-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 24349,
+  "stop_reason": "end_turn",
+  "session_id": "9306d910-4bd4-49cc-b430-d044c2aedb0b",
+  "total_cost_usd": 0.1426096,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 9545,
+   "cache_read_input_tokens": 100048,
+   "output_tokens": 2310,
+   "output_tokens_details": {
+    "thinking_tokens": 520
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9545,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 991,
+     "cache_read_input_tokens": 23031,
+     "cache_creation_input_tokens": 1100,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1100
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2310,
+    "cacheReadInputTokens": 100048,
+    "cacheCreationInputTokens": 9545,
+    "webSearchRequests": 0,
+    "costUSD": 0.1426096,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 520,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces three bugs. I applied it to a temporary copy and ran the test suite: 2 of 6 tests fail. The third bug isn't covered by any test. I didn't edit any files in the repo.\n\n### 1. Bulk discount no longer applies at exactly 10 items (`shop/pricing.py:10`)\n`>= BULK_THRESHOLD` was changed to `> BULK_THRESHOLD`. A line with exactly 10 units (`BULK_THRESHOLD = 10`) now loses its 5% discount; only 11 or more units qualify. Customers buying exactly 10 are overcharged.\n- `test_bulk_discount` fails: 10 \u00d7 100\u00a2 should total `1028` and now totals `1083`. The 50\u00a2 discount is gone, and tax is charged on the full 1000.\n\n### 2. `calc_tax` ignores the bulk discount, so it disagrees with `calc_total` (`shop/pricing.py:23`)\n`calc_tax` now taxes the raw `price_cents * qty` instead of `line_subtotal(l)`. `calc_total` (line 18) still taxes the discounted subtotal, so the two functions now give different tax amounts for any discounted line.\n- **Effect:** `Order` stores both values (`shop/orders.py:15-16`), so a single order now has a `tax_cents` that doesn't match the tax inside its `total_cents`. Example: 11 \u00d7 100\u00a2 (taxable) gives a discounted subtotal of 1045. `calc_total` charges 86\u00a2 tax, but `calc_tax` reports 91\u00a2. Customers are also told they paid tax on money that was discounted away.\n- **No test catches this:** the only `calc_tax` test uses a non-taxable item, which is why the suite still passes this one.\n\n### 3. Cache TTL is 1000\u00d7 too long (`shop/cache.py:15`)\nThe TTL is now multiplied by 1000 (`self.ttl * 1000`), as if the clock returned milliseconds. But the default clock is `time.monotonic`, which returns **seconds**, and the docstring says \"Caches price lookups for ttl seconds.\" The default `ttl=60` now means about 16.7 hours, so stale prices are served long after they should expire.\n- `test_hit_and_expiry` fails: with `ttl=10` and the clock advanced to 11 seconds, the entry should have expired and the loader should run again. Instead the cache still returns the old value (`1 != 2` loader calls).\n\nEach line in the diff introduces one of these bugs; none of its changes is safe to keep.",
+  "ttft_ms": 2032,
+  "type": "result",
+  "duration_ms": 25822,
+  "uuid": "b2897d35-3a5f-4e3e-ad13-05619c7d2725",
+  "ttft_stream_ms": 1753,
+  "time_to_request_ms": 713,
+  "first_content_frame_ms": 1754,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v1-diff.dynamic.3"
+}

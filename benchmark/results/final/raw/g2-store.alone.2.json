@@ -1,0 +1,111 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 13542,
+  "stop_reason": "end_turn",
+  "session_id": "a0ef1540-10df-4328-8dfc-6134b561e7ee",
+  "total_cost_usd": 0.0983762,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 8668,
+   "cache_read_input_tokens": 52641,
+   "output_tokens": 924,
+   "output_tokens_details": {
+    "thinking_tokens": 47
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8668,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 704,
+     "cache_read_input_tokens": 21213,
+     "cache_creation_input_tokens": 245,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 245
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 924,
+    "cacheReadInputTokens": 52641,
+    "cacheCreationInputTokens": 8668,
+    "webSearchRequests": 0,
+    "costUSD": 0.0983762,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 47,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move orders to SQLite (WAL mode), keeping the `Store` interface.**\n\n**Why the current design won't hold up:** `shop/storage.py:16-21` reads the whole JSON file, rewrites the list, and writes it all back.\n- **Lost updates:** with two writers, each can load the file, add its own order, and save. The second save silently erases the first writer's order. Nothing locks the file.\n- **Corruption:** `write_text` isn't atomic. A crash or a read during a write leaves a truncated, unparseable file.\n- **Cost grows with size:** at 100k orders, every save parses and rewrites about 10 MB, and the `id` filter scans every row.\n\n**Why SQLite:** it's in the standard library, so there's no server to run. Transactions handle the two writers safely, and WAL mode lets readers like `reports`/`cli` keep reading while a write happens. An `id` primary key makes each save a single indexed upsert. 100k rows is tiny for it. Postgres would only be worth it if writers end up on different hosts.\n\n**Migration path:**\n1. **Keep the interface.** Add a SQLite-backed store with the same `load()` and `save_order()` methods. Use an `orders` table with `id` as the primary key, money columns as integer cents, and a `busy_timeout` so a writer waits briefly for a lock instead of failing.\n2. **Test both stores against the same suite** (the tests don't cover storage today), including a test where two processes write at once.\n3. **One-time import:** stop the writers, load the JSON into SQLite in one transaction, check row counts and totals match, and keep the JSON as a backup.\n4. **Switch over** with a config flag, which also gives you a rollback, then restart both writers.\n5. **Later:** add query methods (by state, by customer) so `reports` stops loading every order, then delete the JSON code.\n\nOne thing I noticed: `save_order` isn't called anywhere in the repo, so the writers live outside this codebase. Check how they write before cutting over.",
+  "ttft_ms": 2130,
+  "type": "result",
+  "duration_ms": 13834,
+  "uuid": "2ad392ae-aa13-4b97-b9b1-f7c238f07e84",
+  "ttft_stream_ms": 1626,
+  "time_to_request_ms": 94,
+  "first_content_frame_ms": 1626,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.2",
+ "ledger": []
+}

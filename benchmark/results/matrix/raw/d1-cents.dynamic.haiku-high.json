@@ -1,0 +1,112 @@
+{
+ "task": "d1-cents",
+ "class": "debugging",
+ "arm": "dynamic",
+ "rep": "haiku-high",
+ "top": "claude-haiku-5-5",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 45629,
+  "stop_reason": "end_turn",
+  "session_id": "dda2ccbb-dcac-40d9-9f0e-c9c47320d063",
+  "total_cost_usd": 0.00970074,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 15335,
+   "cache_read_input_tokens": 105551,
+   "output_tokens": 5282,
+   "output_tokens_details": {
+    "thinking_tokens": 2447
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 15335,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 660,
+     "cache_read_input_tokens": 25672,
+     "cache_creation_input_tokens": 2453,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2453
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 26,
+    "outputTokens": 7959,
+    "cacheReadInputTokens": 159639,
+    "cacheCreationInputTokens": 23777,
+    "webSearchRequests": 0,
+    "costUSD": 0.00970074,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2611,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 2,
+   "requested": {
+    "background": 0,
+    "foreground": 2,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 2,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 2
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 9,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The root cause was in `to_cents` in `shop/money.py`. The fix is one line, and the quote now prints 27.06.\n\n**Root cause:** `frac.rjust(2, \"0\")` pads on the left, so the fraction `\"5\"` became `\"05\"` instead of `\"50\"`. `12.5` was parsed as 12.05 (1205 cents). The total for two of them is 2410 + 199 tax = 2609, which printed as 26.09. Any amount with one decimal digit was affected, and the existing tests didn't cover one.\n\n**Fix:** `shop/money.py:9` now uses `frac.ljust(2, \"0\")`, which pads on the right.\n\n**Test:** I added `tests/test_money.py` with six cases. They cover `to_cents` for `12.5`, `12.34`, `12` and `0.05`, a `fmt` round trip, and a cart total of 2706 for `12.5` at quantity 2.\n\n**Results:**\n- `python3 -m unittest discover -v`: Ran 12 tests, OK. This includes the 6 existing tests and the 6 new ones.\n- `python3 -c \"from shop.cli import main; main(['quote','a:12.5:2'])\"` prints `27.06`.\n\nI didn't add a `shop/__main__.py`, so `python3 -m shop` still fails with \"No module named shop.__main__\". Say if you want that added.\n\nThe `__pycache__/` directories show as untracked in git. I didn't add a `.gitignore` for them, and I didn't commit anything.",
+  "ttft_ms": 4526,
+  "type": "result",
+  "duration_ms": 47795,
+  "uuid": "31fae457-3af8-4dae-a141-969b99a50936",
+  "ttft_stream_ms": 1322,
+  "time_to_request_ms": 208,
+  "first_content_frame_ms": 1322,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n",
+ "workdir": "d1-cents.dynamic.haiku-high"
+}

@@ -1,0 +1,127 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "final-no-lean-tools",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 68198,
+  "stop_reason": "end_turn",
+  "session_id": "5a0ddec0-a995-494a-8019-2c3f8e38d25c",
+  "total_cost_usd": 0.1954131,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 9425,
+   "cache_read_input_tokens": 33218,
+   "output_tokens": 1618,
+   "output_tokens_details": {
+    "thinking_tokens": 214
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9425,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 651,
+     "cache_read_input_tokens": 20428,
+     "cache_creation_input_tokens": 1787,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1787
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1618,
+    "cacheReadInputTokens": 33218,
+    "cacheCreationInputTokens": 9425,
+    "webSearchRequests": 0,
+    "costUSD": 0.1144196,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 214,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 3943,
+    "cacheReadInputTokens": 111005,
+    "cacheCreationInputTokens": 12174,
+    "webSearchRequests": 0,
+    "costUSD": 0.0809935,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 313,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in. The full suite passes: 15 tests, 0 failures, run with `python3 -m unittest discover -s tests -t .`. The run was done by a subagent; I haven't re-run the tests or read the diff myself. Nothing is committed.\n\n**Changes:**\n- `Cart` has a `tier` attribute that defaults to `\"standard\"` (`shop/models.py`).\n- The discount rates (gold 10%, silver 5%, anything else 0) and a `tier_discount()` helper are in `shop/pricing.py`. It reuses the existing `percent()`, so amounts round half-up to the cent.\n- The discount comes off before tax, in both `calc_total` and `calc_tax`. Tax is charged on the discounted taxable amount.\n- `Order` uses the same two functions, so its totals include the discount. It also stores `tier` (`shop/orders.py`).\n- The `quote` command takes `--tier`, defaulting to `standard` (`shop/cli.py`).\n- New tests are in `tests/test_pricing.py` and `tests/test_orders.py`, plus a new `tests/test_cli.py` for `--tier`.\n\n**Decisions to check:**\n- **Case matters:** `GOLD` gets no discount. If tier names should match regardless of case, that's a one-line change.\n- **Two separate discounts:** the discount is worked out once on the whole subtotal and once on the part that's taxed. Each is rounded on its own, so carts that mix taxed and untaxed items could be a cent off the \"obvious\" figure.\n- **One structural change:** `calc_total` now gets its tax from `calc_tax` instead of working it out itself. This keeps the total and the tax from disagreeing.",
+  "ttft_ms": 3649,
+  "type": "result",
+  "duration_ms": 71014,
+  "uuid": "f1b1674f-73d8-4f75-8413-ee09470faa5e",
+  "ttft_stream_ms": 2445,
+  "time_to_request_ms": 302,
+  "first_content_frame_ms": 2445,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 13 +++++++++----\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 31 +++++++++++++++++++++++++++++++\n 6 files changed, 52 insertions(+), 5 deletions(-)\n",
+ "workdir": "f3-tier.final-no-lean-tools.3",
+ "ledger": []
+}

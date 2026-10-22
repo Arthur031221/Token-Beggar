@@ -1,0 +1,111 @@
+{
+ "task": "h6-partial",
+ "class": "design",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 19516,
+  "stop_reason": "end_turn",
+  "session_id": "e55c544f-648a-4804-97e8-fa24eb3fb6fa",
+  "total_cost_usd": 0.13053620000000002,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11000,
+   "cache_read_input_tokens": 73821,
+   "output_tokens": 1387,
+   "output_tokens_details": {
+    "thinking_tokens": 101
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11000,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 867,
+     "cache_read_input_tokens": 23217,
+     "cache_creation_input_tokens": 573,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 573
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1387,
+    "cacheReadInputTokens": 73821,
+    "cacheCreationInputTokens": 11000,
+    "webSearchRequests": 0,
+    "costUSD": 0.13053620000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 101,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I'd add shipments and returns as separate records that point at the order's lines, and work out the order's state from them.\n\n**What changes**\n\n- **`shop/orders.py`**: Today `ALLOWED` makes `shipped` a final state that can only be reached once. Add `partially_shipped`, `partially_returned` and `returned`. Add `ship(lines, carrier)` and `return_items(lines)`. Both check quantities against `qty_ordered`, `qty_shipped` and `qty_returned` for each SKU, then update `state`. Lines are currently `(sku, qty, price)` tuples. They need to become small records that can hold those counts.\n- **`shop/models.py`**: Add `Shipment(id, order_id, lines, carrier, label)` and `Return(id, order_id, lines, refund_cents)`.\n- **`shop/pricing.py`**: Add a refund calculation for each line. It must reuse the original unit price, bulk discount and tax, not reprice. Make sure all refunds added up never exceed `total_cents`.\n- **`shop/carriers/*.py` (20 files)**: `label(order_id)` allows only one label per order. Change it to `label(shipment_id)` or `label(order_id, seq)`, and update every `valid_label` regex to match. `delta`, `kestrel`, `onyx` and `tundra` have no `tracking_url`, so decide what those four do.\n- **`shop/storage.py`**: `save_order` doesn't save lines at all. Save lines, shipments and returns, and handle older rows that don't have them.\n- **`shop/reports.py`**: Sales should be total minus refunds, and should include the new states.\n- **`shop/cli.py`**: Optionally add `ship` and `return` commands.\n- **`tests/`**: Add tests for over-shipping, over-returning, refund rounding and loading old data.\n\n**Main risks**\n\n1. **Refund rounding:** Tax is rounded once across the whole order. Refunding line by line can drift by a cent or so. A partial return can also push a line below the 10-unit bulk threshold, so there's a policy question: does the customer keep the discount?\n2. **Old data:** Existing JSON files have no line data, so old orders can't be partly returned.\n3. **Label format:** Changing it affects all 20 carriers and any labels already printed.\n4. **Concurrency:** `Store` rewrites the whole file on every save, so two saves at the same time can lose a shipment.",
+  "ttft_ms": 2221,
+  "type": "result",
+  "duration_ms": 19950,
+  "uuid": "b30956c9-1ccc-48ee-9a2a-abaf0158f8a7",
+  "ttft_stream_ms": 2031,
+  "time_to_request_ms": 86,
+  "first_content_frame_ms": 2031,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h6-partial.alone.2",
+ "ledger": []
+}

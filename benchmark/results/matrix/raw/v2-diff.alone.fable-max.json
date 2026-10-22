@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": "fable-max",
+ "top": "claude-fable-5-1",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 157916,
+  "stop_reason": "end_turn",
+  "session_id": "63fc47a7-308f-48a4-b09b-ebf355a3fdb1",
+  "total_cost_usd": 1.157127,
+  "usage": {
+   "input_tokens": 290,
+   "cache_creation_input_tokens": 25720,
+   "cache_read_input_tokens": 250708,
+   "output_tokens": 11543,
+   "output_tokens_details": {
+    "thinking_tokens": 7164
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 25720,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 1912,
+     "cache_read_input_tokens": 36290,
+     "cache_creation_input_tokens": 2220,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2220
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 290,
+    "outputTokens": 11543,
+    "cacheReadInputTokens": 250708,
+    "cacheCreationInputTokens": 25720,
+    "webSearchRequests": 0,
+    "costUSD": 1.157127,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 7164,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 17,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Nothing more is needed. Every claim below was checked against the repo and against a scratch copy with the diff applied, so I can write up the findings.\n\nThe diff introduces two definite bugs, and the ID change carries three further problems even after the obvious one is fixed. The patch also cannot be applied with git as written.\n\n**Confirmed bugs**\n\n1. **`_ids_seen` is never defined.** The diff replaces `next(_ids)` at `shop/orders.py:12` with `len(_ids_seen)` and an append, but adds no module-level `_ids_seen = []`. No file in the repo defines that name. Every `Order(...)` call now raises `NameError`, so both tests in `tests/test_orders.py` error out and the library cannot create an order at all. Baseline suite passes 6 of 6. With the diff applied:\n\n```\nNameError: name '_ids_seen' is not defined\nRan 6 tests ... FAILED (errors=2)\n```\n\n2. **The `move` fallback is backwards.** `ALLOWED.get(self.state, STATES)` at `shop/orders.py:20` uses the tuple of all four state names as the default. So when `self.state` holds anything not in `ALLOWED`, such as a typo or a value loaded from a corrupted store, the guard permits a transition to every known state, including back to `\"new\"`. That is strictly more permissive than any real state, which allow at most two targets. The old code raised `KeyError` and surfaced the bad state. Verified: with state set to `\"refunded\"`, moves to all four of `new`, `paid`, `shipped`, and `cancelled` succeed silently. If the intent was \"unknown state cannot move,\" the default needed to be an empty set.\n\n**Problems in the ID scheme once `_ids_seen = []` is added**\n\n3. **IDs now start at 0 instead of 1000.** Anything that stored or printed the old numbering sees a different series. Carrier labels change from `ACME-00001000` to `ACME-00000000`. The first order's id is also falsy, so any future `if order.id` check misbehaves. Nothing in the repo asserts the base, but it is an unannounced behavior change.\n\n4. **Uniqueness depends on the list never shrinking.** The id is just `len(_ids_seen)`. If anyone clears or trims the list, for instance a test fixture resetting state, ids restart and collide. Verified: after `clear()`, the next order received id 0 again, duplicating an existing order. The `Store.save_order` dedup in `shop/storage.py:17` keys on id, so a duplicate silently overwrites the earlier row.\n\n5. **Unbounded memory growth.** The list retains every id ever issued only to serve as a counter. The appended value is never read. `itertools.count` used constant memory.\n\n**Not reported as a bug**\n\nI tested the `len()` then `append()` pair for a thread race on CPython 3.12 with 8 threads, 120k orders, and a tiny switch interval. No duplicates appeared, so I am not claiming that regression.\n\n**Housekeeping**\n\n- `import itertools` and `_ids` at `shop/orders.py:1` and `shop/orders.py:5` are left behind unused.\n- The hunk headers carry no line ranges, so `git apply --check change.diff` fails with \"No valid patches in input\". The diff cannot be applied by tooling as written.",
+  "ttft_ms": 1278,
+  "type": "result",
+  "duration_ms": 159235,
+  "uuid": "0e0612f6-9ef8-4a9e-b135-2a612c73f2e2",
+  "ttft_stream_ms": 1118,
+  "time_to_request_ms": 85,
+  "first_content_frame_ms": 1118,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.alone.fable-max"
+}

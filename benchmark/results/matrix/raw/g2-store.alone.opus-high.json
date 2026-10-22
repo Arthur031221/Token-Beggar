@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "opus-high",
+ "top": "claude-opus-5-5",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 17044,
+  "stop_reason": "end_turn",
+  "session_id": "992e47ef-63a7-4399-a7a7-d5479238c9e2",
+  "total_cost_usd": 0.0899238,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7483,
+   "cache_read_input_tokens": 50879,
+   "output_tokens": 993,
+   "output_tokens_details": {
+    "thinking_tokens": 18
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7483,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 691,
+     "cache_read_input_tokens": 19444,
+     "cache_creation_input_tokens": 829,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 829
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 993,
+    "cacheReadInputTokens": 50879,
+    "cacheCreationInputTokens": 7483,
+    "webSearchRequests": 0,
+    "costUSD": 0.0899238,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 18,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move `Store` from one JSON file to SQLite, keeping the `Store` interface unchanged.**\n\n**Why the current design breaks**\n- **Lost writes:** `save_order` (`shop/storage.py:17`) reads the whole file, changes it, and writes it back. With two writer processes, both can read the same file, and whichever writes last silently wipes out the other's order. Nothing locks the file.\n- **Corruption:** `write_text` overwrites the file directly. If a process crashes partway, or a reader catches a half-written file, `json.loads` fails and every order is unreadable.\n- **Slows down as it grows:** every save parses and rewrites all orders. At 100k orders that's roughly 10 MB per write.\n\n**Why SQLite**\nIt ships with Python, so there's nothing new to install. Each write is atomic and only touches its own row, and WAL mode lets one process write while others read. Two writers is well within what it handles. A full database server like Postgres would be overkill unless writers end up on different machines.\n\n**Migration path**\n1. **Add `SqliteStore`** with the same `load()` and `save_order()` methods. Use an `orders` table with `id` as the primary key, an upsert for saves, WAL mode and a busy timeout. Run the existing tests against both stores.\n2. **Write a one-off import script** that reads the JSON file and inserts every row in one transaction. It should be safe to re-run, and it should check that row counts and total amounts match.\n3. **Cut over:** stop both writers, run the import, point them and `shop report --db` at the new store, then restart. Keep the JSON file read-only as a backup.\n4. **Clean up:** after a stable period, delete the JSON store. Since `reports.render` currently loads every order, consider adding indexed queries (e.g. by customer or state) for reports.\n\n**If you need a stopgap:** wrap `save_order` in a file lock and write to a temp file, then rename it over the original. That stops lost writes and corruption, but every save still rewrites all 100k orders.",
+  "ttft_ms": 2989,
+  "type": "result",
+  "duration_ms": 17198,
+  "uuid": "26d6bc4c-292d-46e7-a7a7-c8836b0121c4",
+  "ttft_stream_ms": 2054,
+  "time_to_request_ms": 70,
+  "first_content_frame_ms": 2055,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.opus-high"
+}

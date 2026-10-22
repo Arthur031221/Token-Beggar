@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 17658,
+  "stop_reason": "end_turn",
+  "session_id": "96ccb9d8-2498-4dc5-8da8-78fab504a91c",
+  "total_cost_usd": 0.1388384,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11266,
+   "cache_read_input_tokens": 79492,
+   "output_tokens": 1639,
+   "output_tokens_details": {
+    "thinking_tokens": 226
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11266,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 951,
+     "cache_read_input_tokens": 24246,
+     "cache_creation_input_tokens": 1606,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1606
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1639,
+    "cacheReadInputTokens": 79492,
+    "cacheCreationInputTokens": 11266,
+    "webSearchRequests": 0,
+    "costUSD": 0.1388384,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 226,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "# Multi-currency design\n\n**Core idea:** store each amount as integer minor units together with an ISO currency code. Never add amounts in different currencies without an explicit conversion.\n\n**Changes:**\n- **`shop/money.py`**: Add a frozen `Money(minor, currency)` type and a table of how many decimal places each currency uses (JPY 0, USD 2, KWD 3). `to_cents`, `fmt` and `percent` currently assume 2 decimals. Make them currency-aware and refuse to add or compare different currencies.\n- **`shop/models.py`**: Give `Item` a currency field, defaulting to USD. `Cart` gets one currency and rejects items in any other.\n- **`shop/pricing.py`**: The totals return `Money`. The tax and bulk-discount rounding should use the currency's decimal places.\n- **`shop/orders.py`**: Record the currency on the order, including in `lines`.\n- **`shop/storage.py`**: Write a `currency` field. Rows saved before this change have none, so read them as USD.\n- **`shop/reports.py`**: Group sales by (customer, currency), or convert using a stated rate and date. Never add raw totals across currencies.\n- **`shop/cli.py`**: Add a `--currency` flag to `quote` and print the currency code in the output.\n- **`shop/cache.py`**: Cache prices by (sku, currency).\n- **`shop/carriers/*`** (20 files): Every rate card is implicitly USD cents. Tag each card's currency and convert at checkout.\n- **Tests**: Add cases for zero- and three-decimal currencies, rejection of mixed currencies, and loading old rows.\n\n**Main risks:**\n1. **Silent mixing:** `sales_by_customer` adds totals together, and the order total adds shipping to the subtotal. Both would quietly mix currencies. The `Money` type must raise an error instead.\n2. **Rounding:** `percent` uses floats and assumes 2 decimals. Switching to `Decimal` will shift some existing totals by a cent, so check them against the current tests.\n3. **Old data:** existing JSON rows have no currency. Defaulting them to USD is safe only if every past order really was in USD.\n4. **Exchange rates:** decide where rates come from, how old they can be, and record the rate used on each order so it can be audited.\n5. **Scope:** most of the 20 carrier files are near copies of each other, so it's easy to miss one. Centralising the currency there is worth doing first.",
+  "ttft_ms": 1820,
+  "type": "result",
+  "duration_ms": 18319,
+  "uuid": "24d1214e-414b-4b5f-95de-2e6014bcc7c5",
+  "ttft_stream_ms": 877,
+  "time_to_request_ms": 189,
+  "first_content_frame_ms": 878,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.3"
+}

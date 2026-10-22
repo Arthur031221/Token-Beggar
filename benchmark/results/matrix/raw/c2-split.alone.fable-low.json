@@ -1,0 +1,110 @@
+{
+ "task": "c2-split",
+ "class": "routine_code",
+ "arm": "alone",
+ "rep": "fable-low",
+ "top": "claude-fable-5-1",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 56232,
+  "stop_reason": "end_turn",
+  "session_id": "0fea0157-cd09-4d12-a067-2fd699eb15e5",
+  "total_cost_usd": 0.30955524999999995,
+  "usage": {
+   "input_tokens": 162,
+   "cache_creation_input_tokens": 9934,
+   "cache_read_input_tokens": 120421,
+   "output_tokens": 1583,
+   "output_tokens_details": {
+    "thinking_tokens": 45
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9934,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 237,
+     "cache_read_input_tokens": 22536,
+     "cache_creation_input_tokens": 188,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 188
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 162,
+    "outputTokens": 1583,
+    "cacheReadInputTokens": 120421,
+    "cacheCreationInputTokens": 9934,
+    "webSearchRequests": 0,
+    "costUSD": 0.30955524999999995,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 45,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Done. All 12 tests pass, including the 6 new ones.\n\n- **Added `split`** in `shop/money.py`. It uses `divmod` to compute a base share and remainder, then gives one extra cent to each of the first `rem` elements. Parts below 1 raise `ValueError`.\n- **Added `tests/test_money.py`** covering even splits, remainder placement, sum preservation across several inputs, a single part, more parts than cents, and invalid parts.\n\nOne note: negative `cents` follows Python's floor-division semantics, so for example splitting -1 cent into 3 parts gives `[0, 0, -1]`. The sum is still correct, but tell me if you want negative amounts rejected or handled differently.",
+  "ttft_ms": 14139,
+  "type": "result",
+  "duration_ms": 56535,
+  "uuid": "63549916-15db-42aa-afcb-89c399e5f2dc",
+  "ttft_stream_ms": 12663,
+  "time_to_request_ms": 70,
+  "first_content_frame_ms": 12666,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 11 +++++++++++\n 1 file changed, 11 insertions(+)\n",
+ "workdir": "c2-split.alone.fable-low"
+}

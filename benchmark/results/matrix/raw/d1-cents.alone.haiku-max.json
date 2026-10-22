@@ -1,0 +1,110 @@
+{
+ "task": "d1-cents",
+ "class": "debugging",
+ "arm": "alone",
+ "rep": "haiku-max",
+ "top": "claude-haiku-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 166662,
+  "stop_reason": "end_turn",
+  "session_id": "15b92c16-ead8-4a06-85a2-a3ae532ceeff",
+  "total_cost_usd": 0.02224121,
+  "usage": {
+   "input_tokens": 34,
+   "cache_creation_input_tokens": 33588,
+   "cache_read_input_tokens": 512071,
+   "output_tokens": 20799,
+   "output_tokens_details": {
+    "thinking_tokens": 15103
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 33588,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 2701,
+     "cache_read_input_tokens": 45504,
+     "cache_creation_input_tokens": 874,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 874
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 34,
+    "outputTokens": 20799,
+    "cacheReadInputTokens": 512071,
+    "cacheCreationInputTokens": 33588,
+    "webSearchRequests": 0,
+    "costUSD": 0.02224121,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 15103,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 18,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The root cause was a single `ljust`\u2192`rjust` change in the `seed` commit. `to_cents` now reads `12.5` as 1250, and `quote a:12.5:2` prints `27.06`.\n\n**Root cause:** `to_cents` in `shop/money.py:9` used `frac.rjust(2, \"0\")`. `rjust` pads on the left, so the fraction `\"5\"` became `\"05\"` and was read as 5 cents instead of 50. `12.5` was parsed as 12.05, giving a subtotal of 2410 and tax of 199, for a total of 2609 (`26.09`). The correct total is 2500 + 206 tax = 2706 (`27.06`).\n\n**Fix:** changed `rjust` back to `ljust` on that line. The file is now byte-identical to the pre-seed version.\n\n**Tests:** `python3 -m unittest discover -s tests -t .` runs 10 tests, all passing. The 6 existing tests also passed before the fix, but none of them used a one-digit fraction, which is why the regression got through. I added:\n- `tests/test_money.py`: `to_cents` on `12.5`, `0.5`, `12.05`, `12.50`, `12`, and rejection of `1.234`.\n- `tests/test_cli.py`: `quote a:12.5:2` prints `27.06`.\n\nRun against the buggy code, the two new tests fail with `'26.09\\n' != '27.06\\n'` and `1205 != 1250`, so they catch this bug.\n\n**Notes:**\n- `python3 -m shop quote ...` still fails with \"No module named shop.__main__\" because there is no `shop/__main__.py`. I didn't add one since you gave the `-c` form as the way to run it. I can add it if you want the original command to work.\n- I didn't fix a related bug that predates the seed commit: `to_cents(\"-12.50\")` returns -1150 instead of -1250, because the sign applies only to the whole part. Prices here are non-negative, so I left it alone.\n- Nothing is committed. The working tree has `M shop/money.py` plus the two new test files.",
+  "ttft_ms": 1686,
+  "type": "result",
+  "duration_ms": 167765,
+  "uuid": "d28c9711-9894-4f88-a090-89edba2d71a0",
+  "ttft_stream_ms": 1277,
+  "time_to_request_ms": 88,
+  "first_content_frame_ms": 1279,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n",
+ "workdir": "d1-cents.alone.haiku-max"
+}

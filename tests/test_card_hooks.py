@@ -10,7 +10,6 @@ from token_beggar import card, hooks, inventory
 from .helpers import Isolated, assistant, edit, user, write_transcript
 
 OPUS_HIGH = {"model": "claude-opus-5-5", "alias": "opus", "tier": 3, "effort": "high", "effort_source": "--effort", "known": True}
-BENCH = {"top_model": "claude-opus-5-5", "top_effort": "high", "classes": {"mechanical": {"cost_x": 4.2}, "reading": {"cost_x": 1.3}}}
 
 
 def run_hook(event: str, payload: dict) -> tuple[int, str]:
@@ -21,38 +20,46 @@ def run_hook(event: str, payload: dict) -> tuple[int, str]:
 
 
 class CardTests(Isolated):
-    def test_card_states_the_ceiling_and_the_table(self):
+    def test_card_states_the_ceiling_and_lists_the_menu(self):
         text = card.build(OPUS_HIGH, inventory.load())
         self.assertIn("claude-opus-5-5 at high", text)
-        self.assertIn("mechanical | haiku", text)
-        self.assertIn("debugging | opus | high | stay inline", text)
+        self.assertIn("claude haiku (cap 2", text)
+        self.assertIn("claude opus (cap 4", text)
+        self.assertNotIn("claude fable", text)  # above the ceiling
+
+    def test_card_has_no_fixed_table(self):
+        text = card.build(OPUS_HIGH, inventory.load())
+        self.assertNotIn("class | model | effort", text)
+        self.assertIn("split it into subtasks", text)
+        self.assertIn("Stay inline only", text)
 
     def test_unknown_ceiling_asks_the_model_to_use_its_own(self):
         text = card.build({"model": None, "effort": "high", "known": False}, inventory.load())
-        self.assertIn("never above your own model", text)
+        self.assertIn("at or below your own", text)
 
-    def test_multiplier_only_for_the_benchmarked_model_and_effort(self):
-        with mock.patch.object(card, "measured", return_value=BENCH):
-            self.assertIn("mechanical 4.2x", card.footer_rule(OPUS_HIGH))
-            self.assertNotIn("x less", card.footer_rule({**OPUS_HIGH, "effort": "low"}))
-            self.assertNotIn("4.2x", card.footer_rule({**OPUS_HIGH, "model": "claude-sonnet-5-5"}))
-            self.assertNotIn("x less", card.footer_rule({**OPUS_HIGH, "effort_source": "default"}))
-            self.assertIn("Never write a multiplier that is not in that table", card.footer_rule(OPUS_HIGH))
+    def test_the_card_leaves_the_footer_to_the_hook(self):
+        self.assertIn("Do not write one", card.build(OPUS_HIGH, inventory.load()))
 
-    def test_a_class_inside_the_noise_gets_no_multiplier(self):
-        bench = {**BENCH, "classes": {"review": {"cost_x": 1.07}, "mechanical": {"cost_x": 1.4}}}
-        with mock.patch.object(card, "measured", return_value=bench):
-            text = card.footer_rule(OPUS_HIGH)
-        self.assertIn("mechanical 1.4x", text)
-        self.assertNotIn("review 1.07x", text)
+    def test_external_ais_are_listed_with_caps_applied(self):
+        inv = {
+            "claude": ["haiku", "sonnet", "opus"],
+            "external": [{"name": "agy", "kind": "cli", "models": ["gemini-3.8-flash-low", "gpt-oss-120b-medium"]}],
+        }
+        text = card.build(OPUS_HIGH, inv, {"agy": "flash"})
+        self.assertIn("gemini-3.8-flash-low", text)
+        self.assertNotIn("gpt-oss", text)
+        self.assertIn("User caps for this session: agy flash", text)
+        self.assertIn("ask <tool>", text)
 
-    def test_no_multiplier_without_a_benchmark(self):
-        with mock.patch.object(card, "measured", return_value=None):
-            self.assertIn("Give no multiplier", card.footer_rule(OPUS_HIGH))
+    def test_an_mcp_route_is_named(self):
+        inv = {"claude": ["haiku"], "external": [{"name": "gemini-mcp", "kind": "mcp", "models": []}]}
+        self.assertIn("gemini-mcp (MCP server)", card.build(OPUS_HIGH, inv))
 
     def test_exhausted_models_are_called_out(self):
         inventory.mark_exhausted("sonnet")
-        self.assertIn("sonnet", card.build(OPUS_HIGH, inventory.load()).split("Out of quota")[1])
+        text = card.build(OPUS_HIGH, inventory.load())
+        self.assertIn("sonnet", text.split("Out of quota")[1])
+        self.assertNotIn("claude sonnet (", text)
 
 
 class HookTests(Isolated):
@@ -101,8 +108,7 @@ class HookTests(Isolated):
         self.assertIn("boom", (hooks.paths.home() / "errors.log").read_text())
 
     def test_precompact_exit_code_defers(self):
-        self.settings(env={"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "400000"})
-        path = write_transcript(self.tmp / "p.jsonl", [user("x"), assistant("e", [edit("/p/a.py")], tokens=410_000)])
+        path = write_transcript(self.tmp / "p.jsonl", [user("x"), assistant("e", [edit("/p/a.py")], tokens=970_000)])
         code, _ = run_hook("precompact", {"session_id": "s9", "trigger": "auto", "cwd": str(self.tmp), "transcript_path": path})
         self.assertEqual(code, 2)
 
@@ -114,6 +120,14 @@ class HookTests(Isolated):
         self.assertIn(card.MARKER, text)
         self.assertIn("big job", text)
 
+    def test_user_caps_in_the_prompt_are_recorded_and_shown(self):
+        self.prompt("Summarise every module, using agy max flash and no gemini please", session="cap1")
+        _, out = self.prompt("Now also look at the tests folder carefully please", session="cap1")
+        self.assertEqual(hooks.external.load_caps("cap1"), {"agy": "flash", "gemini": "off"})
+        _, again = self.prompt("Okay, lift that: agy max none for the rest of this job", session="cap1")
+        self.assertEqual(hooks.external.load_caps("cap1"), {"gemini": "off"})
+        self.assertIn("User caps now", json.loads(again)["hookSpecificOutput"]["additionalContext"])
+
     def test_context_warning_rides_on_the_prompt(self):
         self.settings(env={"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "100000"})
         path = write_transcript(self.tmp / "w.jsonl", [assistant("x", tokens=95_000)])
@@ -123,6 +137,89 @@ class HookTests(Isolated):
         self.assertIn("compaction point", json.loads(out)["hookSpecificOutput"]["additionalContext"])
 
 
+class AgentClampTests(Isolated):
+    def call(self, tool_input, ceiling_dict=OPUS_HIGH):
+        path = write_transcript(self.tmp / "a.jsonl", [user("x")])
+        with mock.patch.object(hooks.ceiling, "resolve", return_value=ceiling_dict):
+            _, out = run_hook("pretool", {"session_id": "a", "cwd": str(self.tmp), "transcript_path": path, "tool_input": tool_input})
+        return json.loads(out)["hookSpecificOutput"]["updatedInput"] if out else None
+
+    WORKER = "token-beggar:beggar-worker"
+
+    def test_a_model_above_the_ceiling_is_lowered(self):
+        sonnet = {**OPUS_HIGH, "model": "claude-sonnet-5-5", "alias": "sonnet", "tier": 2}
+        fixed = self.call({"subagent_type": self.WORKER, "model": "opus", "effort": "high"}, sonnet)
+        self.assertEqual(fixed["model"], "sonnet")
+
+    def test_an_effort_above_the_ceiling_is_lowered(self):
+        medium = {**OPUS_HIGH, "effort": "medium"}
+        self.assertEqual(self.call({"subagent_type": self.WORKER, "model": "haiku", "effort": "max"}, medium)["effort"], "medium")
+
+    def test_a_call_inside_the_ceiling_is_left_alone(self):
+        self.assertIsNone(self.call({"subagent_type": self.WORKER, "model": "haiku", "effort": "low"}))
+
+    def test_other_agents_are_not_touched(self):
+        self.assertIsNone(self.call({"subagent_type": "Explore", "model": "fable"}))
+
+    def test_a_model_out_of_quota_is_swapped_for_a_cheaper_one(self):
+        inventory.mark_exhausted("sonnet")
+        self.assertEqual(self.call({"subagent_type": self.WORKER, "model": "sonnet", "effort": "low"})["model"], "haiku")
+
+
+class PostToolTests(Isolated):
+    def test_the_compaction_check_runs_during_a_long_turn(self):
+        self.settings(env={"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "100000"})
+        path = write_transcript(self.tmp / "w.jsonl", [user("x"), assistant("x", tokens=65_000)])
+        _, out = run_hook("posttool", {"session_id": "pt", "cwd": str(self.tmp), "transcript_path": path})
+        self.assertIn("compaction point", json.loads(out)["hookSpecificOutput"]["additionalContext"])
+        _, quiet = run_hook("posttool", {"session_id": "pt", "cwd": str(self.tmp), "transcript_path": path})
+        self.assertEqual(quiet, "")
+
+    def test_a_worker_that_hits_a_usage_limit_marks_its_model_out_of_quota(self):
+        path = write_transcript(self.tmp / "q.jsonl", [user("x"), assistant("x", tokens=1_000)])
+        payload = {
+            "session_id": "qq",
+            "cwd": str(self.tmp),
+            "transcript_path": path,
+            "tool_name": "Agent",
+            "tool_input": {"subagent_type": "token-beggar:beggar-worker", "model": "sonnet"},
+            "tool_response": "You have hit your usage limit. It will reset in 2h 30m.",
+        }
+        _, out = run_hook("posttool", payload)
+        self.assertIn("marked sonnet out of quota", json.loads(out)["hookSpecificOutput"]["additionalContext"])
+        self.assertIn("sonnet", inventory.exhausted_aliases(inventory.load()))
+
+    def test_an_ordinary_worker_result_marks_nothing(self):
+        path = write_transcript(self.tmp / "o.jsonl", [user("x"), assistant("x", tokens=1_000)])
+        payload = {
+            "session_id": "oo",
+            "cwd": str(self.tmp),
+            "transcript_path": path,
+            "tool_name": "Agent",
+            "tool_input": {"subagent_type": "token-beggar:beggar-worker", "model": "haiku"},
+            "tool_response": "Edited two files, tests pass.",
+        }
+        self.assertEqual(run_hook("posttool", payload)[1], "")
+        self.assertEqual(inventory.exhausted_aliases(inventory.load()), set())
+
+    def test_a_small_context_costs_nothing(self):
+        path = write_transcript(self.tmp / "s.jsonl", [user("x"), assistant("x", tokens=5_000)])
+        self.assertEqual(run_hook("posttool", {"session_id": "q", "cwd": str(self.tmp), "transcript_path": path})[1], "")
+
+    def test_a_long_context_gets_the_phase_question_once(self):
+        path = write_transcript(self.tmp / "l.jsonl", [user("x"), assistant("x", tokens=170_000)])
+        payload = {"session_id": "ll", "cwd": str(self.tmp), "transcript_path": path}
+        first = json.loads(run_hook("posttool", payload)[1])["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("--phase-done", first)
+        self.assertEqual(run_hook("posttool", payload)[1], "")
+
+    def test_the_deferral_is_announced_after_the_next_tool_call(self):
+        path = write_transcript(self.tmp / "d.jsonl", [user("x"), assistant("e", [edit("/p/a.py")], tokens=970_000)])
+        run_hook("precompact", {"session_id": "dd", "trigger": "auto", "cwd": str(self.tmp), "transcript_path": path})
+        _, out = run_hook("posttool", {"session_id": "dd", "cwd": str(self.tmp), "transcript_path": path})
+        self.assertIn("deferred", json.loads(out)["hookSpecificOutput"]["additionalContext"])
+
+
 class CliTests(Isolated):
     def run_cli(self, *argv: str) -> str:
         out = io.StringIO()
@@ -130,10 +227,10 @@ class CliTests(Isolated):
             cli.main(list(argv))
         return out.getvalue()
 
-    def test_route_json(self):
-        data = json.loads(self.run_cli("route", "--model", "opus", "--effort", "high", "--json"))
+    def test_menu_json(self):
+        data = json.loads(self.run_cli("menu", "--model", "opus", "--effort", "high", "--json"))
         self.assertEqual(data["ceiling"]["effort"], "high")
-        self.assertEqual(len(data["routes"]), 7)
+        self.assertEqual({r["model"] for r in data["claude"]}, {"haiku", "sonnet", "opus"})
 
     def test_exhausted_round_trip(self):
         self.assertIn("opus", self.run_cli("exhausted", "opus"))
@@ -144,10 +241,31 @@ class CliTests(Isolated):
         self.assertIn("TOKEN_BEGGAR_HOME", text)
         self.assertIn("state directory:", text)
 
-    def test_window(self):
-        self.assertIn("not set", self.run_cli("window"))
+    def test_window_works_with_nothing_set(self):
+        text = self.run_cli("window", "--model", "opus")
+        self.assertIn("967,000", text)
+        self.assertIn("model default", text)
         with mock.patch.dict("os.environ", {"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "100k"}):
-            self.assertEqual(self.run_cli("window").strip(), "100000")
+            self.assertIn("67,000", self.run_cli("window", "--model", "opus"))
+
+    def test_note_cli_writes_the_models_note(self):
+        with mock.patch("sys.stdin", io.StringIO("Goal: ship. Next: run tests.")):
+            self.run_cli("note", "--mid-step", "--session", "sx")
+        saved = hooks.compact.handoff.read_model("sx")
+        self.assertTrue(saved["mid_step"])
+        self.assertIn("Next: run tests", saved["text"])
+        self.run_cli("note", "--clean", "--session", "sx", "all", "done")
+        self.assertFalse(hooks.compact.handoff.read_model("sx")["mid_step"])
+
+    def test_note_reads_the_session_id_from_the_environment(self):
+        with mock.patch.dict("os.environ", {"CLAUDE_CODE_SESSION_ID": "envsess"}):
+            self.run_cli("note", "--clean", "text")
+        self.assertIsNotNone(hooks.compact.handoff.read_model("envsess"))
+
+    def test_cap_cli(self):
+        self.run_cli("cap", "agy", "flash", "--session", "sc")
+        self.run_cli("cap", "gemini", "--session", "sc")
+        self.assertEqual(json.loads(self.run_cli("cap", "--session", "sc")), {"agy": "flash", "gemini": "off"})
 
 
 if __name__ == "__main__":

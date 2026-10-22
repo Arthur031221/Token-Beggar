@@ -1,0 +1,117 @@
+{
+ "task": "c2-split",
+ "class": "routine_code",
+ "arm": "dynamic",
+ "rep": "sonnet-xhigh",
+ "top": "claude-sonnet-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 33574,
+  "stop_reason": "end_turn",
+  "session_id": "c22dbb0f-98fd-4a62-8aff-195ccd4d4562",
+  "total_cost_usd": 0.0849077,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 912,
+   "cache_read_input_tokens": 20803,
+   "output_tokens": 554,
+   "output_tokens_details": {
+    "thinking_tokens": 117
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 912,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 554,
+     "cache_read_input_tokens": 20803,
+     "cache_creation_input_tokens": 912,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 912
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 3069,
+    "cacheReadInputTokens": 87032,
+    "cacheCreationInputTokens": 12838,
+    "webSearchRequests": 0,
+    "costUSD": 0.0849077,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 390,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjiye0c-c59a5494"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`split(cents, parts)` is now in `shop/money.py`, with tests in a new file, `tests/test_money.py`. The full suite passes: 15 tests ran, OK, using `python3 -m unittest discover -s tests -t .`, the command in the README. I haven't re-run it myself, and nothing is committed.\n\n- **Behavior:** it returns `parts` integers summing to `cents`, with the remainder spread one cent at a time from the first element. `split(10, 3)` gives `[4, 3, 3]`. `parts < 1` raises `ValueError` with the same f-string message style as `to_cents`.\n- **Tests:** they cover an even split, remainder order, `cents < parts`, `cents == 0`, `parts == 1`, the sum invariant, and `ValueError` for `parts` of 0 and negative.\n- **Negative cents:** you didn't specify this, so the worker followed the sign handling in `fmt`. `split(-10, 3)` gives `[-4, -3, -3]`, which still sums to `-10`, and there's a test for it. Say so if you'd rather it raise instead.\n- **Cleanup:** running the tests left untracked `__pycache__/` directories under `shop/` and `tests/`. There's no `.gitignore` entry for them, so you may want to add one before committing.",
+  "ttft_ms": 2876,
+  "type": "result",
+  "duration_ms": 5707,
+  "uuid": "09a6792f-f5f3-4237-8a03-e8dc59cc3050",
+  "ttft_stream_ms": 1927,
+  "time_to_request_ms": 121,
+  "first_content_frame_ms": 1927,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 9 +++++++++\n 1 file changed, 9 insertions(+)\n",
+ "workdir": "c2-split.dynamic.sonnet-xhigh"
+}

@@ -1,0 +1,111 @@
+{
+ "task": "r2-toprate",
+ "class": "reading",
+ "arm": "final-no-batch",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 3029,
+  "stop_reason": "end_turn",
+  "session_id": "1da1bdec-418c-4e58-a021-d62d40bc6a8f",
+  "total_cost_usd": 0.0820546,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 8988,
+   "cache_read_input_tokens": 33073,
+   "output_tokens": 176,
+   "output_tokens_details": {
+    "thinking_tokens": 33
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8988,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 42,
+     "cache_read_input_tokens": 20283,
+     "cache_creation_input_tokens": 1495,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1495
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 176,
+    "cacheReadInputTokens": 33073,
+    "cacheCreationInputTokens": 8988,
+    "webSearchRequests": 0,
+    "costUSD": 0.0820546,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 33,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Kestrel has the highest BASE_RATE, 845, set in `shop/carriers/kestrel.py:7`.",
+  "ttft_ms": 1526,
+  "type": "result",
+  "duration_ms": 3585,
+  "uuid": "08f8863d-8351-4a9f-a4ee-b9dcf0c663be",
+  "ttft_stream_ms": 877,
+  "time_to_request_ms": 232,
+  "first_content_frame_ms": 878,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r2-toprate.final-no-batch.1",
+ "ledger": []
+}

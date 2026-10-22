@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": "haiku-medium",
+ "top": "claude-haiku-5-5",
+ "effort": "medium",
+ "result": {
+  "duration_api_ms": 8763,
+  "stop_reason": "end_turn",
+  "session_id": "56b135ea-6932-4541-b6be-2cf1fac1d89c",
+  "total_cost_usd": 0.00256103,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 8126,
+   "cache_read_input_tokens": 33143,
+   "output_tokens": 1208,
+   "output_tokens_details": {
+    "thinking_tokens": 438
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8126,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 940,
+     "cache_read_input_tokens": 20353,
+     "cache_creation_input_tokens": 563,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 563
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1208,
+    "cacheReadInputTokens": 33143,
+    "cacheCreationInputTokens": 8126,
+    "webSearchRequests": 0,
+    "costUSD": 0.00256103,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 438,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move `Store` to SQLite, keeping the same `load()` / `save_order()` interface during the transition.**\n\n**Why the current design fails at your scale:**\n\n- **Lost updates.** `save_order` reads the whole file, filters, appends, and writes it back, with no lock. With two writers, both can read the same snapshot and one write silently drops the other's order.\n- **Corruption on crash.** `write_text` truncates the file before writing. A crash or concurrent read mid-write leaves invalid JSON, and `load()` then fails for every caller.\n- **Cost grows with N.** Each save parses and rewrites all orders. At 100k orders that is a full parse and multi-megabyte write per order, and it gets worse as the file grows.\n\nSQLite fixes all three. Transactions give atomic writes, WAL mode lets readers run during writes, and `INSERT ... ON CONFLICT(id) DO UPDATE` replaces the filter-and-append with a single-row write. Two processes are well within SQLite's capability when you set a busy timeout. You don't need a client/server database for this load.\n\n**Migration path:**\n\n1. **Freeze the contract.** Find every caller of `load()` and `save_order()`. `load()` returns the full list, so decide whether callers need that or should use filtered queries.\n2. **Add a SQLite backend** behind the same `Store` class: a table keyed on `id` with the five existing fields, WAL on, busy timeout set, and `save_order` as an upsert.\n3. **Backfill once.** Write a one-off script that reads the JSON and inserts rows. Check the row count and the sum of `total` against the file.\n4. **Switch over** behind a flag. Keep the JSON file read-only for a release as a rollback path.\n5. **Remove the JSON path** after a clean run.\n\nIf you must keep JSON for a short interim, at minimum add an `fcntl` lock around read-modify-write and write to a temp file followed by `os.replace`. That fixes corruption and lost updates but not the O(N) cost, so treat it as a stopgap.",
+  "ttft_ms": 2323,
+  "type": "result",
+  "duration_ms": 9139,
+  "uuid": "23137da5-456f-4a81-b5b4-266532890fa5",
+  "ttft_stream_ms": 1326,
+  "time_to_request_ms": 191,
+  "first_content_frame_ms": 1326,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.haiku-medium"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "sonnet-max",
+ "top": "claude-sonnet-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 195420,
+  "stop_reason": "end_turn",
+  "session_id": "80837626-cc50-4456-a3db-1790da128c7c",
+  "total_cost_usd": 0.4600339,
+  "usage": {
+   "input_tokens": 26,
+   "cache_creation_input_tokens": 40931,
+   "cache_read_input_tokens": 416079,
+   "output_tokens": 25465,
+   "output_tokens_details": {
+    "thinking_tokens": 19056
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 40931,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1198,
+     "cache_read_input_tokens": 49369,
+     "cache_creation_input_tokens": 4352,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4352
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 26,
+    "outputTokens": 25465,
+    "cacheReadInputTokens": 416079,
+    "cacheCreationInputTokens": 40931,
+    "webSearchRequests": 0,
+    "costUSD": 0.4600339,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 19056,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 26,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces two definite bugs and three lesser problems. I checked them by applying the two hunks to scratch copies of the repo outside it, running the tests, and probing the behavior. The repo is untouched (`git status` is clean) and the scratch copies are removed.\n\nThe diff's hunk headers have no line ranges, so `patch` and `git apply` both reject it as written. I applied the hunks by hand. The `-` and context lines do match `shop/orders.py:12` and `:20-21`.\n\n## Definite bugs\n\n**1. `_ids_seen` is never defined, so every `Order(...)` raises `NameError`.** (`shop/orders.py:12`)\n- The diff adds no module-level `_ids_seen = []` anywhere.\n- With the diff applied, the suite goes from 6 passing to 2 errors, `test_total_matches_cart` and `test_state_flow`. Both fail with `NameError: name '_ids_seen' is not defined`.\n- The name is only looked up when an order is built. `import shop.orders` and `shop.cli` still work, and `quote` and `report` don't build orders, so an import-level smoke check wouldn't catch it. Only order creation is broken.\n\n**2. The state machine now accepts any move from an unrecognised state.** (`shop/orders.py:20`)\n- `ALLOWED.get(self.state, STATES)` falls back to all four states when the current state isn't a key in `ALLOWED`.\n- Before, such an order raised `KeyError`. Now, after `o.state = \"canceled\"`, `\"Shipped\"` or `None`, `o.move(\"shipped\")` succeeds. I confirmed this.\n- A cancelled order with a misspelled state can be shipped.\n- `reports.sales_by_customer` (`shop/reports.py:9`) counts `paid` and `shipped` rows as revenue, so that order would show up in sales.\n- Valid states behave as before, and the existing tests don't cover this path. A default of `()` would send unknown states to the existing `ValueError`.\n\n## Lesser problems (these only matter once #1 is fixed)\n\n**3. Order ids now start at 0 instead of 1000.**\n- I got ids `[0, 1, 2]` against `[1000, 1001, 1002]` before.\n- The first order's id is `0`, which is falsy, so any `if order.id` check would treat it as unset. Nothing in the repo does that today.\n- Persisted rows would mix the old 1000+ ids with the new 0-based ones. The diff doesn't explain the change.\n\n**4. `_ids_seen` grows without bound.**\n- Every order appends to a module-level list that only `len()` reads. 50,000 orders grew it by exactly 50,000 entries.\n- `itertools.count` uses constant memory, so a long-running process now leaks.\n\n**5. Id allocation is no longer atomic (latent; I could not reproduce it).**\n- `next(_ids)` was one call. `len()` followed by `append()` is a read-then-write, so two threads could get the same id.\n- `Store.save_order` drops rows with a matching id (`shop/storage.py:17`), so a duplicate would silently overwrite an order.\n- I ran 8 threads \u00d7 5,000 orders \u00d7 5 rounds on CPython 3.12.3 with a 1\u00b5s switch interval and got 0 duplicates, the same as the original. The repo also uses no threads. Treat this as a hazard, not a demonstrated failure.\n\nThe old `_ids` counter and `import itertools` are now dead code. Once #1 is fixed the suite passes 6/6, so nothing in it would catch #2 to #4.",
+  "ttft_ms": 2831,
+  "type": "result",
+  "duration_ms": 199971,
+  "uuid": "0d866268-916b-480e-a30c-f65324f4f60f",
+  "ttft_stream_ms": 1985,
+  "time_to_request_ms": 188,
+  "first_content_frame_ms": 1986,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.sonnet-max"
+}

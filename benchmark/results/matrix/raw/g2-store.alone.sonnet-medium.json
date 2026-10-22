@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "sonnet-medium",
+ "top": "claude-sonnet-5-5",
+ "effort": "medium",
+ "result": {
+  "duration_api_ms": 12307,
+  "stop_reason": "end_turn",
+  "session_id": "b48661d6-4b92-4be1-821f-a8a2369a10c5",
+  "total_cost_usd": 0.0355547,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6263,
+   "cache_read_input_tokens": 31447,
+   "output_tokens": 735,
+   "output_tokens_details": {
+    "thinking_tokens": 19
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6263,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 634,
+     "cache_read_input_tokens": 18657,
+     "cache_creation_input_tokens": 396,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 396
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 735,
+    "cacheReadInputTokens": 31447,
+    "cacheCreationInputTokens": 6263,
+    "webSearchRequests": 0,
+    "costUSD": 0.0355547,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 19,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the single JSON file with SQLite, in WAL mode.** Keep the `Store` interface the same.\n\n**Why the current design fails**\n- `save_order` reads the whole file, rewrites it, and writes it back. Two writers can both read the same state, and the second write silently drops the first writer's order. This is a read-modify-write race with no locking.\n- `write_text` truncates the file before writing. A crash or a concurrent reader can see an empty or partial file, which then fails in `json.loads`.\n- At 100k orders, each save parses and serializes the full file. That is O(n) per write, roughly tens of MB per save, so total work grows quadratically.\n\n**Why SQLite**\n- It's in the standard library, needs no server, and handles multiple processes on one host.\n- It gives atomic transactions and file locking.\n- `id` as the primary key makes `INSERT OR REPLACE` or upsert an O(log n) operation.\n- Set `busy_timeout` so the second writer waits instead of erroring.\n\nIf the writers run on different machines, use Postgres instead. SQLite over network filesystems is unsafe.\n\nI'd skip the lighter option of `fcntl` locking plus atomic rename. It fixes the race but not the O(n) cost.\n\n**Migration path**\n1. Add a `orders` table: `id` primary key, `customer`, `total`, `tax`, `state`.\n2. Write a one-time import script that reads the JSON file and inserts the rows in one transaction. Make it idempotent.\n3. Rewrite `load` and `save_order` against SQLite. Add `get(id)` so callers stop loading everything.\n4. Stop the writers, run the import, deploy, and keep the JSON file as a backup for one release.\n5. Test with two processes writing concurrently, and check that no orders are lost.\n\nFirst check who calls `load()`. Any caller that expects the full list will need a query or pagination at this size.",
+  "ttft_ms": 3921,
+  "type": "result",
+  "duration_ms": 12589,
+  "uuid": "76a7a042-c854-47eb-b992-879aa3ff1808",
+  "ttft_stream_ms": 3652,
+  "time_to_request_ms": 247,
+  "first_content_frame_ms": 3652,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.sonnet-medium"
+}

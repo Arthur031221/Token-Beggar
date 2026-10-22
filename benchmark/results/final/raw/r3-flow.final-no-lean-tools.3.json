@@ -1,0 +1,111 @@
+{
+ "task": "r3-flow",
+ "class": "reading",
+ "arm": "final-no-lean-tools",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15172,
+  "stop_reason": "end_turn",
+  "session_id": "20a58c5a-de30-47c2-bb27-261e02f3939d",
+  "total_cost_usd": 0.11892159999999999,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 9688,
+   "cache_read_input_tokens": 76428,
+   "output_tokens": 1305,
+   "output_tokens_details": {
+    "thinking_tokens": 270
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9688,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 627,
+     "cache_read_input_tokens": 22142,
+     "cache_creation_input_tokens": 336,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 336
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1305,
+    "cacheReadInputTokens": 76428,
+    "cacheCreationInputTokens": 9688,
+    "webSearchRequests": 0,
+    "costUSD": 0.11892159999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 270,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Validation: `shop/orders.py`**\n- `ALLOWED` (`shop/orders.py:7`) is the transition table: `new \u2192 paid | cancelled`, `paid \u2192 shipped | cancelled`. `shipped` and `cancelled` are terminal.\n- `Order.__init__` sets `state = \"new\"`.\n- `Order.move(state)` (`shop/orders.py:19`) checks the target against `ALLOWED[self.state]`. If the move isn't allowed it raises `ValueError(\"cannot go from X to Y\")`; otherwise it sets `self.state`. The state only changes in memory.\n- `STATES` (`shop/orders.py:6`) is defined but never used. An unknown target state is simply not in the allowed set, so `move` rejects it.\n\n**Storage: `shop/storage.py`**\n- `Store.save_order(order)` (`shop/storage.py:16`) loads every row from one JSON file, drops any row with the same `id`, and appends the order's `id`, `customer`, `total`, `tax` and `state`. It then rewrites the whole file. `Store.load()` reads that file back, or returns `[]` if it doesn't exist.\n- Storage does no validation of its own. It writes whatever `order.state` contains.\n\n**Things to know**\n- Nothing calls both functions. `move` and `save_order` aren't linked, so each caller has to save after moving. Right now no code calls `save_order` at all; the CLI (`shop/cli.py:26`) only reads.\n- The write isn't atomic: there's no lock and no temp-file swap. Two writers at once can lose updates.\n- `tests/test_orders.py:20-23` tests the transitions (new \u2192 paid \u2192 shipped, then cancelling fails). No test covers storage.",
+  "ttft_ms": 3314,
+  "type": "result",
+  "duration_ms": 16259,
+  "uuid": "51e91186-1097-4bf8-ac7f-2869c6d19583",
+  "ttft_stream_ms": 1237,
+  "time_to_request_ms": 226,
+  "first_content_frame_ms": 1238,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r3-flow.final-no-lean-tools.3",
+ "ledger": []
+}

@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "opus-low",
+ "top": "claude-opus-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 9364,
+  "stop_reason": "end_turn",
+  "session_id": "2f561b4a-cfbf-4639-92f8-88b5df359193",
+  "total_cost_usd": 0.072047,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6228,
+   "cache_read_input_tokens": 31435,
+   "output_tokens": 796,
+   "output_tokens_details": {
+    "thinking_tokens": 12
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6228,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 718,
+     "cache_read_input_tokens": 18645,
+     "cache_creation_input_tokens": 373,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 373
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 796,
+    "cacheReadInputTokens": 31435,
+    "cacheCreationInputTokens": 6228,
+    "webSearchRequests": 0,
+    "costUSD": 0.072047,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 12,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move from the single JSON file to SQLite, in WAL mode.**\n\n**Why the current design won't hold up** (`shop/storage.py:16-21`):\n- **Lost updates.** `save_order` reads the whole file, changes it, and writes it back. If two writer processes do this at the same time, the later write silently erases the other's order.\n- **Corruption.** `write_text` is not atomic. A crash or a reader opening the file mid-write can leave truncated or invalid JSON.\n- **O(n) per write.** Each save re-reads, re-parses and re-writes all 100k orders, which is roughly 10 MB of work to change one row. The `id` filter is also a linear scan.\n\n**Why SQLite:**\n- It's in the standard library, so there's no server to run.\n- It handles locking between processes, and writes are transactional.\n- WAL mode lets reads continue while one writer commits. Two writers are well within what it handles comfortably.\n- A primary key on `id` makes upsert (`INSERT \u2026 ON CONFLICT(id) DO UPDATE`) O(log n).\n- 100k rows is small for it.\n\nMove to Postgres only if you later need multiple hosts or many concurrent writers.\n\n**Migration path:**\n1. **Keep the interface.** Add a `SqliteStore` with the same `load()` and `save_order()` methods. Use an `orders` table (`id PRIMARY KEY, customer, total, tax, state`), set `journal_mode=WAL` and a `busy_timeout`, and do one transaction per save.\n2. **Write a one-off import script.** It reads the JSON file and bulk-inserts it in one transaction, then checks that row counts and totals match.\n3. **Cut over.** Briefly stop both writers, run the import, switch the config to `SqliteStore`, and restart. Keep the JSON file read-only as a backup.\n4. **Test concurrency.** Have two processes each save N orders in parallel, then assert that all 2N are present.\n5. **Clean up.** Once it's stable, delete `Store` and update callers that rely on `load()` returning everything so they query what they need instead.",
+  "ttft_ms": 1999,
+  "type": "result",
+  "duration_ms": 9795,
+  "uuid": "21db8622-8dfe-4881-acc2-d3277a7fe1dc",
+  "ttft_stream_ms": 1176,
+  "time_to_request_ms": 437,
+  "first_content_frame_ms": 1176,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.opus-low"
+}

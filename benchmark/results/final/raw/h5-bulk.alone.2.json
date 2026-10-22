@@ -1,0 +1,111 @@
+{
+ "task": "h5-bulk",
+ "class": "debugging",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 27141,
+  "stop_reason": "end_turn",
+  "session_id": "ef998d35-0d63-45b1-b45c-1ce379f68a01",
+  "total_cost_usd": 0.13657980000000003,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 10018,
+   "cache_read_input_tokens": 115339,
+   "output_tokens": 1666,
+   "output_tokens_details": {
+    "thinking_tokens": 178
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10018,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 325,
+     "cache_read_input_tokens": 22107,
+     "cache_creation_input_tokens": 701,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 701
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 1666,
+    "cacheReadInputTokens": 115339,
+    "cacheCreationInputTokens": 10018,
+    "webSearchRequests": 0,
+    "costUSD": 0.13657980000000003,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 178,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The bug was an off-by-one check in `line_subtotal`. It's fixed, and all 7 tests pass.\n\n**Root cause:** at `shop/pricing.py:10` the code checked `line.qty > BULK_THRESHOLD` (threshold is 10), so the discount started at 11 units. The policy says 10 or more, so the check should be `>=`. The existing test `test_bulk_discount` already expected 10 units to get the discount, and it was failing before the fix (1083 instead of 1028).\n\n**Changes:**\n- `shop/pricing.py`: changed `>` to `>=`.\n- `tests/test_pricing.py`: added `test_no_bulk_discount_below_threshold`, which checks that 9 units get no discount. With the existing 10-unit test, both sides of the threshold are now tested.\n\nQuantities of the same item added separately are combined into one line before pricing, so a customer adding 10 units in several steps gets the discount too.\n\nI haven't committed anything.",
+  "ttft_ms": 4044,
+  "type": "result",
+  "duration_ms": 28074,
+  "uuid": "cb106c01-dad7-4926-bacb-b8e951a17e8e",
+  "ttft_stream_ms": 2699,
+  "time_to_request_ms": 88,
+  "first_content_frame_ms": 2699,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/pricing.py       | 2 +-\n tests/test_pricing.py | 5 +++++\n 2 files changed, 6 insertions(+), 1 deletion(-)\n",
+ "workdir": "h5-bulk.alone.2",
+ "ledger": []
+}

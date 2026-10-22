@@ -1,0 +1,127 @@
+{
+ "task": "c3-json",
+ "class": "routine_code",
+ "arm": "final-no-batch",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 37108,
+  "stop_reason": "end_turn",
+  "session_id": "3ab852dd-715a-45e2-a193-68a898072fb9",
+  "total_cost_usd": 0.1326385,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 8967,
+   "cache_read_input_tokens": 33107,
+   "output_tokens": 987,
+   "output_tokens_details": {
+    "thinking_tokens": 220
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8967,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 208,
+     "cache_read_input_tokens": 20317,
+     "cache_creation_input_tokens": 1440,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1440
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 987,
+    "cacheReadInputTokens": 33107,
+    "cacheCreationInputTokens": 8967,
+    "webSearchRequests": 0,
+    "costUSD": 0.0981134,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 220,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1936,
+    "cacheReadInputTokens": 35551,
+    "cacheCreationInputTokens": 4636,
+    "webSearchRequests": 0,
+    "costUSD": 0.034525099999999996,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`quote --json` now prints `{\"total_cents\": N}`. Without the flag, the output is the same as before. All 8 tests pass.\n\n- **`shop/cli.py`:** I added a `--json` option to `quote`. `calc_total` already returns whole cents, so that number goes straight into the JSON.\n- **`tests/test_cli.py` (new):** There were no tests for the CLI, so I added two. One checks that the default output is unchanged. The other checks that `--json` gives the right `total_cents`.\n- **To run the tests:** `python3 -m unittest discover -s tests -t .`\n\nNothing is committed yet.",
+  "ttft_ms": 5336,
+  "type": "result",
+  "duration_ms": 39176,
+  "uuid": "c6b7901a-741c-4dc3-a955-5d3a06cfc0b6",
+  "ttft_stream_ms": 3144,
+  "time_to_request_ms": 247,
+  "first_content_frame_ms": 3144,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py | 8 +++++++-\n 1 file changed, 7 insertions(+), 1 deletion(-)\n",
+ "workdir": "c3-json.final-no-batch.3",
+ "ledger": []
+}

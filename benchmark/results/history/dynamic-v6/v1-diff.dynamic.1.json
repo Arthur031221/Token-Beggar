@@ -1,0 +1,110 @@
+{
+ "task": "v1-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 19497,
+  "stop_reason": "end_turn",
+  "session_id": "c7265828-ab5f-4992-82c4-b8ef139eb773",
+  "total_cost_usd": 0.1179052,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 8370,
+   "cache_read_input_tokens": 76866,
+   "output_tokens": 1777,
+   "output_tokens_details": {
+    "thinking_tokens": 438
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8370,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1194,
+     "cache_read_input_tokens": 22011,
+     "cache_creation_input_tokens": 945,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 945
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1777,
+    "cacheReadInputTokens": 76866,
+    "cacheCreationInputTokens": 8370,
+    "webSearchRequests": 0,
+    "costUSD": 0.1179052,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 438,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces three bugs.\n\n**1. Bulk discount no longer applies at exactly the threshold** (`shop/pricing.py:10`)\n`>=` became `>`, so a line with `qty == BULK_THRESHOLD` (10) loses its 5% discount. Only quantities of 11 or more now get it. This is an off-by-one change in pricing behaviour, and `tests/test_pricing.py:22` catches it. For 10 \u00d7 100\u00a2, `calc_total` goes from the expected 1028 (950 + 78 tax) to 1083 (1000 + 83).\n\n**2. `calc_tax` now taxes the undiscounted price** (`shop/pricing.py:23`)\n`calc_tax` used to sum `line_subtotal(l)` and now sums the raw `price_cents * qty`, so it ignores the bulk discount. `calc_total` still taxes the discounted subtotal, so the two functions now disagree. `Order.__init__` (`shop/orders.py:15-16`) stores both values, so an order's `tax_cents` won't match the tax already included in its `total_cents`.\n- **Example:** 20 \u00d7 100\u00a2 gives a discounted subtotal of 1900.\n- **What `calc_total` says:** the tax inside the total is `percent(1900, 8.25)` = 157.\n- **What `calc_tax` says:** `percent(2000, 8.25)` = 165.\n- **Effect:** tax is overstated on every taxable bulk line. Lines without a discount happen to give the same result, which is why the existing tests don't catch it.\n\n**3. Cache TTL is scaled up 1000\u00d7** (`shop/cache.py:15`)\nThe default clock is `time.monotonic`, which returns seconds, and the docstring says \"Caches price lookups for ttl seconds\". Multiplying by 1000 treats the clock as if it returned milliseconds, which it doesn't. The default `ttl=60` now keeps entries for 60,000 s (about 16.7 hours) instead of 60 s, so the cache keeps serving old prices after they change. `tests/test_cache.py:16` fails: at `now = 11` with `ttl = 10`, `11 < 10000` still counts as a hit, so the loader isn't called again.\n\nI worked this out by reading the code; I didn't run the tests. Based on that reading, applying the diff should make `test_bulk_discount` and `test_hit_and_expiry` fail. No current test covers bug 2.",
+  "ttft_ms": 1537,
+  "type": "result",
+  "duration_ms": 20186,
+  "uuid": "293e468c-da12-4e59-badc-d86b8e0e3456",
+  "ttft_stream_ms": 1236,
+  "time_to_request_ms": 163,
+  "first_content_frame_ms": 1237,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v1-diff.dynamic.1"
+}

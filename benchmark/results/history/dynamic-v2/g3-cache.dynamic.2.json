@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14520,
+  "stop_reason": "end_turn",
+  "session_id": "7b89193e-8058-4600-a847-99bed7d365c2",
+  "total_cost_usd": 0.08006440000000001,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5818,
+   "cache_read_input_tokens": 34522,
+   "output_tokens": 1330,
+   "output_tokens_details": {
+    "thinking_tokens": 573
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5818,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1166,
+     "cache_read_input_tokens": 19936,
+     "cache_creation_input_tokens": 468,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 468
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1330,
+    "cacheReadInputTokens": 34522,
+    "cacheCreationInputTokens": 5818,
+    "webSearchRequests": 0,
+    "costUSD": 0.08006440000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 573,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Five problems in `shop/cache.py`, each with the fix I'd choose:\n\n1. **Memory grows without limit (lines 11, 18).** Expired entries are never removed, and every SKU ever requested stays in `_data` forever. In a long-running service that's a slow memory leak.\n   *Fix:* Store entries in an `OrderedDict` with a `maxsize` and evict the least recently used entry. Also drop an entry when a lookup finds it expired.\n\n2. **Concurrent misses all call the loader (lines 14\u201318).** The check and the store are separate steps, so N threads that miss the same SKU at once make N backend calls. This happens on every TTL expiry for popular SKUs.\n   *Fix:* Keep a map of in-flight loads (one `Future` per SKU). The first thread runs the loader and the others wait on its result. The loader must run outside the lock so one slow SKU doesn't block every other lookup.\n\n3. **A stale value can come back after `invalidate`.** Thread A starts loading the old price. Thread B changes the price and calls `invalidate`. Thread A then writes the old price back, and it's served for a full TTL.\n   *Fix:* Give each SKU a version number that `invalidate` increments. A load only stores its result if the version hasn't changed since it started. `invalidate` also discards any in-flight load for that SKU.\n\n4. **The timestamp is taken after the load (line 18).** A slow loader makes the cached value older than the TTL suggests.\n   *Fix:* Read the clock before calling the loader.\n\n5. **Loader failures aren't handled.** An exception isn't cached, so a failing backend gets called on every request from every thread.\n   *Fix:* Pass the exception to the threads waiting on that load, and optionally cache the failure for a short time.\n\n**Overall:** One `threading.Lock` protects the dict, the in-flight map and the version numbers. It's held only for bookkeeping, never while the loader runs.",
+  "ttft_ms": 2050,
+  "type": "result",
+  "duration_ms": 15105,
+  "uuid": "a183ef36-22c7-4b4b-8d06-3524fea59eed",
+  "ttft_stream_ms": 1123,
+  "time_to_request_ms": 263,
+  "first_content_frame_ms": 1124,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.2"
+}

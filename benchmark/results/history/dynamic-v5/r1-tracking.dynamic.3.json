@@ -1,0 +1,110 @@
+{
+ "task": "r1-tracking",
+ "class": "reading",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14812,
+  "stop_reason": "end_turn",
+  "session_id": "696372d1-8665-4e6c-83a2-32ce35ce636e",
+  "total_cost_usd": 0.0979442,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 9377,
+   "cache_read_input_tokens": 56821,
+   "output_tokens": 577,
+   "output_tokens_details": {
+    "thinking_tokens": 127
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9377,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 53,
+     "cache_read_input_tokens": 22624,
+     "cache_creation_input_tokens": 1340,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1340
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 577,
+    "cacheReadInputTokens": 56821,
+    "cacheCreationInputTokens": 9377,
+    "webSearchRequests": 0,
+    "costUSD": 0.0979442,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 127,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "delta, kestrel, onyx, tundra\n\nThese four classes don't define `tracking_url`. They have no base classes, and nothing else in the code adds the method.",
+  "ttft_ms": 3301,
+  "type": "result",
+  "duration_ms": 15277,
+  "uuid": "640a42a8-3f80-46f8-a5d5-af2847d07a47",
+  "ttft_stream_ms": 3052,
+  "time_to_request_ms": 180,
+  "first_content_frame_ms": 3054,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r1-tracking.dynamic.3"
+}

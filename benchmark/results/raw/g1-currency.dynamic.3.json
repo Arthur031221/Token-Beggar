@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 21853,
+  "stop_reason": "end_turn",
+  "session_id": "e7ca82e9-bb23-48ee-a5df-126e6fec0466",
+  "total_cost_usd": 0.1443554,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 10897,
+   "cache_read_input_tokens": 79237,
+   "output_tokens": 2065,
+   "output_tokens_details": {
+    "thinking_tokens": 625
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10897,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1394,
+     "cache_read_input_tokens": 24674,
+     "cache_creation_input_tokens": 809,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 809
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2065,
+    "cacheReadInputTokens": 79237,
+    "cacheCreationInputTokens": 10897,
+    "webSearchRequests": 0,
+    "costUSD": 0.1443554,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 625,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I'd model money as an amount in the currency's smallest unit plus a currency code, and treat any mix of currencies as an error. Version 1 would not convert between currencies.\n\n**Changes, by file**\n- `shop/money.py`: add a `Money(minor, currency)` value type and a table of how many decimal places each currency uses (JPY 0, USD 2, KWD 3). `to_cents` and `fmt` would take a currency, since both assume 2 decimals today. Replace the float rounding in `percent` with `Decimal`, rounding half up.\n- `shop/models.py`: `Item.price_cents` becomes a `price: Money`. `Cart` gets a currency, and `Cart.add` rejects items in a different currency.\n- `shop/pricing.py`: sums and tax return `Money`. Tax rate depends on where the sale happens, not on currency, so `TAX_RATE` stays as it is.\n- `shop/orders.py`: `Order` stores its currency, and each line tuple carries the currency too.\n- `shop/storage.py`: save `\"currency\"` with each row. Saved rows have no currency, so loading should default them to `\"USD\"`.\n- `shop/reports.py`: `sales_by_customer` adds up raw ints across all orders. It must group by (customer, currency) and format each total in its own currency.\n- `shop/cache.py`: cache by `(sku, currency)` instead of `sku`.\n- `shop/cli.py`: add a `--currency` option to `quote` and parse prices using that currency's decimal places.\n- `shop/carriers/*` (20 files): their rates are implicitly USD cents. Rather than edit 20 files, record a currency for each carrier in the `REGISTRY` in `carriers/__init__.py`. Carriers aren't connected to orders yet.\n- `tests/`: cover the 0- and 3-decimal currencies, rejection of mixed currencies, loading old JSON rows, and per-currency reports.\n\n**Main risks**\n1. **Silent mixing:** amounts are plain ints with no unit, so any spot I miss will add USD to JPY without an error. A `Money` type that refuses to add different currencies catches this.\n2. **Old data:** existing JSON rows have no currency, and defaulting them to USD is a guess.\n3. **Decimal places:** code that assumes 2 decimals (`to_cents`, `fmt`, the carrier rates) will be off by 100\u00d7 for JPY.\n4. **Conversion:** where rates come from, when they're applied and how they round is a separate project, so keep it out of scope.",
+  "ttft_ms": 1998,
+  "type": "result",
+  "duration_ms": 23005,
+  "uuid": "88c923ef-bee9-4212-a79a-3fc14f2005fa",
+  "ttft_stream_ms": 1665,
+  "time_to_request_ms": 715,
+  "first_content_frame_ms": 1667,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.3"
+}

@@ -1,0 +1,131 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "dynamic",
+ "rep": "sonnet-xhigh",
+ "top": "claude-sonnet-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 18754,
+  "stop_reason": "end_turn",
+  "session_id": "dae11e17-1282-4f22-a9b9-3c5e3d50c087",
+  "total_cost_usd": 0.04996962000000001,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 1046,
+   "cache_read_input_tokens": 20600,
+   "output_tokens": 235,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1046,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 235,
+     "cache_read_input_tokens": 20600,
+     "cache_creation_input_tokens": 1046,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1046
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 791,
+    "cacheReadInputTokens": 53037,
+    "cacheCreationInputTokens": 8856,
+    "webSearchRequests": 0,
+    "costUSD": 0.048649700000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 35,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1366,
+    "cacheReadInputTokens": 25837,
+    "cacheCreationInputTokens": 3022,
+    "webSearchRequests": 0,
+    "costUSD": 0.00131992,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 115,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjivqob-05599edc"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`calc_total` is now `order_total` everywhere, and all 6 tests pass. I haven't committed anything.\n\n- **Files changed:** `shop/pricing.py` (the definition), `shop/cli.py`, `shop/orders.py`, `tests/test_pricing.py` and `tests/test_orders.py`.\n- **Check for leftovers:** a grep finds no `calc_total` outside `.git`. `calc_tax` and `README.md` weren't touched.\n- **Tests:** `python3 -m unittest discover -s tests -t .` ran 6 tests and reported `OK`.\n\nI'm relying on the worker's report for this. I didn't re-read the edits or re-run the tests myself.",
+  "ttft_ms": 3452,
+  "type": "result",
+  "duration_ms": 3572,
+  "uuid": "33cc8314-460b-4f20-88b7-07d648f4177e",
+  "ttft_stream_ms": 2232,
+  "time_to_request_ms": 105,
+  "first_content_frame_ms": 2232,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.dynamic.sonnet-xhigh"
+}

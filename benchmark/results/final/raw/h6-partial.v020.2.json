@@ -1,0 +1,111 @@
+{
+ "task": "h6-partial",
+ "class": "design",
+ "arm": "v020",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 19367,
+  "stop_reason": "end_turn",
+  "session_id": "1a760216-1b91-4d7d-93fb-67c92b4f76aa",
+  "total_cost_usd": 0.1312736,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 11144,
+   "cache_read_input_tokens": 52388,
+   "output_tokens": 1581,
+   "output_tokens_details": {
+    "thinking_tokens": 434
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11144,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1182,
+     "cache_read_input_tokens": 20105,
+     "cache_creation_input_tokens": 3829,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 3829
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1581,
+    "cacheReadInputTokens": 52388,
+    "cacheCreationInputTokens": 11144,
+    "webSearchRequests": 0,
+    "costUSD": 0.1312736,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 434,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I'd add shipments and returns as their own records, kept apart from the order's state. Nothing below is implemented or tested.\n\n**What changes**\n\n- **`shop/orders.py`**:\n  - Order lines become small records holding sku, qty, unit price after the bulk discount, and the `taxable` flag. Today the tuples drop the flag and the discount.\n  - Add `Shipment(id, lines{sku: qty}, carrier, label)` and `Return(id, lines, refund_cents, tax_refund_cents)`.\n  - Add states `partially_shipped` and `returned`. `shipped` is reached when shipped qty equals ordered qty for every sku.\n  - Checks: ship \u2264 ordered \u2212 shipped; return \u2264 shipped \u2212 returned.\n- **`shop/pricing.py`**: add a `refund_for(order, lines)` function. It refunds at the price actually paid, so it never re-runs the bulk rule (returning 3 of 12 must not lose the discount). Tax is spread over returns so the total refunded can never be more than `tax_cents`. The last return takes whatever is left.\n- **`shop/storage.py`**: `save_order` keeps only total, tax and state today. It must also save lines, shipments and returns. Old rows will need a default.\n- **`shop/reports.py`**: sales should be total minus refunds, and should count the new states.\n- **`shop/carriers/*` (20 files)**: `label(order_id)` gives the same label to every shipment of an order. Change it to `label(order_id, seq)` and update each `valid_label` regex. All 20 files repeat the same code, so moving it into a shared base class is worth doing first.\n- **`shop/cli.py`**: add `ship` and `return` commands.\n- **`tests/`**: add tests for over-ship and over-return, tax rounding across several returns, discounted lines, and loading old JSON.\n\n**Main risks**\n\n1. **Rounding.** `percent()` rounds half up on each call, so adding up tax per return can refund more than was charged.\n2. **Data migration.** Saved orders have no lines, so you can't work out what's returnable for orders that already exist.\n3. **Labels.** Changing the label format breaks any outside code that parses `PREFIX-%08d`.\n4. **Concurrent writes.** `Store` reads and rewrites the whole file, so two writes at once can lose updates.",
+  "ttft_ms": 2416,
+  "type": "result",
+  "duration_ms": 19782,
+  "uuid": "29c47b1b-3952-4c14-a5fb-72da516fac71",
+  "ttft_stream_ms": 1938,
+  "time_to_request_ms": 191,
+  "first_content_frame_ms": 1938,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h6-partial.v020.2",
+ "ledger": []
+}

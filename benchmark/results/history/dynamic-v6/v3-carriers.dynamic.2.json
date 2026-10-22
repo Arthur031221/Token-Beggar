@@ -1,0 +1,110 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 27190,
+  "stop_reason": "end_turn",
+  "session_id": "2b0fc608-2adf-4387-a9bf-dde85fb6620c",
+  "total_cost_usd": 0.1678362,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 12466,
+   "cache_read_input_tokens": 106041,
+   "output_tokens": 2343,
+   "output_tokens_details": {
+    "thinking_tokens": 485
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12466,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1200,
+     "cache_read_input_tokens": 26108,
+     "cache_creation_input_tokens": 945,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 945
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2343,
+    "cacheReadInputTokens": 106041,
+    "cacheCreationInputTokens": 12466,
+    "webSearchRequests": 0,
+    "costUSD": 0.1678362,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 485,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found two inconsistencies that would break code calling the registry. The worst is in **`shop/carriers/maple.py`**.\n\n### 1. `maple.py` takes weight in grams; the other 19 take kilograms (wrong prices, no error)\nEvery carrier's `rate(weight, zone)` has the same signature, but `MapleCarrier.rate` treats `weight` as grams. Its docstring says \"weight in grams\", it uses `PER_GRAMS = 3` and `MAX_GRAMS = 30000`, and it checks `weight > MAX_GRAMS`. All the others use `PER_KG` and `MAX_KG` (30\u201349) and say \"weight in kg\".\n\nA caller that loops over `REGISTRY` and passes kilograms gets a wrong price with no error:\n- `get(\"maple\").rate(2.0)` returns **500** cents, because 2.0 is read as 2 grams. `get(\"acme\").rate(2.0)` returns 1070.\n- Weights above the usual limits, such as `rate(40)`, are accepted by maple. Most kg carriers reject them with `ValueError`.\n\nEven a caller that switches to grams for maple gets a doubtful price. 3 \u00a2/g is 3000 \u00a2/kg, about 8\u201310\u00d7 the other carriers' 310\u2013377 \u00a2/kg, so `PER_GRAMS` may also be wrong. That part is inference from the numbers, not confirmed.\n\n### 2. Four carriers have no `tracking_url` method (crash)\n`delta.py`, `kestrel.py`, `onyx.py` and `tundra.py` define `rate`, `label` and `valid_label` but not `tracking_url`. The other 16 all have it. Any caller doing `get(name).tracking_url(code)` on these four raises `AttributeError`. That is an immediate crash, so it's easy to spot. The maple problem gives wrong prices without any error, which is why I rank it as worse.\n\n### Checked and consistent\nAfter removing names and numbers, the other 15 modules are structurally identical to `acme.py`:\n- They have the same method signatures.\n- Their `ZONES` keys are `local`, `regional` and `national`.\n- Labels use the `NAME-%08d` format, with a matching regex in `valid_label`.\n- Rates are returned as integer cents.\n\nEvery registry key in `__init__.py` matches its class's `name`. Nothing outside `shop/carriers/` currently calls these methods, so the breakage would hit future or external callers. I didn't edit any files.",
+  "ttft_ms": 1793,
+  "type": "result",
+  "duration_ms": 28314,
+  "uuid": "fc695416-69f7-4192-953c-1b1f14bd5691",
+  "ttft_stream_ms": 1548,
+  "time_to_request_ms": 376,
+  "first_content_frame_ms": 1548,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.dynamic.2"
+}

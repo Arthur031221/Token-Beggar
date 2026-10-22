@@ -1,0 +1,111 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 42587,
+  "stop_reason": "end_turn",
+  "session_id": "91701054-4c21-4f9f-b30c-60d1907cefd3",
+  "total_cost_usd": 0.2960156,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 23179,
+   "cache_read_input_tokens": 117118,
+   "output_tokens": 4356,
+   "output_tokens_details": {
+    "thinking_tokens": 781
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23179,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 730,
+     "cache_read_input_tokens": 30734,
+     "cache_creation_input_tokens": 5235,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 5235
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 4356,
+    "cacheReadInputTokens": 117118,
+    "cacheCreationInputTokens": 23179,
+    "webSearchRequests": 0,
+    "costUSD": 0.2960156,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 781,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've added customer tiers, and the full test suite passes (17 tests: the 6 existing ones plus 11 new ones). Nothing is committed.\n\n**What changed**\n- **`shop/models.py`**: `Cart` has a new `tier` field that defaults to `\"standard\"`.\n- **`shop/pricing.py`**:\n  - Gold is 10% off and silver is 5% off. Any other value gets no discount, and matching is exact, so `\"Gold\"` gets nothing.\n  - The discount comes off the subtotal before tax, and tax is charged on the discounted taxable amount.\n  - There's a new `calc_subtotal` (subtotal after the tier discount, before tax). `calc_total` now adds `calc_subtotal` and `calc_tax` rather than working tax out a second way, so the total and the tax can't disagree.\n  - Rounding uses the existing `percent()` helper, which rounds half up.\n- **`shop/orders.py`**: `Order` gets the discount through `calc_total`/`calc_tax`. I also added `order.tier`, but it isn't written out by `Store.save_order`. Say if you want it stored.\n- **`shop/cli.py`**: `quote --tier <name>` defaults to `standard` and accepts any value. For example, `shop quote --tier gold a:10.00:2` prints `19.49`, versus `21.65` without a tier.\n\n**Tests**\n- **`tests/test_pricing.py`**: the default tier, gold, silver, and unknown values (`platinum`, `Gold`, empty) getting no discount.\n  - A mix of taxed and untaxed items, where tax is charged only on the discounted taxed part.\n  - The tier discount on top of the existing bulk discount.\n- **`tests/test_orders.py`**: a gold order's total and tax include the discount.\n- **`tests/test_cli.py`** (new): `quote` with no tier, gold, silver and an unknown tier.\n\n**Rounding:** the tier discount is applied twice, once to the subtotal and once to the taxable amount. If a cart has untaxed items, the two roundings can differ by a cent. Taking the discount off each line instead would avoid that, but cents would then round per line.",
+  "ttft_ms": 3053,
+  "type": "result",
+  "duration_ms": 43179,
+  "uuid": "c9da68ac-df08-4ebb-815f-a3b21918bd76",
+  "ttft_stream_ms": 1687,
+  "time_to_request_ms": 160,
+  "first_content_frame_ms": 1687,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 18 ++++++++++++++----\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 36 +++++++++++++++++++++++++++++++++++-\n 6 files changed, 61 insertions(+), 6 deletions(-)\n",
+ "workdir": "f3-tier.alone.1",
+ "ledger": []
+}

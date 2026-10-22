@@ -31,9 +31,9 @@ class DoctorTests(Isolated):
         (paths.home() / "off").write_text("")
         self.assertEqual(statuses()["switch"], doctor.WARN)
 
-    def test_unknown_chat_model_and_missing_window_are_flagged(self):
+    def test_unknown_chat_model_is_flagged_but_the_compaction_point_needs_no_setting(self):
         found = statuses()
-        self.assertEqual((found["ceiling"], found["compaction window"]), (doctor.WARN, doctor.WARN))
+        self.assertEqual((found["ceiling"], found["compaction window"]), (doctor.WARN, doctor.OK))
 
     def test_hook_errors_are_surfaced(self):
         (paths.home() / "errors.log").write_text("2026-10-22 10:00:00 prompt\nValueError: boom\n")

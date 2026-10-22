@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": "fable-low",
+ "top": "claude-fable-5-1",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 18076,
+  "stop_reason": "end_turn",
+  "session_id": "a0171b41-9e9d-4a1e-81ab-6889537824a9",
+  "total_cost_usd": 0.28094575,
+  "usage": {
+   "input_tokens": 130,
+   "cache_creation_input_tokens": 9971,
+   "cache_read_input_tokens": 98503,
+   "output_tokens": 1112,
+   "output_tokens_details": {
+    "thinking_tokens": 45
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9971,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 604,
+     "cache_read_input_tokens": 22338,
+     "cache_creation_input_tokens": 423,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 423
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 130,
+    "outputTokens": 1112,
+    "cacheReadInputTokens": 98503,
+    "cacheCreationInputTokens": 9971,
+    "webSearchRequests": 0,
+    "costUSD": 0.28094575,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 45,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces three bugs in `shop/orders.py`.\n\n1. **`_ids_seen` is never defined.** The diff replaces `next(_ids)` with `len(_ids_seen)` and `_ids_seen.append(...)`, but adds no module-level `_ids_seen = []`. Every `Order(...)` call raises `NameError`, so both tests in `tests/test_orders.py` fail. The old `_ids` counter and the `itertools` import are also left as dead code.\n\n2. **ID scheme silently changes and breaks storage semantics.** Even if `_ids_seen` were defined, IDs would start at 0 instead of 1000, and the module now accumulates an ever-growing list purely to count. More importantly, `shop/storage.py:17` dedupes saved rows by `r[\"id\"] != order.id`. IDs are no longer unique across process runs in a meaningful way (they restart at 0 every time, same as before but now starting at 0), and an ID of `0` is falsy, which is a classic hazard for any `if order.id:` check. The design is strictly worse than the monotonic counter it replaces with no stated benefit.\n\n3. **`ALLOWED.get(self.state, STATES)` turns an unknown state into an all-permitting state.** Previously, an order with a corrupted or unexpected `state` (for example one loaded from storage with a bad value) raised `KeyError` on `move`, surfacing the problem. Now the fallback is the full `STATES` tuple, so any transition is allowed from an unknown state, including into `\"shipped\"` or back to `\"new\"`. This weakens the state machine rather than tightening it. The fallback should be an empty set, or the lookup should stay strict.\n\nNet effect: the module is unusable at runtime because of bug 1, and the other two changes degrade correctness once that is fixed.",
+  "ttft_ms": 2360,
+  "type": "result",
+  "duration_ms": 18234,
+  "uuid": "793c1c86-5e2c-4aa2-ac89-4960443b2aa5",
+  "ttft_stream_ms": 954,
+  "time_to_request_ms": 63,
+  "first_content_frame_ms": 954,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.alone.fable-low"
+}

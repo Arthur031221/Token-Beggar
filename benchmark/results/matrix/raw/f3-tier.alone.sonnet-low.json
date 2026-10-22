@@ -1,0 +1,110 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": "sonnet-low",
+ "top": "claude-sonnet-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 28289,
+  "stop_reason": "end_turn",
+  "session_id": "c35b5092-2bc3-4dd0-9fbf-e6fe47890960",
+  "total_cost_usd": 0.0957103,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 12398,
+   "cache_read_input_tokens": 120543,
+   "output_tokens": 3404,
+   "output_tokens_details": {
+    "thinking_tokens": 139
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12398,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 364,
+     "cache_read_input_tokens": 24484,
+     "cache_creation_input_tokens": 704,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 704
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 3404,
+    "cacheReadInputTokens": 120543,
+    "cacheCreationInputTokens": 12398,
+    "webSearchRequests": 0,
+    "costUSD": 0.0957103,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 139,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 9,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and all 10 tests pass (8 existing plus the new ones).\n\n- **Cart:** it now has `tier`, defaulting to `\"standard\"`, in `shop/models.py`.\n- **Pricing:** gold takes 10% off and silver 5%. Any other value takes nothing. The discount comes off the subtotal, and off the taxable amount before tax is calculated. `calc_total` and `calc_tax` share the same logic in `shop/pricing.py`. It applies after the existing bulk discount.\n- **Order:** it already calls `calc_total` and `calc_tax`, so it picks up the tier with no change to `shop/orders.py`.\n- **CLI:** `quote` accepts `--tier`, default `standard`. I didn't run it by hand, because `python3 -m shop` doesn't work in this repo. `tests/test_cli.py` covers it by calling `main`.\n- **Tests:** I added tier tests to `tests/test_pricing.py`, an Order tier test to `tests/test_orders.py`, and the new `tests/test_cli.py`.",
+  "ttft_ms": 2720,
+  "type": "result",
+  "duration_ms": 29067,
+  "uuid": "e399325d-8c9b-4a68-9ed5-a02a8c7ed62b",
+  "ttft_stream_ms": 1772,
+  "time_to_request_ms": 78,
+  "first_content_frame_ms": 1774,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/pricing.py       | 18 +++++++++++++-----\n tests/test_orders.py  |  7 +++++++\n tests/test_pricing.py | 11 +++++++++++\n 5 files changed, 34 insertions(+), 6 deletions(-)\n",
+ "workdir": "f3-tier.alone.sonnet-low"
+}

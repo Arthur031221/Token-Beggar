@@ -12,12 +12,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-from tasks import TASKS
+from tasks import ALL
 
-BY_ID = {t["id"]: t for t in TASKS}
+BY_ID = {t["id"]: t for t in ALL}
 ROOT = Path(__file__).resolve().parent.parent
-RAW = ROOT / "benchmark" / "results" / "raw"
-OUT = ROOT / "benchmark" / "results" / "scores.json"
+RESULTS = ROOT / "benchmark" / "results"
+RAW = RESULTS / "raw"  # main() points RAW and OUT at results/<out>/
+OUT = RESULTS / "scores.json"
 CLAUDE = os.environ.get("CLAUDE_BIN", str(Path.home() / ".local/bin/claude"))
 SCRATCH = Path(os.environ.get("TB_SCRATCH", "/tmp/tb-bench"))
 JUDGE_MODEL = "sonnet"
@@ -106,6 +107,9 @@ def usage(result: dict, top: str) -> dict:
 
 
 def main() -> None:
+    global RAW, OUT
+    out = sys.argv[sys.argv.index("--out") + 1] if "--out" in sys.argv else "final"
+    RAW, OUT = RESULTS / out / "raw", RESULTS / out / "scores.json"
     scores = json.loads(OUT.read_text()) if OUT.exists() else {}
     files = sorted(RAW.glob("*.json"))
     random.Random(3).shuffle(files)  # judge order carries no arm information
@@ -119,6 +123,7 @@ def main() -> None:
         row = {
             "task": task["id"],
             "class": task["class"],
+            "held_out": bool(task.get("held_out")),
             "arm": record["arm"],
             "rep": record["rep"],
             **usage(result, record["top"]),

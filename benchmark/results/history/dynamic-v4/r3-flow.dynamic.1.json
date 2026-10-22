@@ -1,0 +1,110 @@
+{
+ "task": "r3-flow",
+ "class": "reading",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14646,
+  "stop_reason": "end_turn",
+  "session_id": "fea6c35f-5f5a-4973-9556-185b55b12058",
+  "total_cost_usd": 0.1054972,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 7921,
+   "cache_read_input_tokens": 77386,
+   "output_tokens": 1331,
+   "output_tokens_details": {
+    "thinking_tokens": 160
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7921,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 633,
+     "cache_read_input_tokens": 22075,
+     "cache_creation_input_tokens": 432,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 432
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1331,
+    "cacheReadInputTokens": 77386,
+    "cacheCreationInputTokens": 7921,
+    "webSearchRequests": 0,
+    "costUSD": 0.1054972,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 160,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Order state is checked in memory in one file and written to disk by a separate class. Nothing in the code connects the two.\n\n**Validation: `shop/orders.py`**\n- `ALLOWED` (line 7) is the transition table: `new \u2192 {paid, cancelled}`, `paid \u2192 {shipped, cancelled}`. `shipped` and `cancelled` are final states with no exits.\n- `STATES` (line 6) lists the four states, but no code uses it.\n- `Order.__init__` sets `self.state = \"new\"`.\n- `Order.move(state)` (line 19) raises `ValueError(\"cannot go from X to Y\")` if the target isn't in `ALLOWED[self.state]`. Otherwise it sets `self.state`.\n\n**Storage: `shop/storage.py`**\n- `Store.save_order(order)` reads every row with `load()`, removes the row with the same `id`, and appends a row containing `{id, customer, total, tax, state}`. It then rewrites the whole JSON file.\n- `Store.load()` returns plain dicts, not `Order` objects. States read back from the file are never checked against `ALLOWED`.\n\n**How they fit together**\n- No code calls `move()` and `save_order()` together; the caller has to do both. Nothing in `shop/` calls either one (`cli.py` doesn't), so only tests use them.\n- `save_order` doesn't check the state, so editing `order.state` directly skips validation.\n- `shop/reports.py:9` reads stored rows and counts only `paid` and `shipped` orders.\n- The only test is `tests/test_orders.py::test_state_flow`, which checks `new \u2192 paid \u2192 shipped` and that `shipped \u2192 cancelled` is rejected.",
+  "ttft_ms": 1557,
+  "type": "result",
+  "duration_ms": 15909,
+  "uuid": "e84cc1b2-7838-4797-9a90-bb1ed20b8ae8",
+  "ttft_stream_ms": 1026,
+  "time_to_request_ms": 162,
+  "first_content_frame_ms": 1026,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r3-flow.dynamic.1"
+}

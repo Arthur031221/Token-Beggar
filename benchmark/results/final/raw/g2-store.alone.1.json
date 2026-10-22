@@ -1,0 +1,111 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 17148,
+  "stop_reason": "end_turn",
+  "session_id": "6cbf8f1f-c012-440d-964a-8dcce35b60d2",
+  "total_cost_usd": 0.09535479999999999,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7385,
+   "cache_read_input_tokens": 50854,
+   "output_tokens": 1304,
+   "output_tokens_details": {
+    "thinking_tokens": 347
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7385,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1021,
+     "cache_read_input_tokens": 19428,
+     "cache_creation_input_tokens": 747,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 747
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1304,
+    "cacheReadInputTokens": 50854,
+    "cacheCreationInputTokens": 7385,
+    "webSearchRequests": 0,
+    "costUSD": 0.09535479999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 347,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I recommend moving orders from the single JSON file to SQLite in WAL mode.\n\n**What's wrong now** (`shop/storage.py:16`)\n- **Lost updates:** `save_order` loads the whole file, edits it in memory, then rewrites it. If both writers do this at once, the one that finishes last silently erases the other's order. There is no locking.\n- **Corrupt reads:** `write_text` isn't atomic. A crash or a concurrent `load()` (such as `shop report`) can hit a half-written file and fail to parse.\n- **Slow writes:** at 100k orders the file is about 10 MB, and every single save re-reads and rewrites all of it.\n\n**Why SQLite**\n- It's in the standard library, so there's no server to run.\n- Each write is a single-row upsert inside a transaction, keyed on `id`.\n- WAL mode lets the two writers queue for the write lock (with a `busy_timeout` set) while readers keep reading.\n- Store money as INTEGER cents, as the code already does.\n- If the writers will ever run on different hosts or a network filesystem, use Postgres instead. SQLite file locking isn't reliable there.\n\n**Migration path**\n1. **Pin the contract.** There are no storage tests today. Add tests for `load()` and `save_order()`: upsert by id, the five fields, and an empty store returning `[]`.\n2. **Add `SqliteStore` behind the same interface.** Use a table `orders(id PRIMARY KEY, customer, total, tax, state)` and pass the same tests. Callers don't change; `cli.py` is the only one.\n3. **Write an idempotent import script.** It upserts every row from the JSON file in one transaction, then checks the row count and the sum of totals against the source.\n4. **Cut over.** Stop both writers, run the import, verify, point config at the `.db` file, then restart. Keep the JSON file read-only as a rollback.\n5. **Follow up.** Have reports query or aggregate in SQL instead of loading all 100k rows into memory.",
+  "ttft_ms": 2786,
+  "type": "result",
+  "duration_ms": 17443,
+  "uuid": "a7e2383c-ca1b-4395-bebb-f6529267212b",
+  "ttft_stream_ms": 1569,
+  "time_to_request_ms": 159,
+  "first_content_frame_ms": 1570,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.1",
+ "ledger": []
+}

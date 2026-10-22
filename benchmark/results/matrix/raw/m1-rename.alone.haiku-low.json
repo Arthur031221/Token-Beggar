@@ -1,0 +1,110 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "alone",
+ "rep": "haiku-low",
+ "top": "claude-haiku-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 9436,
+  "stop_reason": "end_turn",
+  "session_id": "7f9bb4c8-59c6-441f-94df-ce8a47ff4e54",
+  "total_cost_usd": 0.00307931,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 8807,
+   "cache_read_input_tokens": 73661,
+   "output_tokens": 1161,
+   "output_tokens_details": {
+    "thinking_tokens": 174
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8807,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 237,
+     "cache_read_input_tokens": 21012,
+     "cache_creation_input_tokens": 585,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 585
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1161,
+    "cacheReadInputTokens": 73661,
+    "cacheCreationInputTokens": 8807,
+    "webSearchRequests": 0,
+    "costUSD": 0.00307931,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 174,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I renamed `calc_total` to `order_total` in all 9 places across 5 files, and the test suite passes: 6 tests, all OK.\n\n- **Source:** `shop/pricing.py` (the definition), `shop/orders.py`, and `shop/cli.py`.\n- **Tests:** `tests/test_orders.py` and `tests/test_pricing.py`.\n\nA repo-wide search finds no remaining `calc_total`. The rename matched whole identifiers only, so names like `calc_total_cents` would have been left alone; none existed.\n\n`pytest` isn't installed here and `python` isn't on the PATH, so I ran the tests with `python3 -m unittest discover -v`. Nothing is committed.",
+  "ttft_ms": 2191,
+  "type": "result",
+  "duration_ms": 9837,
+  "uuid": "93d6a02e-0693-4f94-bb01-9c98571e2024",
+  "ttft_stream_ms": 1824,
+  "time_to_request_ms": 193,
+  "first_content_frame_ms": 1824,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.alone.haiku-low"
+}

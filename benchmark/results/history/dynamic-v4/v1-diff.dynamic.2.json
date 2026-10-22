@@ -1,0 +1,110 @@
+{
+ "task": "v1-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 18489,
+  "stop_reason": "end_turn",
+  "session_id": "8b6a5e24-ca0d-4a08-bd84-e1f04b031b37",
+  "total_cost_usd": 0.12419859999999999,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 8977,
+   "cache_read_input_tokens": 77753,
+   "output_tokens": 1840,
+   "output_tokens_details": {
+    "thinking_tokens": 452
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8977,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1327,
+     "cache_read_input_tokens": 22271,
+     "cache_creation_input_tokens": 1292,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1292
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1840,
+    "cacheReadInputTokens": 77753,
+    "cacheCreationInputTokens": 8977,
+    "webSearchRequests": 0,
+    "costUSD": 0.12419859999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 452,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found three bugs in `change.diff`. Each one causes wrong behaviour, and two of them would also fail existing tests. I worked these out by reading the code and doing the arithmetic; I didn't apply the diff or run the tests.\n\n### 1. Bulk discount no longer applies at exactly 10 units (`shop/pricing.py`, `line_subtotal`)\nThe diff changes `>=` to `>`. With `BULK_THRESHOLD = 10`, a line with exactly 10 units used to get the 5% discount and now doesn't, because the threshold has moved to 11 units.\n- `tests/test_pricing.py::test_bulk_discount` will fail. For 10 units at 100\u00a2, the discounted line is 1000 \u2212 50 = 950, and with 8.25% tax the expected total is **1028**. After the change there's no discount, so the total is 1000 + 83 = **1083**.\n\n### 2. `calc_tax` taxes the price before the bulk discount (`shop/pricing.py`, `calc_tax`)\nThe diff replaces `line_subtotal(l)` with `l.item.price_cents * l.qty`, so tax is now worked out on the price before the bulk discount. `calc_total` still taxes the discounted subtotal, so the two functions now disagree.\n- Customers on bulk lines are reported as paying more tax than they actually do. `Order` (`shop/orders.py:15-16`) saves both `total_cents` and `tax_cents`, so a saved order's tax no longer equals its total minus its subtotal.\n- Example: 11 units at 100\u00a2. The discounted subtotal is 1045, so `calc_total` includes 86\u00a2 of tax, but the new `calc_tax` returns 91\u00a2 (8.25% of 1100).\n- No existing test catches this. `test_untaxable_item` only checks a case with zero tax, and `test_bulk_discount` only checks `calc_total`.\n\n### 3. Cache entries last 1000\u00d7 longer than intended (`shop/cache.py`, `PriceCache.get`)\nThe clock is `time.monotonic`, which counts in seconds, and the docstring says entries are cached \"for ttl seconds\". The diff compares the age against `self.ttl * 1000`, which treats seconds as milliseconds.\n- With the default `ttl=60`, an entry now stays valid for 60,000 seconds (about 16.7 hours) instead of 60 seconds, so stale prices keep being served.\n- `tests/test_cache.py::test_hit_and_expiry` will fail. At `now = 11` with `ttl=10`, the check `11 < 10000` is still true, so the loader isn't called again and `len(calls)` stays at 1 instead of 2.",
+  "ttft_ms": 1175,
+  "type": "result",
+  "duration_ms": 19102,
+  "uuid": "9c813b88-907d-466d-ae7f-f29920924ae1",
+  "ttft_stream_ms": 977,
+  "time_to_request_ms": 194,
+  "first_content_frame_ms": 977,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v1-diff.dynamic.2"
+}

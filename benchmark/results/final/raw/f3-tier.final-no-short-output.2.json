@@ -1,0 +1,127 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "final-no-short-output",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 49336,
+  "stop_reason": "end_turn",
+  "session_id": "f1958b30-6e99-4e9a-a84d-a7b34f6379e7",
+  "total_cost_usd": 0.18583689999999997,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 9898,
+   "cache_read_input_tokens": 33174,
+   "output_tokens": 1773,
+   "output_tokens_details": {
+    "thinking_tokens": 349
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9898,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 658,
+     "cache_read_input_tokens": 20384,
+     "cache_creation_input_tokens": 2304,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2304
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1773,
+    "cacheReadInputTokens": 33174,
+    "cacheCreationInputTokens": 9898,
+    "webSearchRequests": 0,
+    "costUSD": 0.1212948,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 349,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 3869,
+    "cacheReadInputTokens": 42671,
+    "cacheCreationInputTokens": 8626,
+    "webSearchRequests": 0,
+    "costUSD": 0.0645421,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 477,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in and the full test suite passes (`python3 -m unittest discover -s tests -t .`: 17 tests, OK). Nothing is committed.\n\n**What changed**\n- **`shop/models.py`:** `Cart` has a `tier` attribute that defaults to `\"standard\"`. It's added after `customer`, so existing code that builds carts keeps working.\n- **`shop/pricing.py`:** One lookup sets the discount rate: gold 10%, silver 5%, anything else 0. A new `calc_subtotal` gives the subtotal after the tier discount. `calc_total` is now that subtotal plus `calc_tax`. Both use the same rate, so they can't drift apart.\n- **`shop/orders.py`:** `Order` now records `tier` from the cart. It already got its totals and tax from the pricing functions, so the discount reaches orders with no other change.\n- **`shop/cli.py`:** `quote` takes `--tier`, defaulting to `standard`.\n- **Tests:**\n  - `tests/test_pricing.py` covers standard, gold, silver, unknown and empty tiers.\n  - `tests/test_orders.py` covers an order built from a gold cart.\n  - The new `tests/test_cli.py` covers `quote` with and without `--tier`.\n\n**Decisions you may want to check**\n- **Tax base:** Tax only applies to taxable items, so tax is now charged on the taxable amount after the tier discount. Non-taxable items are still never taxed.\n- **Order of discounts:** The existing per-line bulk discount applies first, then the tier discount on what's left.\n- **Rounding:** The discount uses the existing whole-cent, round-half-up helper. Standard-tier results are unchanged, and the existing tests pass without edits.",
+  "ttft_ms": 4953,
+  "type": "result",
+  "duration_ms": 50729,
+  "uuid": "cc59ce3a-73f8-4ecc-a97a-64769c89a790",
+  "ttft_stream_ms": 2138,
+  "time_to_request_ms": 201,
+  "first_content_frame_ms": 2138,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 26 ++++++++++++++++++++------\n tests/test_orders.py  |  9 +++++++++\n tests/test_pricing.py | 31 +++++++++++++++++++++++++++++++\n 6 files changed, 64 insertions(+), 7 deletions(-)\n",
+ "workdir": "f3-tier.final-no-short-output.2",
+ "ledger": []
+}

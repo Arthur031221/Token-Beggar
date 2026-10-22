@@ -1,0 +1,110 @@
+{
+ "task": "d2-store",
+ "class": "debugging",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16313,
+  "stop_reason": "end_turn",
+  "session_id": "e947e6f0-1833-41c9-9f58-7f8513412a6c",
+  "total_cost_usd": 0.200631,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 17803,
+   "cache_read_input_tokens": 129035,
+   "output_tokens": 1618,
+   "output_tokens_details": {
+    "thinking_tokens": 178
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 17803,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 422,
+     "cache_read_input_tokens": 31971,
+     "cache_creation_input_tokens": 417,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 417
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1618,
+    "cacheReadInputTokens": 129035,
+    "cacheCreationInputTokens": 17803,
+    "webSearchRequests": 0,
+    "costUSD": 0.200631,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 178,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found the bug and fixed it with a one-character change. All 6 existing tests pass, but none of them test storage, so the passing suite doesn't cover this fix.\n\n**Root cause:** In `shop/storage.py:17`, `save_order` should keep every saved order except the one being written, then add the new version of that order. The filter was written backwards:\n\n```python\nrows = [r for r in self.load() if r[\"id\"] == order.id]   # before\nrows = [r for r in self.load() if r[\"id\"] != order.id]   # after\n```\n\nWith `==`, the only row kept was the old copy of the order being saved, and it was dropped again when the new copy was added. So each save wiped out every other order, and the file only ever held the last one saved.\n\n**Checks:**\n- **Tests:** pytest isn't installed here, so I ran the suite with `python3 -m unittest discover`.\n- **The bug itself:** I saved two orders, moved the first to `paid`, and saved it again. `load()` returned both orders, `[(1001, 'new'), (1000, 'paid')]`, so the re-save updated the existing record instead of adding a duplicate.\n\nWant me to add a storage test for this case so it can't come back unnoticed?",
+  "ttft_ms": 1355,
+  "type": "result",
+  "duration_ms": 17263,
+  "uuid": "59b8427b-dbb1-4238-8490-d19045f3fa6e",
+  "ttft_stream_ms": 1015,
+  "time_to_request_ms": 354,
+  "first_content_frame_ms": 1016,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/storage.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n",
+ "workdir": "d2-store.dynamic.2"
+}

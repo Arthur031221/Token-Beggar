@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15199,
+  "stop_reason": "end_turn",
+  "session_id": "ebee1dcb-4524-4a78-be44-dc8b8e0fb368",
+  "total_cost_usd": 0.1298094,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 11443,
+   "cache_read_input_tokens": 53007,
+   "output_tokens": 1382,
+   "output_tokens_details": {
+    "thinking_tokens": 239
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11443,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1019,
+     "cache_read_input_tokens": 20391,
+     "cache_creation_input_tokens": 3842,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 3842
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1382,
+    "cacheReadInputTokens": 53007,
+    "cacheCreationInputTokens": 11443,
+    "webSearchRequests": 0,
+    "costUSD": 0.1298094,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 239,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The design is below; no code was written. I read the core modules and two carrier files (`acme.py`, `borealis.py`) and am assuming the other 18 carriers follow the same template.\n\n## What changes\n\n1. **`shop/money.py`**: Add a `Money(amount_minor: int, currency: str)` value type and a table of how many minor-unit digits each currency uses (JPY 0, USD 2, KWD 3). `to_cents` and `fmt` currently assume two decimals; they need to take a currency. `percent` should round with `Decimal` instead of float.\n2. **`shop/models.py`**: Add `Item.currency` and `Cart.currency`. `Cart.add` should reject an item whose currency doesn't match the cart.\n3. **`shop/pricing.py`**: The functions should return `Money`. Replace the single `TAX_RATE` with a rate per region or currency.\n4. **`shop/orders.py`**: Store the currency on the `Order`, and on each line tuple.\n5. **`shop/storage.py`**: Write a `\"currency\"` field. Old rows without it should load as `\"USD\"`.\n6. **`shop/reports.py`**: Group sales by customer *and* currency. Never add amounts in different currencies together, unless we add an FX step with a fixed rate snapshot.\n7. **`shop/cli.py`**: Add a `--currency` flag to `quote`, and format output per currency.\n8. **`shop/cache.py`**: Key the cache on `(sku, currency)`.\n9. **`shop/carriers/*.py` (20 files)**: Rates are implicit cents. Each carrier should declare its currency, or the code should convert at the boundary. A shared base class would avoid editing 20 near-identical files.\n\n## Main risks\n\n- **Silent mixing:** `reports.sales_by_customer` would add USD and JPY totals without complaint. This is the most likely bug.\n- **Rounding:** Float rounding in `percent`, and the hard-coded `//100` and `%100` in `fmt`, will be wrong for currencies with 0 or 3 decimal places.\n- **Old data:** Existing JSON order files have no currency field, so the \"missing means USD\" default must be explicit and tested.\n- **FX scope:** Converting between currencies brings in rate sources, staleness and auditing. Leave it out of the first version unless it's required.\n- **Tests:** The existing tests assert on plain ints and will need updating.",
+  "ttft_ms": 1800,
+  "type": "result",
+  "duration_ms": 16370,
+  "uuid": "331c4c87-78ef-4c3d-9747-b49299d347da",
+  "ttft_stream_ms": 1080,
+  "time_to_request_ms": 417,
+  "first_content_frame_ms": 1080,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.1"
+}

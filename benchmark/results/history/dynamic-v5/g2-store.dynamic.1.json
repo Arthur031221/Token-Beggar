@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16022,
+  "stop_reason": "end_turn",
+  "session_id": "bc7a3202-c3a6-4849-9d51-0c5e03e4d55d",
+  "total_cost_usd": 0.08004140000000001,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6139,
+   "cache_read_input_tokens": 54627,
+   "output_tokens": 999,
+   "output_tokens_details": {
+    "thinking_tokens": 70
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6139,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 671,
+     "cache_read_input_tokens": 20422,
+     "cache_creation_input_tokens": 302,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 302
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 999,
+    "cacheReadInputTokens": 54627,
+    "cacheCreationInputTokens": 6139,
+    "webSearchRequests": 0,
+    "costUSD": 0.08004140000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 70,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move to SQLite with WAL mode.**\n\n**What's wrong now.** `shop/storage.py` keeps every order in one JSON file. Each `save_order` reads the whole file, filters it, and writes it all back.\n\n- **Lost updates:** with two writer processes, both can read, both append, and the last write silently drops the other's order. Nothing locks the file.\n- **Corruption:** `write_text` isn't atomic. A crash or a read during a write leaves a truncated, unparseable file.\n- **Speed:** at 100k orders, every save rewrites roughly 10 MB of JSON, so each write is O(n).\n\n**Why SQLite.** It's in the standard library, so there's no new server to run. It gives you atomic transactions and safe locking between processes. In WAL mode, readers don't block the writer. Two writers are well within what it handles once you set a `busy_timeout`. An upsert on a primary key (`INSERT \u2026 ON CONFLICT(id) DO UPDATE`) makes each save O(log n). Postgres would only be worth it if writers end up on different hosts or there are many more of them.\n\n**Migration path:**\n1. Keep the `Store` interface (`load()`, `save_order()`) and add a `SqliteStore` behind it. Schema: an `orders` table with columns id PK, customer, total, tax, state, plus an index on state and customer if reports filter on them.\n2. Write a one-off import script that reads the JSON and bulk-inserts it in one transaction. Make it idempotent with upserts and check that the row counts match.\n3. Stop both writers, run the import, switch `cli.py` (currently `Store(args.db)`) to `SqliteStore`, and restart. Keep the JSON file as a read-only backup.\n4. Later, replace `load()` (which returns everything) with filtered queries in `reports.py` so reports don't pull all 100k rows.\n\nAdd a test that runs two processes saving at the same time and checks that no orders are lost.",
+  "ttft_ms": 3520,
+  "type": "result",
+  "duration_ms": 16868,
+  "uuid": "d4264b95-d551-4cdf-a65f-382e6a9196ff",
+  "ttft_stream_ms": 3322,
+  "time_to_request_ms": 507,
+  "first_content_frame_ms": 3322,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.1"
+}

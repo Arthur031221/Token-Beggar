@@ -1,0 +1,127 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "final-no-bulk-agy",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 46439,
+  "stop_reason": "end_turn",
+  "session_id": "4e6b86ce-dfdf-4a1f-96e7-70a8f5478526",
+  "total_cost_usd": 0.17076960000000002,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 8739,
+   "cache_read_input_tokens": 32680,
+   "output_tokens": 1565,
+   "output_tokens_details": {
+    "thinking_tokens": 145
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8739,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 662,
+     "cache_read_input_tokens": 19890,
+     "cache_creation_input_tokens": 1639,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1639
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1565,
+    "cacheReadInputTokens": 32680,
+    "cacheCreationInputTokens": 8739,
+    "webSearchRequests": 0,
+    "costUSD": 0.10776400000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 145,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 3916,
+    "cacheReadInputTokens": 47516,
+    "cacheCreationInputTokens": 7628,
+    "webSearchRequests": 0,
+    "costUSD": 0.0630056,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 309,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `Cart.apply_coupon(code)` and `calc_total` now takes coupons into account. The full suite passes: `python3 -m unittest discover` ran 13 tests, all OK. Nothing is committed.\n\n**Changes:**\n- `shop/coupons.py` (new): SAVE10 takes 10% off the subtotal and FLAT500 takes 500 cents off. An unknown code raises `ValueError`.\n- `shop/models.py`: `Cart` now keeps a list of applied coupons and has `apply_coupon`.\n- `shop/pricing.py`: a new `_discounted` helper applies coupons to the pre-tax subtotal. `calc_total` uses it.\n- `tests/test_pricing.py`: seven new tests, covering each coupon alone, both stacked, an unknown code, and tax.\n\n**Decisions to check:**\n- **Stacking:** each coupon is worked out against the original subtotal, then the discounts are added up. So SAVE10 plus FLAT500 on 10,000\u00a2 gives 1,000 + 500 off. The subtotal can't go below 0.\n- **Rounding:** the 10% uses the existing `percent()` helper, which rounds half up in whole cents.\n- **Same code twice:** applying a code that's already on the cart does nothing. It doesn't raise an error.\n- **Tax:** this is the one most worth reviewing. Some items aren't taxable, so the taxable amount is cut by the same proportion as the subtotal discount. `calc_tax` now reflects coupons as well, not just `calc_total`, which changes what callers of `calc_tax` get once a coupon is applied. If you'd rather discounts come only off taxable items, or only off the total, it's a small change to `_discounted`.\n\nCarts with no coupons price exactly as before.",
+  "ttft_ms": 2798,
+  "type": "result",
+  "duration_ms": 48379,
+  "uuid": "ca3a1583-886a-479d-9322-f6cf2eafdaca",
+  "ttft_stream_ms": 2020,
+  "time_to_request_ms": 285,
+  "first_content_frame_ms": 2022,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py        |  9 +++++++++\n shop/pricing.py       | 24 +++++++++++++++++++++---\n tests/test_pricing.py | 45 +++++++++++++++++++++++++++++++++++++++++++++\n 3 files changed, 75 insertions(+), 3 deletions(-)\n",
+ "workdir": "c1-coupon.final-no-bulk-agy.3",
+ "ledger": []
+}

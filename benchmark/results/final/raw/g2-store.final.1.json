@@ -1,0 +1,111 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "final",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 12360,
+  "stop_reason": "end_turn",
+  "session_id": "c005adfb-b87e-43c7-a386-dfe3dca149f3",
+  "total_cost_usd": 0.100165,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 8658,
+   "cache_read_input_tokens": 54385,
+   "output_tokens": 1000,
+   "output_tokens_details": {
+    "thinking_tokens": 82
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8658,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 679,
+     "cache_read_input_tokens": 21221,
+     "cache_creation_input_tokens": 227,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 227
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1000,
+    "cacheReadInputTokens": 54385,
+    "cacheCreationInputTokens": 8658,
+    "webSearchRequests": 0,
+    "costUSD": 0.100165,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 82,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: switch to SQLite in WAL mode, keeping the same `Store` interface.**\n\n**Why the current design breaks:** `shop/storage.py:16` reads the whole JSON file, rewrites it, and saves it again on every order.\n- **Lost writes:** two processes can both load, both append, and both write. The second write silently erases the first one's order. There is no locking.\n- **Corrupt reads:** `write_text` isn't atomic. A reader or a crash during a write can leave or see a half-written file.\n- **Slow at scale:** with 100k orders, each save rewrites about 10 MB. Total work grows quadratically with order count.\n\n**Why SQLite:** it's in the standard library, needs no server, and handles a few writers on one host well. WAL mode lets readers run while a write is in progress. A `busy_timeout` makes the two writers queue instead of failing. An upsert on a primary-key `id` replaces the current filter-and-append logic. Postgres would be overkill unless the writers run on separate machines.\n\n**Migration path:**\n1. **Schema:** an `orders` table with `id` (primary key), `customer`, `total`, `tax` and `state`. Store money as integer cents, as now. Add an index on `customer` or `state` if `reports.py` filters on them.\n2. **New backend:** add a `SqliteStore` with the same `load()`/`save_order()` signatures. `load()` still returns a list of dicts, so `cli.py:26` and `render` don't change.\n3. **Import script:** a one-off that reads the JSON file and inserts every row in one transaction. Check that the row counts match, and keep the JSON as a backup.\n4. **Cutover:** stop both writers, run the import, point the `--db` path at the new file, and restart.\n5. **Tests:** add one that runs two processes saving concurrently and checks no order is lost.\n6. **Later:** replace `load()`'s read-everything with queries in reports.\n\nThe only caller I found is `cli.py:26`, so the change stays small.",
+  "ttft_ms": 1521,
+  "type": "result",
+  "duration_ms": 13086,
+  "uuid": "437762a9-98ad-4783-962d-7a30bb77ad27",
+  "ttft_stream_ms": 991,
+  "time_to_request_ms": 201,
+  "first_content_frame_ms": 991,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.final.1",
+ "ledger": []
+}

@@ -1,0 +1,111 @@
+{
+ "task": "h2-grams",
+ "class": "reading",
+ "arm": "final-no-lean-tools",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 4674,
+  "stop_reason": "end_turn",
+  "session_id": "2229b564-d5d6-4fcf-8634-5725f569bf7e",
+  "total_cost_usd": 0.08436960000000002,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 9035,
+   "cache_read_input_tokens": 33168,
+   "output_tokens": 272,
+   "output_tokens_details": {
+    "thinking_tokens": 48
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9035,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 70,
+     "cache_read_input_tokens": 20378,
+     "cache_creation_input_tokens": 1447,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1447
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 272,
+    "cacheReadInputTokens": 33168,
+    "cacheCreationInputTokens": 9035,
+    "webSearchRequests": 0,
+    "costUSD": 0.08436960000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 48,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`shop/carriers/maple.py` is the only carrier that uses grams, with `MAX_GRAMS = 30000` (30 kg) at line 10, while all the others set a `MAX_KG` value.",
+  "ttft_ms": 1904,
+  "type": "result",
+  "duration_ms": 5287,
+  "uuid": "d93f315d-8d4e-41c8-bc46-14c27f3f9590",
+  "ttft_stream_ms": 1572,
+  "time_to_request_ms": 309,
+  "first_content_frame_ms": 1573,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h2-grams.final-no-lean-tools.2",
+ "ledger": []
+}

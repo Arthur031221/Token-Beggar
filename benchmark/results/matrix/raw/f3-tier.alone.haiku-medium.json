@@ -1,0 +1,110 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": "haiku-medium",
+ "top": "claude-haiku-5-5",
+ "effort": "medium",
+ "result": {
+  "duration_api_ms": 27366,
+  "stop_reason": "end_turn",
+  "session_id": "b3e45110-b2e6-4ab4-a32a-f956811349d0",
+  "total_cost_usd": 0.00732381,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 15594,
+   "cache_read_input_tokens": 125431,
+   "output_tokens": 5899,
+   "output_tokens_details": {
+    "thinking_tokens": 1544
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 15594,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 691,
+     "cache_read_input_tokens": 26314,
+     "cache_creation_input_tokens": 2070,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2070
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 5899,
+    "cacheReadInputTokens": 125431,
+    "cacheCreationInputTokens": 15594,
+    "webSearchRequests": 0,
+    "costUSD": 0.00732381,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1544,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 12,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and the full suite passes: 16 tests, up from 6. I didn't commit.\n\n**What changed**\n- **`Cart`** (`shop/models.py`) has a `tier` attribute, default `'standard'`.\n- **Pricing** (`shop/pricing.py`): gold takes 10% off and silver 5%. Any other value gets nothing. The discount comes off the subtotal, after the bulk discount, and `calc_total` and `calc_tax` both use it.\n- **`Order`** (`shop/orders.py`) copies the cart's tier onto `order.tier`. Its totals come from the same pricing functions, so they reflect the discount.\n- **Storage** (`shop/storage.py`): saved order rows now include `tier`. This wasn't in the request, but it's how the order's tier gets persisted.\n- **CLI** (`shop/cli.py`): `quote` accepts `--tier`, defaulting to `standard`.\n\n**Choices I made**\n- The tax base is the taxable lines reduced by the tier discount. So a gold cart with half its value taxable gets the discount off the taxable half only. This is the sensible reading of \"before tax\", but say if you'd rather the discount apply differently to taxable and untaxable lines.\n- Tier matching is case-sensitive. `'Gold'` gets no discount.\n\n**Tests**\n- `tests/test_pricing.py`: gold and silver totals and tax, standard and unknown tiers, untaxable items, a mixed taxable/untaxable cart, and gold stacked on bulk pricing.\n- `tests/test_orders.py`: the order picks up the tier and its totals.\n- `tests/test_cli.py` (new): `quote` with no flag, with `--tier gold`, and with `--tier silver`.\n\nThe expected values were worked out by hand, not taken from the code, and the tests agree with them.",
+  "ttft_ms": 1788,
+  "type": "result",
+  "duration_ms": 27864,
+  "uuid": "99459648-599a-43bd-b1b7-d7f4c8e3946d",
+  "ttft_stream_ms": 1283,
+  "time_to_request_ms": 73,
+  "first_content_frame_ms": 1283,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 13 ++++++++++---\n shop/storage.py       |  2 +-\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 36 ++++++++++++++++++++++++++++++++++++\n 7 files changed, 59 insertions(+), 5 deletions(-)\n",
+ "workdir": "f3-tier.alone.haiku-medium"
+}

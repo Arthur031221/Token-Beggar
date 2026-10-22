@@ -1,0 +1,126 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "dynamic",
+ "rep": "fable-high",
+ "top": "claude-fable-5-1",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 26423,
+  "stop_reason": "end_turn",
+  "session_id": "92dbe8ad-856e-41e9-94ce-3b87981ff247",
+  "total_cost_usd": 0.25734183,
+  "usage": {
+   "input_tokens": 34,
+   "cache_creation_input_tokens": 10139,
+   "cache_read_input_tokens": 34388,
+   "output_tokens": 880,
+   "output_tokens_details": {
+    "thinking_tokens": 55
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10139,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 208,
+     "cache_read_input_tokens": 21598,
+     "cache_creation_input_tokens": 1331,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1331
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 34,
+    "outputTokens": 880,
+    "cacheReadInputTokens": 34388,
+    "cacheCreationInputTokens": 10139,
+    "webSearchRequests": 0,
+    "costUSD": 0.25571699999999997,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 55,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 1569,
+    "cacheReadInputTokens": 41988,
+    "cacheCreationInputTokens": 3354,
+    "webSearchRequests": 0,
+    "costUSD": 0.00162483,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 279,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Done. `calc_total` is now `order_total` everywhere in the repo, and the tests pass.\n\nFiles changed:\n- `shop/pricing.py`\n- `shop/cli.py`\n- `shop/orders.py`\n- `tests/test_pricing.py`\n- `tests/test_orders.py`\n\nA final grep across the repo found no remaining occurrences of the old name. The suite was run with unittest, since pytest is not installed and the repo has no runner config:\n\n```\npython3 -m unittest discover -s tests -t .\nRan 6 tests in 0.000s\nOK\n```\n\nThe changes are uncommitted in the working tree.",
+  "ttft_ms": 3767,
+  "type": "result",
+  "duration_ms": 27776,
+  "uuid": "154cd3b2-2d83-406c-bb94-009ae4a33a38",
+  "ttft_stream_ms": 2884,
+  "time_to_request_ms": 154,
+  "first_content_frame_ms": 2884,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.dynamic.fable-high"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16696,
+  "stop_reason": "end_turn",
+  "session_id": "093a9139-5aa0-48e3-b280-2c3851a03be0",
+  "total_cost_usd": 0.0773438,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5461,
+   "cache_read_input_tokens": 34199,
+   "output_tokens": 1340,
+   "output_tokens_details": {
+    "thinking_tokens": 572
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5461,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1210,
+     "cache_read_input_tokens": 19613,
+     "cache_creation_input_tokens": 434,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 434
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1340,
+    "cacheReadInputTokens": 34199,
+    "cacheCreationInputTokens": 5461,
+    "webSearchRequests": 0,
+    "costUSD": 0.0773438,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 572,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I reviewed `shop/cache.py`. It has no locking at all, so every problem below comes from threads overlapping.\n\n1. **Cache stampede (`get`, lines 14\u201318).** When a SKU is missing or expired, every thread that asks for it at the same moment calls `loader` at once. For a popular SKU that can flood the price backend.\n   *Fix:* single-flight loading. A short-held `threading.Lock` guards `_data` and a map of in-flight loads (`sku -> Future`). The first thread to miss runs the loader *outside* the lock, and the others wait on its Future.\n\n2. **Lost invalidation (lines 17\u201318 vs 22).** Say thread A starts loading, then `invalidate(sku)` runs, then A finishes. A writes back the price it fetched before the invalidation, and that stale price is served for a full TTL.\n   *Fix:* keep a version number per key. `invalidate` increments it and drops any in-flight Future. A load only stores its result if the version hasn't changed since it started.\n\n3. **Memory grows without limit.** Expired entries are never removed. A long-running service that sees many SKUs will slowly leak memory.\n   *Fix:* make it a bounded LRU (an `OrderedDict` with `maxsize`, evicting the oldest entry on insert) and drop expired entries when they are read.\n\n4. **Loader errors cause repeated stampedes.** Exceptions aren't cached, so while the backend is failing, every request hits it again.\n   *Fix:* pass the exception through the shared Future to all waiting threads without caching it. Optionally, cache the failure briefly (about a second) as backoff.\n\n5. **TTL starts too late (line 18).** The timestamp is taken after the load finishes, so a slow load makes the data look fresher than it is.\n   *Fix:* read `clock()` before calling `loader`.\n\n**My choice:** one lock, with single-flight Futures, per-key versions and a bounded LRU. The loader never runs while the lock is held.",
+  "ttft_ms": 1798,
+  "type": "result",
+  "duration_ms": 17545,
+  "uuid": "806fec63-8efd-473a-8d7b-d8c780d8dac0",
+  "ttft_stream_ms": 1588,
+  "time_to_request_ms": 202,
+  "first_content_frame_ms": 1588,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.2"
+}

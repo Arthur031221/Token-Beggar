@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 21677,
+  "stop_reason": "end_turn",
+  "session_id": "efb92b9c-cf2c-4d7b-843a-efd5797632eb",
+  "total_cost_usd": 0.13725020000000002,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 10136,
+   "cache_read_input_tokens": 78651,
+   "output_tokens": 2020,
+   "output_tokens_details": {
+    "thinking_tokens": 662
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10136,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1376,
+     "cache_read_input_tokens": 24221,
+     "cache_creation_input_tokens": 501,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 501
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2020,
+    "cacheReadInputTokens": 78651,
+    "cacheCreationInputTokens": 10136,
+    "webSearchRequests": 0,
+    "costUSD": 0.13725020000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 662,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "All amounts in the code today are integer cents, and every module assumes they're in one implied currency with two decimals. The design is to make the currency explicit everywhere and to refuse to mix currencies silently.\n\n**Changes by file**\n- **`shop/money.py`**: Add a `Money(minor, currency)` value type and a table of how many decimals each currency has (JPY 0, USD 2, KWD 3). `to_cents`, `fmt` and `percent` should take the currency. Adding two amounts in different currencies should raise an error.\n- **`shop/models.py`**: Store `Item.price` as `Money` instead of `price_cents`. Give `Cart` a `currency`, and have `add()` reject items priced in a different currency.\n- **`shop/pricing.py`**: `TAX_RATE` and the bulk discount constants are global. Look them up per currency or region instead.\n- **`shop/orders.py`**: `Order` and its line tuples need to record the currency.\n- **`shop/storage.py`**: Add `\"currency\"` to each saved row. Old rows have none, so treat them as USD when loading.\n- **`shop/reports.py`**: `sales_by_customer` adds up every total. Either group by (customer, currency) or convert to one reporting currency using a dated FX rate.\n- **`shop/cache.py`**: Key the cache by `(sku, currency)` instead of `sku`.\n- **`shop/cli.py`**: Add `--currency` to `quote`, and parse prices using that currency's decimals.\n- **`shop/carriers/*`** (20 files): Rates are in cents with no currency stated. Record each carrier's currency once in the registry and convert where the rate is used, rather than editing all 20 files.\n- **Tests**: Add cases for JPY and a 3-decimal currency, a mixed-currency cart, and loading an old JSON file.\n\n**Main risks**\n1. **Silent mixing**: reports, cart totals and carrier fees could add different currencies together and produce wrong numbers with no error.\n2. **Two decimals hard-coded**: `to_cents` and `fmt` would break or be off by 10\u2013100\u00d7 for other currencies.\n3. **Rounding**: `percent` uses floats and its round-half-up is wrong for negative amounts. Switch to `Decimal`.\n4. **Old data**: existing saved orders have no currency field.\n5. **FX policy**: which rate source, as of what time, and where conversion happens all need deciding up front.",
+  "ttft_ms": 1350,
+  "type": "result",
+  "duration_ms": 22616,
+  "uuid": "33ba84fd-83dc-4243-92f3-2aeb97ce509d",
+  "ttft_stream_ms": 841,
+  "time_to_request_ms": 186,
+  "first_content_frame_ms": 841,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.2"
+}

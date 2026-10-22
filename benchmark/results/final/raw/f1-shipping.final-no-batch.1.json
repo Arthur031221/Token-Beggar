@@ -1,0 +1,118 @@
+{
+ "task": "f1-shipping",
+ "class": "multi_file",
+ "arm": "final-no-batch",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 50479,
+  "stop_reason": "end_turn",
+  "session_id": "629185a1-c345-4167-a389-982170da3f41",
+  "total_cost_usd": 0.325322,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 1111,
+   "cache_read_input_tokens": 21852,
+   "output_tokens": 550,
+   "output_tokens_details": {
+    "thinking_tokens": 68
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1111,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 550,
+     "cache_read_input_tokens": 21852,
+     "cache_creation_input_tokens": 1111,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1111
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 5457,
+    "cacheReadInputTokens": 135805,
+    "cacheCreationInputTokens": 31686,
+    "webSearchRequests": 0,
+    "costUSD": 0.325322,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 618,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjmksa6-d2c035de"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Orders now include shipping, and the full suite passes: 17 tests, 17 passing, including 11 new ones in `tests/test_shipping.py`. Nothing is committed.\n\n- **`shop/orders.py`:** `Order(cart, carrier=None, weight=0, zone='local')` looks up the carrier's rate in the registry in `shop/carriers`. With no carrier, `shipping_cents` is 0. `total_cents` is the existing cart total plus shipping, so shipping is added after the discount and tax and is neither discounted nor taxed.\n- **`shop/storage.py`:** `save_order` saves the amount as `'shipping'`. Older saved orders that lack it load with `'shipping'` set to 0.\n- **`shop/reports.py`:** no change was needed. The report only adds up each order's saved total, which now includes shipping, so shipping is counted once and older orders still work.\n- **Unknown carrier names** raise `KeyError`, because that's what the carrier registry already does.\n\n**Decision needed: weight units differ between carriers.** `maple` expects weight in grams and the other carriers expect kilograms. `weight` is currently passed through unchanged, so `Order(..., weight=2)` means 2 g for `maple` but 2 kg for the others. I'd fix this by having `Order` always take kilograms and converting for `maple`. Should I do that?\n\nTo run the tests: `python3 -m unittest discover -s tests -t .`",
+  "ttft_ms": 1552,
+  "type": "result",
+  "duration_ms": 6308,
+  "uuid": "240d9cf0-dce2-4b71-bf87-de6a5942b37b",
+  "ttft_stream_ms": 899,
+  "time_to_request_ms": 116,
+  "first_content_frame_ms": 899,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/orders.py  | 10 ++++++++--\n shop/storage.py |  8 ++++++--\n 2 files changed, 14 insertions(+), 4 deletions(-)\n",
+ "workdir": "f1-shipping.final-no-batch.1",
+ "ledger": []
+}

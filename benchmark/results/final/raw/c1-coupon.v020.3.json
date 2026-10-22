@@ -1,0 +1,127 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "v020",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 42400,
+  "stop_reason": "end_turn",
+  "session_id": "9404c0c0-60ff-42b4-ae67-81c9223810d8",
+  "total_cost_usd": 0.1919634,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 10175,
+   "cache_read_input_tokens": 75730,
+   "output_tokens": 2153,
+   "output_tokens_details": {
+    "thinking_tokens": 588
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10175,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 570,
+     "cache_read_input_tokens": 21893,
+     "cache_creation_input_tokens": 1072,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1072
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2153,
+    "cacheReadInputTokens": 75730,
+    "cacheCreationInputTokens": 10175,
+    "webSearchRequests": 0,
+    "costUSD": 0.13963799999999998,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 588,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2791,
+    "cacheReadInputTokens": 42954,
+    "cacheCreationInputTokens": 8040,
+    "webSearchRequests": 0,
+    "costUSD": 0.0523254,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 421,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `Cart.apply_coupon(code)`, and `calc_total` now includes coupons. All 12 tests pass, including the 6 new coupon tests in `tests/test_pricing.py`.\n\n**How it works**\n- **`shop/coupons.py`** (new) defines SAVE10 (10% off) and FLAT500 (500 cents off). An unknown code raises `ValueError`.\n- **`Cart.apply_coupon`** in `shop/models.py` checks the code and adds it to `cart.coupons`. Applying the same code a second time does nothing, so it can't be counted twice.\n- **`calc_total`** in `shop/pricing.py` computes each discount against the original pre-tax subtotal, so the order coupons are applied in doesn't matter. Both coupons together on a 10,000-cent subtotal take off 1,000 + 500. The subtotal can't go below zero, and tax is charged on the discounted amount. With no coupons, totals are the same as before.\n- **`calc_tax`** also changed to use the discounted amount, so the tax on an order matches the total.\n\n**Decision for you:** you didn't specify what happens when a cart has both taxed and untaxed items. I spread the discount across them in proportion to their share of the subtotal, so tax applies only to the taxed share of the discounted amount. The other option is to take the discount entirely off the taxed items first, which means less tax. Tell me if you want that instead.\n\nRunning the tests created `__pycache__/` folders, which git now lists as untracked files.\n\nToken Beggar: routed 1 subtask(s) to sonnet",
+  "ttft_ms": 5646,
+  "type": "result",
+  "duration_ms": 43246,
+  "uuid": "d0748053-13d5-411c-8fcf-82ecaceaa259",
+  "ttft_stream_ms": 1031,
+  "time_to_request_ms": 266,
+  "first_content_frame_ms": 1032,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py        |  8 ++++++++\n shop/pricing.py       | 23 ++++++++++++++++++-----\n tests/test_pricing.py | 38 ++++++++++++++++++++++++++++++++++++++\n 3 files changed, 64 insertions(+), 5 deletions(-)\n",
+ "workdir": "c1-coupon.v020.3",
+ "ledger": []
+}

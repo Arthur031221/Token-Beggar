@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "haiku-high",
+ "top": "claude-haiku-5-5",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 12527,
+  "stop_reason": "end_turn",
+  "session_id": "5afc20a6-533e-4d08-855d-0d308f946bb7",
+  "total_cost_usd": 0.00296071,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 7683,
+   "cache_read_input_tokens": 32221,
+   "output_tokens": 2203,
+   "output_tokens_details": {
+    "thinking_tokens": 1369
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7683,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1908,
+     "cache_read_input_tokens": 19431,
+     "cache_creation_input_tokens": 1042,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1042
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 2203,
+    "cacheReadInputTokens": 32221,
+    "cacheCreationInputTokens": 7683,
+    "webSearchRequests": 0,
+    "costUSD": 0.00296071,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1369,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the JSON file with SQLite (stdlib `sqlite3`, WAL mode). Don't tune the JSON approach.**\n\n**Why the current design fails at this scale**\n- `save_order` reads the whole file, filters it, and rewrites it. Every save is O(n), so at 100k orders each write reparses and reserializes everything.\n- Two writers lose data. Both load, each appends its own order, and the last `write_text` wins. One order silently disappears. This is a correctness bug, not just slowness.\n- `write_text` isn't atomic. A crash or a concurrent read mid-write leaves truncated JSON, and `load()` then raises.\n- A temp-file plus `os.replace` fixes the torn write only. It doesn't fix the lost update or the O(n) cost.\n\n**Why SQLite**\n- It is a single file with no server and no new dependency. An `id` primary key with upsert makes `save_order` O(1), and SQLite serializes the two writers. A busy timeout makes contention wait instead of fail.\n\n**Migration path**\n1. Keep the `Store` interface (`load`, `save_order`) so `cli.py` doesn't change.\n2. Write a one-time, idempotent importer from the JSON file into an `orders` table. Dry-run it on a copy first.\n3. Swap the implementation behind `Store`. Keep `load()` returning a list for now, then add targeted queries by id and state and move callers off full loads.\n4. Add tests. Run two processes writing concurrently and assert no lost ids. Add a crash test for partial writes. `tests/` has no storage coverage today.\n5. Cut over with writers stopped. Keep the JSON file as a backup for one release.\n\n**Revisit if** the writers run on different hosts. SQLite's locking is per machine, so use PostgreSQL then.",
+  "ttft_ms": 1843,
+  "type": "result",
+  "duration_ms": 12796,
+  "uuid": "15977fe9-2a9f-4746-a0f0-aba1f5e1763a",
+  "ttft_stream_ms": 1446,
+  "time_to_request_ms": 196,
+  "first_content_frame_ms": 1446,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.haiku-high"
+}

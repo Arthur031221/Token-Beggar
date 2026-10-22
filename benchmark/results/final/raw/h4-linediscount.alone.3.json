@@ -1,0 +1,111 @@
+{
+ "task": "h4-linediscount",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 35273,
+  "stop_reason": "end_turn",
+  "session_id": "c7c55fc1-3b5e-4793-a333-3ee40a8819d4",
+  "total_cost_usd": 0.20522200000000002,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 14173,
+   "cache_read_input_tokens": 102890,
+   "output_tokens": 3561,
+   "output_tokens_details": {
+    "thinking_tokens": 420
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14173,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 756,
+     "cache_read_input_tokens": 25699,
+     "cache_creation_input_tokens": 1264,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1264
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 3561,
+    "cacheReadInputTokens": 102890,
+    "cacheCreationInputTokens": 14173,
+    "webSearchRequests": 0,
+    "costUSD": 0.20522200000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 420,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Per-line discounts are in, and all 16 tests pass (3 test files, 13 of the tests are in `tests/test_pricing.py`, 10 of those new).\n\n**What changed:**\n- **`shop/models.py`**: `Line` has a new `discount_percent` field (default 0). `Cart.add(item, qty=1, discount_percent=0)` adds to an existing line only when both the sku and the discount match; otherwise it starts a new line.\n- **`shop/pricing.py`**: `line_subtotal` takes the line discount off first using `money.percent` (round half up), then applies the bulk rule to what's left.\n- **`shop/cli.py`**: `quote` accepts `sku:price:qty` or `sku:price:qty:discount`. The discount is read as a decimal number, so `12.5` works. Any other number of fields now gets a clear argparse error. Before, a malformed item crashed with a `ValueError`.\n\n**New tests** (in `tests/test_pricing.py`):\n- the default discount is 0\n- a 10% discount on 2 \u00d7 $10.00 gives a $18.00 subtotal and $19.49 total\n- half-up rounding: 10% off 5\u00a2 leaves 4\u00a2\n- discount before bulk: 10 \u00d7 $1.00 at 10% gives 900, then 855\n- lines merge when sku and discount match, and split when the discount differs\n- CLI quotes with and without a discount, a mix of both, and a malformed item\n\n**Two behaviours you might not expect:**\n- **Bulk applies per line.** Ten of one sku split across two discounts makes two lines, and neither line reaches the 10-unit bulk threshold. This follows from the merge rule you asked for, but say if bulk should count total quantity per sku instead.\n- **`Order.lines` doesn't record the discount.** It still stores only `(sku, qty, price_cents)`. The order's `total_cents` and `tax_cents` are correct because they're calculated from the cart, but the line list alone can't reproduce them. I left it alone because you didn't ask for it; adding the discount there is a small change.",
+  "ttft_ms": 3766,
+  "type": "result",
+  "duration_ms": 35686,
+  "uuid": "1e8f14ce-59f9-46af-8d98-396bac52c9e4",
+  "ttft_stream_ms": 2547,
+  "time_to_request_ms": 87,
+  "first_content_frame_ms": 2547,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 10 +++++---\n shop/models.py        |  7 +++---\n shop/pricing.py       |  2 ++\n tests/test_pricing.py | 66 +++++++++++++++++++++++++++++++++++++++++++++++++--\n 4 files changed, 77 insertions(+), 8 deletions(-)\n",
+ "workdir": "h4-linediscount.alone.3",
+ "ledger": []
+}

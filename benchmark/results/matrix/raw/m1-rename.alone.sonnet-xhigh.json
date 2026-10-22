@@ -1,0 +1,110 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "alone",
+ "rep": "sonnet-xhigh",
+ "top": "claude-sonnet-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 9437,
+  "stop_reason": "end_turn",
+  "session_id": "64cf92a5-44cd-408c-8b8f-1c365d8bb044",
+  "total_cost_usd": 0.045110000000000004,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 7707,
+   "cache_read_input_tokens": 71360,
+   "output_tokens": 713,
+   "output_tokens_details": {
+    "thinking_tokens": 75
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7707,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 171,
+     "cache_read_input_tokens": 20336,
+     "cache_creation_input_tokens": 161,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 161
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 713,
+    "cacheReadInputTokens": 71360,
+    "cacheCreationInputTokens": 7707,
+    "webSearchRequests": 0,
+    "costUSD": 0.045110000000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 75,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I renamed `calc_total` to `order_total` in all 5 files that used it, and the 6 tests pass. A repo-wide grep finds no `calc_total` left.\n\n- **Definition:** `shop/pricing.py`\n- **Callers:** `shop/orders.py` and `shop/cli.py`\n- **Tests:** `tests/test_pricing.py` and `tests/test_orders.py`\n\nI ran the tests with `python3 -m unittest discover -s tests -t .`. I haven't committed anything.",
+  "ttft_ms": 2131,
+  "type": "result",
+  "duration_ms": 9797,
+  "uuid": "a5383ee0-ea26-4568-91bc-f2359f0fca42",
+  "ttft_stream_ms": 1062,
+  "time_to_request_ms": 78,
+  "first_content_frame_ms": 1062,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.alone.sonnet-xhigh"
+}

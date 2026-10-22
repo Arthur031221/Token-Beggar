@@ -1,0 +1,111 @@
+{
+ "task": "h7-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 24641,
+  "stop_reason": "end_turn",
+  "session_id": "f7fd931e-d4c0-4910-82be-357ab99404fd",
+  "total_cost_usd": 0.145326,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 10607,
+   "cache_read_input_tokens": 95150,
+   "output_tokens": 2070,
+   "output_tokens_details": {
+    "thinking_tokens": 309
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10607,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1145,
+     "cache_read_input_tokens": 22882,
+     "cache_creation_input_tokens": 515,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 515
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2070,
+    "cacheReadInputTokens": 95150,
+    "cacheCreationInputTokens": 10607,
+    "webSearchRequests": 0,
+    "costUSD": 0.145326,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 309,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces three bugs, one in each file it touches.\n\n### 1. `shop/storage.py` \u2013 `save_order` now writes duplicate rows\n```diff\n-        rows = [r for r in self.load() if r[\"id\"] != order.id]\n+        rows = self.load()\n```\n`save_order` used to work as an upsert: it dropped any existing row with the same `id`, then added the current one. Now it only ever adds. An order is saved more than once over its life (`new` \u2192 `paid` \u2192 `shipped`), so each save leaves another row with the same `id` in the JSON file. The old rows are never removed.\n\nExample: save order 1000 as `paid`, then again as `shipped`. The file now holds two rows for order 1000. `sales_by_customer` adds up both, so that customer's sales are counted twice. A later `cancelled` save would add a third row, and the earlier `paid`/`shipped` rows would still be counted. Anything that reads the file can't tell which row for an `id` is current.\n\n### 2. `shop/money.py` \u2013 `percent` truncates instead of rounding half up\n```diff\n-    return int(cents * rate_percent / 100 + 0.5)\n+    return int(cents * rate_percent / 100)\n```\nThe docstring still says \"Round half up, in cents\", but the code now rounds down. `percent` feeds both tax and the bulk discount in `shop/pricing.py`, so both change:\n- **Tax is too low:** `percent(1000, 8.25)` = 82.5 \u2192 now **82** (was 83). `calc_tax` and `calc_total` both come out 1\u00a2 short whenever the fraction is \u2265 .5.\n- **Bulk discount is too small:** for 10 \u00d7 199\u00a2, `percent(1990, 5.0)` = 99.5 \u2192 now **99** (was 100), so the customer pays 1\u00a2 more.\n- Plain `int()` on a float is also exposed to binary representation error: a result that should be exactly N can come out as N\u22120.0000001 and drop to N\u22121. The old +0.5 masked this.\n\nThe existing tests don't catch it: they only use amounts where the result is already a whole number or the fraction is below .5 (2000 \u00d7 8.25% = 165.0; 950 \u00d7 8.25% = 78.375). The suite passes either way.\n\n### 3. `shop/reports.py` \u2013 sales report now counts unpaid orders\n```diff\n-        if row[\"state\"] in (\"paid\", \"shipped\"):\n+        if row[\"state\"] != \"cancelled\":\n```\n`shop/orders.py` defines the states as `(\"new\", \"paid\", \"shipped\", \"cancelled\")`. The old filter counted only money actually taken (`paid`, `shipped`). The new one also counts `new` orders, which have been placed but never paid, so the report's sales totals are too high.\n\nIt also fails open: any state added later, or any unexpected or misspelled value in the file, gets counted as revenue. The old allow-list would have left it out.\n\nCombined with bug 1, this gets worse. One order saved as `new` and then as `paid` is now counted twice: once for the stale `new` row and once for the `paid` row.\n\nThe diff hunks have no line numbers (`@@ def ...`), so `git apply` can't apply it as written. That only affects applying the patch, not the code. I didn't edit any files.",
+  "ttft_ms": 2886,
+  "type": "result",
+  "duration_ms": 24962,
+  "uuid": "43f62a14-6c6a-44b0-8348-6d14f393fe89",
+  "ttft_stream_ms": 1790,
+  "time_to_request_ms": 101,
+  "first_content_frame_ms": 1790,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h7-diff.alone.3",
+ "ledger": []
+}

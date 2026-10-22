@@ -1,0 +1,111 @@
+{
+ "task": "a3-second",
+ "class": "second-opinion",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14353,
+  "stop_reason": "end_turn",
+  "session_id": "25deaf10-77b7-4bf0-ab94-9fa2d61fe9fa",
+  "total_cost_usd": 0.0791334,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6026,
+   "cache_read_input_tokens": 34747,
+   "output_tokens": 1198,
+   "output_tokens_details": {
+    "thinking_tokens": 433
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6026,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1053,
+     "cache_read_input_tokens": 20162,
+     "cache_creation_input_tokens": 449,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 449
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1198,
+    "cacheReadInputTokens": 34747,
+    "cacheCreationInputTokens": 6026,
+    "webSearchRequests": 0,
+    "costUSD": 0.0791334,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 433,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I'd change this before using it from many threads in a long-running service. Concurrent access won't corrupt the dict, since single dict operations are thread-safe in CPython, but these problems remain:\n\n**Problems**\n\n1. **Memory grows without limit** (`shop/cache.py:11`). Expired entries are only overwritten, never removed. Every SKU ever requested stays in memory for the life of the process.\n2. **Stampede on a miss or expiry** (`:17`). When an entry is missing or expires, every thread that asks for that SKU calls `loader` at the same moment. A popular SKU expiring every 60 seconds means N loads at once against the backend.\n3. **A lost invalidation can bring back a stale price** (`:17-18` vs `:22`). Thread A starts a slow load. The price changes and thread B calls `invalidate`. Thread A then writes the old value back, and it is served as fresh for a full TTL. For prices, this is the bug that matters most.\n4. **The timestamp is taken after the load finishes** (`:18`). A slow load makes the entry look newer than the data, so it can be served for up to TTL plus the load time.\n5. **Loader failures aren't cached.** If the backend is down, every call hits it again, which makes problem 2 worse during an outage.\n\n**Fix I'd choose**\n\n- One lock around the dict, and per-key single-flight: the first thread to miss stores an in-flight future, and later callers wait on it. That fixes 2.\n- A per-key generation counter that `invalidate` increments. The loading thread writes its result only if the generation hasn't changed since it started. That fixes 3.\n- Read the clock before calling `loader`. That fixes 4.\n- Bound the size with LRU eviction plus a TTL check, such as an `OrderedDict` under the lock or `cachetools.TTLCache(maxsize, ttl)`. That fixes 1.\n- Optionally, cache failures for a few seconds. That fixes 5.\n\nNever call `loader` while holding the lock.",
+  "ttft_ms": 1727,
+  "type": "result",
+  "duration_ms": 14753,
+  "uuid": "160b343c-5885-4459-beb1-c9a4b51acf34",
+  "ttft_stream_ms": 1314,
+  "time_to_request_ms": 163,
+  "first_content_frame_ms": 1314,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "a3-second.dynamic.3",
+ "ledger": []
+}

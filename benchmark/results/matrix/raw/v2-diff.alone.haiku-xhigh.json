@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": "haiku-xhigh",
+ "top": "claude-haiku-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 70748,
+  "stop_reason": "end_turn",
+  "session_id": "f8dc88f3-1520-4a4d-a1c5-8d51e5ac6f88",
+  "total_cost_usd": 0.012774820000000001,
+  "usage": {
+   "input_tokens": 16,
+   "cache_creation_input_tokens": 20051,
+   "cache_read_input_tokens": 184902,
+   "output_tokens": 13828,
+   "output_tokens_details": {
+    "thinking_tokens": 9548
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 20051,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 5926,
+     "cache_read_input_tokens": 31620,
+     "cache_creation_input_tokens": 1221,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1221
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 13828,
+    "cacheReadInputTokens": 184902,
+    "cacheCreationInputTokens": 20051,
+    "webSearchRequests": 0,
+    "costUSD": 0.012774820000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 9548,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 10,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I reviewed `change.diff` against the repo and did not edit anything in it. The diff has two hunks in `shop/orders.py`. It can't be applied as written: `git apply --check` reports \"No valid patches in input\", and the `@@ class Order:` headers have no line ranges. I applied it by hand to scratch copies in `/tmp/review-scratch-orders` and `/tmp/review-scratch-variant` and ran the suite there.\n\nBugs it introduces, most severe first:\n\n1. **Every `Order()` raises `NameError`.** The diff reads and appends to `_ids_seen`, but nothing defines it, and the diff doesn't add `_ids_seen = []`. On the literal diff, `python3 -m unittest discover -s tests -t .` goes from OK (6 tests) to 2 errors, both from `make()` in `tests/test_orders.py`. This blocks the change.\n\n2. **The ID sequence changes from 1000-based to 0-based.** The original `next(_ids)` starts at 1000. `len(_ids_seen)` starts at 0; with the missing definition filled in, the first ids were `[0, 1, 2]`. Ids already persisted by `Store` are 1000+, so the format is a breaking change. No test checks the value, so the suite doesn't catch it.\n\n3. **An unknown current state now fails open.** `ALLOWED.get(self.state, STATES)` lets a state missing from `ALLOWED` move to any of the four known states. The original raised `KeyError`. In the variant, `move(\"shipped\")` from `\"refunded\"` succeeded. The repo only sets `state` in `__init__` and `move()`, so this needs a direct assignment to trigger, which is why the tests miss it. Keeping `ALLOWED[self.state]`, or raising explicitly on unknown states, avoids it.\n\n4. **ID generation is not thread-safe.** `len()` followed by `append()` is two steps, so two threads can read the same length and get the same id. `next()` on `itertools.count` was a single call. I could not reproduce this: 8 threads \u00d7 2000 constructions \u00d7 5 trials gave no duplicates, so this comes from reading the code. The impact would be real, because `Store.save_order` replaces any row with a matching id, which silently overwrites another order.\n\n5. **`_ids_seen` grows without bound.** It keeps every id for the life of the process. The counter it replaces used O(1) memory. This is minor but a regression for a long-running service.\n\n6. **Leftover dead code.** `_ids = itertools.count(1000)` stays and is now unused, and `import itertools` remains only for it.\n\nPre-existing, not introduced by the diff: the id counter restarts each process in both versions, and `Store.save_order` upserts by id, so orders from different runs can overwrite each other. The diff doesn't fix this.",
+  "ttft_ms": 1815,
+  "type": "result",
+  "duration_ms": 71724,
+  "uuid": "313124fc-7550-4c16-b730-8cd6f9eb0465",
+  "ttft_stream_ms": 1571,
+  "time_to_request_ms": 186,
+  "first_content_frame_ms": 1572,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.alone.haiku-xhigh"
+}

@@ -1,0 +1,117 @@
+{
+ "task": "d1-cents",
+ "class": "debugging",
+ "arm": "dynamic",
+ "rep": "haiku-low",
+ "top": "claude-haiku-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 25423,
+  "stop_reason": "end_turn",
+  "session_id": "b69c3ebe-c910-4c05-a6f8-ece1fda5e783",
+  "total_cost_usd": 0.005953455,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 777,
+   "cache_read_input_tokens": 24815,
+   "output_tokens": 482,
+   "output_tokens_details": {
+    "thinking_tokens": 111
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 777,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 482,
+     "cache_read_input_tokens": 24815,
+     "cache_creation_input_tokens": 777,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 777
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 3335,
+    "cacheReadInputTokens": 143013,
+    "cacheCreationInputTokens": 15151,
+    "webSearchRequests": 0,
+    "costUSD": 0.005953455,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 947,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjiceci-569d8e9d"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`python3 -m shop quote a:12.5:2` should now print 27.06, and the test suite passes.\n\n**Root cause:** `to_cents` in `shop/money.py` padded the fractional part on the wrong side. It used `frac.rjust(2, \"0\")`, so `\"5\"` became `\"05\"` and `12.5` was read as 12.05 (1205 cents) instead of 12.50 (1250 cents). The quote then came out as 26.09 instead of 27.06.\n\n**Fix:** Changed `rjust` to `ljust` on that line, so `\"5\"` becomes `\"50\"`. Nothing else changed.\n\n**Checks:**\n- `python3 -c \"from shop.cli import main; main(['quote','a:12.5:2'])\"` prints `27.06`.\n- `python3 -m unittest discover -s tests -t .` ran 6 tests, all OK.\n\nThe `python3 -m shop` form was not tried, since the repo has no `__main__.py`, as you said. The existing tests don't cover a single-digit fraction like `12.5`, so a regression test for that case would be a sensible addition. I did not add one.",
+  "ttft_ms": 2196,
+  "type": "result",
+  "duration_ms": 3838,
+  "uuid": "bf3fd95d-f6e9-4d57-95d0-e13d545e8ac1",
+  "ttft_stream_ms": 1576,
+  "time_to_request_ms": 121,
+  "first_content_frame_ms": 1577,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n",
+ "workdir": "d1-cents.dynamic.haiku-low"
+}

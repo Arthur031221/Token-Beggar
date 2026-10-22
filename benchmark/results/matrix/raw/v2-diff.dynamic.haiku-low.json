@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "haiku-low",
+ "top": "claude-haiku-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 11748,
+  "stop_reason": "end_turn",
+  "session_id": "4a7e85a1-b6b4-4419-87a0-d9c7faf5581f",
+  "total_cost_usd": 0.00357264,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 9886,
+   "cache_read_input_tokens": 75814,
+   "output_tokens": 1673,
+   "output_tokens_details": {
+    "thinking_tokens": 602
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9886,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 637,
+     "cache_read_input_tokens": 21724,
+     "cache_creation_input_tokens": 952,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 952
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1673,
+    "cacheReadInputTokens": 75814,
+    "cacheCreationInputTokens": 9886,
+    "webSearchRequests": 0,
+    "costUSD": 0.00357264,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 602,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read `change.diff` against `shop/orders.py` and grepped the tests and storage code for usages. I did not edit anything.\n\nBugs the diff introduces:\n\n1. **`NameError` on every `Order()` construction (`shop/orders.py`, the `__init__` hunk).** The diff calls `_ids_seen.append(...)`, but `_ids_seen` is never defined in the file or anywhere else in the repo. Any `Order(cart)` raises `NameError` before the object is built, so order creation is broken entirely. The diff also leaves `_ids = itertools.count(1000)` in place, now unused.\n\n2. **Order IDs no longer start at 1000 and no longer come from the counter.** Even if `_ids_seen` were defined, `len(_ids_seen)` yields 0, 1, 2, \u2026 instead of 1000, 1001, \u2026. This changes the ID contract. `shop/storage.py:17` uses `order.id` as the row key, so existing stored IDs (\u22651000) can collide with new ones starting at 0. The list also grows without bound and is a module-level global, which is a memory leak.\n\n3. **`move()` silently accepts any target state when `self.state` is unrecognised (the `move` hunk).** The old code raised `KeyError` for an unknown current state. `ALLOWED.get(self.state, STATES)` instead permits a transition to any of the four states, including leaving a terminal state. A corrupted or hand-set `state` (for example, loaded from storage with a typo) now gets through validation without any error. This is a silent validation bypass, not a fix for the `KeyError`. The safer change would be to keep the failure, or to default to an empty set.\n\nNot covered by the tests: `tests/test_orders.py` exercises `move()` through valid transitions only, and nothing in the repo asserts on the specific ID values. The `NameError` in bug 1 would surface immediately on any test that constructs an `Order`.",
+  "ttft_ms": 2104,
+  "type": "result",
+  "duration_ms": 12628,
+  "uuid": "31f2edb4-1ad6-45fb-8e5d-78cd5e6e1e22",
+  "ttft_stream_ms": 1602,
+  "time_to_request_ms": 185,
+  "first_content_frame_ms": 1603,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.haiku-low"
+}

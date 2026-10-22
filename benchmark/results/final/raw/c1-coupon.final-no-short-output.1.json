@@ -1,0 +1,127 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "final-no-short-output",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 44357,
+  "stop_reason": "end_turn",
+  "session_id": "688d284b-0925-423d-8075-debffc12955c",
+  "total_cost_usd": 0.1778918,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 9695,
+   "cache_read_input_tokens": 33186,
+   "output_tokens": 1617,
+   "output_tokens_details": {
+    "thinking_tokens": 126
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9695,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 745,
+     "cache_read_input_tokens": 20396,
+     "cache_creation_input_tokens": 2089,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2089
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1617,
+    "cacheReadInputTokens": 33186,
+    "cacheCreationInputTokens": 9695,
+    "webSearchRequests": 0,
+    "costUSD": 0.11655320000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 126,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3654,
+    "cacheReadInputTokens": 30026,
+    "cacheCreationInputTokens": 8712,
+    "webSearchRequests": 0,
+    "costUSD": 0.0613386,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 317,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've added `Cart.apply_coupon(code)` and the new `shop/coupons.py` module, and `calc_total` now takes coupons into account. The full suite passes: `python3 -m unittest discover -s tests -t .` ran 15 tests, all OK. A sub-agent did the implementation and ran the tests; I haven't read through its changes myself. Nothing is committed.\n\n**What changed**\n- **`shop/coupons.py`** (new): defines SAVE10 and FLAT500. An unknown code raises `ValueError`.\n- **`shop/models.py`**: `Cart` keeps a list of applied coupons. `apply_coupon` checks the code before adding it, so a bad code leaves the cart as it was.\n- **`shop/pricing.py`**: `calc_total` and `calc_tax` both work from the discounted subtotal. `calc_tax` had to change too, because orders store their tax from it, and otherwise the stored tax wouldn't match the total.\n- **`tests/test_pricing.py`**: tests for each coupon alone, both stacked in each order, tax on the discounted subtotal, mixed taxable and non-taxable carts, an unknown code, and a cart with no coupons.\n\n**Choices you didn't specify**\n- **Stacking order:** coupons apply one after another in the order they were added, so the order changes the result. On a 10000-cent cart, SAVE10 then FLAT500 gives 8500, and FLAT500 then SAVE10 gives 8550. If you'd rather every percentage coupon apply to the original subtotal, that's a small change.\n- **Rounding:** the 10 percent discount is rounded half up in whole cents, the same way the existing percentage helper does it. The subtotal can't go below 0.\n- **Mixed carts:** when a cart has both taxable and non-taxable items, the discount is shared between them in proportion to their subtotals, which lowers the taxable amount.\n- **Bulk discount:** the existing per-line bulk discount still applies first, and coupons apply to the total after it.\n\nRunning the tests left untracked `__pycache__/` folders in `shop/` and `tests/`.",
+  "ttft_ms": 2313,
+  "type": "result",
+  "duration_ms": 45757,
+  "uuid": "6207a14f-44f1-4d58-bd54-271445304f59",
+  "ttft_stream_ms": 1048,
+  "time_to_request_ms": 200,
+  "first_content_frame_ms": 1048,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py        |  8 +++++++\n shop/pricing.py       | 23 +++++++++++++++----\n tests/test_pricing.py | 63 +++++++++++++++++++++++++++++++++++++++++++++++++++\n 3 files changed, 89 insertions(+), 5 deletions(-)\n",
+ "workdir": "c1-coupon.final-no-short-output.1",
+ "ledger": []
+}

@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14760,
+  "stop_reason": "end_turn",
+  "session_id": "b1ecf638-14ff-44be-874c-92bc657ee097",
+  "total_cost_usd": 0.07811420000000001,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5850,
+   "cache_read_input_tokens": 34591,
+   "output_tokens": 1219,
+   "output_tokens_details": {
+    "thinking_tokens": 444
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5850,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1092,
+     "cache_read_input_tokens": 20005,
+     "cache_creation_input_tokens": 431,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 431
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1219,
+    "cacheReadInputTokens": 34591,
+    "cacheCreationInputTokens": 5850,
+    "webSearchRequests": 0,
+    "costUSD": 0.07811420000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 444,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found five problems in `shop/cache.py`. Python's GIL keeps each dict operation atomic, but the cache's check-then-load-then-store sequence isn't.\n\n1. **Cache stampede (lines 14\u201318).** When a hot SKU expires, every thread that misses at that moment calls `loader` for the same SKU and hits the backend at once.\n   *Fix:* single-flight per key. The first thread to miss records an in-flight entry (an `Event` or `Future`) under a short `threading.Lock`, runs the loader outside the lock, and publishes the result. Other threads wait on that entry instead of loading.\n\n2. **`invalidate` can be undone (lines 17\u201318, 22).** Thread A starts a slow load. Thread B changes the price and calls `invalidate`. Thread A then writes the old price back, and it is served for a full `ttl`.\n   *Fix:* a generation counter per key. `invalidate` increments it, and a load only stores its result if the generation hasn't changed since the load started. This sits inside the single-flight mechanism.\n\n3. **Memory grows without limit.** Expired entries are never removed, so in a long-running service `_data` keeps every SKU ever requested.\n   *Fix:* bound the cache with an LRU (an `OrderedDict` plus `maxsize`) and evict expired entries when they're touched.\n\n4. **The timestamp is taken after the load (line 18).** A slow load gets a fresh timestamp, so the data can be served for longer than `ttl`.\n   *Fix:* read `clock()` before calling the loader.\n\n5. **Failures aren't throttled.** If the loader raises, nothing is cached, so every request retries a backend that's already failing. With single-flight, all the waiting threads should also receive that same exception.\n   *Fix:* hand the exception to the waiting threads and cache the failure briefly.\n\nHold the lock only for dict changes, never while the loader runs. Without that lock the code also isn't safe on free-threaded Python (3.13t and later).",
+  "ttft_ms": 1776,
+  "type": "result",
+  "duration_ms": 15151,
+  "uuid": "ee051c9e-b117-43fa-892d-0a24c2cd209e",
+  "ttft_stream_ms": 1609,
+  "time_to_request_ms": 194,
+  "first_content_frame_ms": 1609,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.3"
+}

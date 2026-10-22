@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "haiku-xhigh",
+ "top": "claude-haiku-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 73554,
+  "stop_reason": "end_turn",
+  "session_id": "ba36b275-86c1-4bfa-9ad1-7260dc2dbe23",
+  "total_cost_usd": 0.012985640000000001,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 23783,
+   "cache_read_input_tokens": 169514,
+   "output_tokens": 13065,
+   "output_tokens_details": {
+    "thinking_tokens": 9184
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23783,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 2379,
+     "cache_read_input_tokens": 33899,
+     "cache_creation_input_tokens": 2674,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2674
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 13065,
+    "cacheReadInputTokens": 169514,
+    "cacheCreationInputTokens": 23783,
+    "webSearchRequests": 0,
+    "costUSD": 0.012985640000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 9184,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 11,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The change crashes every `Order` construction, so it should not be merged. Nothing in the repo was edited, and the working tree is still clean.\n\n**Bugs, most severe first**\n\n1. **`_ids_seen` is never defined (NameError on every `Order(...)`).** The diff adds `self.id = len(_ids_seen)` and `_ids_seen.append(self.id)` at `shop/orders.py:12-13`, but nothing defines `_ids_seen = []`, and the diff does not add it. Any call to `Order(cart)` raises `NameError`. I checked this on a scratch copy with the diff applied by hand. Baseline runs 6/6 green. Patched, `test_total_matches_cart` and `test_state_flow` error out, since both call `make()`.\n\n2. **The transition check now fails open.** `ALLOWED[self.state]` became `ALLOWED.get(self.state, STATES)` at `shop/orders.py:20`. For an unknown current state, the fallback allows a move to any valid state. I confirmed that `bogus -> paid` and `bogus -> new` both succeed. The original raised `KeyError`. The fallback is also the wrong type: `STATES` is the set of all states, not a set of allowed next states. The safe default is an empty set, so unknown states reject every move. `move()` cannot produce an unknown state itself, so this is reachable only through direct assignment or a future loader. It is still the wrong default.\n\n3. **Duplicate ids under concurrency.** `len(_ids_seen)` and `append` are two separate steps, so two threads can both read the same length and assign the same id. The original `next(itertools.count)` was a single step. This is from reading the code, not reproduced. The impact is real: `shop/storage.py:17` filters rows by `id` before saving, so a duplicate id can overwrite another order's record.\n\n4. **Silent change to the id range.** Ids used to start at 1000 and now start at 0 (`0, 1` in my probe, versus `1000` at baseline). Nothing in the diff mentions this, and no test pins the ids, so nothing catches it. Anything that expects 1000+ ids changes behaviour.\n\n5. **Unbounded memory growth.** `_ids_seen` keeps every id for the life of the process. The counter it replaces used constant memory.\n\n6. **Dead code left behind.** `_ids = itertools.count(1000)` and the `itertools` import are now unused.\n\n**Not a code bug, but relevant:** `change.diff` is not a valid patch. `git apply --check` reports \"No valid patches in input\". The hunk headers are function labels with no `-a,b +c,d` ranges. It is also committed at HEAD, in the seed commit. I applied it by hand to a scratch copy, which I have since deleted.\n\n**Suggested fix:** drop hunk 1 entirely, since `next(_ids)` was correct. If the id change is wanted, it needs its own review. Drop hunk 2 too, or change its fallback to an empty set.",
+  "ttft_ms": 4147,
+  "type": "result",
+  "duration_ms": 74990,
+  "uuid": "40aa85ac-aef4-4333-b428-f07e889ab1ab",
+  "ttft_stream_ms": 3145,
+  "time_to_request_ms": 201,
+  "first_content_frame_ms": 3147,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.haiku-xhigh"
+}

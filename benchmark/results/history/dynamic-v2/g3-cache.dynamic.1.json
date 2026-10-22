@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14825,
+  "stop_reason": "end_turn",
+  "session_id": "d2cd8935-846e-4a0c-ad94-69f4ae0c61fc",
+  "total_cost_usd": 0.0796962,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5797,
+   "cache_read_input_tokens": 34521,
+   "output_tokens": 1320,
+   "output_tokens_details": {
+    "thinking_tokens": 579
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5797,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1176,
+     "cache_read_input_tokens": 19935,
+     "cache_creation_input_tokens": 448,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 448
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1320,
+    "cacheReadInputTokens": 34521,
+    "cacheCreationInputTokens": 5797,
+    "webSearchRequests": 0,
+    "costUSD": 0.0796962,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 579,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I reviewed `shop/cache.py` by reading it; I didn't run anything.\n\n**Problems**\n\n1. **Memory grows without limit** (`cache.py:18`). Entries are never removed, even after they expire. In a long-running service every SKU ever looked up stays in memory.\n2. **Many threads reload the same key at once** (`cache.py:14-18`). When an entry is missing or expired, every thread that asks for it at that moment calls `loader` itself. A popular SKU expiring can send dozens of identical requests to the backend together. If the backend is failing, every caller hits it again.\n3. **A load can undo an invalidation** (`cache.py:17-22`). Thread A starts loading the old price. Thread B calls `invalidate` after a price change. A then writes the old price back, and it is served for a full `ttl`.\n4. **Entries live longer than `ttl`** (`cache.py:18`). The timestamp is taken after `loader` returns, so a slow load stretches how long the value counts as fresh.\n5. **Check-then-act with no lock.** Single dict operations are safe, but the read, test and write in `get` are not one atomic step, so all of the above can interleave.\n\n**Fix I would choose**\n\n- Put one `threading.Lock` around a bounded `OrderedDict` used as an LRU cache with a `maxsize`. Evict the least recently used entry when it is full, and drop expired entries when they are read.\n- Allow only one load per key at a time. Under the lock, record a pending entry for the key, release the lock, then call `loader`. Other threads wait on that pending entry instead of loading too. Never hold the global lock while calling `loader`. If the load fails, pass the error to the waiting threads and remove the pending entry.\n- Keep a version number per key that `invalidate` increases. A finished load is stored only if the version hasn't changed since it started.\n- Take the timestamp before calling `loader`.",
+  "ttft_ms": 1198,
+  "type": "result",
+  "duration_ms": 15336,
+  "uuid": "8c00b4cc-c1d5-411d-a5f8-bb9b125f63a5",
+  "ttft_stream_ms": 937,
+  "time_to_request_ms": 266,
+  "first_content_frame_ms": 938,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.1"
+}

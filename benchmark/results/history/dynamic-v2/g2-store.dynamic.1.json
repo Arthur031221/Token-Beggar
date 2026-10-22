@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 12327,
+  "stop_reason": "end_turn",
+  "session_id": "184de5f9-3662-4356-b5a1-f952a6f6e5ae",
+  "total_cost_usd": 0.0766214,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6250,
+   "cache_read_input_tokens": 34527,
+   "output_tokens": 985,
+   "output_tokens_details": {
+    "thinking_tokens": 106
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6250,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 740,
+     "cache_read_input_tokens": 19942,
+     "cache_creation_input_tokens": 893,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 893
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 985,
+    "cacheReadInputTokens": 34527,
+    "cacheCreationInputTokens": 6250,
+    "webSearchRequests": 0,
+    "costUSD": 0.0766214,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 106,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move orders from the JSON file to SQLite (WAL mode). Keep the `Store` interface the same.**\n\n**Why the current design fails at this scale** (`shop/storage.py:16-21`):\n- **Lost updates.** `save_order` reads the whole file, changes it and writes it back. If two writer processes do this at the same time, the second write deletes the first one's order. Nothing locks the file.\n- **Torn files.** `write_text` overwrites the file in place. A crash or a concurrent read partway through leaves broken JSON, and every order is lost.\n- **Slow saves.** Each save parses and rewrites all 100k rows, so a single write costs O(n), and filtering by `id` is a linear scan.\n\n**Why SQLite:** it ships with Python, so there's no server to run. It gives atomic transactions and safe access from several processes (WAL mode allows one writer at a time while readers continue). An upsert on a primary key replaces the read-and-rewrite. 100k rows is small for it. A server database like Postgres would only be worth it if you later need many concurrent writers or more than one host.\n\n**Migration path:**\n1. **Schema:** an `orders` table with `id` as the primary key plus `customer`, `total`, `tax` and `state`. Store money as integer cents, as today. Set `journal_mode=WAL` and a `busy_timeout` so the two writers wait for each other instead of failing.\n2. **New backend:** a `SqliteStore` with the same `load()` and `save_order()`. The only caller is `shop/cli.py`, so switching is small. Run the existing tests against both backends.\n3. **One-time import:** load the JSON file, insert all rows in a single transaction, compare the row count and totals, and keep the JSON file as a backup.\n4. **Cutover:** stop both writers, run the import, point `cli.py` at `SqliteStore` and restart. Remove the JSON backend after one release.\n5. **Later:** add indexes for `reports.py` queries (for example on `state` and `customer`) instead of filtering in Python after `load()`.",
+  "ttft_ms": 2165,
+  "type": "result",
+  "duration_ms": 13125,
+  "uuid": "a42d6495-cbd8-4502-8b91-c85a400e01db",
+  "ttft_stream_ms": 1579,
+  "time_to_request_ms": 452,
+  "first_content_frame_ms": 1580,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.1"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": "haiku-max",
+ "top": "claude-haiku-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 208784,
+  "stop_reason": "end_turn",
+  "session_id": "e0b2ba79-0185-4869-80f5-244a8eaf3ebd",
+  "total_cost_usd": 0.03759159,
+  "usage": {
+   "input_tokens": 18,
+   "cache_creation_input_tokens": 58804,
+   "cache_read_input_tokens": 283149,
+   "output_tokens": 45995,
+   "output_tokens_details": {
+    "thinking_tokens": 40413
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 58804,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 4800,
+     "cache_read_input_tokens": 58870,
+     "cache_creation_input_tokens": 12724,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 12724
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 45995,
+    "cacheReadInputTokens": 283149,
+    "cacheCreationInputTokens": 58804,
+    "webSearchRequests": 0,
+    "costUSD": 0.03759159,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 40413,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 22,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Verdict:** The change breaks `Order` construction outright. Both existing `Order` tests fail with `NameError`, and the patch file itself can't be applied. I reviewed the intended `-`/`+` edits to `shop/orders.py` and didn't edit the repo.\n\n**Bugs introduced**\n\n1. **`_ids_seen` is never defined, so every `Order(...)` raises `NameError`** (blocking). The added `self.id = len(_ids_seen)` (`change.diff:5`) runs first in `__init__`. Nothing in the repo defines `_ids_seen`, and the diff doesn't add it. With the edits applied, both `Order` tests error (`FAILED (errors=2)`); the untouched baseline passes 6/6. Only `tests/test_orders.py:12` constructs an `Order`, so the CLI is unaffected.\n\n2. **The patch can't be applied** (artifact). The hunk headers `@@ class Order:` and `@@ def move(...)` lack the `-start,count +start,count` ranges. `git apply --check` says \"No valid patches in input,\" and `patch --dry-run` says \"Only garbage was found.\" The removed lines do match HEAD, so the defect is the file's format.\n\n3. **`move()` fails open for unrecognized states** (medium). `ALLOWED.get(self.state, STATES)` (`change.diff:9`) lets an unknown current state move to any valid state. The original `ALLOWED[self.state]` raised `KeyError`. With `o.state = \"bogus\"`, `o.move(\"new\")` raised `KeyError: 'bogus'` on baseline and was accepted with the edits. Today `move()` only assigns validated targets, so this needs direct assignment or a future loader that rebuilds orders from storage. The default should deny (`set()`) or raise.\n\n4. **Order ids change from 1000-based to 0-based** (medium, unless intended). `itertools.count(1000)` gave 1000, 1001, 1002; `len(_ids_seen)` gives 0, 1, 2. The first id is now `0`, which is falsy, so an `if order.id` check in a caller would treat the first order as missing. Callers that assumed the 1000+ range see different values. The existing tests don't check id values, so nothing flags it.\n\n5. **Id uniqueness is no longer atomic** (low, latent). `next()` on `itertools.count` is one C call, atomic under the GIL. `len()` followed by `append()` is read-then-write, so two threads can read the same length and get the same id. `Store.save_order` (`shop/storage.py:16`) filters rows by id, so a duplicate would silently overwrite another order. An 8-thread, 16,000-order run produced no duplicates, and the repo has no threading code. I'm flagging the window, not a reproduced failure.\n\n6. **`_ids_seen` grows without bound** (low). It gets one entry per `Order` ever created and never shrinks. The counter it replaces used constant memory.\n\n**Not bugs, but relevant**\n\n- `_ids = itertools.count(1000)` (`shop/orders.py:5`) stays in place and becomes dead code.\n- Once the `NameError` is fixed (I checked by defining `_ids_seen = []`), all 6 tests pass, so items 3 and 4 would ship unnoticed. They need tests.\n- Pre-existing, not counted: each process restarts the id sequence, before and after, so ids can repeat across runs.\n\n**Suggested direction:** Drop the first hunk and keep `next(_ids)`, unless the id source is meant to change. The diff doesn't say why it would. For the second hunk, use `ALLOWED.get(self.state, set())` or raise on unknown states. Regenerate the patch with `git diff`.\n\nI ran the checks in scratch copies under `/tmp/review-base.*`, `/tmp/review-applied.*`, `/tmp/review-fixed.*`, and `/tmp/review-scripts.*`. The repo is unchanged, and `git status` is clean.",
+  "ttft_ms": 1649,
+  "type": "result",
+  "duration_ms": 209698,
+  "uuid": "9b910397-2e59-4821-bdf7-e43cc6a98856",
+  "ttft_stream_ms": 1436,
+  "time_to_request_ms": 63,
+  "first_content_frame_ms": 1436,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.alone.haiku-max"
+}

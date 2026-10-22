@@ -1,0 +1,126 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 54259,
+  "stop_reason": "end_turn",
+  "session_id": "cfef459d-88f8-406a-996f-0e7e0f098eef",
+  "total_cost_usd": 0.2001179,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 10981,
+   "cache_read_input_tokens": 80951,
+   "output_tokens": 2326,
+   "output_tokens_details": {
+    "thinking_tokens": 468
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10981,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 684,
+     "cache_read_input_tokens": 24482,
+     "cache_creation_input_tokens": 1085,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1085
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2326,
+    "cacheReadInputTokens": 80951,
+    "cacheCreationInputTokens": 10981,
+    "webSearchRequests": 0,
+    "costUSD": 0.15059019999999998,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 468,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2838,
+    "cacheReadInputTokens": 29042,
+    "cacheCreationInputTokens": 7291,
+    "webSearchRequests": 0,
+    "costUSD": 0.0495277,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 299,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and the full suite passes (14 tests, 0 failures, including the 7 new ones). I checked the diff, the test math and the rounding myself.\n\n- **Cart:** `Cart` has a new `tier` field that defaults to `\"standard\"`. It comes after `customer`, so existing calls still work (`shop/models.py`).\n- **Discount:** the rates live in one place, `TIER_DISCOUNTS = {\"gold\": 10.0, \"silver\": 5.0}`. Any other tier gets 0% (`shop/pricing.py:6`).\n- **Before tax:** `calc_total` and `calc_tax` both work from the discounted amount. The tier discount comes after the existing bulk discount, and nothing else in `shop/` computes from the subtotal.\n- **Order:** it already took its total and tax from `calc_total` and `calc_tax`, so the discount reaches it automatically. It now also stores `order.tier`.\n- **CLI:** `quote --tier gold a:10.00:2` prints `19.49`; without `--tier` it prints `21.65`.\n\n**Worked example:** a gold cart with two $10.00 items comes to $18.00 after the discount, plus $1.49 tax (8.25%), for $19.49. Silver comes to $20.57.\n\n**Rounding:** discounts round half up to the cent, the same way the code already rounds tax. If a cart mixes taxable and non-taxable items, the subtotal and the taxable amount are discounted and rounded separately. That can occasionally leave them a cent out of step, but every total I tested came out exact.\n\nNew tests are in `tests/test_pricing.py`, `tests/test_orders.py` and a new `tests/test_cli.py`. To run them: `python3 -m unittest discover -s tests -t .`. Nothing is committed yet.",
+  "ttft_ms": 3694,
+  "type": "result",
+  "duration_ms": 56392,
+  "uuid": "6ea4a56c-eb49-4a22-a066-a72438ea9f68",
+  "ttft_stream_ms": 1804,
+  "time_to_request_ms": 292,
+  "first_content_frame_ms": 1804,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 23 +++++++++++++++++------\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 21 +++++++++++++++++++++\n 6 files changed, 50 insertions(+), 7 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.2"
+}

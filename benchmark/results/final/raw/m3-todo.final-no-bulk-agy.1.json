@@ -1,0 +1,132 @@
+{
+ "task": "m3-todo",
+ "class": "mechanical",
+ "arm": "final-no-bulk-agy",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 22804,
+  "stop_reason": "end_turn",
+  "session_id": "a049b3f2-977a-40cf-8e92-cafb588019b0",
+  "total_cost_usd": 0.10858179999999999,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 991,
+   "cache_read_input_tokens": 21075,
+   "output_tokens": 193,
+   "output_tokens_details": {
+    "thinking_tokens": 35
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 991,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 193,
+     "cache_read_input_tokens": 21075,
+     "cache_creation_input_tokens": 991,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 991
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1100,
+    "cacheReadInputTokens": 53667,
+    "cacheCreationInputTokens": 9276,
+    "webSearchRequests": 0,
+    "costUSD": 0.10696539999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 153,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1411,
+    "cacheReadInputTokens": 37390,
+    "cacheCreationInputTokens": 4288,
+    "webSearchRequests": 0,
+    "costUSD": 0.0016164,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 125,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjmjm6s-0122f8e6"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I deleted 20 `# TODO(...)` lines under `shop/`. Each was the first line of a file in `shop/carriers/`, one per carrier from acme to tundra. Nothing else changed: the diff shows 20 deleted lines and no additions, and a search finds no TODOs left anywhere under `shop/`.\n\n**Tests:** all 6 passed, run with `python3 -m unittest discover -s tests -t .` as the README says.\n\nThe changes aren't committed.",
+  "ttft_ms": 1273,
+  "type": "result",
+  "duration_ms": 3223,
+  "uuid": "9d458c94-8501-4533-be2a-15ac72e18dc2",
+  "ttft_stream_ms": 812,
+  "time_to_request_ms": 116,
+  "first_content_frame_ms": 812,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/acme.py     | 1 -\n shop/carriers/borealis.py | 1 -\n shop/carriers/cedar.py    | 1 -\n shop/carriers/delta.py    | 1 -\n shop/carriers/ember.py    | 1 -\n shop/carriers/fjord.py    | 1 -\n shop/carriers/gale.py     | 1 -\n shop/carriers/harbor.py   | 1 -\n shop/carriers/iris.py     | 1 -\n shop/carriers/juniper.py  | 1 -\n shop/carriers/kestrel.py  | 1 -\n shop/carriers/lumen.py    | 1 -\n shop/carriers/maple.py    | 1 -\n shop/carriers/nimbus.py   | 1 -\n shop/carriers/onyx.py     | 1 -\n shop/carriers/prairie.py  | 1 -\n shop/carriers/quartz.py   | 1 -\n shop/carriers/ridge.py    | 1 -\n shop/carriers/summit.py   | 1 -\n shop/carriers/tundra.py   | 1 -\n 20 files changed, 20 deletions(-)\n",
+ "workdir": "m3-todo.final-no-bulk-agy.1",
+ "ledger": []
+}

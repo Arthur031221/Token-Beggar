@@ -1,0 +1,110 @@
+{
+ "task": "d1-cents",
+ "class": "debugging",
+ "arm": "alone",
+ "rep": "haiku-xhigh",
+ "top": "claude-haiku-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 42701,
+  "stop_reason": "end_turn",
+  "session_id": "196cbf68-8c9a-44bf-9ad8-4ed2a18d1fd6",
+  "total_cost_usd": 0.010551459999999999,
+  "usage": {
+   "input_tokens": 20,
+   "cache_creation_input_tokens": 20408,
+   "cache_read_input_tokens": 251186,
+   "output_tokens": 7912,
+   "output_tokens_details": {
+    "thinking_tokens": 3244
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 20408,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 625,
+     "cache_read_input_tokens": 32275,
+     "cache_creation_input_tokens": 923,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 923
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 20,
+    "outputTokens": 7912,
+    "cacheReadInputTokens": 251186,
+    "cacheCreationInputTokens": 20408,
+    "webSearchRequests": 0,
+    "costUSD": 0.010551459999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3244,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 15,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`python3 -c \"from shop.cli import main; main(['quote','a:12.5:2'])\"` now prints 27.06 (it printed 26.09 before). The full suite passes: 12 tests, including 6 new ones.\n\n**Root cause:** `to_cents` in `shop/money.py` padded the fractional digits on the wrong side. `frac.rjust(2, \"0\")` pads on the left, so `\"5\"` became `\"05\"` and `12.5` parsed as 1205 cents instead of 1250. The quote then computed 2 \u00d7 1205 = 2410, tax 199, total 2609, which prints as 26.09. Other inputs were affected too: `12.2` gave 1202 and `0.5` gave 5.\n\n**Fix:** one line in `shop/money.py`, `rjust` \u2192 `ljust`.\n\n**Tests:** No existing test covered `to_cents`, which is why the suite passed with the bug. I added:\n- `tests/test_money.py`: `to_cents` for one, two, and zero decimals, the too-many-decimals error, and an `fmt` round-trip.\n- `tests/test_cli.py`: an end-to-end check that `quote a:12.5:2` prints `27.06`.\n\nI ran the new tests against the original `money.py` and they fail with `'26.09' != '27.06'`, so they catch this bug.\n\n**Other notes:**\n- `python3 -m shop` doesn't work because the package has no `__main__.py`. I left that alone since you didn't ask for it.\n- Negative amounts are still wrong: `to_cents(\"-1.5\")` returns -50, not -150. This is the same helper but a separate defect, and the right fix depends on whether negative prices should be accepted at all. I didn't change it.\n- I haven't committed. The changes are in the working tree: `shop/money.py` modified, `tests/test_money.py` and `tests/test_cli.py` added.",
+  "ttft_ms": 1605,
+  "type": "result",
+  "duration_ms": 43493,
+  "uuid": "40dbcaa9-b1d7-42d5-95e4-075476e8f43b",
+  "ttft_stream_ms": 1561,
+  "time_to_request_ms": 86,
+  "first_content_frame_ms": 1561,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n",
+ "workdir": "d1-cents.alone.haiku-xhigh"
+}

@@ -1,145 +1,208 @@
 # Benchmark results
 
-63 runs per arm (21 tasks), Opus 5.5 at high effort as the chat model. Cost at list price.
+63 runs per arm (21 tasks), Opus 5.5 at high effort as the chat model.
 
-| class | cost alone | cost with | x cheaper | top-model tokens x | quality alone | quality with |
-|---|---|---|---|---|---|---|
-| mechanical | $1.11 | $0.80 | 1.4x | 1.86x | 1.00 | 1.00 |
-| reading | $0.91 | $0.75 | 1.21x | 1.19x | 0.89 | 0.86 |
-| routine_code | $1.47 | $1.32 | 1.12x | 1.25x | 1.00 | 1.00 |
-| multi_file | $2.47 | $1.58 | 1.56x | 1.91x | 1.00 | 1.00 |
-| debugging | $1.45 | $1.29 | 1.12x | 1.18x | 1.00 | 1.00 |
-| design | $0.93 | $0.82 | 1.14x | 1.11x | 1.00 | 1.00 |
-| review | $1.21 | $1.13 | 1.07x | 1.07x | 0.83 | 0.87 |
-| **all** | $9.56 | $7.69 | 1.24x | 1.36x | 0.96 | 0.96 |
+| class | tokens alone | tokens table | tokens dynamic | dynamic x | cost alone | cost table | cost dynamic | quality alone / table / dynamic |
+|---|---|---|---|---|---|---|---|---|
+| mechanical | 116,715 | 112,538 | 98,096 | 1.19x | $0.124 | $0.089 | $0.087 | 1.00 / 1.00 / 1.00 |
+| reading | 69,501 | 72,089 | 64,778 | 1.07x | $0.101 | $0.084 | $0.091 | 0.89 / 0.86 / 0.92 |
+| routine_code | 92,519 | 123,880 | 96,247 | 0.96x | $0.164 | $0.146 | $0.153 | 1.00 / 1.00 / 1.00 |
+| multi_file | 160,462 | 135,395 | 112,791 | 1.42x | $0.274 | $0.175 | $0.224 | 1.00 / 1.00 / 1.00 |
+| debugging | 146,363 | 124,514 | 130,712 | 1.12x | $0.161 | $0.144 | $0.149 | 1.00 / 1.00 / 1.00 |
+| design | 62,063 | 55,779 | 62,190 | 1.0x | $0.104 | $0.091 | $0.098 | 1.00 / 1.00 / 0.97 |
+| review | 92,207 | 85,928 | 89,695 | 1.03x | $0.134 | $0.126 | $0.130 | 0.83 / 0.87 / 0.93 |
+| **all** | 105,690 | 101,446 | 93,501 | 1.13x | $0.152 | $0.122 | $0.133 | 0.96 / 0.96 / 0.97 |
 
 ## Per task
 
-| task | arm | cost | quality | turns | seconds |
-|---|---|---|---|---|---|
-| m1-rename | alone | $0.104 | 1.00 | 6 | 18.4 |
-| m1-rename | alone | $0.103 | 1.00 | 6 | 10.9 |
-| m1-rename | alone | $0.102 | 1.00 | 6 | 14.7 |
-| m1-rename | beggar | $0.087 | 1.00 | 3 | 27.1 |
-| m1-rename | beggar | $0.084 | 1.00 | 3 | 23.0 |
-| m1-rename | beggar | $0.082 | 1.00 | 3 | 19.7 |
-| m2-future | alone | $0.142 | 1.00 | 5 | 17.8 |
-| m2-future | alone | $0.137 | 1.00 | 5 | 20.7 |
-| m2-future | alone | $0.154 | 1.00 | 6 | 22.3 |
-| m2-future | beggar | $0.089 | 1.00 | 3 | 32.0 |
-| m2-future | beggar | $0.098 | 1.00 | 3 | 37.1 |
-| m2-future | beggar | $0.091 | 1.00 | 3 | 36.1 |
-| m3-todo | alone | $0.118 | 1.00 | 7 | 22.3 |
-| m3-todo | alone | $0.125 | 1.00 | 8 | 15.2 |
-| m3-todo | alone | $0.129 | 1.00 | 8 | 16.4 |
-| m3-todo | beggar | $0.087 | 1.00 | 3 | 26.2 |
-| m3-todo | beggar | $0.091 | 1.00 | 3 | 22.6 |
-| m3-todo | beggar | $0.088 | 1.00 | 3 | 21.7 |
-| r1-tracking | alone | $0.121 | 1.00 | 3 | 9.5 |
-| r1-tracking | alone | $0.118 | 1.00 | 3 | 11.1 |
-| r1-tracking | alone | $0.122 | 1.00 | 3 | 6.2 |
-| r1-tracking | beggar | $0.078 | 1.00 | 3 | 7.3 |
-| r1-tracking | beggar | $0.077 | 1.00 | 4 | 14.3 |
-| r1-tracking | beggar | $0.088 | 1.00 | 3 | 7.8 |
-| r2-toprate | alone | $0.078 | 1.00 | 3 | 5.0 |
-| r2-toprate | alone | $0.083 | 1.00 | 4 | 6.1 |
-| r2-toprate | alone | $0.084 | 1.00 | 3 | 8.4 |
-| r2-toprate | beggar | $0.062 | 1.00 | 2 | 3.3 |
-| r2-toprate | beggar | $0.063 | 1.00 | 2 | 5.4 |
-| r2-toprate | beggar | $0.062 | 1.00 | 2 | 3.6 |
-| r3-flow | alone | $0.093 | 0.75 | 6 | 12.2 |
-| r3-flow | alone | $0.115 | 0.75 | 7 | 17.3 |
-| r3-flow | alone | $0.099 | 0.50 | 4 | 15.1 |
-| r3-flow | beggar | $0.111 | 0.75 | 5 | 34.4 |
-| r3-flow | beggar | $0.095 | 0.50 | 3 | 25.4 |
-| r3-flow | beggar | $0.117 | 0.50 | 3 | 23.6 |
-| c1-coupon | alone | $0.226 | 1.00 | 9 | 41.1 |
-| c1-coupon | alone | $0.281 | 1.00 | 8 | 39.2 |
-| c1-coupon | alone | $0.285 | 1.00 | 10 | 38.6 |
-| c1-coupon | beggar | $0.191 | 1.00 | 3 | 50.5 |
-| c1-coupon | beggar | $0.175 | 1.00 | 4 | 53.8 |
-| c1-coupon | beggar | $0.171 | 1.00 | 3 | 52.8 |
-| c2-split | alone | $0.112 | 1.00 | 6 | 17.2 |
-| c2-split | alone | $0.118 | 1.00 | 6 | 15.9 |
-| c2-split | alone | $0.111 | 1.00 | 4 | 17.8 |
-| c2-split | beggar | $0.134 | 1.00 | 3 | 29.2 |
-| c2-split | beggar | $0.124 | 1.00 | 3 | 34.3 |
-| c2-split | beggar | $0.118 | 1.00 | 3 | 29.4 |
-| c3-json | alone | $0.114 | 1.00 | 4 | 12.3 |
-| c3-json | alone | $0.114 | 1.00 | 4 | 15.4 |
-| c3-json | alone | $0.114 | 1.00 | 4 | 12.8 |
-| c3-json | beggar | $0.121 | 1.00 | 3 | 39.8 |
-| c3-json | beggar | $0.163 | 1.00 | 7 | 52.5 |
-| c3-json | beggar | $0.119 | 1.00 | 3 | 33.5 |
-| f1-shipping | alone | $0.295 | 1.00 | 5 | 41.6 |
-| f1-shipping | alone | $0.300 | 1.00 | 5 | 46.3 |
-| f1-shipping | alone | $0.362 | 1.00 | 10 | 52.3 |
-| f1-shipping | beggar | $0.223 | 1.00 | 5 | 71.5 |
-| f1-shipping | beggar | $0.183 | 1.00 | 4 | 41.2 |
-| f1-shipping | beggar | $0.177 | 1.00 | 3 | 52.1 |
-| f2-refund | alone | $0.220 | 1.00 | 8 | 21.5 |
-| f2-refund | alone | $0.223 | 1.00 | 8 | 26.7 |
-| f2-refund | alone | $0.224 | 1.00 | 7 | 23.2 |
-| f2-refund | beggar | $0.166 | 1.00 | 5 | 38.0 |
-| f2-refund | beggar | $0.152 | 1.00 | 4 | 36.5 |
-| f2-refund | beggar | $0.153 | 1.00 | 3 | 37.6 |
-| f3-tier | alone | $0.271 | 1.00 | 6 | 36.3 |
-| f3-tier | alone | $0.272 | 1.00 | 6 | 34.5 |
-| f3-tier | alone | $0.297 | 1.00 | 7 | 41.2 |
-| f3-tier | beggar | $0.158 | 1.00 | 3 | 43.9 |
-| f3-tier | beggar | $0.169 | 1.00 | 3 | 45.7 |
-| f3-tier | beggar | $0.196 | 1.00 | 4 | 42.7 |
-| d1-cents | alone | $0.149 | 1.00 | 8 | 28.6 |
-| d1-cents | alone | $0.144 | 1.00 | 8 | 19.9 |
-| d1-cents | alone | $0.122 | 1.00 | 6 | 13.6 |
-| d1-cents | beggar | $0.110 | 1.00 | 5 | 13.6 |
-| d1-cents | beggar | $0.111 | 1.00 | 5 | 13.7 |
-| d1-cents | beggar | $0.113 | 1.00 | 5 | 19.7 |
-| d2-store | alone | $0.227 | 1.00 | 9 | 31.2 |
-| d2-store | alone | $0.229 | 1.00 | 10 | 24.3 |
-| d2-store | alone | $0.215 | 1.00 | 9 | 37.0 |
-| d2-store | beggar | $0.184 | 1.00 | 7 | 26.3 |
-| d2-store | beggar | $0.225 | 1.00 | 9 | 24.6 |
-| d2-store | beggar | $0.201 | 1.00 | 8 | 23.3 |
-| d3-remove | alone | $0.132 | 1.00 | 6 | 19.3 |
-| d3-remove | alone | $0.117 | 1.00 | 6 | 15.4 |
-| d3-remove | alone | $0.117 | 1.00 | 5 | 23.7 |
-| d3-remove | beggar | $0.112 | 1.00 | 6 | 16.3 |
-| d3-remove | beggar | $0.125 | 1.00 | 6 | 13.5 |
-| d3-remove | beggar | $0.111 | 1.00 | 6 | 12.5 |
-| g1-currency | alone | $0.144 | 1.00 | 4 | 20.5 |
-| g1-currency | alone | $0.134 | 1.00 | 4 | 16.0 |
-| g1-currency | alone | $0.134 | 1.00 | 4 | 15.3 |
-| g1-currency | beggar | $0.120 | 1.00 | 3 | 17.2 |
-| g1-currency | beggar | $0.118 | 1.00 | 3 | 16.0 |
-| g1-currency | beggar | $0.128 | 1.00 | 3 | 20.3 |
-| g2-store | alone | $0.089 | 1.00 | 3 | 14.6 |
-| g2-store | alone | $0.100 | 1.00 | 4 | 12.8 |
-| g2-store | alone | $0.091 | 1.00 | 3 | 14.7 |
-| g2-store | beggar | $0.075 | 1.00 | 3 | 14.0 |
-| g2-store | beggar | $0.078 | 1.00 | 3 | 12.8 |
-| g2-store | beggar | $0.077 | 1.00 | 3 | 10.9 |
-| g3-cache | alone | $0.080 | 1.00 | 2 | 14.7 |
-| g3-cache | alone | $0.082 | 1.00 | 2 | 15.5 |
-| g3-cache | alone | $0.080 | 1.00 | 2 | 13.8 |
-| g3-cache | beggar | $0.073 | 1.00 | 2 | 16.8 |
-| g3-cache | beggar | $0.076 | 1.00 | 2 | 16.6 |
-| g3-cache | beggar | $0.074 | 1.00 | 2 | 16.8 |
-| v1-diff | alone | $0.125 | 1.00 | 4 | 18.9 |
-| v1-diff | alone | $0.137 | 1.00 | 5 | 24.2 |
-| v1-diff | alone | $0.126 | 1.00 | 4 | 24.8 |
-| v1-diff | beggar | $0.120 | 1.00 | 4 | 21.3 |
-| v1-diff | beggar | $0.119 | 1.00 | 4 | 20.7 |
-| v1-diff | beggar | $0.115 | 1.00 | 4 | 20.5 |
-| v2-diff | alone | $0.122 | 1.00 | 4 | 21.3 |
-| v2-diff | alone | $0.128 | 1.00 | 5 | 28.6 |
-| v2-diff | alone | $0.110 | 0.50 | 4 | 17.6 |
-| v2-diff | beggar | $0.110 | 0.50 | 4 | 21.4 |
-| v2-diff | beggar | $0.120 | 1.00 | 7 | 23.3 |
-| v2-diff | beggar | $0.105 | 1.00 | 4 | 17.6 |
-| v3-carriers | alone | $0.160 | 0.67 | 5 | 17.8 |
-| v3-carriers | alone | $0.143 | 0.67 | 5 | 20.0 |
-| v3-carriers | alone | $0.157 | 0.67 | 3 | 15.6 |
-| v3-carriers | beggar | $0.147 | 0.67 | 3 | 15.6 |
-| v3-carriers | beggar | $0.136 | 0.67 | 4 | 17.6 |
-| v3-carriers | beggar | $0.161 | 1.00 | 4 | 15.1 |
+| task | arm | tokens | cost | quality | turns | seconds |
+|---|---|---|---|---|---|---|
+| m1-rename | alone | 101,325 | $0.104 | 1.00 | 6 | 18.4 |
+| m1-rename | alone | 100,908 | $0.103 | 1.00 | 6 | 10.9 |
+| m1-rename | alone | 100,766 | $0.102 | 1.00 | 6 | 14.7 |
+| m1-rename | beggar | 91,981 | $0.087 | 1.00 | 3 | 27.1 |
+| m1-rename | beggar | 98,929 | $0.084 | 1.00 | 3 | 23.0 |
+| m1-rename | beggar | 90,201 | $0.082 | 1.00 | 3 | 19.7 |
+| m1-rename | dynamic | 71,259 | $0.077 | 1.00 | 2 | 22.4 |
+| m1-rename | dynamic | 62,786 | $0.074 | 1.00 | 2 | 20.0 |
+| m1-rename | dynamic | 71,283 | $0.077 | 1.00 | 2 | 20.4 |
+| m2-future | alone | 115,095 | $0.142 | 1.00 | 5 | 17.8 |
+| m2-future | alone | 114,360 | $0.137 | 1.00 | 5 | 20.7 |
+| m2-future | alone | 139,484 | $0.154 | 1.00 | 6 | 22.3 |
+| m2-future | beggar | 130,079 | $0.089 | 1.00 | 3 | 32.0 |
+| m2-future | beggar | 162,688 | $0.098 | 1.00 | 3 | 37.1 |
+| m2-future | beggar | 130,790 | $0.091 | 1.00 | 3 | 36.1 |
+| m2-future | dynamic | 116,376 | $0.091 | 1.00 | 1 | 3.8 |
+| m2-future | dynamic | 135,084 | $0.083 | 1.00 | 2 | 42.3 |
+| m2-future | dynamic | 127,030 | $0.100 | 1.00 | 2 | 6.1 |
+| m3-todo | alone | 123,287 | $0.118 | 1.00 | 7 | 22.3 |
+| m3-todo | alone | 126,992 | $0.125 | 1.00 | 8 | 15.2 |
+| m3-todo | alone | 128,220 | $0.129 | 1.00 | 8 | 16.4 |
+| m3-todo | beggar | 100,646 | $0.087 | 1.00 | 3 | 26.2 |
+| m3-todo | beggar | 101,943 | $0.091 | 1.00 | 3 | 22.6 |
+| m3-todo | beggar | 105,589 | $0.088 | 1.00 | 3 | 21.7 |
+| m3-todo | dynamic | 96,394 | $0.089 | 1.00 | 1 | 5.8 |
+| m3-todo | dynamic | 98,110 | $0.093 | 1.00 | 1 | 2.9 |
+| m3-todo | dynamic | 104,542 | $0.099 | 1.00 | 1 | 4.7 |
+| r1-tracking | alone | 67,507 | $0.121 | 1.00 | 3 | 9.5 |
+| r1-tracking | alone | 67,230 | $0.118 | 1.00 | 3 | 11.1 |
+| r1-tracking | alone | 67,599 | $0.122 | 1.00 | 3 | 6.2 |
+| r1-tracking | beggar | 62,489 | $0.078 | 1.00 | 3 | 7.3 |
+| r1-tracking | beggar | 62,250 | $0.077 | 1.00 | 4 | 14.3 |
+| r1-tracking | beggar | 64,121 | $0.088 | 1.00 | 3 | 7.8 |
+| r1-tracking | dynamic | 66,367 | $0.097 | 1.00 | 3 | 11.8 |
+| r1-tracking | dynamic | 69,528 | $0.109 | 1.00 | 3 | 9.4 |
+| r1-tracking | dynamic | 64,223 | $0.091 | 1.00 | 4 | 14.4 |
+| r2-toprate | alone | 59,491 | $0.078 | 1.00 | 3 | 5.0 |
+| r2-toprate | alone | 59,948 | $0.083 | 1.00 | 4 | 6.1 |
+| r2-toprate | alone | 59,972 | $0.084 | 1.00 | 3 | 8.4 |
+| r2-toprate | beggar | 40,670 | $0.062 | 1.00 | 2 | 3.3 |
+| r2-toprate | beggar | 40,668 | $0.063 | 1.00 | 2 | 5.4 |
+| r2-toprate | beggar | 40,650 | $0.062 | 1.00 | 2 | 3.6 |
+| r2-toprate | dynamic | 45,664 | $0.102 | 1.00 | 2 | 6.6 |
+| r2-toprate | dynamic | 41,035 | $0.064 | 1.00 | 2 | 6.9 |
+| r2-toprate | dynamic | 41,157 | $0.066 | 1.00 | 2 | 5.0 |
+| r3-flow | alone | 78,337 | $0.093 | 0.75 | 6 | 12.2 |
+| r3-flow | alone | 85,639 | $0.115 | 0.75 | 7 | 17.3 |
+| r3-flow | alone | 79,788 | $0.099 | 0.50 | 4 | 15.1 |
+| r3-flow | beggar | 135,330 | $0.111 | 0.75 | 5 | 34.4 |
+| r3-flow | beggar | 98,690 | $0.095 | 0.50 | 3 | 25.4 |
+| r3-flow | beggar | 103,935 | $0.117 | 0.50 | 3 | 23.6 |
+| r3-flow | dynamic | 82,423 | $0.088 | 1.00 | 5 | 16.5 |
+| r3-flow | dynamic | 82,502 | $0.089 | 0.50 | 5 | 12.8 |
+| r3-flow | dynamic | 90,105 | $0.112 | 0.75 | 7 | 12.5 |
+| c1-coupon | alone | 98,536 | $0.226 | 1.00 | 9 | 41.1 |
+| c1-coupon | alone | 121,477 | $0.281 | 1.00 | 8 | 39.2 |
+| c1-coupon | alone | 121,992 | $0.285 | 1.00 | 10 | 38.6 |
+| c1-coupon | beggar | 140,794 | $0.191 | 1.00 | 3 | 50.5 |
+| c1-coupon | beggar | 125,339 | $0.175 | 1.00 | 4 | 53.8 |
+| c1-coupon | beggar | 121,277 | $0.171 | 1.00 | 3 | 52.8 |
+| c1-coupon | dynamic | 104,651 | $0.252 | 1.00 | 2 | 64.6 |
+| c1-coupon | dynamic | 108,129 | $0.163 | 1.00 | 3 | 47.3 |
+| c1-coupon | dynamic | 101,506 | $0.240 | 1.00 | 2 | 58.3 |
+| c2-split | alone | 81,102 | $0.112 | 1.00 | 6 | 17.2 |
+| c2-split | alone | 81,640 | $0.118 | 1.00 | 6 | 15.9 |
+| c2-split | alone | 80,928 | $0.111 | 1.00 | 4 | 17.8 |
+| c2-split | beggar | 102,827 | $0.134 | 1.00 | 3 | 29.2 |
+| c2-split | beggar | 109,457 | $0.124 | 1.00 | 3 | 34.3 |
+| c2-split | beggar | 101,629 | $0.118 | 1.00 | 3 | 29.4 |
+| c2-split | dynamic | 82,993 | $0.123 | 1.00 | 2 | 37.9 |
+| c2-split | dynamic | 73,249 | $0.110 | 1.00 | 2 | 29.1 |
+| c2-split | dynamic | 104,509 | $0.137 | 1.00 | 1 | 6.3 |
+| c3-json | alone | 82,226 | $0.114 | 1.00 | 4 | 12.3 |
+| c3-json | alone | 82,427 | $0.114 | 1.00 | 4 | 15.4 |
+| c3-json | alone | 82,341 | $0.114 | 1.00 | 4 | 12.8 |
+| c3-json | beggar | 119,795 | $0.121 | 1.00 | 3 | 39.8 |
+| c3-json | beggar | 180,194 | $0.163 | 1.00 | 7 | 52.5 |
+| c3-json | beggar | 113,610 | $0.119 | 1.00 | 3 | 33.5 |
+| c3-json | dynamic | 90,863 | $0.113 | 1.00 | 2 | 27.5 |
+| c3-json | dynamic | 96,681 | $0.125 | 1.00 | 2 | 30.7 |
+| c3-json | dynamic | 103,638 | $0.118 | 1.00 | 2 | 29.9 |
+| f1-shipping | alone | 123,002 | $0.295 | 1.00 | 5 | 41.6 |
+| f1-shipping | alone | 155,741 | $0.300 | 1.00 | 5 | 46.3 |
+| f1-shipping | alone | 234,077 | $0.362 | 1.00 | 10 | 52.3 |
+| f1-shipping | beggar | 186,957 | $0.223 | 1.00 | 5 | 71.5 |
+| f1-shipping | beggar | 144,738 | $0.183 | 1.00 | 4 | 41.2 |
+| f1-shipping | beggar | 152,566 | $0.177 | 1.00 | 3 | 52.1 |
+| f1-shipping | dynamic | 134,718 | $0.270 | 1.00 | 2 | 51.7 |
+| f1-shipping | dynamic | 94,504 | $0.231 | 1.00 | 2 | 47.8 |
+| f1-shipping | dynamic | 124,344 | $0.269 | 1.00 | 2 | 62.5 |
+| f2-refund | alone | 136,459 | $0.220 | 1.00 | 8 | 21.5 |
+| f2-refund | alone | 137,729 | $0.223 | 1.00 | 8 | 26.7 |
+| f2-refund | alone | 137,778 | $0.224 | 1.00 | 7 | 23.2 |
+| f2-refund | beggar | 145,361 | $0.166 | 1.00 | 5 | 38.0 |
+| f2-refund | beggar | 121,112 | $0.152 | 1.00 | 4 | 36.5 |
+| f2-refund | beggar | 109,153 | $0.153 | 1.00 | 3 | 37.6 |
+| f2-refund | dynamic | 88,132 | $0.169 | 1.00 | 2 | 44.3 |
+| f2-refund | dynamic | 110,172 | $0.143 | 1.00 | 3 | 45.3 |
+| f2-refund | dynamic | 86,476 | $0.125 | 1.00 | 2 | 30.0 |
+| f3-tier | alone | 168,731 | $0.271 | 1.00 | 6 | 36.3 |
+| f3-tier | alone | 172,494 | $0.272 | 1.00 | 6 | 34.5 |
+| f3-tier | alone | 178,146 | $0.297 | 1.00 | 7 | 41.2 |
+| f3-tier | beggar | 104,414 | $0.158 | 1.00 | 3 | 43.9 |
+| f3-tier | beggar | 120,426 | $0.169 | 1.00 | 3 | 45.7 |
+| f3-tier | beggar | 133,830 | $0.196 | 1.00 | 4 | 42.7 |
+| f3-tier | dynamic | 136,315 | $0.301 | 1.00 | 2 | 55.9 |
+| f3-tier | dynamic | 111,296 | $0.257 | 1.00 | 2 | 50.9 |
+| f3-tier | dynamic | 129,164 | $0.252 | 1.00 | 2 | 54.7 |
+| d1-cents | alone | 133,600 | $0.149 | 1.00 | 8 | 28.6 |
+| d1-cents | alone | 132,935 | $0.144 | 1.00 | 8 | 19.9 |
+| d1-cents | alone | 107,997 | $0.122 | 1.00 | 6 | 13.6 |
+| d1-cents | beggar | 89,407 | $0.110 | 1.00 | 5 | 13.6 |
+| d1-cents | beggar | 89,587 | $0.111 | 1.00 | 5 | 13.7 |
+| d1-cents | beggar | 89,797 | $0.113 | 1.00 | 5 | 19.7 |
+| d1-cents | dynamic | 90,544 | $0.115 | 1.00 | 5 | 19.0 |
+| d1-cents | dynamic | 110,474 | $0.126 | 1.00 | 6 | 21.2 |
+| d1-cents | dynamic | 133,832 | $0.140 | 1.00 | 8 | 29.8 |
+| d2-store | alone | 221,517 | $0.227 | 1.00 | 9 | 31.2 |
+| d2-store | alone | 222,737 | $0.229 | 1.00 | 10 | 24.3 |
+| d2-store | alone | 191,570 | $0.215 | 1.00 | 9 | 37.0 |
+| d2-store | beggar | 134,870 | $0.184 | 1.00 | 7 | 26.3 |
+| d2-store | beggar | 209,443 | $0.225 | 1.00 | 9 | 24.6 |
+| d2-store | beggar | 167,200 | $0.201 | 1.00 | 8 | 23.3 |
+| d2-store | dynamic | 138,182 | $0.188 | 1.00 | 7 | 25.2 |
+| d2-store | dynamic | 145,733 | $0.190 | 1.00 | 6 | 19.7 |
+| d2-store | dynamic | 167,446 | $0.200 | 1.00 | 8 | 23.9 |
+| d3-remove | alone | 111,687 | $0.132 | 1.00 | 6 | 19.3 |
+| d3-remove | alone | 107,675 | $0.117 | 1.00 | 6 | 15.4 |
+| d3-remove | alone | 87,547 | $0.117 | 1.00 | 5 | 23.7 |
+| d3-remove | beggar | 112,170 | $0.112 | 1.00 | 6 | 16.3 |
+| d3-remove | beggar | 116,092 | $0.125 | 1.00 | 6 | 13.5 |
+| d3-remove | beggar | 112,056 | $0.111 | 1.00 | 6 | 12.5 |
+| d3-remove | dynamic | 163,526 | $0.149 | 1.00 | 9 | 30.4 |
+| d3-remove | dynamic | 113,343 | $0.116 | 1.00 | 6 | 21.0 |
+| d3-remove | dynamic | 113,324 | $0.116 | 1.00 | 6 | 14.8 |
+| g1-currency | alone | 87,209 | $0.144 | 1.00 | 4 | 20.5 |
+| g1-currency | alone | 87,012 | $0.134 | 1.00 | 4 | 16.0 |
+| g1-currency | alone | 86,816 | $0.134 | 1.00 | 4 | 15.3 |
+| g1-currency | beggar | 65,422 | $0.120 | 1.00 | 3 | 17.2 |
+| g1-currency | beggar | 65,590 | $0.118 | 1.00 | 3 | 16.0 |
+| g1-currency | beggar | 66,083 | $0.128 | 1.00 | 3 | 20.3 |
+| g1-currency | dynamic | 91,895 | $0.141 | 1.00 | 4 | 16.8 |
+| g1-currency | dynamic | 66,309 | $0.121 | 1.00 | 3 | 16.2 |
+| g1-currency | dynamic | 92,207 | $0.144 | 1.00 | 4 | 23.0 |
+| g2-store | alone | 59,315 | $0.089 | 1.00 | 3 | 14.6 |
+| g2-store | alone | 62,333 | $0.100 | 1.00 | 4 | 12.8 |
+| g2-store | alone | 59,295 | $0.091 | 1.00 | 3 | 14.7 |
+| g2-store | beggar | 60,528 | $0.075 | 1.00 | 3 | 14.0 |
+| g2-store | beggar | 61,304 | $0.078 | 1.00 | 3 | 12.8 |
+| g2-store | beggar | 61,207 | $0.077 | 1.00 | 3 | 10.9 |
+| g2-store | dynamic | 61,988 | $0.081 | 1.00 | 3 | 22.5 |
+| g2-store | dynamic | 61,887 | $0.079 | 1.00 | 3 | 12.2 |
+| g2-store | dynamic | 62,369 | $0.088 | 1.00 | 3 | 18.0 |
+| g3-cache | alone | 38,845 | $0.080 | 1.00 | 2 | 14.7 |
+| g3-cache | alone | 38,923 | $0.082 | 1.00 | 2 | 15.5 |
+| g3-cache | alone | 38,821 | $0.080 | 1.00 | 2 | 13.8 |
+| g3-cache | beggar | 40,553 | $0.073 | 1.00 | 2 | 16.8 |
+| g3-cache | beggar | 40,709 | $0.076 | 1.00 | 2 | 16.6 |
+| g3-cache | beggar | 40,612 | $0.074 | 1.00 | 2 | 16.8 |
+| g3-cache | dynamic | 41,019 | $0.075 | 1.00 | 2 | 14.9 |
+| g3-cache | dynamic | 41,017 | $0.075 | 0.75 | 2 | 17.3 |
+| g3-cache | dynamic | 41,018 | $0.075 | 1.00 | 2 | 17.4 |
+| v1-diff | alone | 83,482 | $0.125 | 1.00 | 4 | 18.9 |
+| v1-diff | alone | 105,949 | $0.137 | 1.00 | 5 | 24.2 |
+| v1-diff | alone | 83,078 | $0.126 | 1.00 | 4 | 24.8 |
+| v1-diff | beggar | 86,335 | $0.120 | 1.00 | 4 | 21.3 |
+| v1-diff | beggar | 85,940 | $0.119 | 1.00 | 4 | 20.7 |
+| v1-diff | beggar | 85,824 | $0.115 | 1.00 | 4 | 20.5 |
+| v1-diff | dynamic | 87,336 | $0.115 | 1.00 | 4 | 18.7 |
+| v1-diff | dynamic | 86,219 | $0.111 | 1.00 | 4 | 17.6 |
+| v1-diff | dynamic | 111,913 | $0.143 | 1.00 | 5 | 25.8 |
+| v2-diff | alone | 81,675 | $0.122 | 1.00 | 4 | 21.3 |
+| v2-diff | alone | 102,628 | $0.128 | 1.00 | 5 | 28.6 |
+| v2-diff | alone | 80,346 | $0.110 | 0.50 | 4 | 17.6 |
+| v2-diff | beggar | 84,232 | $0.110 | 0.50 | 4 | 21.4 |
+| v2-diff | beggar | 85,831 | $0.120 | 1.00 | 7 | 23.3 |
+| v2-diff | beggar | 84,174 | $0.105 | 1.00 | 4 | 17.6 |
+| v2-diff | dynamic | 85,870 | $0.118 | 1.00 | 4 | 26.7 |
+| v2-diff | dynamic | 85,410 | $0.111 | 1.00 | 4 | 21.1 |
+| v2-diff | dynamic | 85,364 | $0.114 | 1.00 | 4 | 22.8 |
+| v3-carriers | alone | 116,480 | $0.160 | 0.67 | 5 | 17.8 |
+| v3-carriers | alone | 109,209 | $0.143 | 0.67 | 5 | 20.0 |
+| v3-carriers | alone | 67,016 | $0.157 | 0.67 | 3 | 15.6 |
+| v3-carriers | beggar | 69,049 | $0.147 | 0.67 | 3 | 15.6 |
+| v3-carriers | beggar | 92,942 | $0.136 | 0.67 | 4 | 17.6 |
+| v3-carriers | beggar | 99,026 | $0.161 | 1.00 | 4 | 15.1 |
+| v3-carriers | dynamic | 94,116 | $0.143 | 0.67 | 4 | 23.8 |
+| v3-carriers | dynamic | 72,137 | $0.158 | 0.67 | 3 | 12.7 |
+| v3-carriers | dynamic | 98,892 | $0.158 | 1.00 | 4 | 18.1 |

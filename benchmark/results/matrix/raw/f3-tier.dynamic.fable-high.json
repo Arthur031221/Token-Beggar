@@ -1,0 +1,126 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": "fable-high",
+ "top": "claude-fable-5-1",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 60723,
+  "stop_reason": "end_turn",
+  "session_id": "df852150-3524-4013-aab1-2a43515074bb",
+  "total_cost_usd": 0.33444385000000004,
+  "usage": {
+   "input_tokens": 34,
+   "cache_creation_input_tokens": 10447,
+   "cache_read_input_tokens": 34467,
+   "output_tokens": 1172,
+   "output_tokens_details": {
+    "thinking_tokens": 52
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10447,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 421,
+     "cache_read_input_tokens": 21677,
+     "cache_creation_input_tokens": 1560,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1560
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 34,
+    "outputTokens": 1172,
+    "cacheReadInputTokens": 34467,
+    "cacheCreationInputTokens": 10447,
+    "webSearchRequests": 0,
+    "costUSD": 0.27649675,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 52,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 3254,
+    "cacheReadInputTokens": 40021,
+    "cacheCreationInputTokens": 8554,
+    "webSearchRequests": 0,
+    "costUSD": 0.0579471,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 226,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are implemented and the full suite passes.\n\n**Test run**\n\n```\npython3 -m unittest discover -s tests -t .\nRan 17 tests in 0.003s\nOK\n```\n\n**What changed**\n\n- `shop/models.py`: Cart gains a `tier` attribute defaulting to \"standard\".\n- `shop/pricing.py`: gold takes 10 percent off the subtotal and silver 5 percent, using the existing half-up percent rounding in integer cents. Any other tier gets nothing. Both calc_total and the tax calculation work from the discounted subtotal, so tax is charged after the discount.\n- `shop/orders.py`: Order carries the tier and derives its totals through the pricing functions, so it picks up the discount.\n- `shop/cli.py`: the quote command accepts `--tier`, defaulting to \"standard\", and passes it to the Cart.\n- Tests: new cases in `tests/test_pricing.py` and `tests/test_orders.py` cover gold, silver, standard and unknown tiers, tax on the discounted subtotal, and Order. A new `tests/test_cli.py` covers the `--tier` option.\n\nThe test run left untracked `__pycache__` directories in `shop/` and `tests/`. Nothing is committed.",
+  "ttft_ms": 2759,
+  "type": "result",
+  "duration_ms": 61930,
+  "uuid": "cf4957fa-d257-4df8-bae1-559bb530cdee",
+  "ttft_stream_ms": 2034,
+  "time_to_request_ms": 183,
+  "first_content_frame_ms": 2035,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 32 ++++++++++++++++++++++++++------\n tests/test_orders.py  |  9 +++++++++\n tests/test_pricing.py | 30 ++++++++++++++++++++++++++++++\n 6 files changed, 69 insertions(+), 7 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.fable-high"
+}

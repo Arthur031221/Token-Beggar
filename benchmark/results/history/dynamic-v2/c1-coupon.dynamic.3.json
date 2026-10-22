@@ -1,0 +1,126 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 56042,
+  "stop_reason": "end_turn",
+  "session_id": "f413f233-5a2e-4b21-84e0-c8f9ce5febda",
+  "total_cost_usd": 0.20086699999999996,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 10470,
+   "cache_read_input_tokens": 80388,
+   "output_tokens": 2340,
+   "output_tokens_details": {
+    "thinking_tokens": 563
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10470,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 768,
+     "cache_read_input_tokens": 23893,
+     "cache_creation_input_tokens": 1164,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1164
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2340,
+    "cacheReadInputTokens": 80388,
+    "cacheCreationInputTokens": 10470,
+    "webSearchRequests": 0,
+    "costUSD": 0.1466696,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 563,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 2955,
+    "cacheReadInputTokens": 64919,
+    "cacheCreationInputTokens": 7251,
+    "webSearchRequests": 0,
+    "costUSD": 0.0541974,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 215,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`Cart.apply_coupon(code)` is in, `calc_total` now takes coupons into account, and the full suite passes (`python3 -m unittest discover`: 11 tests, all OK). I had a worker write the code, then read the diff myself since it involves money.\n\n**What changed**\n- **`shop/coupons.py` (new):** defines SAVE10 (10% off) and FLAT500 (500 cents off). `get_coupon(code)` raises `ValueError` for an unknown code.\n- **`shop/models.py`:** `Cart` now keeps a list of applied coupons. `apply_coupon` checks the code before saving it, so a bad code leaves the cart unchanged.\n- **`shop/pricing.py`:** the discounts come off the pre-tax subtotal and are added together. The 10% is always taken from the original subtotal, not from an already-discounted amount. The discounted subtotal never goes below 0, and tax is worked out after the discount. `calc_tax` uses the same discounted amount, so the `total_cents` and `tax_cents` that `shop/orders.py` saves agree. Carts without coupons give the same totals as before.\n- **`tests/test_pricing.py`:** five new tests: SAVE10 alone, FLAT500 alone, both together, an unknown code, and a discount larger than the cart (total goes to 0). For example, a 2000-cent cart with both coupons comes to 1300 + 107 tax = 1407.\n\n**Choices you may want to change** (your spec didn't cover these):\n- **Same code applied twice:** it counts twice, so SAVE10 twice gives 20% off. If each code should only count once, that's a one-line check in `apply_coupon`.\n- **Carts mixing taxed and untaxed items:** the discount is split across them in proportion to their value, so the taxed part shrinks by the same percentage as the whole cart.\n\nNothing is committed. Running the tests left `__pycache__/` folders that git shows as untracked because the repo has no `.gitignore`.",
+  "ttft_ms": 4830,
+  "type": "result",
+  "duration_ms": 59109,
+  "uuid": "093bd8ef-b328-4ba7-9344-cad085de9ce1",
+  "ttft_stream_ms": 2013,
+  "time_to_request_ms": 270,
+  "first_content_frame_ms": 2013,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py        |  7 +++++++\n shop/pricing.py       | 22 ++++++++++++++++++----\n tests/test_pricing.py | 31 +++++++++++++++++++++++++++++++\n 3 files changed, 56 insertions(+), 4 deletions(-)\n",
+ "workdir": "c1-coupon.dynamic.3"
+}

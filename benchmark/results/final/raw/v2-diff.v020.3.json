@@ -1,0 +1,111 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "v020",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 21625,
+  "stop_reason": "end_turn",
+  "session_id": "5508c6f6-f238-4d26-ab74-205498d58a2b",
+  "total_cost_usd": 0.1362294,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 9791,
+   "cache_read_input_tokens": 95307,
+   "output_tokens": 1940,
+   "output_tokens_details": {
+    "thinking_tokens": 566
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9791,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 835,
+     "cache_read_input_tokens": 21861,
+     "cache_creation_input_tokens": 720,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 720
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1940,
+    "cacheReadInputTokens": 95307,
+    "cacheCreationInputTokens": 9791,
+    "webSearchRequests": 0,
+    "costUSD": 0.1362294,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 566,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces two bugs, both in `shop/orders.py`. One crashes immediately; the other quietly weakens the state checks.\n\n### 1. `Order.__init__`: `_ids_seen` is never defined, so every order fails to build (line 12)\n```python\nself.id = len(_ids_seen)\n_ids_seen.append(self.id)\n```\nThe diff doesn't add a module-level `_ids_seen`, and nothing else in the repo defines it. The only definition is still `_ids = itertools.count(1000)` at line 5, which is now unused. Every `Order(cart)` raises `NameError: name '_ids_seen' is not defined`. That breaks both tests in `tests/test_orders.py` and anything else that creates an order.\n\nEven if someone added `_ids_seen = []`, this approach would still be wrong:\n- **IDs change range.** Numbering starts at 0 instead of 1000. `Store.save_order` (`shop/storage.py:17`) treats `id` as the unique key and drops any existing row with the same id. So a new order can silently overwrite a previously saved order with a matching id.\n- **Memory grows forever.** The list keeps every id ever issued and never shrinks, only to compute a counter that `itertools.count` already provided in constant memory.\n- **Duplicate IDs under concurrency.** `len()` followed by `append()` is two steps, so two threads can read the same length and get the same id. `next()` on an `itertools.count` doesn't have that gap in CPython.\n\n### 2. `Order.move`: unknown states now allow any transition (line 20)\n```python\nif state not in ALLOWED.get(self.state, STATES):\n```\nBefore, an order in a state missing from `ALLOWED` raised `KeyError`, so the bad state got noticed. Now that case falls back to `STATES`, meaning every state is allowed, including `\"new\"` and moving to the same state again. For example, if `order.state` is set to a typo like `\"payed\"` or to a value loaded from storage, `move(\"new\")` succeeds and the order can then go through the payment flow a second time. The transition table is supposed to block moves by default; this change lets them through by default.\n\nIt doesn't change behaviour for the four states that exist today, because each has an entry in `ALLOWED`. That makes the change pointless for valid states and harmful for invalid ones. It should be reverted, or replaced with an explicit `ValueError` for an unknown current state.\n\nI found both by reading the code. I didn't run the tests.",
+  "ttft_ms": 1566,
+  "type": "result",
+  "duration_ms": 21940,
+  "uuid": "47f9143d-c996-4312-b218-f508824bc8aa",
+  "ttft_stream_ms": 878,
+  "time_to_request_ms": 181,
+  "first_content_frame_ms": 879,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.v020.3",
+ "ledger": []
+}

@@ -3,11 +3,23 @@
     "UserPromptSubmit": [
       {"hooks": [{"type": "command", "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m token_beggar hook prompt", "timeout": 10}]}
     ],
+    "PreToolUse": [
+      {"matcher": "Agent|Task", "hooks": [{"type": "command", "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m token_beggar hook pretool", "timeout": 10}]}
+    ],
+    "PostToolUse": [
+      {"hooks": [{"type": "command", "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m token_beggar hook posttool", "timeout": 10}]}
+    ],
+    "PostToolUseFailure": [
+      {"matcher": "Agent|Task", "hooks": [{"type": "command", "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m token_beggar hook posttool", "timeout": 10}]}
+    ],
     "PreCompact": [
       {"hooks": [{"type": "command", "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m token_beggar hook precompact", "timeout": 20}]}
     ],
     "SessionStart": [
       {"matcher": "compact", "hooks": [{"type": "command", "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m token_beggar hook sessionstart", "timeout": 10}]}
+    ],
+    "Stop": [
+      {"hooks": [{"type": "command", "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m token_beggar hook stop", "timeout": 15}]}
     ]
   }
 }

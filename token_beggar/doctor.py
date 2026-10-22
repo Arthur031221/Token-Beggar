@@ -62,10 +62,10 @@ def _subagent_model() -> tuple[str, str]:
 
 
 def _window() -> tuple[str, str]:
-    window = compact.configured_window(os.getcwd())
-    if window:
-        return OK, f"{window:,} tokens"
-    return WARN, "CLAUDE_CODE_AUTO_COMPACT_WINDOW is not set (60000 or more), so the guard only writes handoff notes"
+    point = compact.resolve(os.getcwd(), None)
+    if point["disabled"]:
+        return WARN, "auto compaction is disabled in the settings, so the guard only writes notes"
+    return OK, f"compaction point {point['threshold']:,} tokens ({point['source']})"
 
 
 def _errors() -> tuple[str, str]:

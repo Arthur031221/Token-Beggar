@@ -6,8 +6,6 @@ from pathlib import Path
 from . import catalog, paths, transcript
 
 WORKER_SUFFIX = "beggar-worker"
-CACHE_READ = 0.1  # list price multipliers for cached prompt tokens
-CACHE_WRITE = 1.25
 
 
 def _count(usage: dict, key: str) -> int:
@@ -16,9 +14,7 @@ def _count(usage: dict, key: str) -> int:
 
 
 def _cost(usage: dict, model: catalog.Model) -> float:
-    fresh = _count(usage, "input_tokens") + _count(usage, "cache_read_input_tokens") * CACHE_READ
-    fresh += _count(usage, "cache_creation_input_tokens") * CACHE_WRITE
-    return (fresh * model.input_per_mtok + _count(usage, "output_tokens") * model.output_per_mtok) / 1e6
+    return model.cost(usage)
 
 
 def _chat_models(items: list[dict]) -> dict[str, str]:
@@ -73,7 +69,7 @@ def _mentions_worker(path: Path) -> bool:
 
 
 def summarize(files: list[Path]) -> dict:
-    """Per worker model: runs, tokens, what they cost, and what the same tokens cost at the chat model's price."""
+    """Per worker model: runs, what they cost, and what the same tokens cost at the chat model's price."""
     rows: dict[str, dict] = {}
     seen: set = set()  # an agent copied into a resumed session's file is still one run
     skipped = 0
@@ -108,15 +104,15 @@ def render(data: dict, days: float) -> str:
         return f"${value:.2f}"
 
     def row(label: str, r: dict) -> str:
-        return f"{label:<8}{r['runs']:>6}{r['tokens']:>12,}{money(r['worker_usd']):>10}{money(r['chat_usd']):>16}"
+        return f"{label:<8}{r['runs']:>6}{money(r['worker_usd']):>12}{money(r['chat_usd']):>18}"
 
-    out = [f"Token Beggar workers in {span}, {data['sessions']} sessions", f"{'worker':<8}{'runs':>6}{'tokens':>12}{'cost':>10}{'at chat price':>16}"]
+    out = [f"Token Beggar workers in {span}, {data['sessions']} sessions", f"{'worker':<8}{'runs':>6}{'cost':>12}{'at chat price':>18}"]
     out += [row(alias, r) for alias, r in sorted(data["workers"].items())]
     out.append(row("total", total))
     out.append("")
-    out.append("'At chat price' is the same tokens billed at the model that started each worker. It is an upper bound on what")
-    out.append("delegation moved, not the net saving: the chat model would not have used identical tokens. The measured")
-    out.append("net saving is in the README. List prices. Cached tokens at 0.1x read and 1.25x write.")
+    out.append("'At chat price' is the same work billed at the model that started each worker. It is an upper bound on what")
+    out.append("delegation moved, not the net saving: the chat model would not have done identical work. The measured")
+    out.append("net saving is in the README. List prices, cache reads and writes at each model's own cache price.")
     if left_out:
         out.append(left_out)
     return "\n".join(out)

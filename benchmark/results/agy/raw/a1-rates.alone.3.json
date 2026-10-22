@@ -1,0 +1,111 @@
+{
+ "task": "a1-rates",
+ "class": "bulk-read",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 9240,
+  "stop_reason": "end_turn",
+  "session_id": "89c7c383-e5a7-4d9c-b5c8-868dfc2a58da",
+  "total_cost_usd": 0.13708120000000001,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 14041,
+   "cache_read_input_tokens": 50446,
+   "output_tokens": 732,
+   "output_tokens_details": {
+    "thinking_tokens": 149
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14041,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 520,
+     "cache_read_input_tokens": 19005,
+     "cache_creation_input_tokens": 7826,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 7826
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 732,
+    "cacheReadInputTokens": 50446,
+    "cacheCreationInputTokens": 14041,
+    "webSearchRequests": 0,
+    "costUSD": 0.13708120000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 149,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Here are all 20 carrier modules, sorted by BASE_RATE from highest to lowest:\n\n```\nkestrel   845  kg\niris      796  kg\njuniper   783  kg\ntundra    778  kg\nharbor    734  kg\nridge     729  kg\nsummit    716  kg\nfjord     685  kg\ngale      672  kg\nquartz    667  kg\nember     623  kg\nonyx      618  kg\nprairie   605  kg\ncedar     574  kg\ndelta     561  kg\nnimbus    556  kg\nborealis  512  kg\nlumen     507  kg\nmaple     494  grams\nacme      450  kg\n```\n\nMaple is the only carrier that quotes by grams. It uses `PER_GRAMS = 3` and `MAX_GRAMS = 30000` (`maple.py:8-10`), while every other carrier uses `PER_KG` and `MAX_KG`. Every `rate()` takes a bare `weight: float`, so if a caller passes the same number to every carrier, Maple's price will be badly wrong.\n\nAll BASE_RATE values are in cents, per each module's docstring.",
+  "ttft_ms": 2101,
+  "type": "result",
+  "duration_ms": 9496,
+  "uuid": "285c254d-0658-4941-a8a7-464dad8e27c6",
+  "ttft_stream_ms": 1204,
+  "time_to_request_ms": 99,
+  "first_content_frame_ms": 1205,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "a1-rates.alone.3",
+ "ledger": []
+}

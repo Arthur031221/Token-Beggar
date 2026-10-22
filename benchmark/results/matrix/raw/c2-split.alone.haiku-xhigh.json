@@ -1,0 +1,110 @@
+{
+ "task": "c2-split",
+ "class": "routine_code",
+ "arm": "alone",
+ "rep": "haiku-xhigh",
+ "top": "claude-haiku-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 26875,
+  "stop_reason": "end_turn",
+  "session_id": "5c2db186-1db9-45db-92e2-6f3dd569ced2",
+  "total_cost_usd": 0.006757350000000002,
+  "usage": {
+   "input_tokens": 18,
+   "cache_creation_input_tokens": 13573,
+   "cache_read_input_tokens": 198995,
+   "output_tokens": 4102,
+   "output_tokens_details": {
+    "thinking_tokens": 2000
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 13573,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 344,
+     "cache_read_input_tokens": 26025,
+     "cache_creation_input_tokens": 338,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 338
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 4102,
+    "cacheReadInputTokens": 198995,
+    "cacheCreationInputTokens": 13573,
+    "webSearchRequests": 0,
+    "costUSD": 0.006757350000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2000,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 10,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `split(cents, parts)` to `shop/money.py` with a new test module, and the full suite passes (10 tests, including the 4 new ones).\n\n- **Implementation:** `divmod` gives a base share and a remainder. The first `remainder` shares get one extra cent. `parts < 1` raises `ValueError`.\n- **Tests:** `tests/test_money.py` covers an even split, remainder placement (`split(10, 3) == [4, 3, 3]`), the sum invariant over a range of amounts and part counts, and the `ValueError` for `parts` of 0 and -1.\n- **Negative amounts:** I didn't restrict them because the spec didn't say to and `fmt` already handles negatives. `split(-10, 3)` returns `[-3, -3, -4]`, which still sums to -10. Say if you'd rather reject negatives.\n\nI ran the tests with `python3 -m unittest discover -s tests -t .` (the command in the README) and removed the `__pycache__` directories the run created. Nothing is committed.",
+  "ttft_ms": 1705,
+  "type": "result",
+  "duration_ms": 27430,
+  "uuid": "eb391067-3744-4842-a6fb-56f82df3340f",
+  "ttft_stream_ms": 1459,
+  "time_to_request_ms": 77,
+  "first_content_frame_ms": 1460,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 11 +++++++++++\n 1 file changed, 11 insertions(+)\n",
+ "workdir": "c2-split.alone.haiku-xhigh"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 19993,
+  "stop_reason": "end_turn",
+  "session_id": "7f5fac21-c52c-427d-9cfa-12cd260479b6",
+  "total_cost_usd": 0.11129919999999999,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 7506,
+   "cache_read_input_tokens": 76096,
+   "output_tokens": 1800,
+   "output_tokens_details": {
+    "thinking_tokens": 457
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7506,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1102,
+     "cache_read_input_tokens": 21405,
+     "cache_creation_input_tokens": 687,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 687
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1800,
+    "cacheReadInputTokens": 76096,
+    "cacheCreationInputTokens": 7506,
+    "webSearchRequests": 0,
+    "costUSD": 0.11129919999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 457,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces three bugs, all in `shop/orders.py`. The first breaks every order.\n\n### 1. `_ids_seen` is never defined, so every new order crashes (NameError)\nThe diff swaps `self.id = next(_ids)` (`shop/orders.py:12`) for `len(_ids_seen)` and `_ids_seen.append(...)`. Nothing in the diff defines `_ids_seen`, and nothing else in the repo does either; the old `_ids = itertools.count(1000)` at line 5 is still there but no longer used. So `Order(cart)` raises `NameError` every time. That breaks `tests/test_orders.py` (both tests call `Order(cart)`) and order creation in `shop/cli.py`.\n\n### 2. Even with `_ids_seen = []` added, the ID scheme is wrong\n- **IDs change range.** IDs used to start at 1000; now they start at 0. Any order file written before the change already holds IDs from 1000 up. New orders will eventually reach those same numbers and collide with them.\n- **A collision silently deletes an order.** `Store.save_order` (`shop/storage.py:17`) first removes any row with the same `id`, then appends the new one. A repeated ID therefore overwrites a different customer's saved order with no error.\n- **Not thread-safe.** Reading `len(...)` and then calling `append(...)` are two separate steps. Two threads creating orders at once can both read the same length and get the same ID. `next(itertools.count())` hands out each number exactly once.\n- **Memory grows forever.** The list keeps every ID ever issued, just so it can be counted. The counter used constant memory.\n\n### 3. `ALLOWED.get(self.state, STATES)` lets an unknown state move anywhere\nBefore the change, an order in a state missing from `ALLOWED` (a typo, a bad value loaded from storage, or `order.state` set by hand) raised `KeyError`, so a bad move was refused. Now the fallback is `STATES`, the list of every state, so an order in an unrecognised state can move to any of them, including back to `\"new\"` or straight to `\"shipped\"`. That turns a loud failure into silently accepting a bad move. It also changes nothing for valid states, because all four are already keys in `ALLOWED`. To handle unknown states, the fallback should be an empty set (`ALLOWED.get(self.state, set())`), so the move is refused with the existing `ValueError`. Better still, check the state explicitly.\n\nMinor: `_ids` and `import itertools` are now unused.",
+  "ttft_ms": 1480,
+  "type": "result",
+  "duration_ms": 21067,
+  "uuid": "68735ab8-a734-48bf-b16e-3736e9302b26",
+  "ttft_stream_ms": 1200,
+  "time_to_request_ms": 467,
+  "first_content_frame_ms": 1201,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.2"
+}

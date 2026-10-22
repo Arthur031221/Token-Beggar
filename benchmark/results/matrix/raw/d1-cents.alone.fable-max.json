@@ -1,0 +1,110 @@
+{
+ "task": "d1-cents",
+ "class": "debugging",
+ "arm": "alone",
+ "rep": "fable-max",
+ "top": "claude-fable-5-1",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 101282,
+  "stop_reason": "end_turn",
+  "session_id": "b2c55548-8c40-4e95-b843-faf5d346e9b0",
+  "total_cost_usd": 0.8190027499999999,
+  "usage": {
+   "input_tokens": 194,
+   "cache_creation_input_tokens": 21640,
+   "cache_read_input_tokens": 176451,
+   "output_tokens": 6803,
+   "output_tokens_details": {
+    "thinking_tokens": 2857
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 21640,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 507,
+     "cache_read_input_tokens": 33758,
+     "cache_creation_input_tokens": 672,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 672
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 194,
+    "outputTokens": 6803,
+    "cacheReadInputTokens": 176451,
+    "cacheCreationInputTokens": 21640,
+    "webSearchRequests": 0,
+    "costUSD": 0.8190027499999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 2857,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 26,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Fixed and verified. The quote command now prints 27.06 and all tests pass.\n\n**Root cause:** `to_cents` in `shop/money.py:9` padded the fractional part on the wrong side. It used `rjust`, which turns the fraction \"5\" into \"05\", so \"12.5\" was read as 12 dollars and 5 cents (1205). The quote then computed 2 \u00d7 1205 plus 8.25% tax, which comes out to exactly the wrong 26.09 you saw. Prices with two decimals like \"12.50\" were unaffected, which is why the existing tests never caught it.\n\n**Fix:** changed the padding to `ljust`, so \"5\" becomes \"50\" and \"12.5\" parses as 1250 cents. I also noted the intent in the docstring and a one-line comment.\n\n**Tests:** I added `tests/test_money.py` with regression cases for the one-decimal parse, plus coverage for two decimals, no decimals, the too-many-decimals error, and the `fmt` and `percent` helpers. The full suite runs 12 tests and passes:\n\n```\npython3 -m unittest discover -s tests -t .\nRan 12 tests in 0.001s\nOK\n```\n\n**One aside, not changed:** a price with no whole part such as \".5\" still raises a `ValueError` because the empty string before the dot is passed to `int`. That is a separate pre-existing edge case, not the cause of this bug, so I left it alone.\n\nThe changes are uncommitted in the working tree: the one-line fix in `shop/money.py` and the new test file.",
+  "ttft_ms": 5131,
+  "type": "result",
+  "duration_ms": 102550,
+  "uuid": "dd4bfaaf-640c-44ed-952b-876079996684",
+  "ttft_stream_ms": 3163,
+  "time_to_request_ms": 769,
+  "first_content_frame_ms": 3163,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 5 +++--\n 1 file changed, 3 insertions(+), 2 deletions(-)\n",
+ "workdir": "d1-cents.alone.fable-max"
+}

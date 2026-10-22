@@ -14,11 +14,11 @@ cd benchmark && python3 selftest.py
 
 ## Changing the router
 
-The router is only worth having if it saves money without changing the answer. So a change to `data/routes.json`, the card text or the skill needs a benchmark run before and after:
+The router is only worth having if it saves money without changing the answer. So a change to `data/profiles.json`, the card text or the skill needs a benchmark run before and after:
 
 ```
 cd benchmark
-python3 run.py --top opus --effort high --arms beggar --force
+python3 run.py --top opus --effort high --arms alone,dynamic --force
 python3 score.py && python3 report.py
 ```
 

@@ -1,0 +1,126 @@
+{
+ "task": "c2-split",
+ "class": "routine_code",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 27515,
+  "stop_reason": "end_turn",
+  "session_id": "ad9b8f03-1e98-4f01-9307-b9e24a4b5deb",
+  "total_cost_usd": 0.10952390000000001,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6616,
+   "cache_read_input_tokens": 34294,
+   "output_tokens": 1221,
+   "output_tokens_details": {
+    "thinking_tokens": 119
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6616,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 400,
+     "cache_read_input_tokens": 19709,
+     "cache_creation_input_tokens": 1492,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1492
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1221,
+    "cacheReadInputTokens": 34294,
+    "cacheCreationInputTokens": 6616,
+    "webSearchRequests": 0,
+    "costUSD": 0.0842228,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 119,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1379,
+    "cacheReadInputTokens": 26176,
+    "cacheCreationInputTokens": 3551,
+    "webSearchRequests": 0,
+    "costUSD": 0.0253011,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 36,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `split(cents: int, parts: int) -> list[int]` to `shop/money.py`. The full test suite passes: `python3 -m unittest discover -s tests -t .` ran 13 tests, OK. A worker agent made the change and ran the suite; I haven't re-read the code myself.\n\n- **Behaviour:** it returns `parts` integers that add up to `cents`, with the leftover cents going one each to the first elements. For example, `split(10, 3)` gives `[4, 3, 3]`. A `parts` value below 1 raises `ValueError`.\n- **Negative amounts:** you didn't say how these should work, so I made a call. `split` splits the absolute value and puts the minus sign back on each element, so `split(-10, 3)` gives `[-4, -3, -3]`. That matches how the existing `fmt` handles negatives. Without this, Python's rounding would put the leftover cents on the wrong elements for negative amounts.\n- **Tests:** the new file is `tests/test_money.py`, written with `unittest` like the other tests. It covers an even split, leftover cents, `parts=1`, `cents=0`, negative cents, and `ValueError` for `parts` of zero or below.",
+  "ttft_ms": 3146,
+  "type": "result",
+  "duration_ms": 29074,
+  "uuid": "a5c9529b-369c-4a09-a97d-6081f1b4e249",
+  "ttft_stream_ms": 2164,
+  "time_to_request_ms": 516,
+  "first_content_frame_ms": 2164,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 13 +++++++++++++\n 1 file changed, 13 insertions(+)\n",
+ "workdir": "c2-split.dynamic.2"
+}

@@ -1,0 +1,127 @@
+{
+ "task": "f1-shipping",
+ "class": "multi_file",
+ "arm": "final-no-bulk-agy",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 61925,
+  "stop_reason": "end_turn",
+  "session_id": "1d7523c9-cc34-4389-ad94-be1cc6be4089",
+  "total_cost_usd": 0.21845530000000002,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 9007,
+   "cache_read_input_tokens": 32668,
+   "output_tokens": 1662,
+   "output_tokens_details": {
+    "thinking_tokens": 264
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9007,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 694,
+     "cache_read_input_tokens": 19878,
+     "cache_creation_input_tokens": 1919,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1919
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1662,
+    "cacheReadInputTokens": 32668,
+    "cacheCreationInputTokens": 9007,
+    "webSearchRequests": 0,
+    "costUSD": 0.1118456,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 264,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 5037,
+    "cacheReadInputTokens": 91617,
+    "cacheCreationInputTokens": 18820,
+    "webSearchRequests": 0,
+    "costUSD": 0.1066097,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 413,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Orders now include shipping, and the full test suite passes (`python3 -m unittest discover`: 11 tests, all OK). Nothing is committed.\n\n**What changed**\n- **`shop/orders.py`:** `Order(cart, carrier=None, weight=0, zone='local')` looks up the carrier in the `shop/carriers` registry to get `shipping_cents`. With no carrier it's 0. `total_cents` is now items (after the existing bulk discount) plus tax plus shipping, so shipping is not taxed. An unknown carrier name raises `KeyError`, which comes from the registry's own lookup.\n- **`shop/storage.py`:** `Store.save_order` saves the amount as `'shipping'`. When loading, older saved orders that have no `'shipping'` get 0.\n- **`shop/reports.py`:** unchanged. It adds up the saved `total`, which already includes shipping, so shipping isn't counted twice.\n- **`tests/test_orders.py`:** new tests for no carrier, a rate from the registry, the unknown-carrier error, saving `'shipping'`, and the report with both new orders and older orders that have no `'shipping'`.\n\n**Decision for you:** the Maple carrier's rate function takes weight in grams, while the other 19 carriers take kilograms. To keep `weight` in kg everywhere, `MapleCarrier` in `shop/carriers/maple.py` now has a `weight_unit = \"g\"` setting, and `Order` multiplies the weight by 1000 for it. That's a change to a carrier file, so check it's acceptable. The other option is to change Maple itself to take kg.\n\nShould Order apply tax to shipping? I left it untaxed; if your tax rules require taxing it, that's a small change.",
+  "ttft_ms": 2398,
+  "type": "result",
+  "duration_ms": 63744,
+  "uuid": "dfd04e7d-ed46-44fb-b19d-9d5936ae84af",
+  "ttft_stream_ms": 918,
+  "time_to_request_ms": 241,
+  "first_content_frame_ms": 918,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/maple.py |  1 +\n shop/orders.py         | 19 +++++++++++++++++--\n shop/storage.py        |  7 +++++--\n tests/test_orders.py   | 46 ++++++++++++++++++++++++++++++++++++++++++++++\n 4 files changed, 69 insertions(+), 4 deletions(-)\n",
+ "workdir": "f1-shipping.final-no-bulk-agy.1",
+ "ledger": []
+}

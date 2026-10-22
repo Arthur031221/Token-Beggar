@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 import fixture
-from tasks import TASKS
+from tasks import ALL as TASKS
 
 bad = 0
 for task in TASKS:

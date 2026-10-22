@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16737,
+  "stop_reason": "end_turn",
+  "session_id": "11ddf335-402b-4fe3-a61e-34367c85144e",
+  "total_cost_usd": 0.0754096,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5530,
+   "cache_read_input_tokens": 34268,
+   "output_tokens": 1215,
+   "output_tokens_details": {
+    "thinking_tokens": 501
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5530,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1085,
+     "cache_read_input_tokens": 19682,
+     "cache_creation_input_tokens": 434,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 434
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1215,
+    "cacheReadInputTokens": 34268,
+    "cacheCreationInputTokens": 5530,
+    "webSearchRequests": 0,
+    "costUSD": 0.0754096,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 501,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read `shop/cache.py`. Individual dict operations are atomic, so concurrent use won't crash it. The problems are logical races and memory growth.\n\n**Problems**\n\n1. **Memory grows forever.** Expired entries are only replaced, never removed. Every SKU ever requested stays in `_data` for the life of the process, which in a long-running service is a slow memory leak.\n\n2. **Many threads load the same SKU at once.** `get` checks the cache, then calls the loader, with no coordination between threads. When a popular SKU expires, every thread that misses at that moment calls `loader` at the same time and floods the backend.\n\n3. **`invalidate` can be undone by a load already in progress.** Thread A starts loading the old price. Thread B updates the price and calls `invalidate`. Thread A then writes the old price back, and it is served for a full `ttl`.\n\n4. **The timestamp is taken after the load finishes.** If the loader is slow, the entry looks newer than its data and lives longer than `ttl`.\n\n5. **Loader failures are retried on every call.** Exceptions are never cached, so when the backend is down each request hits it again with no backoff.\n\n**Fix I'd choose**\n\n- Guard `_data` with one `threading.Lock`, and never call `loader` while holding it.\n- Load each key only once at a time: the first thread to miss records an in-flight Future for that key, and later threads wait on that Future instead of calling the loader.\n- Keep a version counter per key. `invalidate` increments it, and a finished load stores its value only if the version hasn't changed since the load began.\n- Take the timestamp before calling `loader`.\n- Store entries in an `OrderedDict` with a `maxsize` and evict the least recently used. Also drop expired entries when they are found.\n- Optionally, cache failures for a few seconds so a down backend isn't hit on every request.",
+  "ttft_ms": 2343,
+  "type": "result",
+  "duration_ms": 17341,
+  "uuid": "f96f0b15-b213-4047-8259-a338cb73a22e",
+  "ttft_stream_ms": 2127,
+  "time_to_request_ms": 180,
+  "first_content_frame_ms": 2128,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.2"
+}

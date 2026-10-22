@@ -1,0 +1,111 @@
+{
+ "task": "h6-partial",
+ "class": "design",
+ "arm": "v020",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 30011,
+  "stop_reason": "end_turn",
+  "session_id": "36a27788-10e2-4e3a-b2cd-fb0bab32217a",
+  "total_cost_usd": 0.1489928,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11617,
+   "cache_read_input_tokens": 76024,
+   "output_tokens": 2041,
+   "output_tokens_details": {
+    "thinking_tokens": 827
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11617,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1537,
+     "cache_read_input_tokens": 23628,
+     "cache_creation_input_tokens": 779,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 779
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2041,
+    "cacheReadInputTokens": 76024,
+    "cacheCreationInputTokens": 11617,
+    "webSearchRequests": 0,
+    "costUSD": 0.1489928,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 827,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Design: partial shipments and returns\n\n**What changes**\n\n- **`shop/orders.py`**: Turn `Order.lines` from tuples into line records holding `ordered`, `shipped` and `returned` quantities, plus the amount actually charged for that line. Add `ship({sku: qty})` and `return_items({sku: qty})`, and stop letting `move()` set the state directly. The state should follow from the quantities: `paid \u2192 partially_shipped \u2192 shipped \u2192 partially_returned \u2192 returned`. Block `cancelled` once anything has shipped.\n- **`shop/pricing.py`**: Add a refund calculation. Refunds must be a share of what the customer was actually charged, not a new price. Returning 3 of 10 items at today's price would drop the bulk discount and refund the wrong amount.\n- **`shop/storage.py`**: `save_order` saves only the totals and state today. The lines aren't saved at all. Save the lines, shipments and refunds, and fill in defaults when loading old rows that lack these fields.\n- **`shop/reports.py`**: `sales_by_customer` counts only `paid` and `shipped` orders. Make it include the new states and subtract refunds.\n- **Carriers**: `label(order_id)` gives one label per order, and there are 20 carrier files. Don't change all 20: pass in a shipment ID instead. That ID needs its own number range so it can't produce the same label as an existing order.\n- **`shop/cli.py`**, **tests**: Add `ship` and `return` commands, and tests for each new state change and refund amount.\n\n**Main risks**\n\n1. **Rounding drift.** Tax is rounded once for the whole cart (`percent` rounds half up). Rounding each return separately can make the refunds add up to more or less than the order total. Fix: work out the refund from the total returned so far, minus what has already been refunded.\n2. **ID collisions.** `_ids` restarts at 1000 every time the program starts, so IDs repeat across runs. If shipments copy this pattern, labels will repeat too.\n3. **Old data.** Existing saved orders have no line data, so returns can't be calculated for them.\n4. **Behaviour change.** `shipped` stops being a final state, which breaks `test_state_flow` and anything else that relies on it.",
+  "ttft_ms": 2843,
+  "type": "result",
+  "duration_ms": 30354,
+  "uuid": "5dac1ba7-3e86-423d-9419-440a5176c652",
+  "ttft_stream_ms": 2202,
+  "time_to_request_ms": 175,
+  "first_content_frame_ms": 2202,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h6-partial.v020.3",
+ "ledger": []
+}

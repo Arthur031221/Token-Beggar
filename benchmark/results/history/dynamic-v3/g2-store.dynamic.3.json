@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 12624,
+  "stop_reason": "end_turn",
+  "session_id": "fbc5b064-9df4-45b4-a068-6063d57f26a4",
+  "total_cost_usd": 0.085063,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6524,
+   "cache_read_input_tokens": 55435,
+   "output_tokens": 1088,
+   "output_tokens_details": {
+    "thinking_tokens": 69
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6524,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 743,
+     "cache_read_input_tokens": 20839,
+     "cache_creation_input_tokens": 270,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 270
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1088,
+    "cacheReadInputTokens": 55435,
+    "cacheCreationInputTokens": 6524,
+    "webSearchRequests": 0,
+    "costUSD": 0.085063,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 69,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move `shop/storage.py` to SQLite in WAL mode, behind the same `Store` interface.**\n\n**Why the current design breaks**\n- **Lost writes:** `save_order` reads the whole JSON file, changes it and rewrites it, with no locking. If both writer processes save at once, the last write silently drops the other one's order.\n- **Corruption:** `write_text` isn't atomic. A crash or a concurrent read mid-write can leave the file truncated or unparseable, and then `load()` fails for every order.\n- **Cost:** every save re-parses and rewrites all orders. At 100k orders that's roughly 10 MB per write, so the work grows as O(n\u00b2) over the store's life.\n\n**Why SQLite**\n- It ships with Python and needs no server.\n- Transactions are atomic and survive crashes.\n- In WAL mode, two writers queue for the lock (set `busy_timeout`) instead of overwriting each other, and readers aren't blocked.\n- Saving becomes one `INSERT \u2026 ON CONFLICT(id) DO UPDATE` on a table keyed by `id`.\n- 100k rows is small for SQLite. Postgres only becomes worth it if writers move to separate machines or you need many concurrent writers.\n\n**Migration path**\n1. **Freeze the interface.** Keep `Store.load()` and `save_order()`. The only caller outside the module is `shop/cli.py:26`, so the change stays contained. Add a test that saves and reloads an order, plus one with two processes writing concurrently.\n2. **Add `SqliteStore`** with an `orders(id PRIMARY KEY, customer, total, tax, state)` table. Store money as integer cents, as now.\n3. **Write a one-off import script.** It reads the JSON file, inserts all rows in one transaction, and checks that the row count and the sums of `total` and `tax` match.\n4. **Cut over.** Stop the writers, run the import, switch the code to `SqliteStore`, and restart. Keep the JSON file read-only as a rollback.\n5. **Later:** add indexes for report queries (e.g. on `state` and `customer`) and have `reports` query SQL rather than loading every row.",
+  "ttft_ms": 1336,
+  "type": "result",
+  "duration_ms": 13315,
+  "uuid": "03cc5da3-b533-401b-b46c-fb0472f69131",
+  "ttft_stream_ms": 906,
+  "time_to_request_ms": 264,
+  "first_content_frame_ms": 907,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.3"
+}

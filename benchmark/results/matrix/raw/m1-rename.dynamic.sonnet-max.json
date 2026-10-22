@@ -1,0 +1,131 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "dynamic",
+ "rep": "sonnet-max",
+ "top": "claude-sonnet-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 30176,
+  "stop_reason": "end_turn",
+  "session_id": "9e14a41e-630d-4d79-a680-b0b4992f0dc9",
+  "total_cost_usd": 0.07173405,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 968,
+   "cache_read_input_tokens": 21615,
+   "output_tokens": 990,
+   "output_tokens_details": {
+    "thinking_tokens": 704
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 968,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 990,
+     "cache_read_input_tokens": 21615,
+     "cache_creation_input_tokens": 968,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 968
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 2590,
+    "cacheReadInputTokens": 54036,
+    "cacheCreationInputTokens": 9793,
+    "webSearchRequests": 0,
+    "costUSD": 0.07048760000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1532,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1251,
+    "cacheReadInputTokens": 26215,
+    "cacheCreationInputTokens": 2864,
+    "webSearchRequests": 0,
+    "costUSD": 0.00124645,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 90,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjidt2c-2bbfd9e4"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`calc_total` is now `order_total` everywhere in the repo, and all 6 tests pass.\n\n- **Files changed:**\n  - `shop/pricing.py` (the definition)\n  - `shop/orders.py` and `shop/cli.py` (import and call)\n  - `tests/test_orders.py` and `tests/test_pricing.py` (import and call)\n- **Checks:** `order_total` didn't exist before, so there was no name collision. No longer identifiers like `calc_total_tax` contained the old name, and no filenames needed renaming. A grep for `calc_total` outside `.git` now finds nothing.\n- **Tests:** the worker ran `python3 -m unittest discover -s tests -t .` from the repo root. It reported 6 tests, all OK. I didn't re-run them myself.\n\nNothing is committed; the changes are in the working tree.",
+  "ttft_ms": 7373,
+  "type": "result",
+  "duration_ms": 8992,
+  "uuid": "f3d0e704-b032-4543-b910-64edfac1b93c",
+  "ttft_stream_ms": 2303,
+  "time_to_request_ms": 387,
+  "first_content_frame_ms": 2303,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.dynamic.sonnet-max"
+}

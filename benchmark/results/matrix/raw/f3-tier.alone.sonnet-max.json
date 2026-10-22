@@ -1,0 +1,110 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": "sonnet-max",
+ "top": "claude-sonnet-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 224939,
+  "stop_reason": "end_turn",
+  "session_id": "32c72642-87a0-41dd-a487-e93ca3367d96",
+  "total_cost_usd": 0.5967629,
+  "usage": {
+   "input_tokens": 30,
+   "cache_creation_input_tokens": 50830,
+   "cache_read_input_tokens": 629629,
+   "output_tokens": 33042,
+   "output_tokens_details": {
+    "thinking_tokens": 23315
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 50830,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 882,
+     "cache_read_input_tokens": 62865,
+     "cache_creation_input_tokens": 755,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 755
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 30,
+    "outputTokens": 33042,
+    "cacheReadInputTokens": 629629,
+    "cacheCreationInputTokens": 50830,
+    "webSearchRequests": 0,
+    "costUSD": 0.5967629,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 23315,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 34,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and all 19 tests pass: the 6 that were already there plus 13 new ones. I haven't committed anything.\n\n- **`Cart`** has a new `tier` field, defaulting to `\"standard\"`.\n- **`calc_total` and `calc_tax`**: gold takes 10% off the subtotal, silver 5%, and any other value takes nothing. The discount comes off the whole subtotal, taxable or not, and the tax is then worked out on the discounted taxable amount.\n- **`Order`** gets the discounted `total_cents` and `tax_cents` through those two functions. I also made it record `tier`, the same way it copies `customer`.\n- **`quote --tier`** defaults to `standard` and accepts any value. An unrecognised one such as `platinum` gets no discount instead of an error.\n\nFor example, `quote --tier gold a:20.00:1` prints `19.49`, where the same quote without the option prints `21.65`.\n\nChoices you may want to check:\n- **Shared tax calculation:** `calc_total` now calls `calc_tax` instead of repeating its taxable-sum expression. That way the total and `Order.tax_cents` can't disagree. Results for existing carts are unchanged.\n- **Stacking with bulk:** the tier discount applies after the existing per-line 5% bulk discount. For ten items at 1.00 each, gold gives 8.55 before tax, not 9.00.\n- **Case-sensitive tiers:** `\"GOLD\"` counts as an unrecognised value and gets no discount.\n- **Persistence:** I did not change `Store.save_order`, so the saved JSON still has no tier. The stored totals are already the discounted ones. Say so if you want the tier saved as well.\n\n## Verification\n\n- **Hand-checked numbers:** I worked out the expected totals with exact fractions, separately from the code, before writing the tests.\n- **Mutation check:** I broke a scratch copy in seven ways and each one made at least one test fail:\n  - tax ignoring the tier\n  - discount applied after tax\n  - swapped rates\n  - `Order` ignoring the tier\n  - the CLI dropping `--tier`\n  - unknown tiers getting a discount\n  - `calc_total` skipping the discount\n- **A slip of mine:** my first edit to `cli.py` removed a space on an unrelated line. I caught it when reviewing the diff and fixed it.\n- **Existing quirk:** `python3 -m shop.cli` does nothing because `cli.py` has no `__main__` guard. That was already the case and I left it. I exercised the command through `main()`, and the new `tests/test_cli.py` does the same.",
+  "ttft_ms": 2054,
+  "type": "result",
+  "duration_ms": 226985,
+  "uuid": "2efa64a8-2df6-4101-93ba-adbd8cfd5248",
+  "ttft_stream_ms": 1964,
+  "time_to_request_ms": 67,
+  "first_content_frame_ms": 1964,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 13 +++++++++----\n tests/test_orders.py  | 12 ++++++++++++\n tests/test_pricing.py | 43 +++++++++++++++++++++++++++++++++++++++++++\n 6 files changed, 68 insertions(+), 5 deletions(-)\n",
+ "workdir": "f3-tier.alone.sonnet-max"
+}

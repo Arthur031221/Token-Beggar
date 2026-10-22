@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 21165,
+  "stop_reason": "end_turn",
+  "session_id": "5b3a4f38-217f-46d0-b8e5-2a79f7d84958",
+  "total_cost_usd": 0.0754438,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5451,
+   "cache_read_input_tokens": 34199,
+   "output_tokens": 1249,
+   "output_tokens_details": {
+    "thinking_tokens": 484
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5451,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1129,
+     "cache_read_input_tokens": 19613,
+     "cache_creation_input_tokens": 424,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 424
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1249,
+    "cacheReadInputTokens": 34199,
+    "cacheCreationInputTokens": 5451,
+    "webSearchRequests": 0,
+    "costUSD": 0.0754438,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 484,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read `shop/cache.py` (23 lines). It has no locking at all, and four things will cause trouble when many threads share it in a long-running service:\n\n1. **Memory grows forever.** Expired entries are never removed, and there's no size limit. Every SKU ever looked up stays in `_data` for the life of the process.\n   *Fix:* use an `OrderedDict` as an LRU with a `max_size`. Evict the oldest entries on insert, and drop expired entries when they're read.\n\n2. **Many threads load the same key at once (cache stampede).** When an entry is missing or expired, every thread that asks for it calls `loader` at the same time. A popular SKU expiring can flood the backend.\n   *Fix:* only one load per key at a time. Keep a map of in-progress loads (a `Future` per key). The first thread runs the loader and the others wait on its result. If the loader raises, the waiters get the same exception and the in-progress entry is cleared.\n\n3. **`invalidate` can be undone.** Thread A starts loading the old price. Thread B calls `invalidate`. Then A finishes and writes the old price back (line 18), so it is served for a full `ttl`.\n   *Fix:* give each key a version number that `invalidate` increments. The loader records the version when it starts and only stores its result if the version hasn't changed.\n\n4. **No lock around read-then-write steps.** Single dict operations are safe under the GIL, but the check, load and store sequence isn't. On free-threaded Python, nothing at all is guaranteed.\n   *Fix:* one `threading.Lock` around all reads and writes of the cache's state, released while `loader` runs so a slow backend doesn't block every thread.\n\nOne smaller issue: the timestamp is taken after the load finishes, so a slow loader makes the value live longer than `ttl`. Take it before calling `loader`.\n\n**What I'd choose:** one lock guarding a size-limited LRU, one load per key at a time, version numbers for invalidation, and timestamps taken before the load.",
+  "ttft_ms": 3907,
+  "type": "result",
+  "duration_ms": 21838,
+  "uuid": "d5a63ab3-9963-42b1-8d38-5e9d1935a6df",
+  "ttft_stream_ms": 3770,
+  "time_to_request_ms": 189,
+  "first_content_frame_ms": 3770,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.3"
+}

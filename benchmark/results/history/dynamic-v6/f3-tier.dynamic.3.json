@@ -1,0 +1,112 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 58965,
+  "stop_reason": "end_turn",
+  "session_id": "90131a82-49bb-4ddc-9d36-7e621a963d4f",
+  "total_cost_usd": 0.3223904,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 10861,
+   "cache_read_input_tokens": 103031,
+   "output_tokens": 2727,
+   "output_tokens_details": {
+    "thinking_tokens": 634
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10861,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 792,
+     "cache_read_input_tokens": 24881,
+     "cache_creation_input_tokens": 566,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 566
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 20,
+    "outputTokens": 6131,
+    "cacheReadInputTokens": 169387,
+    "cacheCreationInputTokens": 26646,
+    "webSearchRequests": 0,
+    "costUSD": 0.3223904,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1118,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've added customer tiers. The full test suite passes (13 tests, including 7 new ones), and nothing is committed.\n\n**What changed:**\n- **`shop/models.py`**: `Cart` now has `tier: str = \"standard\"`. I added it as the last field so existing code that creates a cart without naming the fields still works.\n- **`shop/pricing.py`**: The discount rates live in one table, `TIER_DISCOUNTS` (gold 10%, silver 5%), read through `tier_discount_rate()`; any other tier gets 0%. There's a new `calc_subtotal()` that returns the discounted subtotal.\n  - `calc_tax` now discounts the taxable amount before applying tax.\n  - `calc_total` is now the discounted subtotal plus tax.\n- **`shop/orders.py`**: `Order` gets its totals from `calc_total` and `calc_tax`, so the discount reaches it without extra code. It now also stores `tier`.\n- **`shop/cli.py`**: `quote --tier gold|silver|...`, defaulting to `standard`.\n- **`tests/test_tiers.py`**: tests with exact amounts for the default tier, gold, silver, an unknown tier, tax on the discounted amount (including a cart with an untaxed item), `Order`, and the `--tier` option.\n\n**Things to know:**\n- `calc_total` used to calculate tax itself instead of calling `calc_tax`. That copy has been removed, so the total and the tax figure can't disagree.\n- Amounts are whole cents and round half up. The discount is rounded separately on the full subtotal and on the taxable part, so a cart with untaxed items could be a cent off from discounting once and splitting afterwards.\n- I checked `cache.py`, `reports.py` and `storage.py`: none of them calculate totals or tax, so nothing there needed changing.\n\nTest command: `python3 -m unittest discover -s tests -t .`. The runs left untracked `__pycache__/` folders in `shop/` and `tests/`, which you may want to delete or add to `.gitignore`.",
+  "ttft_ms": 3280,
+  "type": "result",
+  "duration_ms": 60511,
+  "uuid": "cdf8919e-fadb-4e14-92be-23efab685e85",
+  "ttft_stream_ms": 1199,
+  "time_to_request_ms": 271,
+  "first_content_frame_ms": 1199,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py     |  3 ++-\n shop/models.py  |  1 +\n shop/orders.py  |  1 +\n shop/pricing.py | 28 ++++++++++++++++++++++------\n 4 files changed, 26 insertions(+), 7 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.3"
+}

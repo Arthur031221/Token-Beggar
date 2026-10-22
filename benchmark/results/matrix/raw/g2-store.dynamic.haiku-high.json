@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": "haiku-high",
+ "top": "claude-haiku-5-5",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 13785,
+  "stop_reason": "end_turn",
+  "session_id": "922fa703-56c7-47f8-95e4-b8a83c357a4d",
+  "total_cost_usd": 0.0032165400000000004,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 8206,
+   "cache_read_input_tokens": 33144,
+   "output_tokens": 2487,
+   "output_tokens_details": {
+    "thinking_tokens": 1755
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8206,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 2140,
+     "cache_read_input_tokens": 20354,
+     "cache_creation_input_tokens": 642,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 642
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 2487,
+    "cacheReadInputTokens": 33144,
+    "cacheCreationInputTokens": 8206,
+    "webSearchRequests": 0,
+    "costUSD": 0.0032165400000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1755,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the JSON file with SQLite (stdlib `sqlite3`), keeping the `Store` interface.**\n\n**Why**\n- `save_order` is a read-modify-write of the whole file. With two writers, both can load the same list, and the second `write_text` silently drops the first writer's order. That is data loss, not just slowness.\n- `write_text` is not atomic. A crash mid-write, or a read during a write, leaves truncated JSON and `load()` raises.\n- Every save parses and rewrites all rows, so cost grows with total orders, not with the one being saved.\n- SQLite gives per-row writes, transactions, and cross-process locking. A primary key on `id` with an upsert replaces the filter-and-append. WAL mode lets readers proceed during writes, and a busy timeout makes the second writer wait instead of failing. 100k rows is well within its range. Postgres is overkill unless the writers move to separate hosts.\n\n**Migration path**\n1. Keep `load()` and `save_order()` signatures so callers don't change.\n2. Write a one-time importer that reads the JSON and inserts into an `orders` table, mapping `total` to `total_cents` and `tax` to `tax_cents` explicitly.\n3. Verify row count and per-order field equality against the JSON.\n4. Switch `Store` to the SQLite implementation behind the same interface.\n5. Run two writer processes against a copy and confirm the final count equals the number of inserts.\n6. Keep the JSON file as a read-only rollback for one release, then delete it.\n\n**Stop-gap if the switch must wait:** hold an exclusive `fcntl.flock` around load-modify-write, and write to a temp file then `os.replace`. This fixes lost updates and torn reads but keeps O(N) saves.\n\nI haven't run the race; the lost-update conclusion comes from reading the code.",
+  "ttft_ms": 2598,
+  "type": "result",
+  "duration_ms": 14195,
+  "uuid": "4859386c-c8cf-48b5-8f67-670572732e6d",
+  "ttft_stream_ms": 1442,
+  "time_to_request_ms": 201,
+  "first_content_frame_ms": 1442,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.haiku-high"
+}

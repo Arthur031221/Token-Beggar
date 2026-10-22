@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "sonnet-xhigh",
+ "top": "claude-sonnet-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 15184,
+  "stop_reason": "end_turn",
+  "session_id": "f12ac5e3-a5d8-46d4-87b2-ab5073ef5fdb",
+  "total_cost_usd": 0.0595293,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 9651,
+   "cache_read_input_tokens": 74493,
+   "output_tokens": 1346,
+   "output_tokens_details": {
+    "thinking_tokens": 61
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9651,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 704,
+     "cache_read_input_tokens": 21689,
+     "cache_creation_input_tokens": 752,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 752
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1346,
+    "cacheReadInputTokens": 74493,
+    "cacheCreationInputTokens": 9651,
+    "webSearchRequests": 0,
+    "costUSD": 0.0595293,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 61,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the JSON file with SQLite, using the stdlib `sqlite3` module.** It needs no new dependency and no server.\n\n**Why the current design fails**\n- `save_order` (`shop/storage.py:16-21`) reads and parses the whole file, then rewrites the whole file on every save. At 100k orders, each save is O(n) and takes tens to hundreds of milliseconds.\n- Two writers will lose data. Both read the file, each adds its own order, and the second `write_text` overwrites the first. Nothing locks the file, so it can also be truncated mid-write and read as corrupt JSON.\n- The only reader today is `cli.py:26`, which calls `load()` and passes every row to `render`.\n\n**Why SQLite**\n- Each save becomes a single row upsert (`INSERT \u2026 ON CONFLICT(id) DO UPDATE`) instead of a rewrite of the whole file.\n- WAL mode plus a busy timeout serializes two writer processes safely.\n- Writes are atomic, so a crash can't leave a half-written file.\n- A Postgres server is unnecessary for two local writers.\n\n**Migration path**\n1. Keep the `Store` interface (`load`, `save_order`) unchanged, so `cli.py` and `reports.py` don't need to change. Put the table behind that interface with `id` as the primary key.\n2. Write a one-off importer that reads the old JSON and inserts the rows in a single transaction. Run it with writers stopped, and check that the row count matches.\n3. Keep the JSON file as a backup until the new store has run cleanly for a while.\n4. Later, add a `report` path that aggregates in SQL (`GROUP BY customer`) instead of calling `load()`. Loading 100k rows into a list works but isn't needed.\n5. Add a test with two processes writing concurrently. None exists today.\n\n**Rejected alternatives**\n- A file lock around the JSON file fixes the lost writes but not the O(n) cost per save.\n- JSON Lines (one order per line) makes appends cheap but updating an existing order still needs a rewrite, and it still needs locking.",
+  "ttft_ms": 3412,
+  "type": "result",
+  "duration_ms": 15471,
+  "uuid": "4669fc74-f564-455c-80a0-4d43ae7e73f3",
+  "ttft_stream_ms": 3217,
+  "time_to_request_ms": 210,
+  "first_content_frame_ms": 3218,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.sonnet-xhigh"
+}

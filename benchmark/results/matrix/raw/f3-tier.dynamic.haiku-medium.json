@@ -1,0 +1,117 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": "haiku-medium",
+ "top": "claude-haiku-5-5",
+ "effort": "medium",
+ "result": {
+  "duration_api_ms": 36594,
+  "stop_reason": "end_turn",
+  "session_id": "55d64f0a-e4e4-4a19-a1ed-a5eb0bb94fd4",
+  "total_cost_usd": 0.008020115,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 1054,
+   "cache_read_input_tokens": 21863,
+   "output_tokens": 666,
+   "output_tokens_details": {
+    "thinking_tokens": 249
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1054,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 666,
+     "cache_read_input_tokens": 21863,
+     "cache_creation_input_tokens": 1054,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1054
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 7061,
+    "cacheReadInputTokens": 109454,
+    "cacheCreationInputTokens": 21070,
+    "webSearchRequests": 0,
+    "costUSD": 0.008020115,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2011,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjj5v4i-35ea42dc"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are implemented and the full test suite passes: `python3 -m unittest discover -s tests -t .` ran 14 tests, all OK (6 existing, 8 new). I haven't re-read the changes myself; this is the worker's reported output.\n\n- **`shop/models.py`**: `Cart.tier` defaults to `\"standard\"`.\n- **`shop/pricing.py`**: gold takes 10% off and silver 5%, any other value nothing. A shared helper applies the discount, and both `calc_total` and the tax calculation use it, so tax is computed on the discounted amount.\n- **`shop/orders.py`**: `Order` copies the cart's tier.\n- **`shop/cli.py`**: `quote --tier`, defaulting to `standard`.\n- **Tests**: `tests/test_pricing.py` and `tests/test_orders.py` cover the default, gold, silver, unknown tier, discount-before-tax, and Order pickup. `tests/test_cli.py` is new and covers `quote` with no flag, `--tier gold`, and `--tier silver`.\n\nNothing is committed. Running the tests left untracked `__pycache__/` directories under `shop/` and `tests/`. I can delete those or commit the change if you want.",
+  "ttft_ms": 2716,
+  "type": "result",
+  "duration_ms": 4353,
+  "uuid": "4a7e818d-4b2d-4188-957d-7d3bfd67bed8",
+  "ttft_stream_ms": 1396,
+  "time_to_request_ms": 229,
+  "first_content_frame_ms": 1397,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 20 +++++++++++++++++---\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 23 +++++++++++++++++++++++\n 6 files changed, 52 insertions(+), 4 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.haiku-medium"
+}

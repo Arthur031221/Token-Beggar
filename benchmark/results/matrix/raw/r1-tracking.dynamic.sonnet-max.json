@@ -1,0 +1,126 @@
+{
+ "task": "r1-tracking",
+ "class": "reading",
+ "arm": "dynamic",
+ "rep": "sonnet-max",
+ "top": "claude-sonnet-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 68097,
+  "stop_reason": "end_turn",
+  "session_id": "51ffb406-3b7a-497a-b837-e4350994e5c3",
+  "total_cost_usd": 0.136583845,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 15701,
+   "cache_read_input_tokens": 83498,
+   "output_tokens": 6280,
+   "output_tokens_details": {
+    "thinking_tokens": 4875
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 15701,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 21,
+     "cache_read_input_tokens": 26869,
+     "cache_creation_input_tokens": 1622,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1622
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 6280,
+    "cacheReadInputTokens": 83498,
+    "cacheCreationInputTokens": 15701,
+    "webSearchRequests": 0,
+    "costUSD": 0.1339698,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 4875,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1727,
+    "cacheReadInputTokens": 34787,
+    "cacheCreationInputTokens": 11215,
+    "webSearchRequests": 0,
+    "costUSD": 0.002614045,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 243,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Delta, Kestrel, Onyx, Tundra",
+  "ttft_ms": 28311,
+  "type": "result",
+  "duration_ms": 70423,
+  "uuid": "953e1419-ffd6-4136-9a4a-c2fdd95c0dde",
+  "ttft_stream_ms": 7515,
+  "time_to_request_ms": 168,
+  "first_content_frame_ms": 7515,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r1-tracking.dynamic.sonnet-max"
+}

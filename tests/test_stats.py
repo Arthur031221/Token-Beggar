@@ -42,10 +42,10 @@ class StatsTests(Isolated):
         self.assertAlmostEqual(row["worker_usd"], (1000 * 0.1 + 1000 * 0.5) / 1e6)
         self.assertAlmostEqual(row["chat_usd"], (1000 * 4.0 + 1000 * 20.0) / 1e6)
 
-    def test_cached_tokens_use_the_cache_multipliers(self):
+    def test_cached_tokens_use_the_cache_prices(self):
         self.project("s", [spawn("c1"), finished("c1", cache_read_input_tokens=1000, cache_creation_input_tokens=1000)])
         row = stats.summarize(stats.transcripts(7))["workers"]["haiku"]
-        self.assertAlmostEqual(row["worker_usd"], 1000 * (0.1 + 1.25) * 0.1 / 1e6)
+        self.assertAlmostEqual(row["worker_usd"], 1000 * (0.01 + 0.2) / 1e6)
 
     def test_counts_each_agent_once_and_ignores_other_agents(self):
         items = [spawn("c1"), finished("c1"), finished("c1"), finished("c1", agent="b", agent_type="Explore")]

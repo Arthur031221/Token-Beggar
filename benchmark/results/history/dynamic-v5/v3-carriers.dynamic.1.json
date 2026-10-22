@@ -1,0 +1,110 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 25208,
+  "stop_reason": "end_turn",
+  "session_id": "a80a3390-eafe-4162-a19b-7f4bede74c0e",
+  "total_cost_usd": 0.1648446,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 13296,
+   "cache_read_input_tokens": 106783,
+   "output_tokens": 1854,
+   "output_tokens_details": {
+    "thinking_tokens": 111
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 13296,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 694,
+     "cache_read_input_tokens": 27028,
+     "cache_creation_input_tokens": 855,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 855
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1854,
+    "cacheReadInputTokens": 106783,
+    "cacheCreationInputTokens": 13296,
+    "webSearchRequests": 0,
+    "costUSD": 0.1648446,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 111,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Two inconsistencies would break code that uses `REGISTRY` / `get()`. The worst is **`shop/carriers/maple.py`**.\n\n**1. `maple.py` takes weight in grams; every other carrier takes kilograms.** The 19 other modules say \"weight in kg\" and use `PER_KG` / `MAX_KG`. Maple says \"weight in grams\" and uses `PER_GRAMS = 3` and `MAX_GRAMS = 30000` (`maple.py:2`, `:8`, `:10`, `:17`, `:20`). The method signature is the same, `rate(self, weight: float, zone=\"local\")`, so nothing fails visibly. A caller passing kg to every carrier through the registry gets this:\n- `get(\"maple\").rate(5)` is read as 5 g and returns about 509 cents. A 5 kg parcel should cost about 15,494 cents, so Maple is roughly 30\u00d7 too cheap and will win any cheapest-carrier comparison.\n- Its weight limit is effectively 30,000 kg instead of 30 kg, so overweight parcels are accepted when they should raise `ValueError`.\n\n**2. Four carriers don't have `tracking_url()`: `delta.py`, `kestrel.py`, `onyx.py` and `tundra.py`.** The other 16 define it. Calling `get(name).tracking_url(code)` on any of these four raises `AttributeError`. Each one stops right after `valid_label()`.\n\nI found nothing else. I compared every module's structure against `acme.py` with carrier names and numbers masked. The other differences are only per-carrier rates, zone factors, weight limits and label prefixes. Every module has the same three zone keys (`local`, `regional`, `national`), and every class has `name` and the same method signatures.\n\nI didn't find any code outside `shop/carriers/` that calls the registry yet, so nothing in the repo is broken today. These would hit the first caller that treats the carriers as interchangeable. I didn't edit any files.",
+  "ttft_ms": 3305,
+  "type": "result",
+  "duration_ms": 26111,
+  "uuid": "1879a77f-0ed2-4cf2-930f-7d229b31a048",
+  "ttft_stream_ms": 3075,
+  "time_to_request_ms": 257,
+  "first_content_frame_ms": 3076,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.dynamic.1"
+}

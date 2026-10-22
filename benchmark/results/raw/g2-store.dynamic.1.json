@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 21814,
+  "stop_reason": "end_turn",
+  "session_id": "bede3bb5-8fee-469d-a97d-66ea61c7f0ef",
+  "total_cost_usd": 0.0805024,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6190,
+   "cache_read_input_tokens": 54792,
+   "output_tokens": 1000,
+   "output_tokens_details": {
+    "thinking_tokens": 97
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6190,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 692,
+     "cache_read_input_tokens": 20516,
+     "cache_creation_input_tokens": 259,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 259
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1000,
+    "cacheReadInputTokens": 54792,
+    "cacheCreationInputTokens": 6190,
+    "webSearchRequests": 0,
+    "costUSD": 0.0805024,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 97,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the JSON file with SQLite in WAL mode.**\n\n**Why the current design fails.** `shop/storage.py:16` reads the whole file, rewrites the whole file, and takes no lock while doing it.\n- **Lost updates.** With two writers, both processes load the file, each adds its own order, and the second write erases the first.\n- **Torn files.** `write_text` writes in place, not atomically. A crash or a read during a write leaves a truncated, unparseable file.\n- **Cost grows with size.** At 100k orders, every save rewrites a file of roughly 10MB+. Each insert costs O(n), so filling the store costs O(n\u00b2).\n\n**Why SQLite.** It comes with Python's standard library, so there is no server to run. It handles transactions and locking between processes. WAL mode lets readers keep reading while one process writes, and `busy_timeout` makes the second writer wait instead of failing. `INSERT \u2026 ON CONFLICT(id) DO UPDATE` does what `save_order`'s \"replace by id\" does, but in O(log n). A file lock plus atomic rename would fix correctness, but it would still rewrite the whole file on every save. That's the wrong trade at this size.\n\n**Migration path:**\n1. Add a `SqliteStore` with the same interface (`load`, `save_order`). Use one `orders` table with `id` as the primary key, and an index on `customer`/`state` if reports filter on them.\n2. Write a one-time import script that reads the JSON file and inserts every row in one transaction. Then compare row counts and total cents with the source.\n3. Point `cli.py:26` (the only caller of `Store`) at the new store. Keep the old JSON file read-only as a backup.\n4. Add a test where two processes each insert N orders, then assert that 2N rows exist.\n5. Later, change `reports` to query in SQL instead of calling `load()` on every row.\n\nIf you expect many machines or heavy concurrent writing later, move to Postgres. The same interface makes that a small step.",
+  "ttft_ms": 5846,
+  "type": "result",
+  "duration_ms": 22468,
+  "uuid": "dfc20d57-cf73-4f8d-ae29-d195296f2c02",
+  "ttft_stream_ms": 5205,
+  "time_to_request_ms": 275,
+  "first_content_frame_ms": 5207,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.1"
+}

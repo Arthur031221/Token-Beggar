@@ -1,0 +1,117 @@
+{
+ "task": "d1-cents",
+ "class": "debugging",
+ "arm": "dynamic",
+ "rep": "haiku-xhigh",
+ "top": "claude-haiku-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 60755,
+  "stop_reason": "end_turn",
+  "session_id": "5e9fc41a-6f38-4a5e-897d-0330f43d6dcc",
+  "total_cost_usd": 0.013029955,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 1447,
+   "cache_read_input_tokens": 31859,
+   "output_tokens": 1039,
+   "output_tokens_details": {
+    "thinking_tokens": 566
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1447,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1039,
+     "cache_read_input_tokens": 31859,
+     "cache_creation_input_tokens": 1447,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1447
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 32,
+    "outputTokens": 11183,
+    "cacheReadInputTokens": 264868,
+    "cacheCreationInputTokens": 25983,
+    "webSearchRequests": 0,
+    "costUSD": 0.013029955,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 5679,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjif0lx-d31078d1"
+  },
+  "subagent_stats": {
+   "spawned": 2,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 2
+   },
+   "started_in_background": 2,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 2,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 2
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The bug is fixed and the tests pass. `python3 -m shop quote a:12.5:2` now prints 27.06 (run via the `-c` fallback, since there is no `__main__.py`).\n\n**Root cause:** `to_cents` in `shop/money.py` padded the fractional part with `rjust`, which pads on the left. `\"5\"` became `\"05\"`, so `12.5` parsed as 12.05 instead of 12.50. The quote came out as 26.09 instead of 27.06.\n\n**Fix:** `shop/money.py:9` now uses `ljust(2, \"0\")`.\n\n**Tests:** `python3 -m unittest discover -s tests -t .` ran 12 tests, all OK. That is the 6 existing tests plus 6 new ones in `tests/test_money.py`. The new tests cover `to_cents` for `12.5`, `12.05`, `12.50`, `12`, and `0.9`, plus a CLI check that `quote a:12.5:2` prints `27.06`. The existing suite passed before the fix too, because nothing tested a one-digit fraction. I did not open the new test file myself after the worker wrote it. The results above are from the worker's run.\n\n**Notes:**\n- pytest isn't installed, so I used unittest, which the README specifies.\n- `python3 -m shop` still fails because the package has no `__main__.py`. I left that alone; say if you want it added.\n- Nothing is committed.",
+  "ttft_ms": 3413,
+  "type": "result",
+  "duration_ms": 5141,
+  "uuid": "490a713d-15fb-449d-83b6-e0cb200c8721",
+  "ttft_stream_ms": 1025,
+  "time_to_request_ms": 100,
+  "first_content_frame_ms": 1025,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n",
+ "workdir": "d1-cents.dynamic.haiku-xhigh"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "sonnet-low",
+ "top": "claude-sonnet-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 12683,
+  "stop_reason": "end_turn",
+  "session_id": "5016ab49-76e0-426f-9d67-7aeccfd61cca",
+  "total_cost_usd": 0.0367026,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6285,
+   "cache_read_input_tokens": 31446,
+   "output_tokens": 841,
+   "output_tokens_details": {
+    "thinking_tokens": 43
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6285,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 717,
+     "cache_read_input_tokens": 18656,
+     "cache_creation_input_tokens": 419,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 419
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 841,
+    "cacheReadInputTokens": 31446,
+    "cacheCreationInputTokens": 6285,
+    "webSearchRequests": 0,
+    "costUSD": 0.0367026,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 43,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move to SQLite (WAL mode), keeping the `Store` interface.**\n\n**Why the current design fails**\n- `save_order` does a read-modify-write of the whole file with no locking. Two writers will silently lose each other's orders (last write wins).\n- `write_text` truncates the file and then writes it. A crash or a concurrent read mid-write leaves empty or partial JSON, and `load()` then raises.\n- Each save is O(n). At 100k orders that means re-parsing and re-serializing roughly 10 MB per order, and the lock-free window gets wider as the file grows.\n\n**Why SQLite**\n- It's in the standard library, needs no server, and handles multiple processes on one machine. Two writers is well within its range.\n- Transactions give you atomic upserts (`INSERT ... ON CONFLICT(id) DO UPDATE`), and a primary key on `id` replaces the filter-and-append logic.\n- WAL mode lets readers proceed during writes. Set a `busy_timeout` so the second writer waits instead of erroring.\n- Postgres would be warranted only if the writers end up on different hosts. At 100k rows that isn't needed.\n\n**Migration path**\n1. Add a SQLite-backed `Store` with the same `save_order` and `load` methods, plus a `get(id)` lookup. Callers don't change.\n2. Write a one-off import script that reads the JSON file and upserts every row in one transaction. It's idempotent, so you can safely re-run it.\n3. Stop both writers briefly, run the import, and compare row counts and spot-check totals against the JSON.\n4. Switch the configured path to the `.db` file and restart the writers.\n5. Keep the old JSON file as a backup for a release or two, then delete it.\n\n**Interim stopgap if you can't migrate yet:** take an exclusive file lock (`fcntl.flock`) around the whole read-modify-write, and write to a temp file followed by `os.replace`. That fixes lost updates and corruption but not the O(n) cost, so treat it as temporary.\n\nI'd also add an integration test that runs two processes writing concurrently and asserts that no orders are lost.",
+  "ttft_ms": 3458,
+  "type": "result",
+  "duration_ms": 12789,
+  "uuid": "20190826-d0d3-475f-ab00-65e9f8f01bf5",
+  "ttft_stream_ms": 2419,
+  "time_to_request_ms": 84,
+  "first_content_frame_ms": 2419,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.sonnet-low"
+}

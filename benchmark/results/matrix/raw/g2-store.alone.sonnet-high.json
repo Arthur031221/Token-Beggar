@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "sonnet-high",
+ "top": "claude-sonnet-5-5",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 19165,
+  "stop_reason": "end_turn",
+  "session_id": "9c7fb424-c78d-44b6-8368-09b03ebc9f25",
+  "total_cost_usd": 0.042685299999999995,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6961,
+   "cache_read_input_tokens": 50693,
+   "output_tokens": 976,
+   "output_tokens_details": {
+    "thinking_tokens": 10
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6961,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 665,
+     "cache_read_input_tokens": 19248,
+     "cache_creation_input_tokens": 503,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 503
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 976,
+    "cacheReadInputTokens": 50693,
+    "cacheCreationInputTokens": 6961,
+    "webSearchRequests": 0,
+    "costUSD": 0.042685299999999995,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 10,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the JSON file with SQLite, using the stdlib `sqlite3` module, in WAL mode.**\n\n**Why the current design fails**\n- `save_order` (`shop/storage.py:16-21`) reads the whole file, rewrites the whole file, and takes no lock. With two writers, the read-modify-write races, so one process silently overwrites the other's order. This is a correctness bug, and it exists at any order count.\n- `write_text` truncates the file before writing. A crash or a concurrent reader (`report`) can see an empty or half-written file.\n- Each save is O(n). At 100k orders that is roughly 10 MB parsed and rewritten per order, which is slow, and `indent=1` makes the file larger.\n\n**Why SQLite**\n- It gives you transactions and cross-process locking with no new dependency or server.\n- Upserts are atomic: `INSERT ... ON CONFLICT(id) DO UPDATE`.\n- WAL mode lets `report` read while a writer writes. Set `busy_timeout` so the second writer waits instead of failing.\n- 100k rows is small for SQLite. Postgres would be overkill unless you later add multiple hosts.\n\n**Migration path**\n1. Add a new `Store` backed by SQLite, with the same `load()` and `save_order()` interface. `cli.py` is the only caller, so nothing else changes. Use `id` as the primary key.\n2. Write a one-off importer that reads the old JSON and bulk-inserts it in one transaction. Run it with writers stopped, and verify that the row counts match.\n3. Keep the old JSON file as a backup for a release. Make the importer idempotent by using upserts.\n4. Later, replace `load()` with a query or iterator, so `report` doesn't pull all rows into memory.\n\n**Interim stopgap, if you can't migrate yet:** write to a temp file and `os.replace` it, under an `fcntl.flock` lock. This fixes the lost updates but not the O(n) cost.",
+  "ttft_ms": 2398,
+  "type": "result",
+  "duration_ms": 19375,
+  "uuid": "a6fa9524-3559-49e8-84ef-2f79eba56865",
+  "ttft_stream_ms": 1955,
+  "time_to_request_ms": 80,
+  "first_content_frame_ms": 1955,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.sonnet-high"
+}

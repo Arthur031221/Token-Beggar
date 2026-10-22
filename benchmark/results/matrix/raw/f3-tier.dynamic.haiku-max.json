@@ -1,0 +1,117 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": "haiku-max",
+ "top": "claude-haiku-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 330505,
+  "stop_reason": "end_turn",
+  "session_id": "5b7626fa-8f99-469f-a204-f86000c78086",
+  "total_cost_usd": 0.05990657,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 15197,
+   "cache_read_input_tokens": 107065,
+   "output_tokens": 17424,
+   "output_tokens_details": {
+    "thinking_tokens": 16228
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 15197,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 3969,
+     "cache_read_input_tokens": 41678,
+     "cache_creation_input_tokens": 5462,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 5462
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 48,
+    "outputTokens": 76387,
+    "cacheReadInputTokens": 777752,
+    "cacheCreationInputTokens": 90836,
+    "webSearchRequests": 0,
+    "costUSD": 0.05990657,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 65221,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjikwho-2ded9043"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in place, and the test suite passes: `python3 -m unittest discover -s tests -t .` ran 15 tests, OK (6 before the change). The result is from the worker's run. I did not re-run the suite or re-read the diff myself. Nothing is committed.\n\n**What changed**\n- `shop/models.py`: `Cart.tier`, default `'standard'`.\n- `shop/pricing.py`: gold 10%, silver 5%. A shared `discounted_subtotal` helper feeds both `calc_total` and the tax calculation.\n- `shop/orders.py`: `Order.tier` is copied from the cart, and the order's totals use the same discount.\n- `shop/cli.py`: `quote --tier`, default `standard`, passed into the cart.\n- Tests: new cases in `tests/test_pricing.py` and `tests/test_orders.py`, plus a new `tests/test_cli.py`. Existing expected values are unchanged.\n\n`quote --tier gold` on `widget:10.00:2 gadget:5.50:1` prints `24.84`. The worker ran it through `python3 -c` because `shop` has no `__main__` entry point, so I haven't confirmed how you normally invoke `quote`.\n\n**Decisions to confirm**\n1. **Tax only on taxable lines.** The discount reduces the whole subtotal, but tax is charged only on the discounted taxable lines. Taxing the whole discounted subtotal would break the existing `test_untaxable_item`.\n2. **Order of discounts.** The tier discount applies after any bulk discounts.\n3. **Exact match.** Only `'gold'` and `'silver'` match, so `'Gold'` gets no discount.\n4. **Persistence not changed.** `Store.save_order` in `shop/storage.py` doesn't write `tier`. Nothing in the repo calls `save_order` yet, so no saved order is affected today. If a checkout that saves orders is added, the save and load path will need `tier`. I can add that now if you want.",
+  "ttft_ms": 35330,
+  "type": "result",
+  "duration_ms": 79528,
+  "uuid": "182b874c-7d98-4776-9712-6f3f26afbfc2",
+  "ttft_stream_ms": 1348,
+  "time_to_request_ms": 127,
+  "first_content_frame_ms": 1348,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 17 +++++++++++------\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 45 ++++++++++++++++++++++++++++++++++++++++++++-\n 6 files changed, 67 insertions(+), 8 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.haiku-max"
+}

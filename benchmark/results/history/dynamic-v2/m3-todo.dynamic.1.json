@@ -1,0 +1,110 @@
+{
+ "task": "m3-todo",
+ "class": "mechanical",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 23182,
+  "stop_reason": "end_turn",
+  "session_id": "b3951743-8334-4dac-b411-cdd0073d1d02",
+  "total_cost_usd": 0.129217,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 8396,
+   "cache_read_input_tokens": 145265,
+   "output_tokens": 1647,
+   "output_tokens_details": {
+    "thinking_tokens": 311
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8396,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 254,
+     "cache_read_input_tokens": 22803,
+     "cache_creation_input_tokens": 179,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 179
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 1647,
+    "cacheReadInputTokens": 145265,
+    "cacheCreationInputTokens": 8396,
+    "webSearchRequests": 0,
+    "costUSD": 0.129217,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 311,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I deleted all 20 `# TODO(...)` comment lines under `shop/`, and all 6 tests pass.\n\n- **What changed:** Each line was line 1 of a file in `shop/carriers/` (`acme.py` through `tundra.py`). The diff is 20 files with 20 deletions and nothing added. No `TODO` text is left anywhere under `shop/`.\n- **Tests:** pytest isn't installed here, so I ran the suite with `python3 -m unittest discover`. The tests don't seem to cover the carrier files, so I also compiled the whole `shop` package to check those files are still valid Python, and they are.\n- **Cleanup:** Running things created `__pycache__` folders, which I removed. Only the 20 carrier files show as modified.",
+  "ttft_ms": 3947,
+  "type": "result",
+  "duration_ms": 24843,
+  "uuid": "bd6e6bee-a085-4dc3-aac1-90e173d49c95",
+  "ttft_stream_ms": 2052,
+  "time_to_request_ms": 258,
+  "first_content_frame_ms": 2052,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/acme.py     | 1 -\n shop/carriers/borealis.py | 1 -\n shop/carriers/cedar.py    | 1 -\n shop/carriers/delta.py    | 1 -\n shop/carriers/ember.py    | 1 -\n shop/carriers/fjord.py    | 1 -\n shop/carriers/gale.py     | 1 -\n shop/carriers/harbor.py   | 1 -\n shop/carriers/iris.py     | 1 -\n shop/carriers/juniper.py  | 1 -\n shop/carriers/kestrel.py  | 1 -\n shop/carriers/lumen.py    | 1 -\n shop/carriers/maple.py    | 1 -\n shop/carriers/nimbus.py   | 1 -\n shop/carriers/onyx.py     | 1 -\n shop/carriers/prairie.py  | 1 -\n shop/carriers/quartz.py   | 1 -\n shop/carriers/ridge.py    | 1 -\n shop/carriers/summit.py   | 1 -\n shop/carriers/tundra.py   | 1 -\n 20 files changed, 20 deletions(-)\n",
+ "workdir": "m3-todo.dynamic.1"
+}

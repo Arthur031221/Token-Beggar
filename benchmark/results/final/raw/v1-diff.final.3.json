@@ -1,0 +1,111 @@
+{
+ "task": "v1-diff",
+ "class": "review",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 17862,
+  "stop_reason": "end_turn",
+  "session_id": "585e7509-4b17-46bc-85f2-521c34e338d2",
+  "total_cost_usd": 0.13644279999999998,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 10948,
+   "cache_read_input_tokens": 77134,
+   "output_tokens": 1670,
+   "output_tokens_details": {
+    "thinking_tokens": 474
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10948,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1109,
+     "cache_read_input_tokens": 22624,
+     "cache_creation_input_tokens": 1114,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1114
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1670,
+    "cacheReadInputTokens": 77134,
+    "cacheCreationInputTokens": 10948,
+    "webSearchRequests": 0,
+    "costUSD": 0.13644279999999998,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 474,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces three bugs. Two of them also break existing tests.\n\n**1. Bulk discount no longer applies at exactly 10 units** (`shop/pricing.py:10`)\n`>=` became `>`, so a line with exactly `BULK_THRESHOLD` (10) units loses the 5% discount. That's an off-by-one in a business rule. `tests/test_pricing.py` `test_bulk_discount` (10 \u00d7 100\u00a2) expects 1028. After the change it gets 1000 + 83 tax = **1083**.\n\n**2. `calc_tax` taxes the price before the bulk discount** (`shop/pricing.py:23`)\n`line_subtotal(l)` was replaced with `l.item.price_cents * l.qty`, which skips the bulk discount. `calc_total` still taxes the discounted subtotal, so the two functions now disagree on every taxable bulk line:\n- With 11 \u00d7 100\u00a2, the subtotal after discount is 1045. `calc_total` adds 86 tax, but `calc_tax` returns 91.\n- `Order.__init__` (`shop/orders.py:15-16`) stores both values, so `order.tax_cents` no longer matches the tax inside `order.total_cents`. Customers are also told they paid tax on money they were never charged.\n\n**3. Cache entries last 1000 times longer than the TTL** (`shop/cache.py:15`)\nThe class docstring says the TTL is in seconds, and the default clock (`time.monotonic`) also counts seconds. Multiplying by 1000 treats the TTL as milliseconds, so the default `ttl=60` keeps prices cached for 60,000 s (about 16.7 hours) and serves stale prices. `tests/test_cache.py` `test_hit_and_expiry` fails: at `now=11` with `ttl=10`, the check is `11 < 10000`, which is still a cache hit, so the loader count stays at 1 instead of reaching 2.\n\nI worked these out by reading the code and doing the arithmetic. I didn't run the tests against the patched code, because the diff's hunk headers have no line numbers and `git apply` can't apply it as written.",
+  "ttft_ms": 1528,
+  "type": "result",
+  "duration_ms": 18632,
+  "uuid": "e402671b-2bc5-48e2-b279-42814137b5c7",
+  "ttft_stream_ms": 952,
+  "time_to_request_ms": 200,
+  "first_content_frame_ms": 953,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v1-diff.final.3",
+ "ledger": []
+}

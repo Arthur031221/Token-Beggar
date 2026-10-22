@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15007,
+  "stop_reason": "end_turn",
+  "session_id": "8e05047c-e86d-43a4-b048-c787a3e7a386",
+  "total_cost_usd": 0.13441720000000001,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 11774,
+   "cache_read_input_tokens": 55206,
+   "output_tokens": 1458,
+   "output_tokens_details": {
+    "thinking_tokens": 157
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11774,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 911,
+     "cache_read_input_tokens": 20645,
+     "cache_creation_input_tokens": 5715,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 5715
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1458,
+    "cacheReadInputTokens": 55206,
+    "cacheCreationInputTokens": 11774,
+    "webSearchRequests": 0,
+    "costUSD": 0.13441720000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 157,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Multi-currency design\n\n**Core idea:** add a `Money(amount_minor: int, currency: str)` value type. Arithmetic between different currencies raises an error, and each currency has its own exponent (USD/EUR 2, JPY 0, KWD 3).\n\n**What changes, by file**\n- `shop/money.py`: add `Money` and a `CURRENCIES` exponent table. `to_cents`, `fmt` and `percent` get a currency argument and use its exponent instead of the hard-coded 100 and 2 decimals. Replace the float `+0.5` rounding with `Decimal` and `ROUND_HALF_UP`.\n- `shop/models.py`: `Item.price_cents` becomes `price: Money`, and `Cart` gets a `currency`. `Cart.add` rejects items in a different currency.\n- `shop/pricing.py`: functions return `Money`. `TAX_RATE` becomes a lookup by region or currency instead of one global 8.25%.\n- `shop/orders.py`: store `currency` on `Order` and in each line tuple.\n- `shop/storage.py`: write a `currency` field. Old rows without it are read as `\"USD\"`.\n- `shop/reports.py`: group totals by customer and currency. Never add totals across currencies unless conversion is explicit.\n- `shop/cli.py`: add a `--currency` option, defaulting to USD.\n- `shop/cache.py`: key prices by `(sku, currency)`.\n- `shop/carriers/*.py` (20 files): rate cards are implicitly in USD cents. Add a `CURRENCY` constant to each, or convert at a single boundary.\n- Tests: add cases for JPY and KWD, mixed-currency errors, and loading old JSON files.\n\n**Main risks**\n1. **Silent mixing:** plain `int` amounts can be added across currencies without any error. Introduce `Money` first, then migrate the call sites.\n2. **Rounding:** float maths in `percent` and the carrier `rate` methods drifts, and the drift gets worse for 0- and 3-decimal currencies.\n3. **Stored data:** existing JSON rows have no currency field, so the read path needs a default.\n4. **Public API break:** renaming `price_cents` breaks callers. Keep a deprecated alias for one release.\n5. **Exchange rates:** these are out of scope. If added, they need a fixed rate per order and a record of where the rate came from.\n6. **Carrier units:** `maple.py` says it takes weight in grams while the other carriers use kg. Fix that before touching its rate card.",
+  "ttft_ms": 2250,
+  "type": "result",
+  "duration_ms": 15535,
+  "uuid": "9575d74a-a43d-477a-8254-ca312dec97dd",
+  "ttft_stream_ms": 1133,
+  "time_to_request_ms": 184,
+  "first_content_frame_ms": 1133,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.2"
+}

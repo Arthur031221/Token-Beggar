@@ -1,0 +1,110 @@
+{
+ "task": "d2-store",
+ "class": "debugging",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 23414,
+  "stop_reason": "end_turn",
+  "session_id": "2ed96503-9e31-4fe9-9a38-8282cca64a00",
+  "total_cost_usd": 0.1831354,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 15655,
+   "cache_read_input_tokens": 120177,
+   "output_tokens": 1691,
+   "output_tokens_details": {
+    "thinking_tokens": 62
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 15655,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 415,
+     "cache_read_input_tokens": 29750,
+     "cache_creation_input_tokens": 490,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 490
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1691,
+    "cacheReadInputTokens": 120177,
+    "cacheCreationInputTokens": 15655,
+    "webSearchRequests": 0,
+    "costUSD": 0.1831354,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 62,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Fixed. The bug was a reversed comparison in `Store.save_order` (`shop/storage.py:17`).\n\n**Root cause:** before adding the new order, `save_order` removes any existing row with the same id, so saving an order again replaces its row instead of duplicating it. But the filter used `==` instead of `!=`:\n\n```python\nrows = [r for r in self.load() if r[\"id\"] == order.id]   # before\nrows = [r for r in self.load() if r[\"id\"] != order.id]   # after\n```\n\nAs written, it kept only the row that should have been replaced and dropped every other order. Each save threw away all the earlier orders, so the file only ever held the last one saved.\n\n**Tests:** `Store` had no tests, so I added `tests/test_storage.py` with two:\n- `test_keeps_all_orders`: save two different orders, and `load()` returns both.\n- `test_resave_replaces_row`: save one order, change its state, save it again, and there is still one row with the new state. This guards the replace behaviour the filter is there for.\n\n`python3 -m unittest` runs 8 tests and all pass. (This environment has no `python`, only `python3`.) Nothing is committed.",
+  "ttft_ms": 2765,
+  "type": "result",
+  "duration_ms": 24350,
+  "uuid": "9e139877-e2fc-4f36-8da7-073b2c2c2a8e",
+  "ttft_stream_ms": 2513,
+  "time_to_request_ms": 223,
+  "first_content_frame_ms": 2513,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/storage.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n",
+ "workdir": "d2-store.dynamic.1"
+}

@@ -1,0 +1,126 @@
+{
+ "task": "m2-future",
+ "class": "mechanical",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 36727,
+  "stop_reason": "end_turn",
+  "session_id": "4e97619b-ea1c-4a1c-a254-9e059a5b8dfe",
+  "total_cost_usd": 0.103541675,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7466,
+   "cache_read_input_tokens": 55569,
+   "output_tokens": 1489,
+   "output_tokens_details": {
+    "thinking_tokens": 198
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7466,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 309,
+     "cache_read_input_tokens": 21370,
+     "cache_creation_input_tokens": 681,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 681
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1489,
+    "cacheReadInputTokens": 55569,
+    "cacheCreationInputTokens": 7466,
+    "webSearchRequests": 0,
+    "costUSD": 0.10064580000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 198,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 2533,
+    "cacheReadInputTokens": 58780,
+    "cacheCreationInputTokens": 8323,
+    "webSearchRequests": 0,
+    "costUSD": 0.002895875,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 587,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `from __future__ import annotations` to all 20 modules in `shop/carriers/`, from `acme.py` to `tundra.py`, and left `__init__.py` alone. The tests pass: `python3 -m unittest discover -s tests -t .` ran 6 tests, all OK.\n\n- **Where it goes:** each file starts with a `# TODO(owner-N)` comment and a module docstring. Python only accepts the future import after those, so it sits right after the docstring and before `import re`, followed by one blank line.\n- **Nothing else changed:** each file gained exactly those two lines (40 insertions, no deletions). There are no subpackages, and no file already had a `__future__` import.\n- **Test command:** pytest isn't installed and there's no `python` on PATH, so I used the unittest command from the README.\n\nThe test run left untracked `__pycache__/` folders in `shop/` and `tests/`. Nothing is committed yet.",
+  "ttft_ms": 3054,
+  "type": "result",
+  "duration_ms": 38037,
+  "uuid": "e112a99a-06ec-409c-8e37-43495831a281",
+  "ttft_stream_ms": 1273,
+  "time_to_request_ms": 151,
+  "first_content_frame_ms": 1274,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/acme.py     | 2 ++\n shop/carriers/borealis.py | 2 ++\n shop/carriers/cedar.py    | 2 ++\n shop/carriers/delta.py    | 2 ++\n shop/carriers/ember.py    | 2 ++\n shop/carriers/fjord.py    | 2 ++\n shop/carriers/gale.py     | 2 ++\n shop/carriers/harbor.py   | 2 ++\n shop/carriers/iris.py     | 2 ++\n shop/carriers/juniper.py  | 2 ++\n shop/carriers/kestrel.py  | 2 ++\n shop/carriers/lumen.py    | 2 ++\n shop/carriers/maple.py    | 2 ++\n shop/carriers/nimbus.py   | 2 ++\n shop/carriers/onyx.py     | 2 ++\n shop/carriers/prairie.py  | 2 ++\n shop/carriers/quartz.py   | 2 ++\n shop/carriers/ridge.py    | 2 ++\n shop/carriers/summit.py   | 2 ++\n shop/carriers/tundra.py   | 2 ++\n 20 files changed, 40 insertions(+)\n",
+ "workdir": "m2-future.dynamic.1"
+}

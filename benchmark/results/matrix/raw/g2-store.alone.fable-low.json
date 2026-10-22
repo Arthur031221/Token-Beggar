@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "fable-low",
+ "top": "claude-fable-5-1",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 12651,
+  "stop_reason": "end_turn",
+  "session_id": "23428179-0734-474a-981c-ed189e59f34d",
+  "total_cost_usd": 0.19975375,
+  "usage": {
+   "input_tokens": 34,
+   "cache_creation_input_tokens": 8107,
+   "cache_read_input_tokens": 33295,
+   "output_tokens": 579,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8107,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 482,
+     "cache_read_input_tokens": 20505,
+     "cache_creation_input_tokens": 392,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 392
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 34,
+    "outputTokens": 579,
+    "cacheReadInputTokens": 33295,
+    "cacheCreationInputTokens": 8107,
+    "webSearchRequests": 0,
+    "costUSD": 0.19975375,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the single JSON file with SQLite.**\n\nThe current `Store` in `shop/storage.py` has two problems that get worse at your scale:\n\n- **Two writers corrupt data.** Each save does read-all, modify, write-all with no locking. Two processes interleaving will silently drop each other's orders or leave a half-written file that fails to parse.\n- **100k orders makes every save O(n).** Each write re-reads and re-serialises the whole file, roughly tens of megabytes per order saved.\n\nSQLite fixes both with zero new infrastructure. It is in the standard library, handles concurrent writers with file locking, and in WAL mode lets readers proceed during writes. One table with `id` as primary key turns `save_order` into a single upsert.\n\n**Migration path**\n\n1. Add a `SqliteStore` alongside the current class with the same `load` and `save_order` interface. Enable WAL and a busy timeout so writers wait rather than fail.\n2. Write a one-off script that reads the existing JSON and inserts every row, run inside one transaction.\n3. Switch the constructor call site to the new store. Keep the JSON file as a backup until you trust the result.\n4. Add a `get(id)` method so callers stop loading all orders to find one.\n5. Delete the JSON `Store` once nothing imports it.\n\n**If you outgrow SQLite** later, with many writer hosts or multi-machine access, move to Postgres. The interface above ports directly.",
+  "ttft_ms": 3043,
+  "type": "result",
+  "duration_ms": 12767,
+  "uuid": "76463fd3-dc22-469d-aa27-58cbdcf64739",
+  "ttft_stream_ms": 1767,
+  "time_to_request_ms": 70,
+  "first_content_frame_ms": 1767,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.fable-low"
+}

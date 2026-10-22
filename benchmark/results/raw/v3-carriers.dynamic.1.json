@@ -1,0 +1,110 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 23186,
+  "stop_reason": "end_turn",
+  "session_id": "0161865d-4ce8-474f-b8d0-f5993c4b7a17",
+  "total_cost_usd": 0.14324620000000002,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11970,
+   "cache_read_input_tokens": 80571,
+   "output_tokens": 1567,
+   "output_tokens_details": {
+    "thinking_tokens": 192
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11970,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 887,
+     "cache_read_input_tokens": 25856,
+     "cache_creation_input_tokens": 701,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 701
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1567,
+    "cacheReadInputTokens": 80571,
+    "cacheCreationInputTokens": 11970,
+    "webSearchRequests": 0,
+    "costUSD": 0.14324620000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 192,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The module that breaks registry callers is **`shop/carriers/maple.py`**. It reads `weight` as grams, while the other 19 carriers read it as kilograms.\n\nI compared every carrier module with `acme.py` line by line. Apart from that, they differ only in rate numbers and TODO owners, with one smaller exception below.\n\n## 1. `maple.py` uses grams instead of kg\n\n- The docstring says `\"Quotes in cents, weight in grams.\"` The other carriers say kg.\n- It uses `PER_GRAMS = 3` and `MAX_GRAMS = 30000` instead of `PER_KG` and `MAX_KG`.\n- `rate(self, weight, zone)` has the same signature as every other carrier, so nothing warns a caller.\n\nA caller doing `get(name).rate(weight_kg, zone)` gets wrong results for Maple, with no error:\n- **It undercharges badly.** `rate(2.5)` returns `int(494 + 3*2.5)` = 501 cents. The kg-based carriers charge about 1,300\u20131,700 cents for the same parcel.\n- **The weight limit stops working.** Any kg value up to 30000 passes the range check, so overweight parcels are never rejected.\n- **A grams caller can't fix it.** Passing grams to every carrier would make the other 19 raise `ValueError` for almost any real parcel.\n\n## 2. Four carriers have no `tracking_url`\n\n`delta.py`, `kestrel.py`, `onyx.py` and `tundra.py` don't define `tracking_url(code)`. The other 16 do, so `get(name).tracking_url(...)` raises `AttributeError` for those four.\n\nNothing in `shop/` outside `carriers/` calls `tracking_url` (or any carrier method) right now. So this is a gap in the interface waiting to cause trouble, not something that breaks today. The Maple unit problem silently returns wrong prices to any `rate()` caller.\n\nEverything else matches across all carriers: class `name`, the `rate` and `label` signatures, the `label` format (`NAME-%08d`), the `valid_label` pattern, and the zone keys (`local`, `regional`, `national`). I didn't edit any files.",
+  "ttft_ms": 2747,
+  "type": "result",
+  "duration_ms": 23847,
+  "uuid": "0ce07aee-5a6d-456e-8bce-37f69bfdc653",
+  "ttft_stream_ms": 2445,
+  "time_to_request_ms": 279,
+  "first_content_frame_ms": 2445,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.dynamic.1"
+}

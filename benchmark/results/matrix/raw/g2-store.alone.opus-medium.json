@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "opus-medium",
+ "top": "claude-opus-5-5",
+ "effort": "medium",
+ "result": {
+  "duration_api_ms": 12217,
+  "stop_reason": "end_turn",
+  "session_id": "84e46ea1-d442-4758-8cb5-38137a248f73",
+  "total_cost_usd": 0.0792116,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6462,
+   "cache_read_input_tokens": 50458,
+   "output_tokens": 870,
+   "output_tokens_details": {
+    "thinking_tokens": 48
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6462,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 674,
+     "cache_read_input_tokens": 19021,
+     "cache_creation_input_tokens": 231,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 231
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 870,
+    "cacheReadInputTokens": 50458,
+    "cacheCreationInputTokens": 6462,
+    "webSearchRequests": 0,
+    "costUSD": 0.0792116,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 48,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the JSON file with SQLite in WAL mode.**\n\n**Why the current design breaks** (`shop/storage.py:16-21`):\n- **Lost updates.** `save_order` reads the whole file, changes it, and writes the whole file back. If two processes do this at the same time, the second write silently overwrites the first one's order.\n- **Corruption risk.** `write_text` isn't atomic. A crash or a concurrent read partway through a write can leave a truncated file that won't parse as JSON.\n- **O(n) per write.** At 100k orders every save re-reads and re-writes the whole file (roughly 10 MB), which gets slow quickly.\n\n**Why SQLite:** it's in the standard library and has no server to run. It updates one row at a time, and its transactions and locking handle multiple processes. WAL mode lets readers keep working while a write is in progress. Set `busy_timeout` (e.g. 5s) so the two writers wait for each other instead of failing. Two writers is well within what it handles. Postgres would only be worth it if you later need networked access or many concurrent writers.\n\n**Schema:** an `orders` table with `id` (primary key), `customer`, `total`, `tax` and `state`. Add an index on `customer` or `state` if you query by them. Writes become a single upsert (`INSERT \u2026 ON CONFLICT(id) DO UPDATE`).\n\n**Migration path:**\n1. Keep the `Store` interface (`load`, `save_order`) and add a `SqliteStore` that implements it. The only caller I found is `shop/cli.py:26`, so very little has to change.\n2. Write a one-time import script that reads the JSON and inserts all rows in one transaction. Check that the row counts and a few totals match.\n3. Stop both writers, run the import, point them at the `.db` file, and restart them. Keep the JSON file read-only as a backup.\n4. Later, change `load()` to filter or paginate in SQL instead of returning every row.",
+  "ttft_ms": 2073,
+  "type": "result",
+  "duration_ms": 12329,
+  "uuid": "e80591c7-c979-44dc-9505-2a83960217df",
+  "ttft_stream_ms": 1634,
+  "time_to_request_ms": 57,
+  "first_content_frame_ms": 1634,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.opus-medium"
+}

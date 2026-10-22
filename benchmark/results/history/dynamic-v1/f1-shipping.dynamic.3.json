@@ -1,0 +1,110 @@
+{
+ "task": "f1-shipping",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 55656,
+  "stop_reason": "end_turn",
+  "session_id": "feca9117-61e9-4da3-aead-9369cf769a5a",
+  "total_cost_usd": 0.3405986,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 23025,
+   "cache_read_input_tokens": 170113,
+   "output_tokens": 6116,
+   "output_tokens_details": {
+    "thinking_tokens": 1579
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23025,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 762,
+     "cache_read_input_tokens": 32921,
+     "cache_creation_input_tokens": 2894,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2894
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 6116,
+    "cacheReadInputTokens": 170113,
+    "cacheCreationInputTokens": 23025,
+    "webSearchRequests": 0,
+    "costUSD": 0.3405986,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1579,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 11,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Orders now support shipping, and all 17 tests pass: the 6 that were already there plus 11 new ones in `tests/test_shipping.py`.\n\n- **`Order`** (`shop/orders.py`): `Order(cart, carrier=None, weight=0, zone='local')` computes `shipping_cents` from the carrier registry. It is 0 when there's no carrier, and `total_cents` is the cart total plus shipping. Shipping is not taxed, so `tax_cents` doesn't change.\n- **`Store.save_order`** (`shop/storage.py`): each saved row now includes `\"shipping\"`.\n- **Report** (`shop/reports.py`): no code change was needed. Saved orders written before this change have no `\"shipping\"` field, and the report still reads them. A test checks a mix of old and new orders.\n\n**One carrier uses different units.** 19 carriers price by weight in kg, but `maple` prices in grams (`shop/carriers/maple.py`). Passing the order's weight straight through would have charged 500\u00a2 instead of 6494\u00a2 for a 2 kg Maple parcel. To fix it:\n- `Order.weight` is in kg.\n- A new `carriers.quote(name, weight_kg, zone)` converts to grams for any carrier marked `weight_unit = \"g\"`, which is just Maple.\n- Maple's own `rate()` is unchanged, so any code already calling it in grams still works.\n- One test runs every registered carrier on a 2 kg parcel and checks the price is in a sensible range, which catches this kind of unit mix-up.\n\n**Decisions for you:**\n- **Customer sales now include shipping.** The report adds up each order's `total`, so new orders count shipping as part of sales. If sales should exclude it, the report can subtract `row.get(\"shipping\", 0)`, which also works for old orders.\n- **Bad carrier input raises an error.** An unknown carrier name raises a `KeyError`. A carrier with weight 0 or over its limit raises the carrier's `ValueError`. Neither silently charges 0 shipping. The tests cover both.\n\nNothing is committed.",
+  "ttft_ms": 2549,
+  "type": "result",
+  "duration_ms": 57543,
+  "uuid": "41e31a42-a239-41e1-b42b-66e442d4c234",
+  "ttft_stream_ms": 1047,
+  "time_to_request_ms": 272,
+  "first_content_frame_ms": 1047,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/__init__.py |  7 +++++++\n shop/carriers/maple.py    |  1 +\n shop/orders.py            | 10 ++++++++--\n shop/storage.py           |  3 ++-\n 4 files changed, 18 insertions(+), 3 deletions(-)\n",
+ "workdir": "f1-shipping.dynamic.3"
+}

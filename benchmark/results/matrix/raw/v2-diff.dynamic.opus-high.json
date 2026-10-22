@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "opus-high",
+ "top": "claude-opus-5-5",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 23388,
+  "stop_reason": "end_turn",
+  "session_id": "720b5196-8c65-40ca-9c97-5c33567553f6",
+  "total_cost_usd": 0.1178904,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 9238,
+   "cache_read_input_tokens": 52912,
+   "output_tokens": 1669,
+   "output_tokens_details": {
+    "thinking_tokens": 375
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9238,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1189,
+     "cache_read_input_tokens": 20441,
+     "cache_creation_input_tokens": 1587,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1587
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1669,
+    "cacheReadInputTokens": 52912,
+    "cacheCreationInputTokens": 9238,
+    "webSearchRequests": 0,
+    "costUSD": 0.1178904,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 375,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found three bugs in `change.diff`, all in `shop/orders.py`. The first one breaks every order.\n\n### 1. `_ids_seen` is never defined, so creating any order crashes (`Order.__init__`, line 12)\nThe diff changes the code to use `_ids_seen`, but nothing defines it. The module still has only `_ids = itertools.count(1000)` on line 5. So every `Order(cart)` raises `NameError: name '_ids_seen' is not defined`. Both tests in `tests/test_orders.py` will fail, since each one calls `Order(cart)` through `make()`.\n\n### 2. Even if `_ids_seen = []` were added, the new ID scheme is wrong\n- **IDs change:** they used to start at 1000 and now start at 0. Anything that expects order IDs of 1000 or more will see different values.\n- **IDs repeat across runs, and saved orders get overwritten:** the list lives in memory, so every new process starts again at 0. `Store.save_order` (`shop/storage.py`) removes any saved row with the same `id` before appending the new one. A new order with ID 0 in a later run will silently replace the order saved with ID 0 earlier. `itertools.count(1000)` also restarted per process, but this change makes the collision certain from the first order.\n- **Not thread-safe:** reading `len(_ids_seen)` and then calling `append` are two separate steps. Two threads creating orders at once can read the same length and get the same ID. `next(itertools.count())` hands out a value in one step.\n- **Memory grows forever:** the list keeps one entry for every order ever created, only to work out the next number. A counter needs no storage.\n- **Dead code:** `_ids` and `import itertools` are no longer used.\n\n### 3. `ALLOWED.get(self.state, STATES)` lets an order in an unknown state move anywhere (`move`, line 20)\nBefore, an unrecognised `self.state` raised `KeyError`, so a bad state stopped the call. Now any state missing from `ALLOWED` falls back to `STATES`, the list of every state. An order whose state is a typo, a corrupted or legacy value, or something set directly (e.g. `\"refunded\"`) can move to `\"new\"`, `\"paid\"`, `\"shipped\"` or `\"cancelled\"`. That includes `\"shipped\"` without ever being paid, or back to `\"new\"`. The transition guard now fails open, which is the opposite of what it is for, and the bad state goes unnoticed. For the four valid states nothing changes, so the existing tests won't catch this.",
+  "ttft_ms": 2144,
+  "type": "result",
+  "duration_ms": 23912,
+  "uuid": "e3b373b5-3e4b-423a-918d-3cb4825c4734",
+  "ttft_stream_ms": 1801,
+  "time_to_request_ms": 175,
+  "first_content_frame_ms": 1801,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.opus-high"
+}

@@ -1,0 +1,111 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "v020",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 27725,
+  "stop_reason": "end_turn",
+  "session_id": "b6d0a40a-8d88-4648-9f00-24a1eda088a3",
+  "total_cost_usd": 0.186353,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 15427,
+   "cache_read_input_tokens": 105485,
+   "output_tokens": 2090,
+   "output_tokens_details": {
+    "thinking_tokens": 339
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 15427,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1048,
+     "cache_read_input_tokens": 27542,
+     "cache_creation_input_tokens": 675,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 675
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2090,
+    "cacheReadInputTokens": 105485,
+    "cacheCreationInputTokens": 15427,
+    "webSearchRequests": 0,
+    "costUSD": 0.186353,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 339,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found two inconsistencies that break the registry contract. Every other carrier quotes in cents for a weight in kg and has the same four methods: `rate`, `label`, `valid_label` and `tracking_url`.\n\n### 1. `shop/carriers/maple.py` takes weight in grams, not kg\nThe other 19 carriers have `PER_KG` / `MAX_KG` and a docstring saying \"weight in kg\". Maple has `PER_GRAMS = 3` and `MAX_GRAMS = 30000`, its docstring says \"weight in grams\", and `rate()` checks and prices `weight` as grams (`maple.py:16-20`).\n\nCallers of the registry pass the same `weight` to any carrier, so Maple gives wrong answers without raising an error:\n- `get(\"maple\").rate(5.0)` treats 5 kg as 5 g and returns `int((494 + 3*5) * 1.0)` = **509 cents**. A kg-based rate in the same range as the others would be roughly 2,100 cents, so Maple massively undercharges.\n- The range check is off by 1000\u00d7. Any weight up to 30,000 \"kg\" is accepted, so oversized parcels that every other carrier rejects with `ValueError` get quoted.\n\nThis one is the more dangerous of the two because no error is raised.\n\n### 2. Four carriers have no `tracking_url()`\n`shop/carriers/delta.py`, `kestrel.py`, `onyx.py` and `tundra.py` stop after `valid_label()`. All the others define `tracking_url(code)`. Anything that loops over `REGISTRY` or calls `get(name).tracking_url(...)` will raise `AttributeError` for those four.\n\n### What I checked\n- I compared every module against `acme.py` after replacing the carrier names. The only other differences are the expected per-carrier constants (base rate, per-kg rate, zone factors, max weight) and TODO owners.\n- All carriers use the same zone keys (`local`/`regional`/`national`) and the same label format (`NAME-%08d` with a matching regex), and every class name matches its `REGISTRY` entry.\n- Nothing in `shop/` outside `carriers/` currently calls `REGISTRY`, `get()` or `tracking_url`. Both problems are breaks in the shared interface that will hit the first caller that uses it, not failures you can see in current code.\n\nI didn't edit any files.",
+  "ttft_ms": 2557,
+  "type": "result",
+  "duration_ms": 28667,
+  "uuid": "1d9f06ca-260c-4dd5-a5df-8f4a3ffda122",
+  "ttft_stream_ms": 2192,
+  "time_to_request_ms": 180,
+  "first_content_frame_ms": 2192,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.v020.2",
+ "ledger": []
+}

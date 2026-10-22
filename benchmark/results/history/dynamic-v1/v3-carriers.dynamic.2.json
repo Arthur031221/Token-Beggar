@@ -1,0 +1,110 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 30974,
+  "stop_reason": "end_turn",
+  "session_id": "1dcb81fe-c03e-40f3-8c4a-95606d860fa5",
+  "total_cost_usd": 0.19341080000000002,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 16517,
+   "cache_read_input_tokens": 107974,
+   "output_tokens": 1982,
+   "output_tokens_details": {
+    "thinking_tokens": 230
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 16517,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 909,
+     "cache_read_input_tokens": 27971,
+     "cache_creation_input_tokens": 1336,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1336
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1982,
+    "cacheReadInputTokens": 107974,
+    "cacheCreationInputTokens": 16517,
+    "webSearchRequests": 0,
+    "costUSD": 0.19341080000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 230,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found two inconsistencies that would break callers of the registry. The worst one is in **`shop/carriers/maple.py`**.\n\nI compared all 20 carrier modules after swapping out carrier names and numbers. Fifteen are structurally identical, `maple.py` is unique, and four form a separate group missing a method.\n\n### 1. `shop/carriers/maple.py`: weight in grams instead of kg (silently wrong results)\nEvery other carrier documents \"Quotes in cents, weight in kg\" and uses `PER_KG` / `MAX_KG`. Maple's docstring says \"weight in grams\", and its constants are `PER_GRAMS = 3` and `MAX_GRAMS = 30000` (`maple.py:7-10`). The `rate(weight, zone)` signature is the same, so a caller doing `registry.get(name).rate(weight_kg, zone)` gets no error, just a wrong number:\n- `get(\"maple\").rate(5)` returns 509 cents (\u2248 $5.09) when it should be about 15,494 cents for 5 kg. That's roughly 30\u00d7 too cheap.\n- Its weight limit, 30000, is checked in grams, so its kg limit is effectively gone. `rate(500)` works on Maple, while every other carrier raises `ValueError` above 30\u201349 kg.\n\nNothing crashes, so this one is the most dangerous.\n\n### 2. `delta.py`, `kestrel.py`, `onyx.py`, `tundra.py`: no `tracking_url()`\nThe other 16 carriers define `tracking_url(self, code) -> str`. These four end after `valid_label()`. A caller that loops over `REGISTRY` or calls `get(name).tracking_url(code)` will raise `AttributeError` for `\"delta\"`, `\"kestrel\"`, `\"onyx\"` and `\"tundra\"`.\n\n### Consistent across all 20\n- Registry keys in `__init__.py` match each module's `CARRIER` constant and class name.\n- `rate` (including the `\"local\"` default zone), `label`, `valid_label` and the `name` attribute have the same signature everywhere.\n- All zone tables have the same three keys: `local`, `regional`, `national`.\n\nThe repo has no code outside `shop/carriers/` that calls the registry, so these are breakages for future or external callers rather than a test that fails today. I didn't edit any files.",
+  "ttft_ms": 5058,
+  "type": "result",
+  "duration_ms": 32082,
+  "uuid": "e840ba63-f493-4d6b-abb6-cc309a773564",
+  "ttft_stream_ms": 4807,
+  "time_to_request_ms": 372,
+  "first_content_frame_ms": 4807,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.dynamic.2"
+}

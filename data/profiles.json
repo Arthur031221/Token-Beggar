@@ -1,0 +1,115 @@
+{
+ "claude": {
+  "haiku": {
+   "capability": 2,
+   "good_for": "exact edits, renames, sweeps over many files, grep and report, run a command and summarise",
+   "weak_at": "ambiguity, synthesis, root causes"
+  },
+  "sonnet": {
+   "capability": 3,
+   "good_for": "a function or multi-file feature with a clear spec and a test, scripts, long reads",
+   "weak_at": "open design, subtle review"
+  },
+  "opus": {
+   "capability": 4,
+   "good_for": "root causes, risky review, hard multi-file work, design",
+   "weak_at": "cost on chores"
+  },
+  "fable": {
+   "capability": 5,
+   "good_for": "the hardest design and debugging, long-horizon planning",
+   "weak_at": "nothing that matters; it is the costliest"
+  }
+ },
+ "external": {
+  "agy": {
+   "good_for": "bulk reading and summarising of files you name, first drafts, a second opinion; it uses its own quota, not your Claude quota",
+   "weak_at": "no view of this conversation, no verification, may invent details; Claude must check what it returns",
+   "models": [
+    {
+     "match": "flash-low",
+     "capability": 1,
+     "label": "flash low"
+    },
+    {
+     "match": "flash-medium",
+     "capability": 2,
+     "label": "flash medium"
+    },
+    {
+     "match": "flash-high",
+     "capability": 3,
+     "label": "flash high"
+    },
+    {
+     "match": "gpt-oss",
+     "capability": 2,
+     "label": "gpt-oss"
+    },
+    {
+     "match": "claude-sonnet",
+     "capability": 3,
+     "label": "claude sonnet via agy",
+     "vendor": "anthropic"
+    },
+    {
+     "match": "claude-opus",
+     "capability": 4,
+     "label": "claude opus via agy",
+     "vendor": "anthropic"
+    },
+    {
+     "match": "pro",
+     "capability": 4,
+     "label": "pro"
+    }
+   ],
+   "default_capability": 2,
+   "prior": 1
+  },
+  "codex": {
+   "good_for": "an independent review, a second implementation, code reading",
+   "weak_at": "no view of this conversation; Claude must check what it returns",
+   "models": [],
+   "default_capability": 3,
+   "prior": 2
+  },
+  "gemini": {
+   "good_for": "reading long documents or logs, first drafts, a second opinion",
+   "weak_at": "no view of this conversation; may invent details; Claude must check what it returns",
+   "models": [
+    {
+     "match": "flash-lite",
+     "capability": 1,
+     "label": "flash lite"
+    },
+    {
+     "match": "flash",
+     "capability": 2,
+     "label": "flash"
+    },
+    {
+     "match": "pro",
+     "capability": 3,
+     "label": "pro"
+    }
+   ],
+   "default_capability": 2,
+   "prior": 1
+  }
+ },
+ "rules": [
+  "Grade the prompt before you read a file or run a command: split it into subtasks and pick a route for each. Write one line, Plan: <subtask> -> <pick>; ..., and make every subtask that is not stay-inline your FIRST action as an Agent call. The worker reads, edits and tests in its own context, so do not explore first.",
+  "Stay inline only for chat, a short answer, or a subtask of one or two tool calls on fewer than three files. Everything else goes to a worker.",
+  "Give each subtask the cheapest model and effort whose profile covers it: mechanical, well-specified work to the low end; work that needs judgement across connected files one or two steps up. Reading to answer a question, root causes, review and design stay inline, because the answer needs the whole conversation.",
+  "Open choices, answers that depend on this conversation, and synthesis stay inline or on a mid model. Risky work (money, auth, public API) gets a worker one step up, not a second look from you.",
+  "Batch: subtasks that suit the same model and effort go to ONE worker as a numbered list, not one worker each, because every worker call pays for its own setup. Independent batches go out together in one message.",
+  "Keep output short, yours and the workers': every worker is told to report under 150 words, and your own answer states the result and the check, nothing restated.",
+  "Start cheap. If the check fails, redo once one step up, never above the ceiling.",
+  "You keep judgement and the final answer. The worker's reported check output is the check. Do not re-read or re-review what it changed: that costs more than the worker did."
+ ],
+ "external_rules": [
+  "With an external AI on the menu, make the ask command your FIRST action for three or more files to read, tabulate or summarise, for a first draft, and for a second opinion on a design. This beats 'stay inline'. It uses its own quota, so it saves Claude quota and money. Do not cat or read the files yourself first: pass them with --file (a directory glob works) and ask for a short answer. Its output is a draft, so skim it, then answer.",
+  "Do not send an external AI anything that needs this conversation, edits files, or is risky. If a call fails or the tool is out of quota, do the subtask yourself or on a worker."
+ ]
+}

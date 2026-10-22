@@ -117,11 +117,13 @@ def effort_from_settings(cwd: str | None) -> tuple[str | None, str]:
     return None, "default"
 
 
-def resolve(transcript_path: str | None, cwd: str | None) -> dict:
-    """Best known ceiling. `known` is False when the model had to be guessed."""
+def resolve(transcript_path: str | None, cwd: str | None, effort_hint: str | None = None) -> dict:
+    """Best known ceiling. `known` is False when the model had to be guessed. A hook payload that carries the effort wins."""
     raw = model_from_transcript(transcript_path) or model_from_settings(cwd)
     model = catalog.find(raw)
     effort, source = effort_from_settings(cwd)
+    if effort_hint in catalog.EFFORTS:
+        effort, source = effort_hint, "hook payload"
     if effort is None:
         effort = model.default_effort if model else "high"
     return {

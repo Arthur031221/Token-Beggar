@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "haiku-xhigh",
+ "top": "claude-haiku-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 23903,
+  "stop_reason": "end_turn",
+  "session_id": "733f50a9-3e9b-45e5-addb-85d297de9ec0",
+  "total_cost_usd": 0.00433416,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 8115,
+   "cache_read_input_tokens": 52606,
+   "output_tokens": 4369,
+   "output_tokens_details": {
+    "thinking_tokens": 3521
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8115,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 3778,
+     "cache_read_input_tokens": 20377,
+     "cache_creation_input_tokens": 528,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 528
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 4369,
+    "cacheReadInputTokens": 52606,
+    "cacheCreationInputTokens": 8115,
+    "webSearchRequests": 0,
+    "costUSD": 0.00433416,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3521,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Move `Store` to SQLite (stdlib `sqlite3`) and keep its interface.**\n\nProblems at this scale:\n- `save_order` rereads and rewrites the whole file on every save, so each save costs more as orders grow.\n- The two writers do an unlocked read-modify-write, so one process's order can silently disappear.\n- `write_text` truncates first. A crash or concurrent read can leave invalid JSON and make every order unreadable.\n- No storage tests exist today.\n\nWhy SQLite: it serializes writes across local processes with file locks and a busy timeout, commits atomically, and turns the id dedupe into a primary-key upsert. 100k rows is trivial for it. Use Postgres only if the writers move to separate hosts.\n\nMigration:\n1. Add a SQLite implementation behind `load()` and `save_order()` so callers in `cli.py` and `reports.py` don't change.\n2. Import the existing JSON once in a single transaction. Verify the row count and total cents match, then keep the file as a backup.\n3. Enable WAL mode and a busy timeout.\n4. Add a test where two processes each write 1,000 orders and assert 2,000 rows.\n5. Switch the default path, then remove the JSON code after one release.\n\nMaking the write atomic with a temp file and `os.replace` fixes the corruption risk only. It doesn't fix lost updates or the per-save cost, so treat it as a stopgap.",
+  "ttft_ms": 2641,
+  "type": "result",
+  "duration_ms": 24082,
+  "uuid": "eed5a811-bec8-4d57-a2f2-650f8a7479c5",
+  "ttft_stream_ms": 1689,
+  "time_to_request_ms": 79,
+  "first_content_frame_ms": 1689,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.haiku-xhigh"
+}

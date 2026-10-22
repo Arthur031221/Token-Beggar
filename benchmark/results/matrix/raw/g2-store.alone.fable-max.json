@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "fable-max",
+ "top": "claude-fable-5-1",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 82731,
+  "stop_reason": "end_turn",
+  "session_id": "0181abae-cacd-4e9e-98a8-bcd95968e3d0",
+  "total_cost_usd": 0.54441325,
+  "usage": {
+   "input_tokens": 98,
+   "cache_creation_input_tokens": 10415,
+   "cache_read_input_tokens": 76333,
+   "output_tokens": 6321,
+   "output_tokens_details": {
+    "thinking_tokens": 5121
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10415,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 5468,
+     "cache_read_input_tokens": 22108,
+     "cache_creation_input_tokens": 1097,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1097
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 98,
+    "outputTokens": 6321,
+    "cacheReadInputTokens": 76333,
+    "cacheCreationInputTokens": 10415,
+    "webSearchRequests": 0,
+    "costUSD": 0.54441325,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 5121,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move the store to SQLite and keep the Store interface.**\n\nWhy the JSON file fails here:\n- Every save reloads, rescans and rewrites the whole file, megabytes of work per order at 100k rows.\n- Two writers doing load, modify, write with no lock drop each other's orders. Last writer wins.\n- The write is not atomic. A crash or report run mid-write leaves a truncated file and the dataset is gone.\n\nSQLite fixes all three with no new dependency: one table keyed on order id, an upsert instead of the dedupe loop, transactions to serialize the two writers, and WAL mode so reports can read while they write.\n\nMigration path:\n1. Freeze the interface. Only the CLI reads the store and nothing writes to it yet, so keep both method signatures and the list-of-dicts result.\n2. Reimplement Store on SQLite: columns id, customer, total, tax and state with id as primary key, WAL mode, a busy timeout of a few seconds, and upsert on id.\n3. Add a one-shot import: read the legacy JSON, insert every row in one transaction, verify row count and sum of totals match, then rename the JSON to a backup.\n4. Add tests: upsert replaces an existing id, and two processes writing distinct ids concurrently lose nothing.\n\nStopgap if migration must wait: an exclusive file lock around load-and-write, plus writing to a temp file renamed into place. That stops corruption and lost updates, not the full rewrite.",
+  "ttft_ms": 2390,
+  "type": "result",
+  "duration_ms": 82893,
+  "uuid": "4a60ec50-7ee1-4d8e-8c9a-4b7da6cb77d8",
+  "ttft_stream_ms": 2256,
+  "time_to_request_ms": 53,
+  "first_content_frame_ms": 2256,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.fable-max"
+}

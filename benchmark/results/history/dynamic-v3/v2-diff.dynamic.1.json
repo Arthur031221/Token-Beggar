@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 33414,
+  "stop_reason": "end_turn",
+  "session_id": "ec84536f-c1d1-408e-bb78-11bf0deaad96",
+  "total_cost_usd": 0.1693206,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 9975,
+   "cache_read_input_tokens": 147823,
+   "output_tokens": 2995,
+   "output_tokens_details": {
+    "thinking_tokens": 715
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9975,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1021,
+     "cache_read_input_tokens": 24122,
+     "cache_creation_input_tokens": 439,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 439
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 2995,
+    "cacheReadInputTokens": 147823,
+    "cacheCreationInputTokens": 9975,
+    "webSearchRequests": 0,
+    "costUSD": 0.1693206,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 715,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The change introduces four bugs: one crash, two problems that appear once the crash is fixed, and a safety check that now lets bad transitions through. I tested it on a temporary copy of the repo and the working tree is unchanged.\n\n### 1. Every `Order(...)` now crashes with `NameError` (`shop/orders.py:12`)\nThe diff uses `_ids_seen`, but nothing in the diff or the repo defines it. The module still defines only `_ids = itertools.count(1000)`. So `Order.__init__` raises `NameError: name '_ids_seen' is not defined` every time an order is created. On the patched copy, both tests in `tests/test_orders.py` fail with that error. Any code that builds an `Order`, such as the import in `shop/cli.py`, would fail the same way. `_ids` and `import itertools` become dead code.\n\n### 2. Even with `_ids_seen = []` added, the new ID scheme is wrong\n- **The ID range changes.** IDs now start at 0 instead of 1000. Order IDs collide with any already stored in the 1000+ range once the counter gets there. 0 is also a falsy ID, so any `if order.id:` check would treat it as missing.\n- **It's not thread-safe.** `len()` followed by `append()` are two separate steps. Two orders created at the same moment can read the same length and get the same ID. `next(itertools.count())` hands out each number exactly once, so the old code didn't have this race.\n- **Memory grows without limit.** Every ID ever issued stays in a module-level list for the life of the process, only to count them.\n- **Duplicate IDs overwrite saved orders.** `Store.save_order` (`shop/storage.py:17`) removes any existing row with the same `id` before appending the new one. A duplicate ID from the race above replaces another customer's order on disk.\n\n### 3. The state check now lets unknown states through (`shop/orders.py:20`)\n`ALLOWED[self.state]` used to raise `KeyError` when the current state was unknown. `ALLOWED.get(self.state, STATES)` instead allows a move to any of the four states. An order whose `state` came from a bad stored row, a legacy value like `\"refunded\"`, or a direct assignment can now jump to `\"shipped\"`, `\"paid\"`, or back to `\"new\"`. That skips the state machine entirely, and it's a fail-open default on a path that affects money. For the four valid states the behaviour is unchanged, so the existing tests don't catch it.\n\n### 4. The error for an unknown state is now misleading\nWith the `.get` default, an unknown state no longer raises `KeyError`. It only raises `ValueError(\"cannot go from X to Y\")`, and only when the target is outside `STATES`. So a corrupted state either goes through silently or gets reported as a bad transition, which hides the real problem.\n\n**Fix:** Revert both hunks. If an unknown state needs a clearer error, raise it explicitly (`if self.state not in ALLOWED: raise ValueError(...)`) instead of defaulting to \"anything goes.\"",
+  "ttft_ms": 1637,
+  "type": "result",
+  "duration_ms": 35928,
+  "uuid": "0398073f-7e91-4032-a3c4-37f97cf45df0",
+  "ttft_stream_ms": 1309,
+  "time_to_request_ms": 392,
+  "first_content_frame_ms": 1309,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.1"
+}

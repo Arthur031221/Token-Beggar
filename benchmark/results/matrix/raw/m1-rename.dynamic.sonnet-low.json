@@ -1,0 +1,131 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "dynamic",
+ "rep": "sonnet-low",
+ "top": "claude-sonnet-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 15400,
+  "stop_reason": "end_turn",
+  "session_id": "c74c39ae-29c4-4265-a469-4b928528f4f4",
+  "total_cost_usd": 0.046944549999999995,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 898,
+   "cache_read_input_tokens": 20396,
+   "output_tokens": 266,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 898,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 266,
+     "cache_read_input_tokens": 20396,
+     "cache_creation_input_tokens": 898,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 898
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 661,
+    "cacheReadInputTokens": 52802,
+    "cacheCreationInputTokens": 8504,
+    "webSearchRequests": 0,
+    "costUSD": 0.04591819999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 987,
+    "cacheReadInputTokens": 24505,
+    "cacheCreationInputTokens": 2296,
+    "webSearchRequests": 0,
+    "costUSD": 0.00102635,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 126,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjj2053-117c37a6"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`calc_total` is now `order_total` in all five files that used it, and the tests pass.\n\n- **Changed files:** `shop/pricing.py` (the definition), `shop/orders.py`, `shop/cli.py`, `tests/test_orders.py` and `tests/test_pricing.py`.\n- **Leftovers:** A word-match grep of the repo, excluding `.git`, finds no remaining `calc_total`. The README had no mentions, so I left it alone.\n- **Tests:** pytest isn't installed and `python` isn't on the PATH, so the worker ran `python3 -m unittest discover -s tests -t .`. All 6 tests passed.\n- **Not done:** Nothing is committed. The test run left untracked `__pycache__/` directories in `shop/` and `tests/`.",
+  "ttft_ms": 2875,
+  "type": "result",
+  "duration_ms": 2983,
+  "uuid": "ed25655b-c834-416b-85d6-a27647dea2d1",
+  "ttft_stream_ms": 977,
+  "time_to_request_ms": 148,
+  "first_content_frame_ms": 977,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.dynamic.sonnet-low"
+}

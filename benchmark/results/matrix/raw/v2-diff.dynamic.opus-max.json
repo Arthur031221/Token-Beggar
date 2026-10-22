@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "opus-max",
+ "top": "claude-opus-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 252465,
+  "stop_reason": "end_turn",
+  "session_id": "db62fa6f-2f26-4299-a40d-efe8cfbf23fb",
+  "total_cost_usd": 0.9059650000000001,
+  "usage": {
+   "input_tokens": 30,
+   "cache_creation_input_tokens": 35338,
+   "cache_read_input_tokens": 485205,
+   "output_tokens": 26305,
+   "output_tokens_details": {
+    "thinking_tokens": 19676
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 35338,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 7289,
+     "cache_read_input_tokens": 47860,
+     "cache_creation_input_tokens": 268,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 268
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 30,
+    "outputTokens": 26305,
+    "cacheReadInputTokens": 485205,
+    "cacheCreationInputTokens": 35338,
+    "webSearchRequests": 0,
+    "costUSD": 0.9059650000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 19676,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 25,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff only changes `shop/orders.py`. It introduces two outright bugs, plus two more that remain even after the first one is fixed. I checked each one by applying the change to scratch copies, which I've since deleted. The repo is unchanged; I also removed the `__pycache__` folders my test run created.\n\n### Bugs\n\n**1. `_ids_seen` is never defined, so every `Order(...)` raises `NameError`** (`shop/orders.py:12`)\nThe change replaces `next(_ids)` with `len(_ids_seen)` and `_ids_seen.append(...)`, but nothing adds `_ids_seen = []`, and nothing else in the repo defines it. No order can be created. With the change applied, the tests go from 6 passing to 2 errors (`test_total_matches_cart` and `test_state_flow`, both `NameError: name '_ids_seen' is not defined`).\n\n**2. The state-transition check now allows anything when the state is unknown** (`shop/orders.py:20`)\nWhen the current state isn't a key in `ALLOWED`, `ALLOWED.get(self.state, STATES)` falls back to `STATES`, which lists every state. The old code raised `KeyError` there. Now any move is allowed. With `order.state = \"refunded\"`:\n- `move(\"shipped\")` succeeds, so an order can ship without being paid.\n- `move(\"new\")` succeeds, which `ALLOWED` never allows from any state.\n\nThis can happen through direct assignment, a typo or wrong case (`\"Paid\"`), or a new state added to `STATES` without an `ALLOWED` entry. That last mistake used to crash; now it quietly lets the order go anywhere. Known states behave as before. The fix is to refuse instead: `ALLOWED.get(self.state, ())`, or raise `ValueError` for an unknown state.\n\n**3. With `_ids_seen = []` added, two threads can get the same ID, and the store then loses an order** (`shop/orders.py:12`)\nReading `len()` and then calling `append()` are two separate steps, so two threads can read the same length and get the same ID. `next(itertools.count())` was a single C call with no such gap.\n- **Reproduced:** with 8 threads creating 20,000 orders each, the patched code gave 918 duplicate IDs on Python 3.9 and 109 on 3.10. The original code gave none on any version I ran.\n- **Newer versions:** on 3.11\u20133.14 I got no duplicates, so the race is hidden there, but nothing guarantees that. Free-threaded Python builds have no lock that would prevent it (I didn't test those).\n- **Effect:** `Store.save_order` (`shop/storage.py:17`) removes any saved row with the same ID before writing. I saved two different orders (alice and bob) that shared ID 941, and the store kept only bob's, with no error.\n\n**4. With `_ids_seen = []` added, memory grows forever**\n`_ids_seen` keeps one integer for every order ever created, for the life of the process, only to compute its own length. Creating and discarding 100,000 orders left 5.1 MB in use (about 51 bytes per order). The original code kept nothing. A long-running process never gets that memory back.\n\n### Lesser issues\n- **IDs now start at 0 instead of 1000.** This is an unannounced change, and ID `0` counts as false, so an `if order.id:` check would treat the first order as having no ID. Nothing in the repo does that today.\n- **Unused code is left behind:** `import itertools` and `_ids = itertools.count(1000)`.\n- **The patch can't be applied:** its hunk headers (`@@ class Order:`) have no line numbers, and `git apply --check` rejects it with \"No valid patches in input\".\n- **The tests miss bugs 2\u20134:** with `_ids_seen = []` added, all 6 tests pass.\n\n**Recommendation:** drop the ID change entirely, since `next(_ids)` was correct and thread-safe. If the goal was to avoid `KeyError` on unknown states, raise an error or refuse the move instead of allowing every state.",
+  "ttft_ms": 2151,
+  "type": "result",
+  "duration_ms": 302529,
+  "uuid": "a22aa52b-d951-4aac-8fff-66f68ca11396",
+  "ttft_stream_ms": 870,
+  "time_to_request_ms": 172,
+  "first_content_frame_ms": 870,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.opus-max"
+}

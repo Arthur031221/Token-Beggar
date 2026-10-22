@@ -1,0 +1,127 @@
+{
+ "task": "h4-linediscount",
+ "class": "multi_file",
+ "arm": "final-no-batch",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 55961,
+  "stop_reason": "end_turn",
+  "session_id": "2d75806e-227f-4858-bfea-7d0f18181164",
+  "total_cost_usd": 0.1915692,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 9381,
+   "cache_read_input_tokens": 33192,
+   "output_tokens": 1717,
+   "output_tokens_details": {
+    "thinking_tokens": 256
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9381,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 755,
+     "cache_read_input_tokens": 20402,
+     "cache_creation_input_tokens": 1769,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1769
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1717,
+    "cacheReadInputTokens": 33192,
+    "cacheCreationInputTokens": 9381,
+    "webSearchRequests": 0,
+    "costUSD": 0.11604239999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 256,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 4755,
+    "cacheReadInputTokens": 46493,
+    "cacheCreationInputTokens": 9323,
+    "webSearchRequests": 0,
+    "costUSD": 0.0755268,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 746,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Per-line discounts are in, and the full suite passes: `python3 -m unittest` ran 14 tests, all OK. pytest isn't installed here, so I used unittest. Nothing is committed.\n\n**What changed**\n- **`shop/models.py`:** `Line` has a new `discount_percent` field, default 0. `Cart.add(item, qty=1, discount_percent=0)` adds to an existing line only when both the sku and the discount match; otherwise it starts a new line.\n- **`shop/pricing.py`:** `line_subtotal` takes the discount off first with `money.percent`. The existing bulk rule (5% off at qty \u2265 10) then applies to what's left. Lines with no discount price exactly as before.\n- **`shop/cli.py`:** `quote` accepts `sku:price:qty:discount`, and the three-field form still works. A discount that isn't a number, or is outside 0\u2013100, raises `ValueError`, the same way a bad qty already does.\n- **`tests/test_pricing.py`:** new tests for:\n  - the order of the two steps: price 5, qty 10, 10% off gives 43, where applying bulk first would give 42\n  - a half-up rounding case: 25 at 10% off gives 22\n  - a discount of 0 pricing the same as before\n  - merging lines and keeping them separate\n  - both CLI forms and bad discounts\n\n**Worth knowing**\n- `money.percent` is `int(cents*rate/100 + 0.5)`. That rounds half up for amounts of zero or more, so I left it alone. It works in floating point, though, which can occasionally round the wrong way on an exact .5. Integer or `Decimal` math would fix that. It was already like this before the change.\n- The discount is stored as a float, so a discount like 12.5% is accepted.",
+  "ttft_ms": 3459,
+  "type": "result",
+  "duration_ms": 58479,
+  "uuid": "c2d490c9-56c2-4ee4-98c9-ce78e8b5287a",
+  "ttft_stream_ms": 2227,
+  "time_to_request_ms": 305,
+  "first_content_frame_ms": 2228,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 12 ++++++++---\n shop/models.py        |  7 ++++---\n shop/pricing.py       |  2 ++\n tests/test_pricing.py | 56 ++++++++++++++++++++++++++++++++++++++++++++++++++-\n 4 files changed, 70 insertions(+), 7 deletions(-)\n",
+ "workdir": "h4-linediscount.final-no-batch.3",
+ "ledger": []
+}

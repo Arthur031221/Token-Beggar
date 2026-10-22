@@ -1,0 +1,111 @@
+{
+ "task": "h4-linediscount",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 32926,
+  "stop_reason": "end_turn",
+  "session_id": "8b431e24-6370-4ada-a205-d4adf4ce1598",
+  "total_cost_usd": 0.21065,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 14583,
+   "cache_read_input_tokens": 77270,
+   "output_tokens": 3925,
+   "output_tokens_details": {
+    "thinking_tokens": 717
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14583,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 784,
+     "cache_read_input_tokens": 23460,
+     "cache_creation_input_tokens": 3913,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 3913
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3925,
+    "cacheReadInputTokens": 77270,
+    "cacheCreationInputTokens": 14583,
+    "webSearchRequests": 0,
+    "costUSD": 0.21065,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 717,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Per-line discounts are in, and the full test suite passes: 18 tests, 4 of which were already there.\n\n**What changed**\n- **`shop/models.py`**: `Line` has a new field, `discount_percent`, which defaults to 0. `Cart.add(item, qty=1, discount_percent=0)` adds to an existing line only when both the sku and the discount match; otherwise it starts a new line.\n- **`shop/pricing.py`**: `line_subtotal` takes the line discount off first using `money.percent` (round half up), then applies the bulk rule to what's left. For example, 10 \u00d7 1.00 at 10% off becomes 9.00, then the 5% bulk discount takes it to 8.55.\n- **`shop/cli.py`**: `quote` accepts `sku:price:qty` or `sku:price:qty:discount`. The discount is read as a decimal number, so `12.5` works. I also made it reject a spec with the wrong number of fields with a clear usage error, instead of crashing on the unpack as it did before.\n\n**Tests added**\n- **`tests/test_pricing.py`**: discounted totals, half-up rounding (15\u00a2 at 10% gives 13\u00a2), discount applied before bulk, and the default of 0.\n- **`tests/test_models.py`** (new): lines merge on the same sku and discount, a different discount starts a new line, and `remove` drops every line for a sku.\n- **`tests/test_cli.py`** (new): quotes with and without a discount, the same sku at two discounts, and rejection of a malformed spec.\n\n**Things to be aware of**\n- **Bulk threshold**: it still counts quantity per line. So 6 at 0% plus 6 at 10% of the same sku are two lines of 6, and neither gets the bulk discount.\n- **Orders don't record the discount**: `Order.lines` still stores only `(sku, qty, price_cents)`. Order totals are right because they come from `calc_total`, but the discount isn't saved on the order's lines.\n- **No range check**: `discount_percent` isn't validated, so a negative value or one over 100 will be accepted. Tell me if you want either of these handled.\n\nNothing is committed yet.",
+  "ttft_ms": 2427,
+  "type": "result",
+  "duration_ms": 33661,
+  "uuid": "8744be0a-0776-493e-a02f-181369077c3b",
+  "ttft_stream_ms": 1292,
+  "time_to_request_ms": 469,
+  "first_content_frame_ms": 1293,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 10 +++++++---\n shop/models.py        |  7 ++++---\n shop/pricing.py       |  1 +\n tests/test_pricing.py | 20 ++++++++++++++++++--\n 4 files changed, 30 insertions(+), 8 deletions(-)\n",
+ "workdir": "h4-linediscount.alone.2",
+ "ledger": []
+}

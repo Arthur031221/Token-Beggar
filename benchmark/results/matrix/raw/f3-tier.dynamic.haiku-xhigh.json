@@ -1,0 +1,112 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": "haiku-xhigh",
+ "top": "claude-haiku-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 86940,
+  "stop_reason": "end_turn",
+  "session_id": "fa9d147a-3fb0-4d16-98d8-ab219e0b1a95",
+  "total_cost_usd": 0.016275455,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 12005,
+   "cache_read_input_tokens": 33215,
+   "output_tokens": 5338,
+   "output_tokens_details": {
+    "thinking_tokens": 4029
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12005,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1660,
+     "cache_read_input_tokens": 20425,
+     "cache_creation_input_tokens": 4370,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4370
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 22,
+    "outputTokens": 17726,
+    "cacheReadInputTokens": 198588,
+    "cacheCreationInputTokens": 36192,
+    "webSearchRequests": 0,
+    "costUSD": 0.016275455,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 11140,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in place for the cart, tax, Order, and quote command. The full suite passes: `python3 -m unittest discover -s tests -t . -v` ran 14 tests, all OK (6 at baseline, 8 new). Nothing is committed. I haven't re-read the diff myself, so the test run is the check.\n\n**Changes**\n- `shop/pricing.py`: a `TIER_DISCOUNTS` dict and a `tier_discount()` helper. `calc_total` and `calc_tax` apply the discount before tax.\n- `shop/models.py`: `Cart.tier` defaults to `\"standard\"`.\n- `shop/orders.py`: `Order.tier` is copied from the cart.\n- `shop/cli.py`: `quote --tier`, default `standard`.\n- Tests: new cases in `tests/test_pricing.py` and `tests/test_orders.py`, and a new `tests/test_cli.py` for quote.\n\n**Choices where the spec was silent**\n- Tier matching is exact and case-sensitive, so `'Gold'` gets no discount.\n- The discount applies to the cart's aggregate subtotal, not per line.\n- Untaxable items reduce the subtotal but are not taxed. Tax is computed on the discounted taxable base.\n- `storage.py` does not persist `tier`. I left it alone, so a saved cart reloads as `standard`.\n\nThe last two are the ones most worth checking before you rely on this.",
+  "ttft_ms": 14262,
+  "type": "result",
+  "duration_ms": 89878,
+  "uuid": "cb80ce7c-9f8b-40c5-b980-07b34ac69083",
+  "ttft_stream_ms": 1737,
+  "time_to_request_ms": 179,
+  "first_content_frame_ms": 1738,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 14 ++++++++++----\n tests/test_orders.py  |  9 +++++++++\n tests/test_pricing.py | 25 +++++++++++++++++++++++++\n 6 files changed, 48 insertions(+), 5 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.haiku-xhigh"
+}

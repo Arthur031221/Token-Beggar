@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "haiku-low",
+ "top": "claude-haiku-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 8994,
+  "stop_reason": "end_turn",
+  "session_id": "1f880d7e-cd38-43f5-8725-75e9b521bd66",
+  "total_cost_usd": 0.00241791,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 7284,
+   "cache_read_input_tokens": 32221,
+   "output_tokens": 1277,
+   "output_tokens_details": {
+    "thinking_tokens": 461
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7284,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1109,
+     "cache_read_input_tokens": 19431,
+     "cache_creation_input_tokens": 643,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 643
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1277,
+    "cacheReadInputTokens": 32221,
+    "cacheCreationInputTokens": 7284,
+    "webSearchRequests": 0,
+    "costUSD": 0.00241791,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 461,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move `Store` to SQLite (stdlib `sqlite3`), keeping the same `load()` / `save_order()` interface.**\n\n**Why the current design won't hold at 100k orders with two writers:**\n\n- **Lost updates.** `save_order` reads the whole file, filters, appends, and writes it back. If two processes save at once, the second write silently drops the first one's order.\n- **Corruption risk.** `write_text` truncates then writes, with no atomic rename. A crash or a concurrent reader can see a half-written JSON file, and `load()` then fails for every caller.\n- **Cost per save.** Each save parses and rewrites all rows, so writes scale with total orders. At 100k rows that is a full parse and a multi-megabyte rewrite per order.\n\n**Why SQLite:** it gives atomic transactions, row-level upserts, and file locking across processes on one host, with no new dependency or server. `INSERT ... ON CONFLICT(id) DO UPDATE` replaces the filter-and-append logic. Use WAL mode so the two writers and any readers don't block each other.\n\n**Migration path:**\n\n1. Add a `orders` table with `id TEXT PRIMARY KEY` and the existing fields (`customer`, `total`, `tax`, `state`).\n2. Write a one-time import that reads the JSON and inserts everything in a single transaction. Check row count and the sum of totals against the JSON before switching.\n3. Replace the body of `Store` with SQLite calls. Keep the method names so `cli.py`, `reports.py`, and `orders.py` don't change.\n4. Change `load()` callers that need everything to query only what they need. Loading 100k rows into memory for reports is wasteful.\n5. Keep the JSON file read-only as a backup for one release, then delete it.\n\n**When to go further:** if the writers run on different hosts, SQLite on a shared network filesystem is unsafe. Use PostgreSQL then. A per-order-file layout is not worth it here.\n\nI only read `shop/storage.py`, not its callers or tests, so check those before cutting over.",
+  "ttft_ms": 1759,
+  "type": "result",
+  "duration_ms": 9150,
+  "uuid": "c393ecbf-85c6-40ef-ab4c-72202fb8a5b7",
+  "ttft_stream_ms": 1414,
+  "time_to_request_ms": 89,
+  "first_content_frame_ms": 1414,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.haiku-low"
+}

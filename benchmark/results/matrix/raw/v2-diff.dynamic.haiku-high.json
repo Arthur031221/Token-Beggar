@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "haiku-high",
+ "top": "claude-haiku-5-5",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 39559,
+  "stop_reason": "end_turn",
+  "session_id": "50a74adb-1b04-4bdc-ac86-3bf29c0ccaa8",
+  "total_cost_usd": 0.007878330000000001,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 16027,
+   "cache_read_input_tokens": 152253,
+   "output_tokens": 6298,
+   "output_tokens_details": {
+    "thinking_tokens": 3661
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 16027,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 920,
+     "cache_read_input_tokens": 27284,
+     "cache_creation_input_tokens": 1533,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1533
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 6298,
+    "cacheReadInputTokens": 152253,
+    "cacheCreationInputTokens": 16027,
+    "webSearchRequests": 0,
+    "costUSD": 0.007878330000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3661,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces two bugs, and it also doesn't apply as written. I did not edit any files in the repo. I checked the diff by hand-applying it to a scratch copy and running the suite there; the scratch copy has been deleted.\n\n**1. `Order.__init__` raises `NameError` on every construction (breaks the library).**\nThe diff changes `self.id = next(_ids)` to `self.id = len(_ids_seen)` and `_ids_seen.append(self.id)`, but `_ids_seen` is never defined. `grep` finds it nowhere in the repo, so the first `Order(cart)` call fails.\n- Scratch run: `tests/test_orders.py` reports `errors=2` (`test_total_matches_cart` and `test_state_flow`), both at `shop/orders.py:12` with `NameError: name '_ids_seen' is not defined`.\n- Fix: define `_ids_seen = []` at module level, or revert to `next(_ids)`.\n\n**2. `move()` now fails open for unknown states.**\n`ALLOWED[self.state]` became `ALLOWED.get(self.state, STATES)`. If `self.state` is not a key in `ALLOWED`, any state in `STATES` is now allowed, including `\"paid\"` and `\"new\"`. Before, that case raised `KeyError`.\n- Probe: setting `o.state = \"refunded\"` and calling `o.move(\"paid\")` succeeds and leaves the order in `\"paid\"`.\n- Reach: through the public API, `state` is only set to `\"new\"` in `__init__` or through `move()`, so this is latent today. It becomes live the moment an order's state is assigned directly or loaded from storage, which `Store` does not do yet.\n- Fix: fail closed, e.g. `ALLOWED.get(self.state, set())`, or leave the `KeyError` alone.\n\n**3. The ID scheme changes in ways the diff doesn't account for.**\n- IDs now start at 0 instead of 1000. `Store.save_order` uses `order.id` as the upsert key, so a new process's first order gets id `0` and can overwrite a stored order with that id. The old counter also reset each process, so this collision already existed in some form, but the change moves it to the very first order.\n- `_ids` is left defined and no longer used.\n- `_ids_seen` would be an unbounded list that grows with every order created, a memory leak in a long-running process.\n\n**4. The diff is not a valid patch.**\nThe hunks use `@@ class Order:` and `@@ def move(...)` as headers instead of `@@ -l,s +l,s @@` ranges. `git apply --check change.diff` fails with `No valid patches in input`. Whoever produced it needs to regenerate it with `git diff` so it can be applied and reviewed mechanically.",
+  "ttft_ms": 3380,
+  "type": "result",
+  "duration_ms": 40761,
+  "uuid": "3d30d623-4905-4c3e-96c0-05dfaf3204b5",
+  "ttft_stream_ms": 2418,
+  "time_to_request_ms": 196,
+  "first_content_frame_ms": 2419,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.haiku-high"
+}

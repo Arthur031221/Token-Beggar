@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16695,
+  "stop_reason": "end_turn",
+  "session_id": "ed5d6779-ca02-48ca-8bf5-cd7ff390ed9d",
+  "total_cost_usd": 0.1394652,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11527,
+   "cache_read_input_tokens": 79086,
+   "output_tokens": 1570,
+   "output_tokens_details": {
+    "thinking_tokens": 170
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11527,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 851,
+     "cache_read_input_tokens": 24570,
+     "cache_creation_input_tokens": 1543,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1543
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1570,
+    "cacheReadInputTokens": 79086,
+    "cacheCreationInputTokens": 11527,
+    "webSearchRequests": 0,
+    "costUSD": 0.1394652,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 170,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Design for multi-currency support. Nothing has been written to the repo.\n\n**Core idea:** keep amounts as integers in *minor units* (cents, yen, fils) and always carry an ISO currency code next to them. Never put a bare `int` in a field that holds money in more than one currency.\n\n**What changes, by file**\n- **`shop/money.py`**: add a frozen `Money(amount_minor, currency)` type and a table of how many decimals each currency uses (JPY 0, USD 2, KWD 3). `to_cents`, `fmt` and `percent` become currency-aware, and adding or comparing two different currencies raises an error. The two-decimal limit in `to_cents` is currently hardcoded.\n- **`shop/models.py`**: `Item.price_cents` becomes a `Money` value, and `Cart` gets a `currency`. Adding an item in a different currency is rejected; the cart does not convert it silently.\n- **`shop/pricing.py`**: `TAX_RATE` and the bulk discount should probably vary by region or currency. Return `Money` values.\n- **`shop/orders.py`**: store the currency on the order and on each line.\n- **`shop/storage.py`**: add a `currency` field to each row. Treat old rows that lack it as USD.\n- **`shop/reports.py`**: `sales_by_customer` adds up totals across all orders. Group by currency instead, or convert using a dated exchange rate.\n- **`shop/cli.py`**: add a `--currency` option to `quote`.\n- **`shop/carriers/*.py` (20 files)**: shipping rates are hardcoded cents, presumably USD. Either tag them with a currency or convert them; changing them is a mechanical edit across all 20 files.\n- **`shop/cache.py`**: key the cache by currency as well as SKU, e.g. `(sku, currency)`.\n- **Tests**: update `test_pricing.py` and `test_orders.py`, and add cases for 0- and 3-decimal currencies.\n\n**Main risks**\n1. **Rounding:** `percent` rounds half up using floats, and different decimal counts change the results. Move to `Decimal`.\n2. **Silent mixing:** reports and cart totals could add up different currencies without any error.\n3. **Old data:** existing JSON rows have no currency, so a default has to be chosen.\n4. **Exchange rates:** decide where they come from, how old they can be, and that a rate is locked when the order is created.\n5. **API break:** renaming `price_cents` breaks every caller.",
+  "ttft_ms": 1673,
+  "type": "result",
+  "duration_ms": 17341,
+  "uuid": "8a45fb9a-4167-42ae-8964-6c1ff48f2210",
+  "ttft_stream_ms": 883,
+  "time_to_request_ms": 151,
+  "first_content_frame_ms": 883,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.2"
+}

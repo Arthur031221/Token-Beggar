@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from . import paths
 
 EFFORTS = ["low", "medium", "high", "xhigh", "max"]
+CACHE_READ_X, CACHE_WRITE_X = 0.05, 2.0  # when the price page gives no cache prices: the multiples of the input price seen on 5.5 models
 
 
 @dataclass(frozen=True)
@@ -16,6 +17,24 @@ class Model:
     input_per_mtok: float
     output_per_mtok: float
     default_effort: str
+    context_window: int = 1_000_000
+    cache_read_per_mtok: float = 0.0
+    cache_write_per_mtok: float = 0.0
+
+    def cost(self, usage: dict | None) -> float:
+        """List price in dollars of one usage record: input, output, cache read and cache write each at this model's own price."""
+        usage = usage or {}
+
+        def count(key: str) -> float:
+            value = usage.get(key)
+            return float(value) if isinstance(value, int | float) else 0.0
+
+        return (
+            count("input_tokens") * self.input_per_mtok
+            + count("output_tokens") * self.output_per_mtok
+            + count("cache_read_input_tokens") * self.cache_read_per_mtok
+            + count("cache_creation_input_tokens") * self.cache_write_per_mtok
+        ) / 1e6
 
 
 def _load_json() -> dict:
@@ -28,7 +47,15 @@ def _load_json() -> dict:
             continue
     if not found:
         raise FileNotFoundError("no models.json found")
-    return max(found, key=lambda data: data.get("updated", ""))
+    newest = max(found, key=lambda data: data.get("updated", ""))
+    for row in newest.get("claude", []):  # a refreshed file has no cache prices: take them from another copy with the same input price
+        for other in found:
+            for old in other.get("claude", []):
+                if old.get("id") == row.get("id") and old.get("input_per_mtok") == row.get("input_per_mtok"):
+                    for key in ("cache_read_per_mtok", "cache_write_per_mtok"):
+                        if key in old:
+                            row.setdefault(key, old[key])
+    return newest
 
 
 def load() -> dict:
@@ -38,7 +65,20 @@ def load() -> dict:
 def models() -> list[Model]:
     rows = _load_json()["claude"]
     return sorted(
-        (Model(r["alias"], r["id"], r["tier"], r["input_per_mtok"], r["output_per_mtok"], r["default_effort"]) for r in rows),
+        (
+            Model(
+                r["alias"],
+                r["id"],
+                r["tier"],
+                r["input_per_mtok"],
+                r["output_per_mtok"],
+                r["default_effort"],
+                r.get("context_window", 1_000_000),
+                r.get("cache_read_per_mtok", round(r["input_per_mtok"] * CACHE_READ_X, 4)),
+                r.get("cache_write_per_mtok", round(r["input_per_mtok"] * CACHE_WRITE_X, 4)),
+            )
+            for r in rows
+        ),
         key=lambda m: m.tier,
     )
 

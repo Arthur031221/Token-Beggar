@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "fable-max",
+ "top": "claude-fable-5-1",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 200871,
+  "stop_reason": "end_turn",
+  "session_id": "71d07ca9-0957-4914-8565-cc73c4b644fa",
+  "total_cost_usd": 1.1937235,
+  "usage": {
+   "input_tokens": 258,
+   "cache_creation_input_tokens": 22379,
+   "cache_read_input_tokens": 222454,
+   "output_tokens": 13759,
+   "output_tokens_details": {
+    "thinking_tokens": 9212
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 22379,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 5166,
+     "cache_read_input_tokens": 34411,
+     "cache_creation_input_tokens": 758,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 758
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 258,
+    "outputTokens": 13759,
+    "cacheReadInputTokens": 222454,
+    "cacheCreationInputTokens": 22379,
+    "webSearchRequests": 0,
+    "costUSD": 1.1937235,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 9212,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 15,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces one hard crash, two definite regressions, and one latent one. I verified each by applying the change to a scratch copy under /tmp and running the suite plus targeted probes. Nothing in the repo was edited.\n\n**Confirmed**\n\n- **The new name `_ids_seen` is never defined,** so constructing any order raises NameError. The diff reads the list's length but adds no module-level definition, and the name exists nowhere else in the repo. With the patch applied as written, both tests in the order test file error out at construction. The CLI survives only because it never builds an order.\n\n- **The new ID scheme leaks memory** for the life of the process. Assuming the author meant to add an empty list, every order appends to a module-level list that is never read and never trimmed. It is a counter implemented as an ever-growing list. The old `itertools.count` used constant memory. Because the ID is derived from the list length, anything that later removes entries would also reissue IDs already handed out.\n\n- **Order IDs silently restart at 0 instead of 1000.** Any JSON store written by the old code and appended by the new one carries two disjoint ranges, and any caller that treats id 0 as \"unset\" will misbehave. Nothing in this repo does that today, so this is an unannounced behaviour change rather than a crash.\n\n- **The new transition lookup fails open.** `ALLOWED.get(self.state, STATES)` falls back to the tuple of all states whenever the current state is not a key of the table, so every move is then permitted. In the probe, an order whose state was \"refunded\" or None moved straight to shipped without ever being paid, and moved to \"new\", which no row of the table ever allows. The old code raised KeyError and stopped. The safe default is an empty set. Today the public API keeps state inside the key set, so this only triggers through a direct attribute write, a state added to the state tuple but not to the table, or future code that rehydrates orders from the store. It is a latent inversion of the failure mode rather than a live failure.\n\n**Not reproduced, flagged for completeness**\n\n- Replacing an atomic counter read with a length read followed by an append makes ID allocation a two-step operation. On CPython 3.12 with the GIL I could not produce a duplicate even under heavy contention with a one microsecond switch interval. On the free-threaded build the two steps can interleave and hand out duplicate IDs, so this matters only if the code ever runs there.\n\n**Minor**\n\n- The old counter and the `itertools` import are left behind as dead code.\n- The hunk headers carry no line ranges, so both `git apply` and `patch` reject the file. Anyone applying it must do so by hand, which is how the missing definition would slip through.",
+  "ttft_ms": 6513,
+  "type": "result",
+  "duration_ms": 203653,
+  "uuid": "661adeff-9d5a-410b-bf64-67151dc70cab",
+  "ttft_stream_ms": 5599,
+  "time_to_request_ms": 184,
+  "first_content_frame_ms": 5600,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.fable-max"
+}

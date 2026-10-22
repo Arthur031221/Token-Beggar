@@ -1,0 +1,111 @@
+{
+ "task": "a3-second",
+ "class": "second-opinion",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 24274,
+  "stop_reason": "end_turn",
+  "session_id": "b6bc7e91-f8d0-4457-a01a-c660849a97f4",
+  "total_cost_usd": 0.0831178,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6056,
+   "cache_read_input_tokens": 34769,
+   "output_tokens": 1385,
+   "output_tokens_details": {
+    "thinking_tokens": 567
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6056,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1232,
+     "cache_read_input_tokens": 20184,
+     "cache_creation_input_tokens": 457,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 457
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1385,
+    "cacheReadInputTokens": 34769,
+    "cacheCreationInputTokens": 6056,
+    "webSearchRequests": 0,
+    "costUSD": 0.0831178,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 567,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read the file myself; it's 23 lines, so I didn't hand it to a worker.\n\n**Problems in `shop/cache.py` with many threads over a long run:**\n\n1. **Unbounded growth (lines 11, 18).** Expired entries are never removed. Every SKU ever requested stays in `_data` forever, so memory keeps growing for the life of the process.\n2. **Cache stampede (lines 14\u201318).** Nothing stops concurrent misses. When a popular SKU expires, N threads all call `loader` together and hit the backend N times.\n3. **Invalidation can be lost (line 22 vs 17\u201318).** Thread A starts loading. Thread B updates the price and calls `invalidate`. Then A writes the old value back, and it is served for a full `ttl`. This is the most serious issue, because it serves wrong prices.\n4. **Timestamp is taken after the load (line 18).** If `loader` is slow, the value is already stale when it is stamped, so it can live longer than `ttl`. Taking the time before the load is the safer choice.\n5. **Failures aren't handled.** Loader exceptions aren't cached or backed off, so a failing backend gets retried by every request.\n\nThe dict operations themselves are atomic under the GIL, so the data won't be corrupted. The bugs are all about logic, not memory safety.\n\n**Fix I'd choose:** one `threading.Lock` guarding an `OrderedDict` that acts as a bounded LRU with a `maxsize`, dropping expired entries on access.\n- **Stampede:** add single-flight loading. The first thread to miss puts an in-flight `Future` in the cache for that key and calls `loader` outside the lock. Other threads wait on that `Future`.\n- **Lost invalidation:** keep a version number per key. `invalidate` bumps it, and a load only stores its result if the version hasn't changed since it started.\n- **Staleness:** stamp the time before calling `loader`.\n- **Failures:** optionally cache failures briefly as negative entries.\n\nI wouldn't use `cachetools.TTLCache` plus a lock alone, because it fixes problem 1 but not problems 2 or 3.",
+  "ttft_ms": 5040,
+  "type": "result",
+  "duration_ms": 25010,
+  "uuid": "e11cf7df-8fc7-40d8-9a13-38e4e1fa28b5",
+  "ttft_stream_ms": 3164,
+  "time_to_request_ms": 207,
+  "first_content_frame_ms": 3165,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "a3-second.dynamic.3",
+ "ledger": []
+}

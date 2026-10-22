@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 10333,
+  "stop_reason": "end_turn",
+  "session_id": "3a0bd35b-f10d-4338-8706-19ef2cebb4f7",
+  "total_cost_usd": 0.07245000000000001,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6055,
+   "cache_read_input_tokens": 34570,
+   "output_tokens": 854,
+   "output_tokens_details": {
+    "thinking_tokens": 56
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6055,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 674,
+     "cache_read_input_tokens": 19985,
+     "cache_creation_input_tokens": 655,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 655
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 854,
+    "cacheReadInputTokens": 34570,
+    "cacheCreationInputTokens": 6055,
+    "webSearchRequests": 0,
+    "costUSD": 0.07245000000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 56,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move orders from the single JSON file to SQLite in WAL mode, keeping the `Store` interface the same.**\n\n**Why the current design fails**\n- **It loses writes.** `save_order` loads the whole file, changes it, then writes it back (`shop/storage.py:16-20`). If both writers do this at the same time, the last one to write erases the other's order.\n- **It can corrupt the file.** `write_text` is not atomic, so a crash or a read in the middle of a write leaves a truncated file that won't parse.\n- **It gets slow.** Each save reads and rewrites every order. At 100k orders that's about 10 MB of JSON per save, so cost grows with the total order count.\n\n**Why SQLite**\nIt ships with Python, so there's no server to run. It handles multiple processes safely (WAL plus `busy_timeout` gives one writer at a time and readers that don't block). Each save becomes an indexed upsert (`INSERT \u2026 ON CONFLICT(id) DO UPDATE`), and every write is atomic and survives a crash. Postgres would be overkill for two writers and 100k rows; move to it only if you later need multiple hosts.\n\n**Migration path**\n1. **Add `SqliteStore`** with the same `load`/`save_order` methods. Create the `orders` table with `id` as the primary key, and store money as integer cents, as today.\n2. **Test it** against the existing tests plus a new one: two processes saving at the same time, with no orders lost.\n3. **Write a one-off import script** that reads `orders.json` and inserts it in a single transaction, then checks that the row counts and totals match.\n4. **Cut over:** stop both writers, run the import, switch the config to `SqliteStore`, restart. Keep the JSON file read-only as a backup.\n5. **Afterwards:** add `get(id)` and filtered queries so `reports.py` and other callers stop using `load()`, which pulls all 100k rows. Then delete the JSON store.",
+  "ttft_ms": 1891,
+  "type": "result",
+  "duration_ms": 11415,
+  "uuid": "caa8320c-4b13-4dc8-a0a1-8063063fb587",
+  "ttft_stream_ms": 963,
+  "time_to_request_ms": 245,
+  "first_content_frame_ms": 963,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.3"
+}

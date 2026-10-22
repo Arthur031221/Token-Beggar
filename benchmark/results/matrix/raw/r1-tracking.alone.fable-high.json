@@ -1,0 +1,110 @@
+{
+ "task": "r1-tracking",
+ "class": "reading",
+ "arm": "alone",
+ "rep": "fable-high",
+ "top": "claude-fable-5-1",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 11055,
+  "stop_reason": "end_turn",
+  "session_id": "f3a1effe-1fed-4500-93c5-610a2f2431b6",
+  "total_cost_usd": 0.34026249999999997,
+  "usage": {
+   "input_tokens": 66,
+   "cache_creation_input_tokens": 14254,
+   "cache_read_input_tokens": 58090,
+   "output_tokens": 800,
+   "output_tokens_details": {
+    "thinking_tokens": 152
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14254,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 87,
+     "cache_read_input_tokens": 24805,
+     "cache_creation_input_tokens": 2239,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2239
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 66,
+    "outputTokens": 800,
+    "cacheReadInputTokens": 58090,
+    "cacheCreationInputTokens": 14254,
+    "webSearchRequests": 0,
+    "costUSD": 0.34026249999999997,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 152,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "delta, kestrel, onyx, tundra\n\nOf the 20 carrier modules, these four define only `rate`, `label`, and `valid_label` with no `tracking_url` method and no base class that could supply one. The other 16 all define `tracking_url` directly.",
+  "ttft_ms": 2261,
+  "type": "result",
+  "duration_ms": 11254,
+  "uuid": "47ce8bff-c8d5-4195-955a-0288d7e4d731",
+  "ttft_stream_ms": 975,
+  "time_to_request_ms": 82,
+  "first_content_frame_ms": 976,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r1-tracking.alone.fable-high"
+}

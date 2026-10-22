@@ -1,0 +1,117 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": "sonnet-xhigh",
+ "top": "claude-sonnet-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 88171,
+  "stop_reason": "end_turn",
+  "session_id": "9f7749af-ac7d-4c2f-934f-ceb2a6487c71",
+  "total_cost_usd": 0.19360479999999997,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 1130,
+   "cache_read_input_tokens": 21414,
+   "output_tokens": 830,
+   "output_tokens_details": {
+    "thinking_tokens": 243
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1130,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 830,
+     "cache_read_input_tokens": 21414,
+     "cache_creation_input_tokens": 1130,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1130
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 22,
+    "outputTokens": 9435,
+    "cacheReadInputTokens": 162448,
+    "cacheCreationInputTokens": 27334,
+    "webSearchRequests": 0,
+    "costUSD": 0.19360479999999997,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3919,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjif8nu-c0a59761"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and the worker reports the full suite passing: 20 tests, 0 failures. I haven't re-run the tests or read the diff myself. Nothing is committed.\n\n- **Cart:** `Cart.tier` defaults to `'standard'` (`shop/models.py`).\n- **Discount:** `shop/pricing.py` now has a `TIER_DISCOUNTS` table and a `tier_discount(cart, cents)` helper. Gold takes 10%, silver 5%, and any other value takes nothing. Amounts stay in integer cents and use the existing `percent()` rounding.\n- **Before tax:** `calc_tax` taxes the discounted subtotal. `calc_total` applies the same discount and now calls `calc_tax`, so the two can't drift apart.\n- **Order:** `Order` gets `tier = cart.tier` (`shop/orders.py`). Its totals and tax already came from `calc_total` and `calc_tax`, so they're discounted. The stored-order and report code only copy or sum those figures, so they're discounted too.\n- **CLI:** `quote --tier` defaults to `standard` and sets the cart's tier (`shop/cli.py`).\n- **Tests:** new tier tests in `tests/test_pricing.py` and `tests/test_orders.py`, plus a new `tests/test_cli.py` for `quote --tier`. The test command was `python3 -m unittest discover -s tests -t . -v`.\n\nTwo gaps you may want closed:\n- **Quote output:** it has no discount line, because I kept the existing single-line format.\n- **Persistence:** `Store.save_order` doesn't write the tier to the JSON file, so a reloaded order won't know its tier. The discounted totals are saved, though.",
+  "ttft_ms": 2909,
+  "type": "result",
+  "duration_ms": 6357,
+  "uuid": "616e41bc-5110-4031-8b78-3a746a11e4cc",
+  "ttft_stream_ms": 858,
+  "time_to_request_ms": 120,
+  "first_content_frame_ms": 858,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 13 ++++++++++---\n tests/test_orders.py  | 17 ++++++++++++++++-\n tests/test_pricing.py | 44 +++++++++++++++++++++++++++++++++++++++++++-\n 6 files changed, 73 insertions(+), 6 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.sonnet-xhigh"
+}

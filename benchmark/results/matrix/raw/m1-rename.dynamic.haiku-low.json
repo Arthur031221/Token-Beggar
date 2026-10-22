@@ -1,0 +1,117 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "dynamic",
+ "rep": "haiku-low",
+ "top": "claude-haiku-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 18997,
+  "stop_reason": "end_turn",
+  "session_id": "4542f57e-a83a-4ca7-965d-7c9a384ad448",
+  "total_cost_usd": 0.00439704,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 1054,
+   "cache_read_input_tokens": 21379,
+   "output_tokens": 349,
+   "output_tokens_details": {
+    "thinking_tokens": 127
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1054,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 349,
+     "cache_read_input_tokens": 21379,
+     "cache_creation_input_tokens": 1054,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1054
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 2456,
+    "cacheReadInputTokens": 87359,
+    "cacheCreationInputTokens": 12565,
+    "webSearchRequests": 0,
+    "costUSD": 0.00439704,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 474,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjibxpx-be12983a"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`calc_total` is now `order_total` in all 11 places across 5 files, and the tests pass (6 of 6).\n\n- `shop/pricing.py` (1 change)\n- `shop/cli.py` (2)\n- `shop/orders.py` (2)\n- `tests/test_pricing.py` (4)\n- `tests/test_orders.py` (2)\n\nA grep over the repo (excluding `.git`) finds no remaining `calc_total`. There was no Makefile and pytest isn't installed, so the worker ran the suite with `python3 -m unittest discover -s tests -t .`. It printed `Ran 6 tests` and `OK`. The changes are not committed.",
+  "ttft_ms": 2057,
+  "type": "result",
+  "duration_ms": 2960,
+  "uuid": "fce80509-2b3c-4b6f-ae4f-1942b7542f6c",
+  "ttft_stream_ms": 1454,
+  "time_to_request_ms": 113,
+  "first_content_frame_ms": 1454,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.dynamic.haiku-low"
+}

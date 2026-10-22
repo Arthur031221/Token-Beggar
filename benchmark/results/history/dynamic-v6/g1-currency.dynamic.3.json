@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16692,
+  "stop_reason": "end_turn",
+  "session_id": "0a69e64f-a71f-48c4-a7a9-76e4e37f7e39",
+  "total_cost_usd": 0.1267062,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 10166,
+   "cache_read_input_tokens": 78731,
+   "output_tokens": 1480,
+   "output_tokens_details": {
+    "thinking_tokens": 94
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10166,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 829,
+     "cache_read_input_tokens": 24243,
+     "cache_creation_input_tokens": 509,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 509
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1480,
+    "cacheReadInputTokens": 78731,
+    "cacheCreationInputTokens": 10166,
+    "webSearchRequests": 0,
+    "costUSD": 0.1267062,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 94,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "# Multi-currency design\n\n**Core idea:** amounts stay as integers in minor units, but each one carries a currency code. Never add amounts in different currencies without an explicit conversion.\n\n**Changes by file**\n\n- **`shop/money.py`**: Add a `Money(amount_minor, currency)` value type and a table of minor-unit exponents (USD 2, JPY 0, KWD 3). `to_cents`, `fmt` and `percent` currently assume 2 decimals. They become `parse(str, cur)`, `fmt(Money)` and `percent(Money, rate)`. Adding two `Money` values with different currencies should raise an error.\n- **`shop/models.py`**: Change `Item.price_cents` to `Item.price: Money`. Give `Cart` a `currency` and have `add()` reject items in any other currency.\n- **`shop/pricing.py`**: `TAX_RATE` is a single global at 8.25% and needs to be looked up per currency or region. Bulk-discount rounding has to respect each currency's exponent.\n- **`shop/orders.py`**: Store the currency on `Order`. Snapshot any FX rate used at order time so totals don't change later.\n- **`shop/storage.py`**: Add a `currency` field to the JSON rows. Rows already on disk have none, so treat a missing value as `\"USD\"` when loading.\n- **`shop/reports.py`**: `sales_by_customer` adds totals together whatever their currency. Group by `(customer, currency)`, or convert to a reporting currency using stored rates.\n- **`shop/cli.py`**: Add a `--currency` option to `quote`.\n- **`shop/cache.py`**: Cache prices per `(sku, currency)`.\n- **`shop/carriers/*.py`** (20 files): Rates are hard-coded in USD cents. Return `Money` in USD and convert in one place, rather than editing every rate card.\n- **Tests**: Add cases for JPY and KWD, mixed currencies, and loading old rows.\n\n**Main risks**\n\n1. Every place that currently sums totals silently mixes currencies; reports are the worst case.\n2. The hard-coded 2-decimal assumption gives JPY totals that are 100\u00d7 off.\n3. Old stored data has no currency field and must default to USD.\n4. FX rounding and when the rate is taken can cause disputes over totals; record the rate used on each order.\n5. Tax rules differ by jurisdiction, not just by currency.",
+  "ttft_ms": 1305,
+  "type": "result",
+  "duration_ms": 17343,
+  "uuid": "30fbc841-cd87-4d26-8263-51f817d591df",
+  "ttft_stream_ms": 1061,
+  "time_to_request_ms": 191,
+  "first_content_frame_ms": 1062,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.3"
+}

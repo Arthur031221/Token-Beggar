@@ -1,0 +1,132 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "final-no-batch",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 65903,
+  "stop_reason": "end_turn",
+  "session_id": "e51209f3-3f28-4053-b959-51a4742cd8a2",
+  "total_cost_usd": 0.19568109999999997,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 1098,
+   "cache_read_input_tokens": 21660,
+   "output_tokens": 604,
+   "output_tokens_details": {
+    "thinking_tokens": 109
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1098,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 604,
+     "cache_read_input_tokens": 21660,
+     "cache_creation_input_tokens": 1098,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1098
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1554,
+    "cacheReadInputTokens": 54814,
+    "cacheCreationInputTokens": 9968,
+    "webSearchRequests": 0,
+    "costUSD": 0.1218108,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 252,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 4516,
+    "cacheReadInputTokens": 54188,
+    "cacheCreationInputTokens": 9307,
+    "webSearchRequests": 0,
+    "costUSD": 0.0738703,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 190,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjmw23z-6b49151e"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are added and the full suite passes: `python3 -m unittest discover` ran 14 tests, all OK. Nothing is committed. I'm going on the worker's report here; I haven't read the diff myself.\n\n- **Cart** (`shop/models.py`): has a `tier` attribute that defaults to `'standard'`. It sits after `customer`, so existing positional calls still work.\n- **Discounts** (`shop/pricing.py`): gold takes 10% off, silver 5%, and any other value nothing. One helper takes the discount off the subtotal before tax, and both `calc_total` and `calc_tax` use it.\n- **Order** (`shop/orders.py`): copies `cart.tier` and prices through `calc_total`/`calc_tax`, so it gets the discount.\n- **CLI** (`shop/cli.py`): `quote --tier`, default `standard`.\n- **Tests**: new cases in `tests/test_pricing.py` and `tests/test_orders.py`, and a new `tests/test_cli.py`.\n\nDecision for you: the discount is rounded twice, once on the full subtotal and once on the taxable part (so only the taxable items' share of the discount comes off before tax). Each uses the existing half-up rounding. On some carts these two roundings could differ by a cent from rounding the discount once and splitting it. If you'd rather round once, that's a small follow-up.\n\nThe test run also left untracked `__pycache__` folders; you may want them in `.gitignore`.",
+  "ttft_ms": 1915,
+  "type": "result",
+  "duration_ms": 6452,
+  "uuid": "00cdb3e5-7d81-4b6b-8284-7287231b3c58",
+  "ttft_stream_ms": 836,
+  "time_to_request_ms": 140,
+  "first_content_frame_ms": 836,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 28 ++++++++++++++++++++++------\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 24 ++++++++++++++++++++++++\n 6 files changed, 58 insertions(+), 7 deletions(-)\n",
+ "workdir": "f3-tier.final-no-batch.3",
+ "ledger": []
+}

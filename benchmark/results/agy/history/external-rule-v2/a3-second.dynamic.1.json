@@ -1,0 +1,111 @@
+{
+ "task": "a3-second",
+ "class": "second-opinion",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15964,
+  "stop_reason": "end_turn",
+  "session_id": "58eec393-5b79-4904-beea-f3654a09dfa1",
+  "total_cost_usd": 0.0810138,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6031,
+   "cache_read_input_tokens": 34749,
+   "output_tokens": 1290,
+   "output_tokens_details": {
+    "thinking_tokens": 476
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6031,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1142,
+     "cache_read_input_tokens": 20164,
+     "cache_creation_input_tokens": 452,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 452
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1290,
+    "cacheReadInputTokens": 34749,
+    "cacheCreationInputTokens": 6031,
+    "webSearchRequests": 0,
+    "costUSD": 0.0810138,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 476,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I'd flag four problems in `shop/cache.py`, in order of severity:\n\n1. **Invalidation can be lost (stale prices).** Thread A misses and starts a slow `loader(sku)`. While it runs, the price changes and thread B calls `invalidate(sku)`. Then A writes the old value back at line 18, and that stale price is served for a full `ttl`. For prices, this is the bug that matters most.\n\n2. **Duplicate loads when an entry expires.** When a popular SKU expires, every thread that asks for it at that moment misses and calls `loader` at the same time. That puts a spike of load on the backend. If the loader is failing, every request retries it, because errors aren't cached.\n\n3. **Memory grows without limit.** Expired entries are only replaced when someone asks for that SKU again, and nothing ever removes them. In a long-running service, every SKU ever requested stays in memory.\n\n4. **Prices can be older than `ttl`.** The timestamp is taken after the load finishes (line 18), so a slow load makes the value older than `ttl` by the load time. This is minor.\n\nThe dict itself won't get corrupted: each dict operation is safe on its own in CPython, including free-threaded builds. The problems come from the gap between the check and the write.\n\n**The fix I'd choose:**\n- Protect the dict and its bookkeeping with one `threading.Lock`. Never hold that lock while `loader` runs.\n- Allow one load per SKU at a time: keep an in-progress table of SKU \u2192 Future. The first thread to miss runs the load; the others wait on its Future. If the load fails, give the error to everyone waiting and remove the entry from the table.\n- Keep a version counter per SKU. `invalidate` increases it. A loader stores its result only if the version is unchanged since it started.\n- Use an `OrderedDict` with a `maxsize` and evict the least recently used entry. Also drop expired entries whenever they're found.\n- Record the timestamp before calling `loader`.\n\n`cachetools.TTLCache` plus a lock would cover the size and expiry parts (3 and 4), but you would still need to add points 1 and 2 yourself.",
+  "ttft_ms": 2045,
+  "type": "result",
+  "duration_ms": 16337,
+  "uuid": "35794631-03cc-4faf-a280-99dc232f4128",
+  "ttft_stream_ms": 1565,
+  "time_to_request_ms": 129,
+  "first_content_frame_ms": 1565,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "a3-second.dynamic.1",
+ "ledger": []
+}

@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "opus-xhigh",
+ "top": "claude-opus-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 38346,
+  "stop_reason": "end_turn",
+  "session_id": "e7a507a0-bb11-4734-9e9c-c8ec616c0dc4",
+  "total_cost_usd": 0.1958328,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 12853,
+   "cache_read_input_tokens": 98344,
+   "output_tokens": 3665,
+   "output_tokens_details": {
+    "thinking_tokens": 1532
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12853,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1050,
+     "cache_read_input_tokens": 23628,
+     "cache_creation_input_tokens": 2015,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2015
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 3665,
+    "cacheReadInputTokens": 98344,
+    "cacheCreationInputTokens": 12853,
+    "webSearchRequests": 0,
+    "costUSD": 0.1958328,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1532,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces three real bugs, and one more if the first is fixed. I checked them by applying the diff to a scratch copy of the repo, not the working tree.\n\n### 1. `_ids_seen` is never defined, so every `Order()` raises `NameError` (blocker)\n**`shop/orders.py:12`**: The diff changes the ID code to use `_ids_seen` but never adds `_ids_seen = []` at module level, and the name exists nowhere else in the repo. Every attempt to create an order crashes. With the diff applied, both tests in `tests/test_orders.py` error out (`Ran 2 tests \u2026 FAILED (errors=2)`). The old `_ids = itertools.count(1000)` and `import itertools` are left behind and no longer used.\n\n### 2. If the list were defined, IDs are no longer thread-safe and memory grows forever\n- **Duplicate IDs under threads:** `len(_ids_seen)` followed by `.append()` is two separate steps. Two threads creating orders at once can both read the same length and get the same ID. `next(itertools.count())` is a single C call that can't be interleaved this way. Duplicate IDs then cause data loss in `Store.save_order` (`shop/storage.py:17`): it removes any row with the same `id` before writing, so one order silently replaces the other on disk.\n- **Unbounded memory:** the list keeps every ID ever issued just to count them. In a long-running process that is a slow memory leak; the old counter used constant memory.\n\n### 3. IDs now start at 0 instead of 1000\nI confirmed the first order gets `id 0`. Two consequences:\n- `0` is falsy, so any `if order.id:` or `order.id or \u2026` check will treat the first order as having no ID.\n- Order numbers now overlap a range (0\u2013999) that never appeared before. A JSON store or anything downstream that assumed IDs \u2265 1000 will mix old and new numbering.\n\n### 4. `move()` now allows any transition from an unrecognised state\n**`shop/orders.py:20`**: All four valid states are already keys in `ALLOWED`, so `ALLOWED.get(self.state, STATES)` only changes behaviour when `self.state` is invalid (corrupted, a typo like `\"canceled\"`, or a value from old data). Before, that raised `KeyError`. Now the fallback is `STATES`, so the order may move to any state, skipping the `new \u2192 paid \u2192 shipped` flow. I confirmed an order with `state = \"canceled\"` can go straight to `\"shipped\"`. That matters because `reports.sales_by_customer` counts `\"shipped\"` orders as revenue, so a broken order can turn into counted sales without ever being paid. It also hides the corruption instead of reporting it. If a fallback is wanted at all, it should be an empty set (no transitions allowed), or the unknown state should raise an error.\n\nThe diff file itself is also malformed: the hunk headers (`@@ class Order:`) have no line numbers, so `git apply` and `patch` can't apply it as written.",
+  "ttft_ms": 1473,
+  "type": "result",
+  "duration_ms": 39113,
+  "uuid": "d4fe7620-6656-4a36-8359-a7ba6ba573d1",
+  "ttft_stream_ms": 983,
+  "time_to_request_ms": 112,
+  "first_content_frame_ms": 983,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.opus-xhigh"
+}

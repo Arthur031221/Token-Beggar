@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": "sonnet-medium",
+ "top": "claude-sonnet-5-5",
+ "effort": "medium",
+ "result": {
+  "duration_api_ms": 10720,
+  "stop_reason": "end_turn",
+  "session_id": "afc9aa2a-87ec-4863-833f-833490a9c335",
+  "total_cost_usd": 0.0407398,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 7272,
+   "cache_read_input_tokens": 32438,
+   "output_tokens": 840,
+   "output_tokens_details": {
+    "thinking_tokens": 35
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7272,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 721,
+     "cache_read_input_tokens": 19648,
+     "cache_creation_input_tokens": 414,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 414
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 840,
+    "cacheReadInputTokens": 32438,
+    "cacheCreationInputTokens": 7272,
+    "webSearchRequests": 0,
+    "costUSD": 0.0407398,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 35,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move to SQLite (WAL mode) behind the same `Store` interface.**\n\n**Why the current design fails**\n- `save_order` reads the whole file, filters it, and rewrites it. Each save is O(n), so 100k orders means megabytes of JSON parsed and written per order.\n- `write_text` truncates the file and then writes, and there is no locking. With two writer processes, both can load the same snapshot, so the last writer silently drops the other's order (lost update).\n- A reader, or a crash mid-write, can see a truncated or corrupt file.\n\n**Why SQLite**\n- It's in the standard library, so there's no new infrastructure.\n- It handles cross-process locking and gives atomic transactions.\n- `INSERT ... ON CONFLICT(id) DO UPDATE` replaces the read-filter-append logic, and `id` as primary key makes the lookup O(log n).\n- Two writers on one machine is well within its range. WAL mode plus `busy_timeout` serializes them safely.\n- Move to Postgres only if the writers end up on different hosts or the write rate grows well beyond this.\n\n**Migration path**\n1. Add a `SqliteStore` with the same `load` and `save_order` signatures. Use the schema `orders(id PK, customer, total, tax, state)`. Set `PRAGMA journal_mode=WAL` and `busy_timeout`.\n2. Write a one-off import script that reads the JSON file and bulk-inserts it in a single transaction. Run it with writers stopped, or copy the file and then replay changes.\n3. Verify the migration: compare row counts and a checksum of the ids and totals against the JSON.\n4. Switch the writers to `SqliteStore` behind a config flag. Keep the JSON file read-only as a rollback copy for a release or two.\n5. Remove the JSON store once it's stable.\n\n**Caveats**\n- `load()` returning a full list won't scale. Add `get(id)` and query methods, and move callers off `load()`.\n- Money is already stored as integer cents, which is correct. Keep it that way.\n- Keep the database on a local disk, not NFS, because SQLite locking is unreliable there.",
+  "ttft_ms": 4484,
+  "type": "result",
+  "duration_ms": 11052,
+  "uuid": "84d0efae-68ab-44d3-8959-edad51adf880",
+  "ttft_stream_ms": 3434,
+  "time_to_request_ms": 141,
+  "first_content_frame_ms": 3435,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.sonnet-medium"
+}

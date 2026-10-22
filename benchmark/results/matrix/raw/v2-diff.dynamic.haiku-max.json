@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "haiku-max",
+ "top": "claude-haiku-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 186072,
+  "stop_reason": "end_turn",
+  "session_id": "ff0f3517-63b1-491f-905d-ebc9943703fe",
+  "total_cost_usd": 0.03143145,
+  "usage": {
+   "input_tokens": 16,
+   "cache_creation_input_tokens": 44283,
+   "cache_read_input_tokens": 232975,
+   "output_tokens": 40487,
+   "output_tokens_details": {
+    "thinking_tokens": 34622
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 44283,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 9470,
+     "cache_read_input_tokens": 48078,
+     "cache_creation_input_tokens": 8995,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 8995
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 40487,
+    "cacheReadInputTokens": 232975,
+    "cacheCreationInputTokens": 44283,
+    "webSearchRequests": 0,
+    "costUSD": 0.03143145,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 34622,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 15,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "As written, the diff breaks order creation. The suite passes on HEAD (6 tests). With the diff applied, both `test_orders` tests error.\n\n**Bugs introduced**\n\n1. **`_ids_seen` is never defined, so every `Order(...)` raises `NameError`.** The diff calls `len(_ids_seen)` and `_ids_seen.append(...)` but never adds `_ids_seen = []`, and nothing else in the repo defines it. The module still imports, because the name is only looked up when `__init__` runs, so an import-only check won't catch it. Verified in a scratch copy: `NameError: name '_ids_seen' is not defined` in `test_state_flow` and `test_total_matches_cart`. The CLI never builds an `Order`, so `quote` and `report` are unaffected.\n\n2. **The state guard now fails open for unknown states.** `ALLOWED.get(self.state, STATES)` lets any unrecognised current state move to any valid state. The original `ALLOWED[self.state]` raised `KeyError`. Verified: with `state = \"bogus\"`, `move(\"new\")` now succeeds. A realistic trigger is a misspelled state such as `\"canceled\"` (one *l*) loaded from storage, which would let `move(\"paid\")` silently revive a cancelled order. Adding a state to `STATES` without an `ALLOWED` entry also disables its guard instead of failing loudly. Nothing in the repo produces an unknown state today, so this is latent. Known states behave as before, and `cancelled -> paid` is still rejected.\n\n3. **Id assignment is no longer atomic.** `next(_ids)` is a single call. `len(_ids_seen)` followed by `append` is a read and then a write, so two threads can read the same length and get the same id. I stress-tested 8 threads \u00d7 2000 orders and saw no duplicates, so I could not reproduce it. This one is reasoned from the code. The repo has no threading, so the impact is limited to concurrent callers.\n\n4. **Ids change from 1000-based to 0-based, and the list grows without bound.** Verified: `[1000, 1001, 1002]` becomes `[0, 1, 2]`. Nothing in the repo depends on the values, but id `0` is falsy, so a downstream `if order.id:` treats the first order as missing. `_ids_seen` also keeps one entry per order ever created in the process, where the counter used constant memory.\n\n**Not introduced by this diff, and not fixed by it**\n- Ids restart every process, and `Store.save_order` replaces rows by id. Two processes saving to one file leave one row, with `bob` overwriting `ann`. The original has the same problem (both get 1000), and so does the diff's version (both get 0).\n\n**Delivery problem**\n- `change.diff` is not a valid unified diff. The hunk headers (`@@ class Order:`, `@@ def move(...)`) have no `-a,b +c,d` ranges and there are no context lines. `git apply --check` rejects it with \"No valid patches in input\", so it has to be applied by hand.\n\n**Nit:** `_ids = itertools.count(1000)` is left behind as dead code.\n\n**Suggested fix:** Revert both changed lines unless the id change is intended. If it is, define `_ids_seen` and decide on items 3 and 4 explicitly. Keep `ALLOWED[self.state]` so unknown states still raise.\n\n**How I checked:** I copied `HEAD` into scratch directories under `/tmp/review-scratch.ckDPq0` (outside the repo), applied the two lines by hand, and ran the test suite and small probes. The repo is unchanged, and `git status` is clean.",
+  "ttft_ms": 3874,
+  "type": "result",
+  "duration_ms": 188494,
+  "uuid": "399baf3e-08c6-471e-9c8b-d8dad4cf57cf",
+  "ttft_stream_ms": 1681,
+  "time_to_request_ms": 183,
+  "first_content_frame_ms": 1682,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.haiku-max"
+}

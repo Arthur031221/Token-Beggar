@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": "haiku-low",
+ "top": "claude-haiku-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 10749,
+  "stop_reason": "end_turn",
+  "session_id": "c6ca2a40-9a6c-4912-8bbf-3e0286f60269",
+  "total_cost_usd": 0.0034074400000000003,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 8567,
+   "cache_read_input_tokens": 72774,
+   "output_tokens": 1931,
+   "output_tokens_details": {
+    "thinking_tokens": 936
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8567,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1308,
+     "cache_read_input_tokens": 20616,
+     "cache_creation_input_tokens": 741,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 741
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1931,
+    "cacheReadInputTokens": 72774,
+    "cacheCreationInputTokens": 8567,
+    "webSearchRequests": 0,
+    "costUSD": 0.0034074400000000003,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 936,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff has two real bugs and one likely problem. I read the diff and `shop/orders.py`, and did not edit anything or run the tests.\n\n1. **`_ids_seen` is undefined, so every `Order(...)` call crashes.** The diff replaces `self.id = next(_ids)` with `self.id = len(_ids_seen)` and `_ids_seen.append(...)`, but nothing in the diff or the file defines `_ids_seen`. `Order.__init__` raises `NameError` on the first construction. This breaks `test_orders.py` (its `make()` helper builds an `Order`) and any code that creates orders.\n\n2. **Even with `_ids_seen` defined, the ID scheme changes silently.** `_ids = itertools.count(1000)` is no longer used, so IDs would start at 0 instead of 1000. Using `len()` before the append also means the list grows forever, one entry per order, which is a memory leak in a long-running process. `shop/storage.py` keys rows on `order.id` (lines 17 and 19), so changing the ID sequence would alter stored data. The fix is to keep `next(_ids)`, or to remove the diff's list entirely.\n\n3. **`move()` now accepts transitions from invalid states.** `ALLOWED[self.state]` becomes `ALLOWED.get(self.state, STATES)`. Any state missing from `ALLOWED` (for example a bad value loaded from storage) now permits a move to any of the four states, including the state it is already in. Before, that case raised `KeyError`. The fallback hides corrupted state instead of rejecting it. Raising a `ValueError` for an unknown current state is the safer behaviour.\n\nAlso, the hunk headers (`@@ class Order:`) have no line numbers, so this is not a standard unified diff. I did not check whether `git apply` accepts it.",
+  "ttft_ms": 1053,
+  "type": "result",
+  "duration_ms": 10961,
+  "uuid": "4ab72303-4fe3-4c27-a9fa-d2e4ebbdd4a1",
+  "ttft_stream_ms": 699,
+  "time_to_request_ms": 96,
+  "first_content_frame_ms": 699,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.alone.haiku-low"
+}

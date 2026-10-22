@@ -1,0 +1,117 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": "sonnet-low",
+ "top": "claude-sonnet-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 44139,
+  "stop_reason": "end_turn",
+  "session_id": "ec6944d9-9975-4ff5-b447-17fbb92295bc",
+  "total_cost_usd": 0.1095968,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 1084,
+   "cache_read_input_tokens": 20602,
+   "output_tokens": 424,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1084,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 424,
+     "cache_read_input_tokens": 20602,
+     "cache_creation_input_tokens": 1084,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1084
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 4516,
+    "cacheReadInputTokens": 102893,
+    "cacheCreationInputTokens": 16307,
+    "webSearchRequests": 0,
+    "costUSD": 0.1095968,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 130,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjj1eu3-aafb7368"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and the full suite passes (`python3 -m unittest discover`, 14 tests, all OK). I haven't committed anything, and I didn't re-read the changes myself, so the test output is the only check.\n\n- **Cart:** `shop/models.py` gives `Cart` a `tier` attribute that defaults to `\"standard\"`.\n- **Pricing:** In `shop/pricing.py`, gold takes 10% off the subtotal, silver 5%, and any other value nothing. Tax is computed on the discounted amount, and `calc_total` is the discounted subtotal plus that tax.\n- **Order:** `shop/orders.py` now carries `tier`, and its total and tax pick up the discount through the pricing functions.\n- **CLI:** `quote` takes `--tier` (default `standard`) and passes it into `Cart`, in `shop/cli.py`.\n- **Tests:** I added cases for gold, silver, standard, an unknown tier, tax on the discounted amount, Order, and the CLI. The CLI tests are in a new `tests/test_cli.py`.\n\nThe discount is rounded twice, once on the whole subtotal and once on the taxable part. With a mix of taxable and untaxable items, the result can differ by a cent from discounting each line.",
+  "ttft_ms": 3956,
+  "type": "result",
+  "duration_ms": 4067,
+  "uuid": "e2d2a3b2-8010-4eaa-9c2e-e4c0f9349363",
+  "ttft_stream_ms": 1343,
+  "time_to_request_ms": 118,
+  "first_content_frame_ms": 1344,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 21 +++++++++++++++------\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 20 ++++++++++++++++++++\n 6 files changed, 47 insertions(+), 7 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.sonnet-low"
+}

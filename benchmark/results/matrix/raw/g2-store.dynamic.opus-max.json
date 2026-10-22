@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": "opus-max",
+ "top": "claude-opus-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 195082,
+  "stop_reason": "end_turn",
+  "session_id": "8989a928-0dcd-4eb7-ab80-d0851edfebb7",
+  "total_cost_usd": 0.6268996,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 18824,
+   "cache_read_input_tokens": 127598,
+   "output_tokens": 22537,
+   "output_tokens_details": {
+    "thinking_tokens": 21005
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 18824,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 14986,
+     "cache_read_input_tokens": 25131,
+     "cache_creation_input_tokens": 6483,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 6483
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 22537,
+    "cacheReadInputTokens": 127598,
+    "cacheCreationInputTokens": 18824,
+    "webSearchRequests": 0,
+    "costUSD": 0.6268996,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 21005,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 10,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation:** move orders to SQLite (Python's built-in `sqlite3`, in WAL mode) and let the database assign order IDs.\n\n**Why the current store fails:**\n- **Lost orders:** `save_order` reads, changes and rewrites the whole file with no lock (`shop/storage.py:17`). If two saves overlap, one order is lost.\n- **Corruption:** `write_text` empties the file before writing it. A crash mid-save leaves the whole file unreadable, and a `report` run at the same time can read it half-written.\n- **ID collisions:** each process numbers its orders from 1000 (`shop/orders.py:5`), and `save_order` replaces rows by id. So the two processes overwrite each other's orders, and every restart overwrites old ones. A file lock won't fix this.\n- **Cost:** at 100k orders the file is about 10 MB, and every save parses and rewrites all of it. Total work grows quadratically, and the window for the race grows with it.\n\nSQLite fixes all four. Each save is a small atomic write of one row, writers take turns, readers don't block writers, and the database hands out unique IDs. 100k rows is easy for it, and it needs no server or new dependency. One caveat: every process must run on the same host, with the database on a local disk. If that can't hold, use Postgres and follow the same steps.\n\n**Migration:**\n1. Build a SQLite `Store` with the same `load()` and `save_order()` methods, so `cli.py` and `reports.py` don't change. Have it assign the IDs. Nothing else reads `order.id`, so this is safe.\n2. Add a test where two processes each save N orders, then check for 2N rows. The current code would fail it.\n3. Cut over: stop both writers, import the JSON once while keeping its IDs, and check that the row count and summed totals match. Then deploy and restart. Keep the JSON file, read-only, so you can roll back.",
+  "ttft_ms": 2789,
+  "type": "result",
+  "duration_ms": 195878,
+  "uuid": "078dd564-4f73-46ce-9cb5-e99dfe5463cc",
+  "ttft_stream_ms": 836,
+  "time_to_request_ms": 145,
+  "first_content_frame_ms": 836,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.opus-max"
+}

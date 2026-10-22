@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "sonnet-medium",
+ "top": "claude-sonnet-5-5",
+ "effort": "medium",
+ "result": {
+  "duration_api_ms": 22098,
+  "stop_reason": "end_turn",
+  "session_id": "12d3c65c-8221-47c1-915c-566fe42e23d5",
+  "total_cost_usd": 0.047883999999999996,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 8019,
+   "cache_read_input_tokens": 52760,
+   "output_tokens": 1052,
+   "output_tokens_details": {
+    "thinking_tokens": 225
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8019,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 797,
+     "cache_read_input_tokens": 20336,
+     "cache_creation_input_tokens": 473,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 473
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1052,
+    "cacheReadInputTokens": 52760,
+    "cacheCreationInputTokens": 8019,
+    "webSearchRequests": 0,
+    "costUSD": 0.047883999999999996,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 225,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces two bugs, both in `shop/orders.py`.\n\n1. **`_ids_seen` is never defined (`NameError`).**\n   - The diff replaces `next(_ids)` with `len(_ids_seen)` and `_ids_seen.append(...)`. It never adds `_ids_seen` anywhere, and nothing else in the repo defines it.\n   - Every `Order(cart)` call now raises `NameError`, so no order can be created. That breaks `tests/test_orders.py` and anything that builds orders, such as the CLI and reports.\n   - Even if the list were defined, IDs would start at 0 instead of 1000, because `_ids = itertools.count(1000)` is no longer used. That changes the ID range existing code and data may rely on.\n   - The `len()` plus `append()` pair is also not atomic. Two threads can read the same length and get duplicate IDs, which `itertools.count` avoids.\n   - `_ids` and the `itertools` import are now dead code.\n\n2. **`move()` now allows any transition from an unrecognised state.**\n   - `ALLOWED[self.state]` became `ALLOWED.get(self.state, STATES)`. If `self.state` isn't a key in `ALLOWED`, for example because it was corrupted or loaded from storage, the fallback is all of `STATES`.\n   - The old code raised `KeyError` for that case. The new code lets the order move to any state, including `paid`, `shipped` or `cancelled`.\n   - For the four valid states the behavior is unchanged, so tests may not catch it. It still turns a loud failure into a silent bypass of the state machine.\n   - A safer fallback would be `set()` or no fallback, so unknown states are rejected.",
+  "ttft_ms": 8621,
+  "type": "result",
+  "duration_ms": 22926,
+  "uuid": "fec4f720-0376-4c42-ba41-73e8daae42f2",
+  "ttft_stream_ms": 8226,
+  "time_to_request_ms": 146,
+  "first_content_frame_ms": 8226,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.sonnet-medium"
+}

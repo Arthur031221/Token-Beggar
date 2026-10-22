@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "haiku-max",
+ "top": "claude-haiku-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 150882,
+  "stop_reason": "end_turn",
+  "session_id": "d7b4582c-7cac-4998-a0b3-127b8d4a5055",
+  "total_cost_usd": 0.022168299999999995,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 13448,
+   "cache_read_input_tokens": 79240,
+   "output_tokens": 37371,
+   "output_tokens_details": {
+    "thinking_tokens": 35991
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 13448,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 34724,
+     "cache_read_input_tokens": 24668,
+     "cache_creation_input_tokens": 1570,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1570
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 37371,
+    "cacheReadInputTokens": 79240,
+    "cacheCreationInputTokens": 13448,
+    "webSearchRequests": 0,
+    "costUSD": 0.022168299999999995,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 35991,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 9,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move to SQLite (WAL mode) before running two writers.** SQLite gives transactions and cross-process locking with no new service. This assumes both writers run on one host; otherwise use Postgres. Until cutover, allow only one writer and seed its ID counter from the file's max ID.\n\n**Why the JSON file fails**\n\n- **Concurrent writers drop orders.** `save_order` (`shop/storage.py:16-21`) reads the whole file, then rewrites it without a lock. A crash mid-write can truncate the only copy.\n- **Quadratic total cost.** Each save re-parses and re-encodes the whole file, so building 100k orders means about 5 billion row rewrites.\n- **IDs collide, the most urgent bug.** `shop/orders.py:5,12` uses an in-process counter from 1000. Two processes, or one after a restart, mint duplicate IDs. `save_order` upserts by ID, so new orders silently overwrite old ones. Fix this regardless of storage.\n\n**Migration path**\n\n1. Keep `load` and `save_order`'s interface so callers don't change; swap the implementation behind it.\n2. Let the database assign IDs, importing existing ones unchanged.\n3. Add an `order_lines` table. `save_order` drops `order.lines` today; confirm that's intended.\n4. Import `orders.json` once, verify row count and totals, then keep it as a read-only backup.\n5. Insert new orders. Change state with a compare-and-set on the current state, so conflicting transitions fail.\n6. Compute reports in the database instead of loading every row.\n7. Add a concurrency test: two processes insert at once, then check row count and ID uniqueness. No test touches storage today.",
+  "ttft_ms": 3552,
+  "type": "result",
+  "duration_ms": 151286,
+  "uuid": "230401f1-a4dd-489e-9216-ff5943b8e4ec",
+  "ttft_stream_ms": 2399,
+  "time_to_request_ms": 343,
+  "first_content_frame_ms": 2399,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.haiku-max"
+}

@@ -1,0 +1,132 @@
+{
+ "task": "h4-linediscount",
+ "class": "multi_file",
+ "arm": "final-no-bulk-agy",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 51350,
+  "stop_reason": "end_turn",
+  "session_id": "3dea553b-2e5e-44fd-a8b5-c2d1a42f3d4b",
+  "total_cost_usd": 0.16972440000000003,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 1081,
+   "cache_read_input_tokens": 21216,
+   "output_tokens": 627,
+   "output_tokens_details": {
+    "thinking_tokens": 61
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1081,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 627,
+     "cache_read_input_tokens": 21216,
+     "cache_creation_input_tokens": 1081,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1081
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1528,
+    "cacheReadInputTokens": 53927,
+    "cacheCreationInputTokens": 9507,
+    "webSearchRequests": 0,
+    "costUSD": 0.11742540000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 186,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3179,
+    "cacheReadInputTokens": 28030,
+    "cacheCreationInputTokens": 7076,
+    "webSearchRequests": 0,
+    "costUSD": 0.052299,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 638,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjmxtg3-ebb19754"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Per-line discounts are in, and the full suite passes (14 tests, OK, via `python3 -m unittest discover -s tests -t .`). Nothing is committed. I haven't read the diff myself; this comes from the agent's report.\n\n**What changed:**\n- **`shop/models.py`:** `Line` has `discount_percent`, defaulting to 0. `Cart.add(item, qty=1, discount_percent=0)` merges into an existing line only when the sku and the discount both match; otherwise it starts a new line.\n- **`shop/pricing.py`:** `line_subtotal` applies the discount first with `money.percent` (round half up), then the bulk rule on the discounted amount. Whether the bulk rule kicks in is still decided by quantity, not by the discounted amount.\n- **`shop/cli.py`:** `quote` accepts `sku:price:qty` and `sku:price:qty:discount`.\n- **Tests:** new ones in `tests/test_pricing.py` cover:\n  - the discount coming before the bulk rule\n  - half-up rounding\n  - discount 0 behaving as before\n  - same-sku lines merging or staying separate\n\n  The new `tests/test_cli.py` covers the three-field form, the four-field form and malformed input.\n\n**Decisions for you:**\n- **No range check:** a negative discount or one over 100 is accepted, because the existing code doesn't validate prices or quantities either. I'd add a 0\u2013100 check if you want one.\n- **Fractional discounts:** the discount is read as a decimal number (e.g. `12.5`), not a whole number, so fractional percentages work.\n\nThe test run left untracked `__pycache__/` folders in `shop/` and `tests/`.",
+  "ttft_ms": 2172,
+  "type": "result",
+  "duration_ms": 6661,
+  "uuid": "64eb2be3-bbc1-42c6-9fd2-1caeae1ad9d0",
+  "ttft_stream_ms": 1083,
+  "time_to_request_ms": 118,
+  "first_content_frame_ms": 1083,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  9 ++++++---\n shop/models.py        |  7 ++++---\n shop/pricing.py       |  1 +\n tests/test_pricing.py | 32 ++++++++++++++++++++++++++++++--\n 4 files changed, 41 insertions(+), 8 deletions(-)\n",
+ "workdir": "h4-linediscount.final-no-bulk-agy.3",
+ "ledger": []
+}

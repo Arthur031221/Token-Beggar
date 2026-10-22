@@ -1,0 +1,110 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": "fable-low",
+ "top": "claude-fable-5-1",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 46463,
+  "stop_reason": "end_turn",
+  "session_id": "66ef3444-d4d5-4b27-aa42-acfda824328a",
+  "total_cost_usd": 0.7402035000000001,
+  "usage": {
+   "input_tokens": 322,
+   "cache_creation_input_tokens": 23186,
+   "cache_read_input_tokens": 339054,
+   "output_tokens": 3770,
+   "output_tokens_details": {
+    "thinking_tokens": 132
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23186,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 474,
+     "cache_read_input_tokens": 35787,
+     "cache_creation_input_tokens": 189,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 189
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 322,
+    "outputTokens": 3770,
+    "cacheReadInputTokens": 339054,
+    "cacheCreationInputTokens": 23186,
+    "webSearchRequests": 0,
+    "costUSD": 0.7402035000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 132,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 11,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "All 13 tests pass, including the 7 new ones.\n\nWhat changed:\n\n- **`shop/models.py`**: `Cart` gains `tier: str = \"standard\"`.\n- **`shop/pricing.py`**: new `TIER_DISCOUNTS` table (gold 10%, silver 5%; anything else 0). Added `calc_subtotal`, which applies the tier discount after bulk discounts. `calc_tax` now taxes the tier-discounted taxable amount, and `calc_total` is subtotal plus tax, so the discount lands before tax in both.\n- **`shop/orders.py`**: `Order` stores `tier` from the cart. Its totals already flow through `calc_total` and `calc_tax`, so they pick up the discount automatically.\n- **`shop/cli.py`**: `quote` accepts `--tier` (default `standard`) and builds the cart with it.\n- **Tests**: tier default, gold, silver, unknown tier, mixed taxable/untaxable with a tier, Order picking up the tier, and the CLI `--tier` option end to end.\n\nOne judgment call worth knowing: when a cart mixes taxable and untaxable items, the tier discount is applied proportionally to the taxable portion before computing tax, rather than subtracting the whole discount from the taxable base. Rounding uses the existing half-up `percent` helper, so gold on 2000 cents gives 1949 total with 149 tax.",
+  "ttft_ms": 2133,
+  "type": "result",
+  "duration_ms": 46972,
+  "uuid": "2e3db35b-7e06-48b7-8de5-594416175b6c",
+  "ttft_stream_ms": 1408,
+  "time_to_request_ms": 75,
+  "first_content_frame_ms": 1408,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 25 +++++++++++++++++++------\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 49 ++++++++++++++++++++++++++++++++++++++++++++++++-\n 6 files changed, 79 insertions(+), 8 deletions(-)\n",
+ "workdir": "f3-tier.alone.fable-low"
+}

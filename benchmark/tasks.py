@@ -438,3 +438,136 @@ TASKS = [
 ]
 
 assert len(TASKS) == 21 and len({t["id"] for t in TASKS}) == 21
+
+# ---- held out: one new task per class, never used while the rules or prompts were tuned -----------------------------------------
+
+CHK_H_RENAME = """
+import pathlib, re
+hits = [str(p) for p in pathlib.Path('.').rglob('*.py') if re.search(r'\\bTAX_RATE\\b', p.read_text())]
+assert not hits, hits
+from shop.pricing import SALES_TAX_PERCENT
+assert SALES_TAX_PERCENT == 8.25
+"""
+CHK_H_CLAMP = """
+from shop.money import clamp
+assert clamp(50, 0, 100) == 50 and clamp(-5, 0, 100) == 0 and clamp(500, 0, 100) == 100
+try:
+    clamp(1, 10, 5)
+    raise SystemExit('no ValueError')
+except ValueError:
+    pass
+"""
+CHK_H_LINEDISC = """
+import io, contextlib
+from shop.models import Cart, Item
+from shop.pricing import calc_total
+from shop.cli import main
+c = Cart(); c.add(Item('a', 'A', 1000), 2, discount_percent=10)
+assert calc_total(c) == 1949, calc_total(c)
+c.add(Item('a', 'A', 1000), 1)
+assert len(c.lines) == 2 and c.count() == 3
+c.add(Item('a', 'A', 1000), 1, discount_percent=10)
+assert len(c.lines) == 2 and c.count() == 4
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    main(['quote', 'a:10.00:2:10'])
+assert buf.getvalue().strip() == '19.49', buf.getvalue()
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    main(['quote', 'a:10.00:2'])
+assert buf.getvalue().strip() == '21.65', buf.getvalue()
+"""
+CHK_H_BULK = """
+from shop.models import Cart, Item
+from shop.pricing import calc_total
+c = Cart(); c.add(Item('a', 'A', 1000), 10)
+assert calc_total(c) == 10284, calc_total(c)
+c = Cart(); c.add(Item('a', 'A', 1000), 9)
+assert calc_total(c) == 9743, calc_total(c)
+"""
+H_CARRIER_GRAMS = [
+    "Names maple as the carrier that quotes by grams",
+    "Gives 30000 as its maximum (MAX_GRAMS)",
+]
+H_DESIGN_PARTIAL = [
+    "The ALLOWED table in shop/orders.py makes shipped terminal, so partial shipments and returns need new states or a per line status instead of the single state",
+    "Order.lines are tuples with no shipped or returned quantity, so line level quantities have to be tracked",
+    "shop/storage.py persists only totals and state, so the new data needs persisting, with a migration or default for existing rows",
+    "shop/reports.py sales_by_customer counts whole orders by state, so returns need to net out of sales",
+]
+H_DIFF = """--- a/shop/storage.py
++++ b/shop/storage.py
+@@ def save_order(self, order) -> None:
+-        rows = [r for r in self.load() if r["id"] != order.id]
++        rows = self.load()
+         rows.append(
+--- a/shop/money.py
++++ b/shop/money.py
+@@ def percent(cents: int, rate_percent: float) -> int:
+-    return int(cents * rate_percent / 100 + 0.5)
++    return int(cents * rate_percent / 100)
+--- a/shop/reports.py
++++ b/shop/reports.py
+@@ def sales_by_customer(rows: list) -> dict:
+-        if row["state"] in ("paid", "shipped"):
++        if row["state"] != "cancelled":
+"""
+H_DIFF_FACTS = [
+    "storage.py: dropping the filter on order id means saving an order again appends a duplicate row instead of replacing it, so orders are duplicated and counted twice",
+    "money.py: removing the + 0.5 turns round half up into truncation, so any fractional cent is rounded down and tax or discounts come out one cent off",
+    "reports.py: != 'cancelled' also counts orders in the new state (not paid yet), so sales are overstated",
+]
+
+HELD_OUT = [
+    task(
+        "h1-constant",
+        "mechanical",
+        "Rename the constant TAX_RATE to SALES_TAX_PERCENT everywhere in this repo (code and tests). Run the tests when done.",
+        CHK_H_RENAME,
+    ),
+    task(
+        "h2-grams",
+        "reading",
+        "Which carrier module in shop/carriers/ defines its maximum weight in grams (MAX_GRAMS) instead of kilograms, and what is that maximum? Answer in one sentence.",
+        facts=H_CARRIER_GRAMS,
+        needs_tests=False,
+    ),
+    task(
+        "h3-clamp",
+        "routine_code",
+        "Add clamp(cents, low, high) to shop/money.py. It returns cents limited to the range low..high inclusive. low greater than high raises ValueError. Add a test and run the tests.",
+        CHK_H_CLAMP,
+    ),
+    task(
+        "h4-linediscount",
+        "multi_file",
+        "Add per line discounts. Line gets discount_percent (default 0). pricing.line_subtotal applies it first with money.percent (round half up) and then the bulk rule. Cart.add(item, qty=1, discount_percent=0) merges into an existing line only when the sku and the discount are the same, otherwise it starts a new line. The quote command in shop/cli.py takes an optional fourth field, sku:price:qty:discount. Add tests and run the tests.",
+        CHK_H_LINEDISC,
+    ),
+    task(
+        "h5-bulk",
+        "debugging",
+        "A customer says that buying exactly 10 units of one item gets no bulk discount, but the policy says 10 or more. Find the root cause and fix it. Run the tests.",
+        CHK_H_BULK,
+        setup=lambda w: sub(w / "shop/pricing.py", "line.qty >= BULK_THRESHOLD", "line.qty > BULK_THRESHOLD"),
+    ),
+    task(
+        "h6-partial",
+        "design",
+        "We want to support partial shipments and returns in this repo. Do not write code. Give me a design: what has to change, in which files, and the main risks. Under 250 words.",
+        facts=H_DESIGN_PARTIAL,
+        needs_tests=False,
+    ),
+    task(
+        "h7-diff",
+        "review",
+        "Review the change in change.diff against this repo. List every bug it introduces and why. Do not edit files.",
+        facts=H_DIFF_FACTS,
+        setup=diff_file(H_DIFF),
+        needs_tests=False,
+    ),
+]
+for _t in HELD_OUT:
+    _t["held_out"] = True
+assert len(HELD_OUT) == 7 and {t["class"] for t in HELD_OUT} == {t["class"] for t in TASKS}
+ALL = TASKS + HELD_OUT

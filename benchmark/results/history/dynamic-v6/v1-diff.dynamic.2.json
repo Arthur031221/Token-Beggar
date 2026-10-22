@@ -1,0 +1,110 @@
+{
+ "task": "v1-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 18898,
+  "stop_reason": "end_turn",
+  "session_id": "da5bf07c-966a-4432-a7fc-1ed625a3707e",
+  "total_cost_usd": 0.1112806,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 8411,
+   "cache_read_input_tokens": 77003,
+   "output_tokens": 1428,
+   "output_tokens_details": {
+    "thinking_tokens": 166
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8411,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 880,
+     "cache_read_input_tokens": 22171,
+     "cache_creation_input_tokens": 826,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 826
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1428,
+    "cacheReadInputTokens": 77003,
+    "cacheCreationInputTokens": 8411,
+    "webSearchRequests": 0,
+    "costUSD": 0.1112806,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 166,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces three bugs. Two of them break the existing tests.\n\n### 1. Bulk discount no longer applies at exactly the threshold (`shop/pricing.py:10`)\n`>=` became `>`, so a line with `qty == BULK_THRESHOLD` (10) no longer gets the 5% discount. Only 11 or more does. That's an off-by-one in the pricing rule, and it charges customers more at exactly 10 units.\n- `tests/test_pricing.py::test_bulk_discount` will fail. With 10 \u00d7 100\u00a2, it now yields 1000 + 83 tax = **1083** instead of 950 + 78 = **1028**.\n\n### 2. `calc_tax` now ignores line discounts (`shop/pricing.py:23`)\nThe taxable base became `price_cents * qty` instead of `line_subtotal(l)`, so on bulk lines tax is charged on the pre-discount amount.\n- It no longer agrees with `calc_total`, which still taxes `line_subtotal`. `Order` (`shop/orders.py:15-16`) stores both `total_cents = calc_total(cart)` and `tax_cents = calc_tax(cart)`. So any order with a discounted taxable line has a `tax_cents` that doesn't match the tax inside `total_cents`. For example, 11 \u00d7 100\u00a2 gives a stored tax of 91\u00a2 against 86\u00a2 in the total.\n- This also duplicates the subtotal logic, so the two functions will drift further apart if pricing changes again.\n\n### 3. Cache TTL multiplied by 1000 (`shop/cache.py:15`)\n`self.ttl * 1000` treats the TTL as if the clock counted milliseconds. But the default clock is `time.monotonic`, which returns seconds, and the class docstring says \"Caches price lookups for ttl seconds.\" The default `ttl=60` now means about 16.7 hours, so stale prices keep being served long after they should expire. Every entry effectively lives forever unless `invalidate` is called.\n- `tests/test_cache.py::test_hit_and_expiry` will fail. At `now=11` with `ttl=10`, the check is `11 < 10000`, so the entry is still a hit and the loader isn't called a second time.\n\nI didn't run the tests. The failures above come from working through the test values by hand.",
+  "ttft_ms": 2510,
+  "type": "result",
+  "duration_ms": 19512,
+  "uuid": "29475065-855a-42ed-b368-9afed0c0b8f1",
+  "ttft_stream_ms": 2288,
+  "time_to_request_ms": 160,
+  "first_content_frame_ms": 2288,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v1-diff.dynamic.2"
+}

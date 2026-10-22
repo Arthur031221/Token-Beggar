@@ -1,0 +1,110 @@
+{
+ "task": "r1-tracking",
+ "class": "reading",
+ "arm": "alone",
+ "rep": "fable-max",
+ "top": "claude-fable-5-1",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 27157,
+  "stop_reason": "end_turn",
+  "session_id": "0c88d13d-8df6-4b9a-8445-669b3b0272d5",
+  "total_cost_usd": 0.56048375,
+  "usage": {
+   "input_tokens": 98,
+   "cache_creation_input_tokens": 20839,
+   "cache_read_input_tokens": 77295,
+   "output_tokens": 2468,
+   "output_tokens_details": {
+    "thinking_tokens": 547
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 20839,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 191,
+     "cache_read_input_tokens": 22479,
+     "cache_creation_input_tokens": 11150,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 11150
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 98,
+    "outputTokens": 2468,
+    "cacheReadInputTokens": 77295,
+    "cacheCreationInputTokens": 20839,
+    "webSearchRequests": 0,
+    "costUSD": 0.56048375,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 547,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 23,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "delta, kestrel, onyx, tundra",
+  "ttft_ms": 1658,
+  "type": "result",
+  "duration_ms": 27399,
+  "uuid": "c1cc6cd3-2759-49a5-83de-a6ff73fe3a71",
+  "ttft_stream_ms": 1318,
+  "time_to_request_ms": 94,
+  "first_content_frame_ms": 1319,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r1-tracking.alone.fable-max"
+}

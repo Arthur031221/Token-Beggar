@@ -1,0 +1,111 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "v020",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 20784,
+  "stop_reason": "end_turn",
+  "session_id": "cc6d20c9-cdb0-4130-a320-33647d549a38",
+  "total_cost_usd": 0.13035000000000002,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 9619,
+   "cache_read_input_tokens": 95590,
+   "output_tokens": 1712,
+   "output_tokens_details": {
+    "thinking_tokens": 428
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9619,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 857,
+     "cache_read_input_tokens": 22119,
+     "cache_creation_input_tokens": 290,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 290
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1712,
+    "cacheReadInputTokens": 95590,
+    "cacheCreationInputTokens": 9619,
+    "webSearchRequests": 0,
+    "costUSD": 0.13035000000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 428,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces three bugs. It has no line numbers, so `git apply` won't take it and I reviewed it by reading against `shop/orders.py`. The current tests pass on the unpatched code. With the diff applied, bug 1 would make both tests in `tests/test_orders.py` fail; I worked that out from the code and didn't run it.\n\n### 1. `_ids_seen` is never defined, so every `Order()` crashes (`shop/orders.py:12`)\nThe diff replaces `next(_ids)` with `len(_ids_seen)` and `_ids_seen.append(...)`, but nothing defines `_ids_seen`. The module only has `_ids = itertools.count(1000)`, which is now unused. Every `Order(cart)` raises `NameError`, which breaks:\n- both tests in `tests/test_orders.py`, which build an `Order`;\n- anything that imports `Order` from `shop/orders.py`, such as `shop/cli.py:5`.\n\n### 2. Even with `_ids_seen = []` added, the ID scheme gets worse\n- **IDs start at 0, not 1000.** Any code or stored data that assumes IDs are 1000 or higher breaks. And when `Store.save_order` (`shop/storage.py:17`) replaces the row whose `id` matches, new orders 0, 1, 2\u2026 could overwrite rows that use those IDs.\n- **Not atomic.** `len()` followed by `append()` is a read-then-write. Two threads can read the same length and get the same ID. `next()` on `itertools.count` doesn't have this gap. Since `save_order` dedupes by `id`, a duplicate ID silently overwrites the other order.\n- **Memory grows without limit.** The list keeps every ID ever issued just to act as a counter.\n\n### 3. An unknown current state now allows any transition (`shop/orders.py:20`)\n`ALLOWED[self.state]` used to raise `KeyError` when `self.state` was not a known state. `ALLOWED.get(self.state, STATES)` now treats an unknown state as allowed to move to any state in `STATES`. For example, an order whose `state` was set to a typo like `\"payed\"` or `\"refunded\"` can now go straight to `\"shipped\"` or back to `\"new\"`. A corrupt state that used to fail loudly now passes the check, defeating the purpose of the state machine. For the four known states nothing changes, so the edit adds risk and no benefit.",
+  "ttft_ms": 2730,
+  "type": "result",
+  "duration_ms": 21537,
+  "uuid": "ae7f77c2-f884-491f-b437-f7d0a7058ff6",
+  "ttft_stream_ms": 1524,
+  "time_to_request_ms": 436,
+  "first_content_frame_ms": 1524,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.v020.1",
+ "ledger": []
+}

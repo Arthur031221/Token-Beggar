@@ -1,0 +1,126 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "dynamic",
+ "rep": "fable-max",
+ "top": "claude-fable-5-1",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 26174,
+  "stop_reason": "end_turn",
+  "session_id": "f28faf59-199c-410f-9d6d-21588736789d",
+  "total_cost_usd": 0.274755655,
+  "usage": {
+   "input_tokens": 34,
+   "cache_creation_input_tokens": 10268,
+   "cache_read_input_tokens": 34397,
+   "output_tokens": 1183,
+   "output_tokens_details": {
+    "thinking_tokens": 144
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10268,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 264,
+     "cache_read_input_tokens": 21607,
+     "cache_creation_input_tokens": 1451,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1451
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 34,
+    "outputTokens": 1183,
+    "cacheReadInputTokens": 34397,
+    "cacheCreationInputTokens": 10268,
+    "webSearchRequests": 0,
+    "costUSD": 0.27344925,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 144,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1234,
+    "cacheReadInputTokens": 25848,
+    "cacheCreationInputTokens": 3441,
+    "webSearchRequests": 0,
+    "costUSD": 0.001306405,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 90,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The rename is done and the tests pass.\n\n**What changed:** every occurrence of `calc_total` is now `order_total` across five files. A grep over the repo, excluding `.git`, returns no remaining matches.\n\n- `shop/orders.py`\n- `shop/pricing.py`\n- `shop/cli.py`\n- `tests/test_orders.py`\n- `tests/test_pricing.py`\n\n**Tests:** pytest is not installed, so the worker used the standard library runner.\n\n```\npython3 -m unittest discover -v\n```\n\nAll 6 tests passed with exit code 0.\n\nThe test run left `__pycache__` directories under `shop/`, `shop/carriers/`, and `tests/`. They are untracked and harmless, but you may want a `.gitignore` entry for them. Nothing has been committed.",
+  "ttft_ms": 4645,
+  "type": "result",
+  "duration_ms": 27364,
+  "uuid": "75f7e5b9-4939-4561-a675-7df1eebcad49",
+  "ttft_stream_ms": 2987,
+  "time_to_request_ms": 135,
+  "first_content_frame_ms": 2987,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.dynamic.fable-max"
+}

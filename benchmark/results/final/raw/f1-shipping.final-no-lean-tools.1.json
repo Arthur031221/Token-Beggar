@@ -1,0 +1,127 @@
+{
+ "task": "f1-shipping",
+ "class": "multi_file",
+ "arm": "final-no-lean-tools",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 79258,
+  "stop_reason": "end_turn",
+  "session_id": "520f4da2-e100-44a1-9450-1ed53f49f656",
+  "total_cost_usd": 0.4071344,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 22782,
+   "cache_read_input_tokens": 187928,
+   "output_tokens": 4077,
+   "output_tokens_details": {
+    "thinking_tokens": 847
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 22782,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 744,
+     "cache_read_input_tokens": 34762,
+     "cache_creation_input_tokens": 810,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 810
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 4077,
+    "cacheReadInputTokens": 187928,
+    "cacheCreationInputTokens": 22782,
+    "webSearchRequests": 0,
+    "costUSD": 0.3014376,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 847,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 4177,
+    "cacheReadInputTokens": 132078,
+    "cacheCreationInputTokens": 20278,
+    "webSearchRequests": 0,
+    "costUSD": 0.1056968,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 344,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 11,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Orders now include shipping, and all 12 tests pass (`python3 -m unittest discover`). Nothing is committed.\n\n- **Shipping amount:** `Order(cart, carrier=None, weight=0, zone='local')` gets its shipping price from the carrier registry in `shop/carriers`. With no carrier, shipping is 0. An unknown carrier or zone raises `KeyError`, and a weight outside a carrier's limits raises `ValueError`. Both errors come from the registry and aren't caught.\n- **Total:** `total_cents` is the existing cart total plus shipping. Shipping is added after the discount and tax step, so it is neither discounted nor taxed.\n- **Saving:** `Store.save_order` writes `shipping`. Orders saved before this change have no `shipping` field, so they load with `shipping: 0`.\n- **Report:** `shop/reports.py` needed no changes. It sums each order's total, which now already includes shipping, so nothing is counted twice and older orders still work. It doesn't show shipping on its own line.\n\n**Bug I fixed in the delegated version:** the `maple` carrier takes weight in grams, while the other 19 take kg, and the first version passed the weight through unchanged. A 2 kg maple order came out at 500\u00a2 instead of 6,494\u00a2. I made `Order.weight` mean kg and added `weight_unit = \"g\"` to `MapleCarrier`, so `Order` converts the weight before asking that carrier for a price. A new test covers this. If you meant `weight` to be in some other unit, tell me and I'll change it.\n\n**Tests added** in `tests/test_orders.py`: no carrier, carrier with zone, total includes shipping, unknown carrier, maple's gram conversion, and saving plus the report, including an older order with no `shipping` field.\n\nFiles changed: `shop/orders.py`, `shop/storage.py`, `shop/carriers/maple.py`, `tests/test_orders.py`. Running the tests also left untracked `__pycache__/` folders.",
+  "ttft_ms": 1870,
+  "type": "result",
+  "duration_ms": 81462,
+  "uuid": "4db07b4f-4ff9-4043-8819-b2cbf63481ed",
+  "ttft_stream_ms": 955,
+  "time_to_request_ms": 241,
+  "first_content_frame_ms": 955,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/maple.py |  1 +\n shop/orders.py         | 20 +++++++++++++++++--\n shop/storage.py        |  8 ++++++--\n tests/test_orders.py   | 53 ++++++++++++++++++++++++++++++++++++++++++++++++++\n 4 files changed, 78 insertions(+), 4 deletions(-)\n",
+ "workdir": "f1-shipping.final-no-lean-tools.1",
+ "ledger": []
+}

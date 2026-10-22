@@ -1,0 +1,117 @@
+{
+ "task": "c2-split",
+ "class": "routine_code",
+ "arm": "dynamic",
+ "rep": "haiku-xhigh",
+ "top": "claude-haiku-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 29017,
+  "stop_reason": "end_turn",
+  "session_id": "a4d6f7a5-9257-4ba3-8f66-681bb49ec6f3",
+  "total_cost_usd": 0.007393245,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 1070,
+   "cache_read_input_tokens": 23821,
+   "output_tokens": 715,
+   "output_tokens_details": {
+    "thinking_tokens": 380
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1070,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 715,
+     "cache_read_input_tokens": 23821,
+     "cache_creation_input_tokens": 1070,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1070
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 6271,
+    "cacheReadInputTokens": 97682,
+    "cacheCreationInputTokens": 18974,
+    "webSearchRequests": 0,
+    "costUSD": 0.007393245,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3062,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjis588-01dca667"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`split(cents, parts)` is in `shop/money.py`, with a test, and the suite passes: `Ran 13 tests` / `OK`, including 7 new ones.\n\n- **Function:** returns `parts` ints summing to `cents`. The remainder goes one cent at a time from the first element. It raises `ValueError` when `parts < 1`.\n- **Test file:** there was no existing test file for `shop/money`, so the worker created `tests/test_money.py` in the unittest style of the other tests. If you'd rather have these in an existing file, I can move them.\n- **Tests:** an even split, remainder spread from the front, the sum equals `cents` (checked over cents 0\u2013199 and parts 1\u201311), `parts=1`, `cents=0`, and `parts=0` and negative parts raising `ValueError`.\n- **Command:** `python3 -m unittest discover -s tests -t .`, the command the README gives.\n\nI haven't read the code myself; the result above is the worker's reported test output. Nothing is committed.",
+  "ttft_ms": 2700,
+  "type": "result",
+  "duration_ms": 3988,
+  "uuid": "7e4d5c95-78e5-4231-a14b-c12e83cb8f39",
+  "ttft_stream_ms": 605,
+  "time_to_request_ms": 81,
+  "first_content_frame_ms": 605,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 11 +++++++++++\n 1 file changed, 11 insertions(+)\n",
+ "workdir": "c2-split.dynamic.haiku-xhigh"
+}

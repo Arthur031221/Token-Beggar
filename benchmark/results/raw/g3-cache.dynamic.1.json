@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14013,
+  "stop_reason": "end_turn",
+  "session_id": "54460e94-073c-4074-807d-352ffe59603b",
+  "total_cost_usd": 0.0754856,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5527,
+   "cache_read_input_tokens": 34268,
+   "output_tokens": 1220,
+   "output_tokens_details": {
+    "thinking_tokens": 530
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5527,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1093,
+     "cache_read_input_tokens": 19682,
+     "cache_creation_input_tokens": 431,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 431
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1220,
+    "cacheReadInputTokens": 34268,
+    "cacheCreationInputTokens": 5527,
+    "webSearchRequests": 0,
+    "costUSD": 0.0754856,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 530,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I'd fix four problems in `shop/cache.py`:\n\n1. **Cache stampede (`get`, lines 14\u201318).** When a key is missing or expired, every thread that asks for it at the same moment calls `loader` itself. Under load, one popular SKU expiring sends N identical calls to the backend. **Fix:** single-flight loading. Keep an in-flight map from key to `Future`. The first thread to miss runs the load and the others wait on its future. If the loader raises, pass the exception to every waiter and cache nothing.\n\n2. **`invalidate` can be undone by a load already running.** Thread A starts loading the old price. Thread B changes the price and calls `invalidate`. Thread A then writes the old price back, and it is served for a full `ttl`. **Fix:** keep a version number per key. `invalidate` increments it and cancels any in-flight entry. A load only stores its result if the version hasn't changed since it started.\n\n3. **Memory grows without limit.** Expired entries are never removed. Every SKU ever requested stays in `_data` for the life of the process. **Fix:** a size-capped LRU (`OrderedDict` with `move_to_end` and `popitem(last=False)`). Drop expired entries when you find them, so dead keys age out.\n\n4. **Check-then-set isn't atomic.** The code relies on single dict operations being GIL-atomic, but the read, check and write together are not. On free-threaded Python (3.13t+) even that per-operation guarantee is gone. **Fix:** one `threading.Lock` around all access to the dict, the in-flight map and the versions. Never hold it while `loader` runs.\n\nMinor: the timestamp is taken after the load finishes, so values can be up to load time plus `ttl` old. Take it before calling `loader`.",
+  "ttft_ms": 1108,
+  "type": "result",
+  "duration_ms": 14852,
+  "uuid": "1db6f208-9745-42c4-b511-2b70da40329f",
+  "ttft_stream_ms": 830,
+  "time_to_request_ms": 189,
+  "first_content_frame_ms": 830,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.1"
+}

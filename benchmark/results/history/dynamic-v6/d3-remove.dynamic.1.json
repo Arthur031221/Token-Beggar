@@ -1,0 +1,110 @@
+{
+ "task": "d3-remove",
+ "class": "debugging",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 18359,
+  "stop_reason": "end_turn",
+  "session_id": "a9040b79-1912-4af1-bafb-83df0c5e4a17",
+  "total_cost_usd": 0.1135284,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 8993,
+   "cache_read_input_tokens": 102922,
+   "output_tokens": 1048,
+   "output_tokens_details": {
+    "thinking_tokens": 49
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8993,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 295,
+     "cache_read_input_tokens": 23171,
+     "cache_creation_input_tokens": 408,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 408
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1048,
+    "cacheReadInputTokens": 102922,
+    "cacheCreationInputTokens": 8993,
+    "webSearchRequests": 0,
+    "costUSD": 0.1135284,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 49,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Fixed. `Cart.remove` in `shop/models.py:31` was filtering lines by `l.item.name` instead of `l.item.sku`. So `remove('sku-1')` was comparing `'sku-1'` against `'Widget'`, never found a match, and removed nothing.\n\nThe fix is a one-word change: compare against `l.item.sku`, which is also what `Cart.add` uses to identify lines.\n\n**Checks:**\n- `python3 -m shop.demo` now prints `1`, so only the Gadget is left. Before the fix it printed `2`.\n- pytest isn't installed here, so I ran the tests with `python3 -m unittest`: all 6 passed.\n\nNone of the existing tests call `Cart.remove`, which is why the suite didn't catch this. I can add a regression test in `tests/` if you want one.",
+  "ttft_ms": 2230,
+  "type": "result",
+  "duration_ms": 19220,
+  "uuid": "c9d5fe9f-bdc0-4d89-8e3f-b8cd06833a4e",
+  "ttft_stream_ms": 1986,
+  "time_to_request_ms": 300,
+  "first_content_frame_ms": 1986,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n",
+ "workdir": "d3-remove.dynamic.1"
+}

@@ -1,0 +1,111 @@
+{
+ "task": "r3-flow",
+ "class": "reading",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 13010,
+  "stop_reason": "end_turn",
+  "session_id": "cdf6a0f3-3b78-4340-a477-51cd78365fec",
+  "total_cost_usd": 0.0978248,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 7729,
+   "cache_read_input_tokens": 70504,
+   "output_tokens": 1093,
+   "output_tokens_details": {
+    "thinking_tokens": 71
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7729,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 620,
+     "cache_read_input_tokens": 20057,
+     "cache_creation_input_tokens": 462,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 462
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1093,
+    "cacheReadInputTokens": 70504,
+    "cacheCreationInputTokens": 7729,
+    "webSearchRequests": 0,
+    "costUSD": 0.0978248,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 71,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Validation and storage are two separate steps, and nothing in the app code connects them.\n\n**Validation: `shop/orders.py`**\n- `STATES` (line 6) lists the four states: `new`, `paid`, `shipped`, `cancelled`.\n- `ALLOWED` (line 7) maps each state to the states it may move to: `new \u2192 paid/cancelled`, `paid \u2192 shipped/cancelled`. `shipped` and `cancelled` are final.\n- `Order.__init__` starts every order in `\"new\"`.\n- `Order.move(state)` (line 19) checks the target against `ALLOWED[self.state]`. If the move isn't allowed it raises `ValueError(\"cannot go from X to Y\")`; otherwise it sets `self.state`. The change is only in memory.\n\n**Storage: `shop/storage.py`**\n- `Store` keeps all orders in a single JSON file.\n- `Store.save_order(order)` reads every row with `load()`, drops any row with the same `id`, appends `{id, customer, total, tax, state}` and rewrites the whole file. It does no state checks of its own.\n- `Store.load()` returns the raw rows and doesn't validate them.\n\n**Things to note**\n- No app code calls both `move()` and `save_order()`. `shop/cli.py:26` only calls `Store(...).load()` to build a report. The caller has to persist after each move.\n- A hand-edited JSON file could contain an invalid state, and `load()` would accept it.\n- Each save rewrites the whole file non-atomically, so a crash mid-write can corrupt it.\n- `tests/test_orders.py:20-23` tests the transitions (`new\u2192paid\u2192shipped`, then rejecting `cancelled`).",
+  "ttft_ms": 2183,
+  "type": "result",
+  "duration_ms": 13324,
+  "uuid": "60e2831e-fd66-4b42-95dd-7657a62fece2",
+  "ttft_stream_ms": 1113,
+  "time_to_request_ms": 99,
+  "first_content_frame_ms": 1114,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r3-flow.alone.2",
+ "ledger": []
+}

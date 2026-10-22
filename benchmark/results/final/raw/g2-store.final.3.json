@@ -1,0 +1,111 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14254,
+  "stop_reason": "end_turn",
+  "session_id": "2e4777ff-62b7-4f8f-a758-8f99ba0e41eb",
+  "total_cost_usd": 0.1016484,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 8651,
+   "cache_read_input_tokens": 54382,
+   "output_tokens": 1077,
+   "output_tokens_details": {
+    "thinking_tokens": 89
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8651,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 762,
+     "cache_read_input_tokens": 21219,
+     "cache_creation_input_tokens": 222,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 222
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1077,
+    "cacheReadInputTokens": 54382,
+    "cacheCreationInputTokens": 8651,
+    "webSearchRequests": 0,
+    "costUSD": 0.1016484,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 89,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**My recommendation: move orders to SQLite in WAL mode, with `id` as the primary key.**\n\n**Why the current design fails at this scale (`shop/storage.py:16-21`):**\n- **Lost writes.** `save_order` reads the whole file, changes it and writes it back. With two writers, process A's save can overwrite B's, and nothing reports an error.\n- **Corruption.** `write_text` truncates the file before writing. A crash, or a reader arriving mid-write, gets a half-written file and `json.loads` fails.\n- **Cost.** Every save rewrites all 100k orders, about 10 MB, so each write costs O(n). Duplicate checks also scan the whole list.\n\n**Why SQLite rather than file locks or Postgres:**\n- It ships with Python and needs no server.\n- Transactions handle two writers safely.\n- WAL mode lets reads continue while a write is in progress.\n- `INSERT \u2026 ON CONFLICT(id) DO UPDATE` does what `save_order` does now, on one row, in O(log n).\n- 100k rows is small for it.\n- A lock around the JSON file would stop lost writes, but every save would still rewrite everything and a crash could still corrupt the file.\n- Postgres only becomes worth it if the writers end up on separate machines.\n\n**Migration path:**\n1. Write a `SqliteStore` with the same interface as today's `load()`/`save_order()`. The only caller is `cli.py:26`, so very little needs to change. Set `journal_mode=WAL` and `busy_timeout`, and add an index on `customer` or `state` if `reports.py` filters on them.\n2. Write a one-off import script that loads the JSON file and inserts it in a single transaction. Run it while both writers are stopped, then compare row counts and the sum of `total`.\n3. Choose the backend with config. Switch the writers to SQLite and keep the JSON file read-only as a rollback.\n4. Remove the JSON store once things are stable. Later, swap `load()` for queries so reports stop pulling every order into memory.\n\n**Before migrating:** money is already stored as integer cents, so keep the columns `INTEGER`. Add a two-process test that writes concurrently and checks no orders are lost.",
+  "ttft_ms": 1721,
+  "type": "result",
+  "duration_ms": 15349,
+  "uuid": "9c3ac407-b4bc-4595-ba07-d2e633654d74",
+  "ttft_stream_ms": 1222,
+  "time_to_request_ms": 280,
+  "first_content_frame_ms": 1223,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.final.3",
+ "ledger": []
+}

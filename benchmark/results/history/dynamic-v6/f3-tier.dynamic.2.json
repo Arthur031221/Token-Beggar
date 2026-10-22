@@ -1,0 +1,112 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 50866,
+  "stop_reason": "end_turn",
+  "session_id": "b37c2088-b486-43f8-bd0a-6a3b4f56a438",
+  "total_cost_usd": 0.26979179999999997,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6976,
+   "cache_read_input_tokens": 34297,
+   "output_tokens": 1708,
+   "output_tokens_details": {
+    "thinking_tokens": 306
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6976,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 658,
+     "cache_read_input_tokens": 19711,
+     "cache_creation_input_tokens": 1851,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1851
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 5619,
+    "cacheReadInputTokens": 100339,
+    "cacheCreationInputTokens": 23272,
+    "webSearchRequests": 0,
+    "costUSD": 0.26979179999999997,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 718,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and the full test suite passes: `python3 -m unittest discover -s tests -t .` ran 20 tests, all passed. I haven't committed anything.\n\n**What changed:**\n- **`shop/models.py`:** `Cart` has a `tier` attribute that defaults to `\"standard\"`, so existing calls still work.\n- **`shop/pricing.py`:** the discount rules live only here. Gold takes 10% off, silver 5%, and any other tier gets nothing. A new `calc_subtotal(cart)` gives the discounted subtotal, and both `calc_tax` and `calc_total` use it, so the discount comes off before tax.\n- **`shop/orders.py`:** `Order` copies the tier from the cart, and its tax and total include the discount.\n- **`shop/cli.py`:** `quote` has a `--tier` option (default `standard`) that is passed to the cart.\n- **Tests:** new cases in `tests/test_pricing.py` and `tests/test_orders.py`, plus a new `tests/test_cli.py`. They cover gold, silver, standard and an unknown tier, tax on the discounted subtotal, `Order` picking up the tier, and the CLI option.\n\n**Choices you may want to check:**\n- **Order of discounts:** the tier discount is taken after the existing bulk discount, not before it.\n- **Rounding:** amounts stay in whole cents, and the discount rounds half up using the existing `percent()` helper.\n- **Tax:** the discount is worked out separately for the taxable items (to get the tax) and for the whole subtotal. Because each is rounded on its own, they could differ by a cent in rare cases.\n- **Saved orders:** `Store.save_order` doesn't store the tier. If saved orders need to keep it, that's a small follow-up.",
+  "ttft_ms": 4691,
+  "type": "result",
+  "duration_ms": 52196,
+  "uuid": "b3dbb1e6-61e0-4e27-8918-ea9c5583f559",
+  "ttft_stream_ms": 1924,
+  "time_to_request_ms": 352,
+  "first_content_frame_ms": 1924,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 23 ++++++++++++++++++-----\n tests/test_orders.py  | 15 ++++++++++++++-\n tests/test_pricing.py | 46 +++++++++++++++++++++++++++++++++++++++++++++-\n 6 files changed, 81 insertions(+), 8 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.2"
+}

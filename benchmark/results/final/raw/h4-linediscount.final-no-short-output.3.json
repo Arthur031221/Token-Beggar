@@ -1,0 +1,127 @@
+{
+ "task": "h4-linediscount",
+ "class": "multi_file",
+ "arm": "final-no-short-output",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 62705,
+  "stop_reason": "end_turn",
+  "session_id": "5819a045-a86d-4c52-96b1-8a1c4393f046",
+  "total_cost_usd": 0.2016839,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 10200,
+   "cache_read_input_tokens": 33216,
+   "output_tokens": 1929,
+   "output_tokens_details": {
+    "thinking_tokens": 179
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10200,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 769,
+     "cache_read_input_tokens": 20426,
+     "cache_creation_input_tokens": 2564,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2564
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1929,
+    "cacheReadInputTokens": 33216,
+    "cacheCreationInputTokens": 10200,
+    "webSearchRequests": 0,
+    "costUSD": 0.12683919999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 179,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 4577,
+    "cacheReadInputTokens": 57182,
+    "cacheCreationInputTokens": 9333,
+    "webSearchRequests": 0,
+    "costUSD": 0.0748447,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 390,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Each line can now carry its own discount, and all 14 tests pass with `python3 -m unittest discover -s tests -t .`. Nothing is committed.\n\n- **`Line`** (`shop/models.py`) has a new `discount_percent` field that defaults to 0.\n- **`pricing.line_subtotal`** takes the line's discount off first using `money.percent`, then applies the existing bulk rule to the reduced amount. `money.percent` already rounded half up, so I didn't change it. With a discount of 0, totals are the same as before.\n- **`Cart.add(item, qty=1, discount_percent=0)`** adds to an existing line only when both the sku and the discount match; otherwise it starts a new line.\n- **The `quote` command** (`shop/cli.py`) accepts `sku:price:qty` or `sku:price:qty:discount`. A fifth field is rejected with a `ValueError`, and the help text now shows `sku:price:qty[:discount]`.\n\nThe new tests in `tests/test_pricing.py` cover:\n- **Order of discounts:** 10 items at 5\u00a2 with a 10% line discount come to 43\u00a2. Applying the bulk rule first would give 42\u00a2.\n- **Rounding:** a half-up case, where 10% of 25\u00a2 is 3\u00a2.\n- **No discount:** a discount of 0 leaves the total unchanged.\n- **Cart:** merging versus starting a new line.\n- **CLI:** the three-field and four-field forms.\n\nDecisions for you:\n- **No range check on the discount.** The code doesn't validate qty or price anywhere, so I didn't add one for discounts; a discount below 0 or above 100 is currently accepted. Rejecting it would mean raising a `ValueError` in `Cart.add`, which is new behaviour. Should I add it?\n- **Whole numbers only on the command line.** `quote` reads the discount as a whole number, the same way it reads qty, so `10.5` is rejected there. `Line` and `Cart.add` do accept fractional discounts.\n\nRunning the tests left untracked `__pycache__/` folders, because the repo has no `.gitignore`. I left them in place.",
+  "ttft_ms": 2533,
+  "type": "result",
+  "duration_ms": 65338,
+  "uuid": "136f538b-3443-461c-8d68-97ade9b042ab",
+  "ttft_stream_ms": 1203,
+  "time_to_request_ms": 260,
+  "first_content_frame_ms": 1203,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  9 ++++++---\n shop/models.py        |  7 ++++---\n shop/pricing.py       |  1 +\n tests/test_pricing.py | 54 ++++++++++++++++++++++++++++++++++++++++++++++++++-\n 4 files changed, 64 insertions(+), 7 deletions(-)\n",
+ "workdir": "h4-linediscount.final-no-short-output.3",
+ "ledger": []
+}

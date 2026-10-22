@@ -1,0 +1,127 @@
+{
+ "task": "h4-linediscount",
+ "class": "multi_file",
+ "arm": "final-no-short-output",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 47066,
+  "stop_reason": "end_turn",
+  "session_id": "ffb3bd60-6a8b-4ab4-ad8d-fc6b4add163a",
+  "total_cost_usd": 0.17327700000000001,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 9826,
+   "cache_read_input_tokens": 33216,
+   "output_tokens": 1838,
+   "output_tokens_details": {
+    "thinking_tokens": 116
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9826,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 758,
+     "cache_read_input_tokens": 20426,
+     "cache_creation_input_tokens": 2190,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2190
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1838,
+    "cacheReadInputTokens": 33216,
+    "cacheCreationInputTokens": 9826,
+    "webSearchRequests": 0,
+    "costUSD": 0.1220272,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 116,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3026,
+    "cacheReadInputTokens": 30738,
+    "cacheCreationInputTokens": 7160,
+    "webSearchRequests": 0,
+    "costUSD": 0.051249800000000005,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 470,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've added per-line discounts and the full suite passes (`python3 -m unittest discover -s tests -t .`: 12 tests, OK). Nothing is committed.\n\nWhat changed:\n- **`shop/models.py`**: `Line` has a `discount_percent` field that defaults to 0. `Cart.add(item, qty=1, discount_percent=0)` merges into an existing line only when both the sku and the discount match; otherwise it starts a new line.\n- **`shop/pricing.py`**: `line_subtotal` takes `percent(price*qty, discount_percent)` off the line total first, then applies the bulk rule to what's left. That's the same way the bulk rule already uses `money.percent`.\n- **`shop/cli.py`**: `quote` accepts `sku:price:qty` or `sku:price:qty:discount`. With three fields the discount is 0, and decimal discounts like `10.5` are accepted.\n- **`tests/test_pricing.py`**: seven new tests:\n  - a default discount of 0 leaves totals unchanged\n  - the discount is applied before the bulk rule\n  - a .5-cent case rounds half up (105\u00a2 at 10% \u2192 11\u00a2 off)\n  - same sku with the same discount merges into one line\n  - same sku with a different discount makes a separate line\n  - the CLI works with both three and four fields\n\nThings that behave in ways you might not expect:\n- **Order only matters through rounding.** The bulk rule triggers on quantity, not amount, so a discount never changes whether bulk applies. The ordering test uses a case where the result differs by one cent: 1005\u00a2 \u00d7 10 at 10% off gives 8593 with the discount first and 8592 with bulk first.\n- **No validation on the discount.** The code doesn't validate price or qty either, so I didn't add any. A discount below 0 or above 100 is accepted as is.\n- **Malformed `quote` input still crashes**, with an uncaught `ValueError`, just as the three-field form did before.\n- **`money.percent` uses floats** (`int(cents*rate/100 + 0.5)`). That rounds half up for non-negative values, but a value that should be exactly x.5 could in rare cases land just below it and round down. The tested case is exact. Switching to `Decimal` would remove the risk if you want it.",
+  "ttft_ms": 2981,
+  "type": "result",
+  "duration_ms": 48514,
+  "uuid": "4414d762-6ea0-4608-9afa-89fd15adf27d",
+  "ttft_stream_ms": 1665,
+  "time_to_request_ms": 232,
+  "first_content_frame_ms": 1665,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  9 ++++++---\n shop/models.py        |  7 ++++---\n shop/pricing.py       |  1 +\n tests/test_pricing.py | 48 +++++++++++++++++++++++++++++++++++++++++++++++-\n 4 files changed, 58 insertions(+), 7 deletions(-)\n",
+ "workdir": "h4-linediscount.final-no-short-output.1",
+ "ledger": []
+}

@@ -1,8 +1,8 @@
-"""Runs the benchmark: each task twice (alone, with Token Beggar), same model, same effort, same prompt.
+"""Runs the benchmark: each task once per arm, same model, effort and prompt. Arms are defined in arms.py.
 
-    python3 run.py --top opus --effort high --workers 4 [--only m1-rename,r1-tracking] [--rep 1]
+    python3 run.py --top opus --effort high --workers 4 --arms alone,v020,final [--only m1-rename,heldout] [--rep 1] [--out final]
 
-Raw claude -p JSON goes to results/raw/. Scoring is done by score.py.
+Raw claude -p JSON goes to results/<out>/raw/. Scoring is done by score.py --out <out>.
 """
 
 import argparse
@@ -13,13 +13,15 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import arms
 import fixture
-from tasks import TASKS
+from tasks import ALL as TASKS
 
 ROOT = Path(__file__).resolve().parent.parent
 CLAUDE = os.environ.get("CLAUDE_BIN", str(Path.home() / ".local/bin/claude"))
 SCRATCH = Path(os.environ.get("TB_SCRATCH", "/tmp/tb-bench"))
-RAW = ROOT / "benchmark" / "results" / "raw"
+RESULTS = ROOT / "benchmark" / "results"
+RAW = RESULTS / "raw"  # main() points this at results/<out>/raw
 # Both arms get the same tool permissions. Without Bash allowed, headless subagents are denied their shell and the run measures permission prompts instead of routing.
 FLAGS = [
     "--setting-sources",
@@ -43,7 +45,7 @@ def scrub(text: str) -> str:
     return text.replace(str(Path.home()), "~").replace(str(SCRATCH), "<work>")
 
 
-def run_one(task: dict, arm: str, top: str, effort: str, rep: int) -> dict:
+def run_one(task: dict, arm: str, top: str, effort: str, rep, extra_env: dict | None = None) -> dict:
     name = f"{task['id']}.{arm}.{rep}"
     work = SCRATCH / name
     fixture.build(work)
@@ -52,9 +54,11 @@ def run_one(task: dict, arm: str, top: str, effort: str, rep: int) -> dict:
         subprocess.run(["git", "add", "-A"], cwd=work, check=True)
         subprocess.run(["git", "-c", "user.name=b", "-c", "user.email=b@b", "commit", "-qm", "seed"], cwd=work, check=True)
     cmd = [CLAUDE, "-p", task["prompt"], "--model", top, "--effort", effort, *FLAGS]
-    env = dict(os.environ, TOKEN_BEGGAR_HOME=str(SCRATCH / "home" / name), TOKEN_BEGGAR_OFFLINE="1")
-    if arm == "beggar":
-        cmd += ["--plugin-dir", str(ROOT)]
+    env = dict(os.environ, TOKEN_BEGGAR_HOME=str(SCRATCH / "home" / name), TOKEN_BEGGAR_OFFLINE="1", **(extra_env or {}))
+    plugin = arms.plugin_dir(arm)
+    if plugin:
+        cmd += ["--plugin-dir", str(plugin)]
+        env.update(arms.extra_env(arm))
     try:
         proc = subprocess.run(cmd, cwd=work, env=env, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=1500)
         out, err = proc.stdout, proc.stderr[-400:]
@@ -76,6 +80,7 @@ def run_one(task: dict, arm: str, top: str, effort: str, rep: int) -> dict:
         "stderr": err,
         "diff_stat": diff,
         "workdir": name,
+        "ledger": [json.loads(line) for f in (SCRATCH / "home" / name / "ledger").glob("*.jsonl") for line in f.read_text().splitlines()],
     }
     RAW.mkdir(parents=True, exist_ok=True)
     (RAW / f"{name}.json").write_text(scrub(json.dumps(record, indent=1)))
@@ -89,11 +94,26 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--only", default="")
     ap.add_argument("--rep", type=int, default=1)
-    ap.add_argument("--arms", default="alone,beggar")
+    ap.add_argument("--arms", default="alone,v020,final")
+    ap.add_argument("--out", default="final", help="results subfolder")
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
+    global RAW
+    RAW = RESULTS / args.out / "raw"
+    arm_list = args.arms.split(",")
+    arms.prepare(arm_list)
     only = set(filter(None, args.only.split(",")))
-    jobs = [(t, a) for t in TASKS if not only or t["id"] in only or t["class"] in only for a in args.arms.split(",")]
+
+    def wanted(t):
+        return (
+            not only
+            or t["id"] in only
+            or t["class"] in only
+            or ("heldout" in only and t.get("held_out"))
+            or ("seen" in only and not t.get("held_out"))
+        )
+
+    jobs = [(t, a) for t in TASKS if wanted(t) for a in arm_list]
     jobs = [(t, a) for t, a in jobs if args.force or not (RAW / f"{t['id']}.{a}.{args.rep}.json").exists()]
     random.Random(7).shuffle(jobs)
     print(f"{len(jobs)} runs", flush=True)

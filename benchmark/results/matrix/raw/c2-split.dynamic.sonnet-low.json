@@ -1,0 +1,117 @@
+{
+ "task": "c2-split",
+ "class": "routine_code",
+ "arm": "dynamic",
+ "rep": "sonnet-low",
+ "top": "claude-sonnet-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 22160,
+  "stop_reason": "end_turn",
+  "session_id": "b57254fc-a799-445b-8965-e82fc3c83f9f",
+  "total_cost_usd": 0.0716997,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 899,
+   "cache_read_input_tokens": 20526,
+   "output_tokens": 291,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 899,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 291,
+     "cache_read_input_tokens": 20526,
+     "cache_creation_input_tokens": 899,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 899
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 2070,
+    "cacheReadInputTokens": 86077,
+    "cacheCreationInputTokens": 11763,
+    "webSearchRequests": 0,
+    "costUSD": 0.0716997,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 56,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjj2i8o-e3d04b9b"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`split(cents, parts)` is now in `shop/money.py`, with tests, and all 9 tests pass. I didn't re-read the code myself. This comes from the worker's report and its test output.\n\n- **Function:** it uses `divmod` and gives one extra cent to each of the first `extra` elements, so `split(10, 3)` returns `[4, 3, 3]`. `parts < 1` raises `ValueError`.\n- **Tests:** the new `tests/test_money.py` has a `SplitTests` class in the same `unittest` style as `tests/test_pricing.py`. It covers the even split, the remainder spread, and `ValueError` for `parts=0` and `parts=-1`.\n- **Test run:** `python` isn't installed here, so the worker ran `python3 -m unittest discover`. The output was `Ran 9 tests in 0.000s` and `OK`.",
+  "ttft_ms": 3138,
+  "type": "result",
+  "duration_ms": 3493,
+  "uuid": "edeb4087-b05f-4f0a-b91e-1363333a1b05",
+  "ttft_stream_ms": 1348,
+  "time_to_request_ms": 103,
+  "first_content_frame_ms": 1348,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 8 ++++++++\n 1 file changed, 8 insertions(+)\n",
+ "workdir": "c2-split.dynamic.sonnet-low"
+}

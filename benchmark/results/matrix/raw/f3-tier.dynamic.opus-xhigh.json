@@ -1,0 +1,112 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": "opus-xhigh",
+ "top": "claude-opus-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 75165,
+  "stop_reason": "end_turn",
+  "session_id": "1783e06e-4b4a-422e-ac20-4127b771a43b",
+  "total_cost_usd": 0.34175340000000004,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 9476,
+   "cache_read_input_tokens": 32567,
+   "output_tokens": 2501,
+   "output_tokens_details": {
+    "thinking_tokens": 819
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9476,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 997,
+     "cache_read_input_tokens": 19777,
+     "cache_creation_input_tokens": 2489,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2489
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 7538,
+    "cacheReadInputTokens": 136592,
+    "cacheCreationInputTokens": 27035,
+    "webSearchRequests": 0,
+    "costUSD": 0.34175340000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1696,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are added, and the full suite passes: 19 tests, 0 failures, run with `python3 -m unittest discover -s tests -t .`. Nothing is committed.\n\n**What changed**\n- **`shop/models.py`:** `Cart` has a new `tier` field, default `'standard'`. It's the last field, so existing code that creates a `Cart` still works.\n- **`shop/pricing.py`:** the rates are kept in one table, `TIER_DISCOUNTS`: gold 10%, silver 5%, any other value 0%. `calc_total` and `calc_tax` now get the amount they work on from the same helper, so both use the discounted subtotal.\n- **`shop/orders.py`:** `Order` already recalculates its totals from the cart, so it gets the discount automatically. It also stores `self.tier` now.\n- **`shop/cli.py`:** `quote` takes `--tier` (default `standard`).\n- **Tests:** new cases in `tests/test_pricing.py` and `tests/test_orders.py`, plus a new `tests/test_cli.py`. They cover gold, silver, the default, an unknown tier, tax on the discounted amount, Order and the CLI flag.\n\n**Choices made**\n- Amounts stay in integer cents, as before. The bulk discount comes first, then the tier discount (rounded half-up with the existing `percent` helper), then tax on that rounded amount.\n- Tier names are case-sensitive, so `Gold` gets no discount. Nothing else in the code converts case, so I left it that way.\n\n**Two things to decide**\n1. **Possible one-cent mismatch.** The tier discount is rounded twice: once on the whole subtotal for the total, and once on the taxable part for tax. In a cart with both taxable and non-taxable items, those two roundings can differ by a cent. To fix it, the discount would have to be split across items in one rounding step.\n2. **The tier isn't saved.** `Store.save_order` doesn't store it, so saved orders lose it. Saved totals should be unaffected if they're stored as computed, but I haven't checked that.\n\nI can fix either of these if you want.",
+  "ttft_ms": 7145,
+  "type": "result",
+  "duration_ms": 76759,
+  "uuid": "f44d759e-abc3-4948-a22c-8ca44a759679",
+  "ttft_stream_ms": 1815,
+  "time_to_request_ms": 187,
+  "first_content_frame_ms": 1815,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 26 ++++++++++++++++++++------\n tests/test_orders.py  | 12 ++++++++++++\n tests/test_pricing.py | 42 ++++++++++++++++++++++++++++++++++++++++++\n 6 files changed, 78 insertions(+), 7 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.opus-xhigh"
+}

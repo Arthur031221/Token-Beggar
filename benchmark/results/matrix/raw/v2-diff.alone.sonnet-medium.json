@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": "sonnet-medium",
+ "top": "claude-sonnet-5-5",
+ "effort": "medium",
+ "result": {
+  "duration_api_ms": 8753,
+  "stop_reason": "end_turn",
+  "session_id": "a5a9aea2-c4ef-42f2-b1fa-87b90c51ddf0",
+  "total_cost_usd": 0.0390311,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6601,
+   "cache_read_input_tokens": 50351,
+   "output_tokens": 758,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6601,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 539,
+     "cache_read_input_tokens": 18920,
+     "cache_creation_input_tokens": 471,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 471
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 758,
+    "cacheReadInputTokens": 50351,
+    "cacheCreationInputTokens": 6601,
+    "webSearchRequests": 0,
+    "costUSD": 0.0390311,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces three bugs. I didn't edit anything.\n\n1. **`_ids_seen` is never defined.** The diff replaces `next(_ids)` with `len(_ids_seen)` and `_ids_seen.append(...)`, but nothing in `shop/orders.py` or elsewhere in the repo defines `_ids_seen`. The first `Order(...)` raises `NameError`, so no order can be created. The diff also leaves `_ids` and `itertools` unused.\n\n2. **Order IDs change meaning.** The original IDs came from `itertools.count(1000)`, so they started at 1000. Even if `_ids_seen = []` were added, IDs would start at 0 and run 0, 1, 2, and so on. Any code or data that expects IDs of 1000 or higher would break. The new scheme also isn't safe under concurrent creation. Two threads can read the same `len(...)` before either appends, which gives duplicate IDs. `next()` on a `count` is effectively atomic in CPython, so the original didn't have this problem.\n\n3. **`move()` no longer rejects unknown states.** `ALLOWED.get(self.state, STATES)` falls back to `STATES`, which is every state. If `self.state` isn't a key in `ALLOWED`, any transition is now allowed. The original raised `KeyError` in that case. A corrupted or invalid state therefore passes validation silently.\n\n   For valid states the lookup behaves as before, and `shipped` and `cancelled` still map to empty sets. Even so, the fallback turns a hard failure into permissive behavior, which is the wrong default for a state machine guard.",
+  "ttft_ms": 2196,
+  "type": "result",
+  "duration_ms": 8935,
+  "uuid": "afaa0811-5bc5-42d2-b559-922a9de116dc",
+  "ttft_stream_ms": 1910,
+  "time_to_request_ms": 85,
+  "first_content_frame_ms": 1911,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.alone.sonnet-medium"
+}

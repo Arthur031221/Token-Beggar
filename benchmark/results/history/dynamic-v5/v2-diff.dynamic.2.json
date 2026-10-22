@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 22639,
+  "stop_reason": "end_turn",
+  "session_id": "b966ea4f-5267-498b-9205-6597a992790e",
+  "total_cost_usd": 0.1066652,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 7118,
+   "cache_read_input_tokens": 75746,
+   "output_tokens": 1727,
+   "output_tokens_details": {
+    "thinking_tokens": 378
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7118,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1030,
+     "cache_read_input_tokens": 21211,
+     "cache_creation_input_tokens": 493,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 493
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1727,
+    "cacheReadInputTokens": 75746,
+    "cacheCreationInputTokens": 7118,
+    "webSearchRequests": 0,
+    "costUSD": 0.1066652,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 378,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found four bugs in the diff. The first one breaks every order before the others can matter. I made no edits.\n\n### 1. `NameError` every time an order is created (`shop/orders.py:12`)\nThe new code reads `len(_ids_seen)` and calls `_ids_seen.append(...)`, but nothing defines `_ids_seen`. The diff doesn't add it at module level, and the module only has `_ids = itertools.count(1000)`. So every `Order(cart)` raises `NameError: name '_ids_seen' is not defined`. That breaks `shop/cli.py` and both tests in `tests/test_orders.py`, which build an order in `make()`. `_ids` and `import itertools` are also left behind unused.\n\n### 2. Even if `_ids_seen = []` were added, IDs change and can repeat\n- **IDs start at 0 instead of 1000.** Anything that expects order IDs of 1000 and up (display, existing records, external references) now gets 0, 1, 2\u2026\n- **Duplicate IDs under concurrency.** `next(itertools.count())` is a single atomic step in CPython. Reading `len(list)` and then calling `append` is two steps, so two threads can read the same length and get the same ID. This matters because `shop/storage.py:17-19` saves by `id`: it drops any existing row with `order.id` and writes the new one. Two orders with the same ID means one silently overwrites the other in storage.\n- **Unbounded memory growth.** Every ID ever issued is kept in a list for the life of the process, only so the code can take its length. A counter needs no storage at all.\n\n### 3. An unknown state now allows any move (`shop/orders.py:20`)\n`ALLOWED.get(self.state, STATES)` falls back to every state when `self.state` isn't a key in `ALLOWED`. Before, an unknown or corrupted state raised `KeyError`. Now it silently permits a move to `\"new\"`, `\"paid\"`, `\"shipped\"` or `\"cancelled\"`. For example, an order whose state was set to `\"refunded\"` or a typo like `\"Paid\"` (say, from loaded data or a direct assignment) can jump straight to `\"shipped\"`, skipping payment. The state machine is meant to reject moves it doesn't know about, and this change makes it allow them instead.\n\n### 4. The `move` change removes the error without fixing anything\nEvery valid state is already a key in `ALLOWED`, so the `.get` fallback only ever runs when the order is already in a bad state. In that case the old `KeyError` was the right outcome, perhaps with a clearer `ValueError`. The change hides the corruption rather than handling it.",
+  "ttft_ms": 2004,
+  "type": "result",
+  "duration_ms": 23483,
+  "uuid": "df15a02d-9352-4ad2-ad3d-37eba82ecc47",
+  "ttft_stream_ms": 1905,
+  "time_to_request_ms": 399,
+  "first_content_frame_ms": 1905,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.2"
+}

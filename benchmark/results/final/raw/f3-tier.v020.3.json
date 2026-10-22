@@ -1,0 +1,127 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "v020",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 45405,
+  "stop_reason": "end_turn",
+  "session_id": "21d81430-52cf-47f3-8090-9931adb44165",
+  "total_cost_usd": 0.18288710000000002,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 9697,
+   "cache_read_input_tokens": 75596,
+   "output_tokens": 1777,
+   "output_tokens_details": {
+    "thinking_tokens": 157
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9697,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 608,
+     "cache_read_input_tokens": 22128,
+     "cache_creation_input_tokens": 359,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 359
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1777,
+    "cacheReadInputTokens": 75596,
+    "cacheCreationInputTokens": 9697,
+    "webSearchRequests": 0,
+    "costUSD": 0.12826720000000003,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 157,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3074,
+    "cacheReadInputTokens": 30739,
+    "cacheCreationInputTokens": 8316,
+    "webSearchRequests": 0,
+    "costUSD": 0.0546199,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 209,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and all 17 tests pass (I ran `python3 -m unittest discover -s tests` myself). Nothing is committed.\n\n- **Cart** (`shop/models.py`): has a `tier` attribute that defaults to `'standard'`. It's added last, so existing code that creates carts still works.\n- **Pricing** (`shop/pricing.py`):\n  - `TIER_DISCOUNTS` sets gold to 10% and silver to 5%, and `tier_discount()` looks up the rate. Any other value gets 0%.\n  - A shared `_discounted()` helper takes the discount off the subtotal before tax. Both `calc_total` and `calc_tax` use it, and those are the only two places that work out a total or tax.\n- **Order** (`shop/orders.py`): copies `cart.tier`. It already got its total and tax from `calc_total` and `calc_tax`, so the discount carries through automatically.\n- **CLI** (`shop/cli.py`): `quote --tier` defaults to `standard` and is passed to the Cart.\n- **Tests:** new cases in `tests/test_pricing.py` and `tests/test_orders.py`, plus a new `tests/test_cli.py`. They cover gold, silver, standard, an unknown tier, tax on the discounted amount, Order, and the CLI option.\n\n**Rounding:** amounts are in whole cents, rounded half-up. The discount is rounded separately on the full subtotal and on the taxable part, so in rare cases the two can be a cent apart. If you'd rather have one rounding point, the alternative is to discount each line instead.\n\nToken Beggar: about 1.56x less spend than claude-opus-5-5 high alone (measured, multi_file)",
+  "ttft_ms": 1846,
+  "type": "result",
+  "duration_ms": 46189,
+  "uuid": "57d7e6fd-aec5-423e-957a-9573db03da53",
+  "ttft_stream_ms": 947,
+  "time_to_request_ms": 202,
+  "first_content_frame_ms": 948,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 18 +++++++++++++++---\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 33 +++++++++++++++++++++++++++++++++\n 6 files changed, 60 insertions(+), 4 deletions(-)\n",
+ "workdir": "f3-tier.v020.3",
+ "ledger": []
+}

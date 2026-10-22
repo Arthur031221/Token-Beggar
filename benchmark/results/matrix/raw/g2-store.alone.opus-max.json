@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "opus-max",
+ "top": "claude-opus-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 240317,
+  "stop_reason": "end_turn",
+  "session_id": "7594c84f-f2e0-47ae-9c3b-3ca96cc847a2",
+  "total_cost_usd": 0.8482082,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 34592,
+   "cache_read_input_tokens": 124621,
+   "output_tokens": 27325,
+   "output_tokens_details": {
+    "thinking_tokens": 24834
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 34592,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 2009,
+     "cache_read_input_tokens": 26963,
+     "cache_creation_input_tokens": 20419,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 20419
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 27325,
+    "cacheReadInputTokens": 124621,
+    "cacheCreationInputTokens": 34592,
+    "webSearchRequests": 0,
+    "costUSD": 0.8482082,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 24834,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I recommend moving orders to SQLite in WAL mode. It's in Python's standard library and needs no server.\n\n**Why the current file won't hold up:**\n- **Two writers will lose data.** `save_order` rewrites the whole file with no lock, so two saves at the same time drop each other's orders. `write_text` empties the file before writing, so a crash during a save can destroy every order.\n- **Order IDs collide.** Each process starts its own counter at 1000; I ran two processes and both gave out id 1000. `save_order` replaces rows by id, so the other writer, or any restart, overwrites existing orders.\n- **It's slow at 100k orders.** The file reaches about 10 MB and every save rewrites all of it. I measured about 500 ms per save.\n\nSQLite gives you crash-safe transactions, single-row writes and IDs assigned by the database. With a busy timeout set, the two writers wait their turn instead of overwriting each other. Adding a lock and atomic rename to the JSON file would stop the corruption, but saves would still take 500 ms. One requirement: both processes must run on the same machine with a local disk. If they don't, use Postgres instead.\n\n**Migration path:**\n1. Rebuild `Store` on SQLite but keep `load()`, `save_order()` and the row format, so `cli.py` and `reports.py` don't change.\n2. Let the database assign IDs on first insert, and remove the per-process counter.\n3. Write a one-off import of `orders.json` that keeps existing IDs. Test it first and check that order counts and totals match.\n4. To switch over, stop both writers, run the import, deploy and restart. That's simpler than writing to both stores for a while. Keep the JSON file as a backup.\n5. Afterwards, add a table for order lines, which aren't saved at all today. Also make a state change apply only if the order is still in the expected state, so the two writers can't make conflicting changes.",
+  "ttft_ms": 2282,
+  "type": "result",
+  "duration_ms": 243902,
+  "uuid": "69d2333d-744f-42c0-830d-bf73af7921c8",
+  "ttft_stream_ms": 1539,
+  "time_to_request_ms": 80,
+  "first_content_frame_ms": 1540,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.opus-max"
+}

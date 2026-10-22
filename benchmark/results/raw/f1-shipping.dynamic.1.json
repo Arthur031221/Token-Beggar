@@ -1,0 +1,112 @@
+{
+ "task": "f1-shipping",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 50519,
+  "stop_reason": "end_turn",
+  "session_id": "9bf6e081-ea6a-4c91-8ff1-803e84a5f862",
+  "total_cost_usd": 0.2700544,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 7021,
+   "cache_read_input_tokens": 34331,
+   "output_tokens": 1877,
+   "output_tokens_details": {
+    "thinking_tokens": 334
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7021,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 781,
+     "cache_read_input_tokens": 19744,
+     "cache_creation_input_tokens": 1864,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1864
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 5519,
+    "cacheReadInputTokens": 105702,
+    "cacheCreationInputTokens": 23483,
+    "webSearchRequests": 0,
+    "costUSD": 0.2700544,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 590,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Orders now include shipping. The full suite passes: `python3 -m unittest discover -s tests -t .` ran 13 tests, all OK. I handed this to a worker agent, and what follows comes from its report; I didn't go over its code myself. Nothing is committed.\n\n**What changed**\n- **`shop/orders.py`:** `Order(cart, carrier=None, weight=0, zone='local')` gets `shipping_cents` from the carrier registry in `shop/carriers`. It's an integer, and 0 when there's no carrier. `total_cents` includes it.\n- **`shop/storage.py`:** `Store.save_order` saves the amount as `'shipping'`. Orders saved before this change load with `shipping = 0`.\n- **`shop/reports.py`:** unchanged. The report adds up the saved `total`, which now includes shipping, and never reads `shipping` on its own, so shipping is counted once. Old orders still report correctly.\n- **`tests/test_shipping.py`** (new, in the same unittest style as the other tests) covers:\n  - no carrier, and a carrier's rate for a given weight and zone\n  - the total including shipping\n  - `'shipping'` being saved, and old orders still loading\n  - the report with shipping orders\n  - an unknown carrier\n\n**Worth checking**\n1. **Default weight crashes with a carrier.** `Order(cart, carrier='x')` uses the default `weight=0`, and carriers reject that with a `ValueError`. Either that's the behaviour you want, or `Order` should return 0 shipping when the weight is 0.\n2. **Unknown carrier:** this raises `KeyError`, because that's what the registry's lookup already does. Nothing new was added on top.\n3. **Units differ by carrier.** The `maple` carrier takes weight in grams and the others take kilograms. `Order` passes `weight` through unchanged, so callers have to use the right unit for each carrier. It may be worth making these the same in the registry.",
+  "ttft_ms": 3044,
+  "type": "result",
+  "duration_ms": 51681,
+  "uuid": "edd9ce88-4984-4266-b8d8-fc94010ff9a6",
+  "ttft_stream_ms": 1112,
+  "time_to_request_ms": 200,
+  "first_content_frame_ms": 1112,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/orders.py  | 11 +++++++++--\n shop/storage.py |  8 ++++++--\n 2 files changed, 15 insertions(+), 4 deletions(-)\n",
+ "workdir": "f1-shipping.dynamic.1"
+}

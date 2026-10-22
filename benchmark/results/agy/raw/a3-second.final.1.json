@@ -1,0 +1,111 @@
+{
+ "task": "a3-second",
+ "class": "second-opinion",
+ "arm": "final",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 21088,
+  "stop_reason": "end_turn",
+  "session_id": "772a6cd9-1200-47d8-a431-eb567c80110a",
+  "total_cost_usd": 0.0973648,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 8031,
+   "cache_read_input_tokens": 33104,
+   "output_tokens": 1324,
+   "output_tokens_details": {
+    "thinking_tokens": 553
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8031,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1121,
+     "cache_read_input_tokens": 20314,
+     "cache_creation_input_tokens": 507,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 507
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1324,
+    "cacheReadInputTokens": 33104,
+    "cacheCreationInputTokens": 8031,
+    "webSearchRequests": 0,
+    "costUSD": 0.0973648,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 553,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I'd flag three problems in `shop/cache.py`, in order of severity.\n\n**1. An in-flight load can undo `invalidate()` (`shop/cache.py:17-18`, `:22`).** Thread A misses and calls `loader` while the old price is still current. Thread B changes the price and calls `invalidate(sku)`. A's load finishes and writes the old price back with a fresh timestamp, so the wrong price is served for a full `ttl`. For a price cache this is the most serious problem.\n\n**2. Concurrent misses all call the loader (`shop/cache.py:14-18`).** Nothing stops many threads from missing the same SKU at once, and each one calls `loader`. When a popular SKU expires, the backend gets a burst of identical calls. The last write wins, so a slower, older result can overwrite a newer one.\n\n**3. The cache never shrinks.** Expired entries are only replaced, never removed, and there's no size limit. In a long-running service with many SKUs, memory keeps growing.\n\nSmaller points:\n- There's no explicit lock. Single dict operations are safe in CPython, but nothing makes the read, load and write sequence atomic, and this gets riskier on free-threaded Python.\n- Errors aren't cached, so if the backend is down every request calls the loader again.\n\n**Fix I'd choose:** guard the cache with one lock, held only for dict bookkeeping and never while the loader runs. On top of that:\n- **One load per SKU:** keep an in-flight entry per SKU (a Future/Event). The first thread to miss loads the value; other threads wait for its result.\n- **Version counter per SKU:** `invalidate` bumps it. A load stores its result only if the version is unchanged since the load started, which fixes problem 1.\n- **Size limit:** an LRU with `maxsize` that drops expired entries as it goes. `cachetools.TTLCache` behind the lock would do this part.\n\nOptionally, cache failures for a few seconds so a backend outage doesn't turn into a retry storm.",
+  "ttft_ms": 5218,
+  "type": "result",
+  "duration_ms": 21797,
+  "uuid": "0190c65d-d3f1-4cb7-a9f9-4da4e8c0f36c",
+  "ttft_stream_ms": 4202,
+  "time_to_request_ms": 224,
+  "first_content_frame_ms": 4202,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "a3-second.final.1",
+ "ledger": []
+}

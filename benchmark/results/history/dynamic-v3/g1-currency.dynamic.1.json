@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 20842,
+  "stop_reason": "end_turn",
+  "session_id": "1c608899-cf97-4eef-9e75-118505f047a5",
+  "total_cost_usd": 0.1461744,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 11572,
+   "cache_read_input_tokens": 55272,
+   "output_tokens": 2126,
+   "output_tokens_details": {
+    "thinking_tokens": 732
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11572,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1464,
+     "cache_read_input_tokens": 20681,
+     "cache_creation_input_tokens": 5477,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 5477
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 2126,
+    "cacheReadInputTokens": 55272,
+    "cacheCreationInputTokens": 11572,
+    "webSearchRequests": 0,
+    "costUSD": 0.1461744,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 732,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "# Multi-currency design for `shop`\n\n**Core decision:** each cart and order holds exactly one currency. The core never converts between currencies. If conversion is ever needed, it should be a separate step that records the exchange rate it used.\n\n## What changes\n\n- **`shop/money.py`**: Add a `Money(minor: int, currency: str)` type and a table of minor-unit exponents (for example USD=2, JPY=0, KWD=3). `to_cents`, `fmt` and `percent` all assume 2 decimals (`/100`, `:02d`), so they must take the exponent from the currency. `percent` should use `Decimal` instead of float.\n- **`shop/models.py`**: `Item.price_cents` becomes a `Money` price, or gains a `currency` field. `Cart` gets a `currency`, and `Cart.add` rejects items in a different currency.\n- **`shop/pricing.py`**: The flat `TAX_RATE = 8.25` and the rounding should become per currency or region. Totals return `Money`.\n- **`shop/orders.py`**: Store the currency on `Order`, including in each line tuple.\n- **`shop/storage.py`**: Add `currency` to saved rows. Old rows without it are read as `\"USD\"`.\n- **`shop/reports.py`**: `sales_by_customer` adds up totals of any currency. It must group by `(customer, currency)`.\n- **`shop/cli.py`**: Add a `--currency` flag to `quote`, and parse and format prices for that currency.\n- **`shop/cache.py`**: Key prices by `(sku, currency)`.\n- **`shop/carriers/*.py`** (20 files): Each one returns an amount with no currency, even though the docstrings say \"cents\". Add a `CURRENCY` constant per carrier and return `Money`.\n- **`tests/`**: Add cases for currencies with 0 and 3 decimals and for mixed-currency rejection.\n\n## Main risks\n\n1. **Mixed-currency sums:** amounts in different currencies get added together without any error, mainly in reports and order totals. A `Money` type that refuses to add different currencies prevents this.\n2. **Wrong decimals:** JPY or KWD amounts come out 100\u00d7 too large or small.\n3. **Old data:** stored JSON rows have no currency. A wrong default misstates historical sales.\n4. **API break:** renaming `price_cents` breaks callers. Keep it as a deprecated alias for a while.\n5. **Rounding and tax:** float rounding and a single US-style tax rate give wrong results for other countries.",
+  "ttft_ms": 1760,
+  "type": "result",
+  "duration_ms": 21667,
+  "uuid": "6074b616-db69-43e7-bf47-9c1dedb8b3c2",
+  "ttft_stream_ms": 744,
+  "time_to_request_ms": 108,
+  "first_content_frame_ms": 746,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.1"
+}

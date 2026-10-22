@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": "sonnet-max",
+ "top": "claude-sonnet-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 249542,
+  "stop_reason": "end_turn",
+  "session_id": "0e44ec7e-c626-4ee1-8359-3d657be1a939",
+  "total_cost_usd": 0.5982615,
+  "usage": {
+   "input_tokens": 38,
+   "cache_creation_input_tokens": 50389,
+   "cache_read_input_tokens": 723695,
+   "output_tokens": 32426,
+   "output_tokens_details": {
+    "thinking_tokens": 23472
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 50389,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1513,
+     "cache_read_input_tokens": 59386,
+     "cache_creation_input_tokens": 3793,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 3793
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 38,
+    "outputTokens": 32426,
+    "cacheReadInputTokens": 723695,
+    "cacheCreationInputTokens": 50389,
+    "webSearchRequests": 0,
+    "costUSD": 0.5982615,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 23472,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 33,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces six bugs in `shop/orders.py`: a crash on every `Order(...)`, a state-machine hole, duplicate IDs under threads, an ID range shift, a memory leak and a dead leftover counter. I checked each one by running scratch copies in `/tmp`, which I've since deleted. I edited no repo files, and `git status` is clean.\n\n## Bugs, most severe first\n\n**1. `_ids_seen` is never defined, so every `Order(...)` raises `NameError`** (`shop/orders.py:12`)\n- The diff uses `_ids_seen` but never adds a `_ids_seen = []` line, and nothing else in the repo defines it.\n- I applied the diff's two edits and ran `python3 -m unittest discover -s tests -t .`. Two of the six tests, `test_total_matches_cart` and `test_state_flow`, now error with `NameError: name '_ids_seen' is not defined`. Both pass on the original.\n- The remaining bugs assume this one is fixed by adding `_ids_seen = []`. I tested them on a scratch copy with that line added. All six tests pass there, so the suite can't see any of the problems below.\n\n**2. The state machine fails open for unrecognised states** (`shop/orders.py:20`)\n- `ALLOWED.get(self.state, STATES)` falls back to the tuple of every state. Before, an unrecognised state raised `KeyError`.\n- From a made-up state (`order.state = \"refunded\"`), `move()` now accepts all four targets. That includes `shipped`, which skips payment, and `new`, which resets the order. The original raised `KeyError` for all four.\n- Nothing in the current code sets an unknown state, so this is latent. Any state loaded from storage that `ALLOWED` doesn't know about, or a typo like `\"Paid\"`, would bypass the guard.\n- A safe default would be an empty collection, so unknown states raise the existing `ValueError`.\n\n**3. ID generation is no longer atomic, so threads can get duplicate IDs** (`shop/orders.py:12`)\n- `next(itertools.count)` is a single atomic call. `len(_ids_seen)` followed by `.append(...)` is a read-then-write, so two threads can read the same length.\n- In an 8-thread test creating 160,000 orders, the original gave 0 duplicate IDs on every interpreter I tried. The patched version gave about 150\u2013365 duplicates per run on CPython 3.8, 3.9 and 3.10, and about 23\u201349 on PyPy 3.8.\n- I got 0 duplicates on CPython 3.11, 3.12, 3.13 and 3.14. That looks like an interpreter detail rather than safety. I had no free-threaded build to test.\n- Duplicate IDs are costly here. `Store.save_order` replaces any row with the same `id` (`shop/storage.py:17`), so one order would silently overwrite another. Carrier labels (for example `shop/carriers/acme.py:23`) would also collide.\n- Uniqueness now also depends on nobody ever removing entries from that list.\n\n**4. IDs restart at 0 instead of 1000** (`shop/orders.py:12`)\n- `itertools.count(1000)` gave 1000, 1001, 1002. `len(_ids_seen)` gives 0, 1, 2.\n- The first order's `id` is `0`, which is falsy, so any later `if order.id:` check would treat it as missing.\n- The first Acme label changes from `ACME-00001000` to `ACME-00000000`, so numbering no longer matches labels already issued.\n- I don't know why the original started at 1000, but dropping the offset looks unintentional.\n\n**5. Unbounded memory growth** (`shop/orders.py:13`)\n- `_ids_seen` keeps every ID for the life of the process. I measured about 36 bytes per order, roughly 7 MiB per 200,000 orders. The original retained nothing.\n- This is minor, but it's a regression from an O(1) counter.\n\n**6. Dead code left behind** (`shop/orders.py:1,5`)\n- `_ids = itertools.count(1000)` and `import itertools` are now unused, which suggests the old counter was meant to be replaced rather than kept alongside.\n\n## One note on the diff file\n`change.diff` can't be applied mechanically. Its hunk headers are bare `@@ class Order:` with no line ranges, so `git apply` says \"No valid patches in input\" and `patch` says \"Only garbage was found\". That is a problem with the file, not with the code.",
+  "ttft_ms": 1447,
+  "type": "result",
+  "duration_ms": 293292,
+  "uuid": "0a70300e-d553-4f68-8455-8cc60e8ef64d",
+  "ttft_stream_ms": 1348,
+  "time_to_request_ms": 93,
+  "first_content_frame_ms": 1348,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.alone.sonnet-max"
+}

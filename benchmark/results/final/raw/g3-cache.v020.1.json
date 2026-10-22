@@ -1,0 +1,111 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "v020",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 17844,
+  "stop_reason": "end_turn",
+  "session_id": "76781f69-5788-4c13-b3f6-b3618ce744a4",
+  "total_cost_usd": 0.0880882,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 7097,
+   "cache_read_input_tokens": 32281,
+   "output_tokens": 1242,
+   "output_tokens_details": {
+    "thinking_tokens": 522
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7097,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1150,
+     "cache_read_input_tokens": 19491,
+     "cache_creation_input_tokens": 396,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 396
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1242,
+    "cacheReadInputTokens": 32281,
+    "cacheCreationInputTokens": 7097,
+    "webSearchRequests": 0,
+    "costUSD": 0.0880882,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 522,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read `shop/cache.py`. Single dict reads and writes are safe on their own, but the steps around them don't hold up under concurrency or long uptime.\n\n**Problems**\n\n1. **Duplicate loads (stampede):** `get` checks the dict, then loads, then writes. When a hot SKU expires or is missing, every thread that misses at the same moment calls `loader` (lines 14\u201318). The backend gets N calls instead of one.\n2. **`invalidate` can be undone by a slow load:** If thread A starts loading, thread B calls `invalidate` (say, after a price change), and A then writes back the value it fetched before the change. That stale price is then served for a full TTL.\n3. **Unbounded memory:** Expired entries are only replaced, never removed. Every SKU ever requested stays in `_data` forever, so a long-running service leaks memory as the catalogue or junk SKUs grow.\n4. **Failure storms:** If `loader` raises, nothing is recorded. During a backend outage, every request from every thread goes straight to the struggling backend.\n5. **Minor, TTL timing:** The timestamp is taken after the load finishes, so a slow load makes the data older than the TTL suggests. Stamp the time before calling the loader.\n\n**Fix I'd choose**\n\n- One `threading.Lock` guards a bounded LRU (`OrderedDict` with `max_size`). Expired entries are dropped when touched, and the oldest is evicted on insert.\n- A per-key in-flight map (key \u2192 `Future`), so only one thread per key calls `loader` and the others wait on its result. Call `loader` outside the lock.\n- A per-key version counter that `invalidate` bumps. A finished load only stores its value if the version hasn't changed.\n- Pass loader exceptions to all waiting threads but don't cache them. Optionally add a short negative-cache TTL to absorb outages.\n- Don't make it async; plain locks fit this threaded design.",
+  "ttft_ms": 3792,
+  "type": "result",
+  "duration_ms": 18226,
+  "uuid": "cb9a7153-941c-49af-85f5-942c7eccdadb",
+  "ttft_stream_ms": 2373,
+  "time_to_request_ms": 330,
+  "first_content_frame_ms": 2373,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.v020.1",
+ "ledger": []
+}

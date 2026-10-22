@@ -1,0 +1,112 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": "opus-high",
+ "top": "claude-opus-5-5",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 62799,
+  "stop_reason": "end_turn",
+  "session_id": "369d907d-e91f-4d94-b976-7b4a238dd4ea",
+  "total_cost_usd": 0.2999166,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 8856,
+   "cache_read_input_tokens": 32544,
+   "output_tokens": 1710,
+   "output_tokens_details": {
+    "thinking_tokens": 253
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8856,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 708,
+     "cache_read_input_tokens": 19754,
+     "cache_creation_input_tokens": 1892,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1892
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 6100,
+    "cacheReadInputTokens": 133633,
+    "cacheCreationInputTokens": 24910,
+    "webSearchRequests": 0,
+    "costUSD": 0.2999166,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 882,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and the full test suite passes: 14 tests, 0 failures, run with `python3 -m unittest discover -s tests -t .`. Nothing is committed.\n\n- **Cart** (`shop/models.py`): has a `tier` attribute that defaults to `\"standard\"`.\n- **Pricing** (`shop/pricing.py`): the rates are defined once (gold 10%, silver 5%); any other tier gets no discount. The subtotal is discounted first, then tax is worked out on the discounted taxable amount. `calc_total` and `calc_tax` used to each compute the taxable sum separately. Now `calc_total` is just the discounted subtotal plus `calc_tax`, so the two can't disagree. Amounts stay in integer cents with the same rounding as before.\n- **Order** (`shop/orders.py`): stores the cart's `tier`, and its totals and tax come out discounted.\n- **CLI** (`shop/cli.py`): `quote` has a `--tier` option that defaults to `standard`.\n- **Tests**: I added cases to `tests/test_pricing.py` and `tests/test_orders.py` and created `tests/test_cli.py`. They cover gold, silver, standard and an unknown tier, the subtotal, tax, total, Order, and `quote` with and without `--tier`.\n\nTwo things to decide on:\n1. **Saved orders lose the tier.** I left `shop/storage.py` unchanged, so the tier isn't saved with an order and won't be there when one is loaded back. If saved orders need it, that's a small follow-up.\n2. **A one-cent rounding difference is possible.** In a cart with both taxable and non-taxable items, the discount is rounded once on the full subtotal and once on the taxable part. Tax is charged on the second figure, so it can be off by a cent from what the discounted subtotal suggests. If you'd rather avoid that, the fix is to round each item's discount and add those up.",
+  "ttft_ms": 3675,
+  "type": "result",
+  "duration_ms": 68470,
+  "uuid": "d8a4daf9-0a52-4ed6-8c2d-b233cdabfb10",
+  "ttft_stream_ms": 1662,
+  "time_to_request_ms": 141,
+  "first_content_frame_ms": 1662,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 26 ++++++++++++++++++++------\n tests/test_orders.py  | 15 ++++++++++++++-\n tests/test_pricing.py | 36 +++++++++++++++++++++++++++++++++++-\n 6 files changed, 73 insertions(+), 9 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.opus-high"
+}

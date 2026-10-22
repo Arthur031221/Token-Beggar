@@ -1,0 +1,111 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 18379,
+  "stop_reason": "end_turn",
+  "session_id": "a3bab104-1724-4b13-b3ef-9028e49254b1",
+  "total_cost_usd": 0.1330008,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11359,
+   "cache_read_input_tokens": 73984,
+   "output_tokens": 1365,
+   "output_tokens_details": {
+    "thinking_tokens": 49
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11359,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 836,
+     "cache_read_input_tokens": 23390,
+     "cache_creation_input_tokens": 759,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 759
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1365,
+    "cacheReadInputTokens": 73984,
+    "cacheCreationInputTokens": 11359,
+    "webSearchRequests": 0,
+    "costUSD": 0.1330008,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 49,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read the whole codebase before writing this. Everything stores money as a bare `int` of cents and assumes USD.\n\n**Design: represent money as an amount in minor units plus a currency code.**\n\n| File | Change |\n|---|---|\n| `shop/money.py` | Add a frozen `Money(minor: int, currency: str)` and an ISO-4217 exponent table (JPY=0, USD=2, KWD=3). `to_cents`/`fmt` become `parse(amount, ccy)`/`fmt(money)`. Adding or comparing two different currencies raises an error. `percent` keeps round-half-up. |\n| `shop/models.py` | `Item.price_cents` becomes `price: Money`. `Cart` gets a `currency` field, and `add()` rejects items in a different currency. |\n| `shop/pricing.py` | Return `Money`. `TAX_RATE` becomes a per-region or per-currency setting, not a global. |\n| `shop/orders.py` | Store `currency` and save it with each line's price. |\n| `shop/storage.py` | Add a `\"currency\"` field to each row. Rows without one are read as `\"USD\"`. |\n| `shop/reports.py` | Group sales by `(customer, currency)`, or convert using an explicit rate table. Never add different currencies together. |\n| `shop/cli.py` | Add a `--currency` flag to `quote` (default USD) and print the currency code. |\n| `shop/cache.py` | Cache by `(sku, currency)`. |\n| `shop/carriers/*.py` (20 files) | Each rate card is in USD cents. Add `CURRENCY = \"USD\"` and return `Money`, ideally through a shared base class rather than 20 copied edits. |\n\n**Main risks**\n1. **Rounding:** `percent` uses float math and assumes 2 decimals, which gives wrong results for JPY and KWD. Switch to `Decimal` or integer math.\n2. **Persisted data:** existing JSON files have no currency field. The USD default must be applied consistently, or old totals will be misread.\n3. **Mixed-currency sums:** reports and carts currently sum everything silently. This is the most likely source of bugs that don't show up as errors.\n4. **Exchange rates:** decide whether to convert at all, where rates come from, and when they're fixed (at quote or at payment).\n5. **API break:** renaming `price_cents`/`total_cents` breaks callers and tests. Keep deprecated aliases for a while.",
+  "ttft_ms": 2110,
+  "type": "result",
+  "duration_ms": 18694,
+  "uuid": "ec636876-6620-4af4-b15c-43b396df9d28",
+  "ttft_stream_ms": 1831,
+  "time_to_request_ms": 116,
+  "first_content_frame_ms": 1831,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.alone.2",
+ "ledger": []
+}

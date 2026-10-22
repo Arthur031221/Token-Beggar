@@ -1,0 +1,112 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 51860,
+  "stop_reason": "end_turn",
+  "session_id": "52735e5b-86f3-48db-a46f-4a2a0404ed41",
+  "total_cost_usd": 0.222393,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7739,
+   "cache_read_input_tokens": 56247,
+   "output_tokens": 2330,
+   "output_tokens_details": {
+    "thinking_tokens": 540
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7739,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 731,
+     "cache_read_input_tokens": 21939,
+     "cache_creation_input_tokens": 387,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 387
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 5378,
+    "cacheReadInputTokens": 77840,
+    "cacheCreationInputTokens": 15200,
+    "webSearchRequests": 0,
+    "costUSD": 0.222393,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 932,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `Cart.apply_coupon(code)` and the coupons now come off the subtotal in `calc_total`. All 13 tests pass (`python3 -m unittest discover -s tests -t .`). I delegated the work to a sub-agent, then checked the changed files and re-ran the tests myself. I haven't read the new code line by line, and nothing is committed.\n\n**What changed:**\n- **`shop/coupons.py` (new):** holds the two coupons. SAVE10 takes 10% off and FLAT500 takes 500 cents off. Looking up an unknown code raises `ValueError`.\n- **`shop/models.py`:** `Cart` now keeps a list of applied coupons and has `apply_coupon(code)`. An unknown code raises `ValueError` and leaves the cart as it was.\n- **`shop/pricing.py`:** `calc_total` and `calc_tax` both take coupons into account.\n- **`tests/test_coupons.py` (new):** 7 tests covering each coupon alone, both stacked, an unknown code, tax after a discount, and the total not going below zero.\n\n**Choices you may want to change:**\n- **Stacking:** each coupon's discount is worked out from the same subtotal, so order doesn't matter. On a 10,000\u00a2 subtotal you get 1,000 + 500 off.\n- **Bulk discount:** the cart already had a bulk discount. Coupons are applied after it, so SAVE10 takes 10% of the already-reduced amount.\n- **Applying the same code twice:** the second time is ignored, so each coupon counts once.\n- **Rounding:** the 10% is rounded half up to whole cents, using the same rounding as the rest of the money code.\n- **Floor:** the discounted subtotal can't go below 0.\n- **Tax:** only some items are taxable. The taxable amount is reduced by the same proportion as the whole subtotal, then the 8.25% rate is applied. This is the choice I'd most want you to check, since you might prefer to discount only the non-taxable items, or only the taxable ones.\n\nYou'll also see untracked `__pycache__/` folders from the test run in `git status`.",
+  "ttft_ms": 6459,
+  "type": "result",
+  "duration_ms": 52922,
+  "uuid": "d9170682-6d26-4a02-a2a0-f63c58112a81",
+  "ttft_stream_ms": 1823,
+  "time_to_request_ms": 238,
+  "first_content_frame_ms": 1823,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py  |  9 +++++++++\n shop/pricing.py | 24 +++++++++++++++++++++---\n 2 files changed, 30 insertions(+), 3 deletions(-)\n",
+ "workdir": "c1-coupon.dynamic.1"
+}

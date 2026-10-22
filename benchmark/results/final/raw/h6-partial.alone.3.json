@@ -1,0 +1,111 @@
+{
+ "task": "h6-partial",
+ "class": "design",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 17828,
+  "stop_reason": "end_turn",
+  "session_id": "82d2b119-f737-481a-868c-2056b6237d4d",
+  "total_cost_usd": 0.1445022,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 12536,
+   "cache_read_input_tokens": 73511,
+   "output_tokens": 1474,
+   "output_tokens_details": {
+    "thinking_tokens": 267
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12536,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 926,
+     "cache_read_input_tokens": 22911,
+     "cache_creation_input_tokens": 2415,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2415
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1474,
+    "cacheReadInputTokens": 73511,
+    "cacheCreationInputTokens": 12536,
+    "webSearchRequests": 0,
+    "costUSD": 0.1445022,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 267,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Design: partial shipments and returns\n\n**What changes**\n\n1. **`shop/orders.py`**: Add `Shipment` and `Return` records with an id, carrier, label and `{sku: qty}` lines. `Order` gets `ship(lines, carrier)` and `return_items(lines)`. Each one checks quantities against what is still unshipped or not yet returned. Add states `partially_shipped` and `partially_returned`/`returned` to `STATES`/`ALLOWED`, and derive them from the quantities rather than setting them by hand. Allow cancelling only what hasn't shipped yet.\n2. **`shop/pricing.py`**: Add `refund_for(order, lines)`. Today tax and the bulk discount are worked out over the whole cart (`line_subtotal`, `percent`). Refunds must be split from the price actually charged, not recalculated from list price.\n3. **`shop/storage.py`**: `save_order` only saves totals and state. It has to also save `lines`, shipments and returns, and gain a `load_order`. Existing JSON files need a migration or default values.\n4. **`shop/carriers/*.py` (20 files)**: `label(order_id)` gives one label per order. Change it to `label(order_id, seq)` and update every `valid_label` regex. Better: move this into a shared base class first.\n5. **`shop/reports.py`**: Sales should be gross minus refunds, and should include the new states.\n6. **`shop/cli.py`**: Add `ship` and `return` commands. **Tests**: new cases in `tests/test_orders.py` and `tests/test_pricing.py`.\n\n**Main risks**\n\n- **Refund rounding:** a line that qualified for the bulk discount (10+ items), partly returned, could be refunded at the wrong price. Split per-unit rounding could also make total refunds exceed `total_cents`.\n- **Order ids:** `itertools.count(1000)` starts again in every process, so saved orders and labels can collide. This needs fixing before multiple shipments rely on ids.\n- **Labels:** changing the format may break label validation for labels already issued.\n- **Reports:** if the new states aren't added, revenue silently drops out of reports.",
+  "ttft_ms": 1324,
+  "type": "result",
+  "duration_ms": 18046,
+  "uuid": "0ef0befa-7f2c-42bf-a27c-8a0eb1ba0eba",
+  "ttft_stream_ms": 1183,
+  "time_to_request_ms": 93,
+  "first_content_frame_ms": 1183,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h6-partial.alone.3",
+ "ledger": []
+}

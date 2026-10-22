@@ -1,0 +1,111 @@
+{
+ "task": "a3-second",
+ "class": "second-opinion",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 17197,
+  "stop_reason": "end_turn",
+  "session_id": "247942ee-4e2b-438d-b885-8baab797d118",
+  "total_cost_usd": 0.100081,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 8103,
+   "cache_read_input_tokens": 33105,
+   "output_tokens": 1431,
+   "output_tokens_details": {
+    "thinking_tokens": 717
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8103,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1157,
+     "cache_read_input_tokens": 20315,
+     "cache_creation_input_tokens": 578,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 578
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1431,
+    "cacheReadInputTokens": 33105,
+    "cacheCreationInputTokens": 8103,
+    "webSearchRequests": 0,
+    "costUSD": 0.100081,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 717,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`shop/cache.py` has four problems for use across many threads in a long-running service. Plain dict operations won't corrupt anything, but there is no coordination around them.\n\n1. **Memory grows without limit (`cache.py:11`, `:18`).** Expired entries are only replaced, never removed, and there's no size cap. Every SKU ever looked up stays in memory for the life of the process.\n2. **Simultaneous misses all call the loader (`cache.py:14-18`).** When a popular SKU expires, every thread that misses at that moment calls `loader` at once. If the loader raises, nothing is stored, so all callers keep retrying and hammer the backend while it's struggling.\n3. **`invalidate` can be undone (`cache.py:17-18` vs `:22`).** Thread A starts loading the old price. Thread B calls `invalidate` after a price change. A then writes the stale value back, and it is served for a full TTL. This is the most serious bug, because invalidation exists to stop exactly this.\n4. **The timestamp is taken after the load (`cache.py:18`).** A slow load makes the value look fresher than it is, so it can be served past `ttl`. This is minor.\n\n**The fix I'd choose:** keep it a small custom class rather than adding a library.\n- Guard the bookkeeping with one lock, but never hold it while calling `loader`.\n- Store entries in an `OrderedDict` used as an LRU with a `maxsize`. Drop expired entries when they're read and evict the oldest when full.\n- For each key, keep a record of any load in progress so other threads wait for that result instead of loading again (single-flight). Pass errors to the waiters but don't cache them.\n- Keep a version number per key. `invalidate` bumps it, and a finished load only stores its value if the version hasn't changed since it started.\n- Record the time before calling the loader.",
+  "ttft_ms": 3092,
+  "type": "result",
+  "duration_ms": 17943,
+  "uuid": "d56ba37e-0716-4fd1-b3ff-c1de2fcf2e40",
+  "ttft_stream_ms": 1526,
+  "time_to_request_ms": 237,
+  "first_content_frame_ms": 1526,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "a3-second.final.3",
+ "ledger": []
+}

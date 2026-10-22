@@ -1,0 +1,111 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "v020",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 11645,
+  "stop_reason": "end_turn",
+  "session_id": "e5efde5e-edd9-4989-b0d7-c76f8300397a",
+  "total_cost_usd": 0.0918474,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7719,
+   "cache_read_input_tokens": 52557,
+   "output_tokens": 978,
+   "output_tokens_details": {
+    "thinking_tokens": 62
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7719,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 711,
+     "cache_read_input_tokens": 20268,
+     "cache_creation_input_tokens": 241,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 241
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 978,
+    "cacheReadInputTokens": 52557,
+    "cacheCreationInputTokens": 7719,
+    "webSearchRequests": 0,
+    "costUSD": 0.0918474,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 62,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move orders to SQLite in WAL mode, behind the existing `Store` interface.**\n\n**Why the current design fails.** `shop/storage.py:16` handles every write by reading the whole JSON file, rewriting it, and writing all of it back. That causes two problems:\n\n- **Lost updates.** If two writer processes interleave the read and the write, one process's order silently disappears. Nothing locks the file.\n- **Torn files.** `write_text` isn't atomic, so a crash or a concurrent reader can catch a half-written file and fail to parse it.\n- **Cost.** At 100k orders (about 10 MB with `indent=1`), each save reparses and rewrites the whole file. That's O(n) work per order.\n\n**Why SQLite.** It's in the standard library and needs no server. It gives atomic transactions, row-level upserts (`INSERT \u2026 ON CONFLICT(id) DO UPDATE`) and an indexed primary key. WAL mode lets readers work while a write is in progress, and it serialises the two writers safely. Set `busy_timeout` so a writer waits for the lock instead of erroring. 100k rows is tiny for SQLite.\n\nPostgres is only worth it if the writers end up on different hosts. File locking (`flock`) plus atomic rename would fix correctness, but it keeps the O(n) rewrite.\n\n**Migration path:**\n1. Keep `Store.load()` and `save_order()` as they are, and add a `SqliteStore` with the same methods. Its table mirrors the current fields: `id` primary key, customer, total, tax, state. Store money as integer cents.\n2. Write a one-off import script that loads the JSON and inserts every row in one transaction. Check that the row counts match.\n3. Choose the backend by file extension or a flag in `shop/cli.py:26`, which is currently the only caller.\n4. Run the existing tests against both backends, and add a test with two concurrent writers.\n5. Switch over, keep the JSON file read-only as a backup, then delete the JSON backend.",
+  "ttft_ms": 1672,
+  "type": "result",
+  "duration_ms": 12127,
+  "uuid": "4722e7e3-0be6-47d6-a95a-714caa850d5a",
+  "ttft_stream_ms": 988,
+  "time_to_request_ms": 316,
+  "first_content_frame_ms": 988,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.v020.2",
+ "ledger": []
+}

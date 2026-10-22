@@ -1,0 +1,112 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "dynamic",
+ "rep": "haiku-high",
+ "top": "claude-haiku-5-5",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 24518,
+  "stop_reason": "end_turn",
+  "session_id": "88d31363-8930-4663-9bd2-7720dfa0256d",
+  "total_cost_usd": 0.0041953749999999995,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 9039,
+   "cache_read_input_tokens": 33121,
+   "output_tokens": 1238,
+   "output_tokens_details": {
+    "thinking_tokens": 235
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9039,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 383,
+     "cache_read_input_tokens": 20331,
+     "cache_creation_input_tokens": 1498,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1498
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 2585,
+    "cacheReadInputTokens": 67055,
+    "cacheCreationInputTokens": 12424,
+    "webSearchRequests": 0,
+    "costUSD": 0.0041953749999999995,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 501,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`calc_total` is now `order_total` across the repo, and the tests pass.\n\n- **Files changed (5, 13 replacements):** `shop/pricing.py` (definition), `shop/cli.py`, `shop/orders.py`, `tests/test_pricing.py`, and `tests/test_orders.py`.\n- **Tests:** `python3 -m unittest discover -s tests -t . -v` reported `Ran 6 tests ... OK`. I used unittest because pytest isn't installed here and there is no test runner config. The `python` command isn't on PATH either, so the run used `python3`.\n- **Verification:** `grep -rn calc_total --exclude-dir=.git .` returns no matches.\n- **Not done:** The changes are uncommitted. Nothing else in the repo was touched, and there were no borderline matches.",
+  "ttft_ms": 2280,
+  "type": "result",
+  "duration_ms": 25662,
+  "uuid": "94171556-ccac-4f99-bc7e-103aef28e0a7",
+  "ttft_stream_ms": 1667,
+  "time_to_request_ms": 168,
+  "first_content_frame_ms": 1669,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.dynamic.haiku-high"
+}

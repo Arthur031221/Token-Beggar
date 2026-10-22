@@ -1,0 +1,112 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": "opus-max",
+ "top": "claude-opus-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 218493,
+  "stop_reason": "end_turn",
+  "session_id": "38d11a79-73a8-4ab7-bc6b-9a4d1f25d2b1",
+  "total_cost_usd": 0.7481755999999999,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 22112,
+   "cache_read_input_tokens": 32548,
+   "output_tokens": 18286,
+   "output_tokens_details": {
+    "thinking_tokens": 16150
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 22112,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 4140,
+     "cache_read_input_tokens": 19758,
+     "cache_creation_input_tokens": 15144,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 15144
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 23477,
+    "cacheReadInputTokens": 85078,
+    "cacheCreationInputTokens": 39044,
+    "webSearchRequests": 0,
+    "costUSD": 0.7481755999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 17320,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've added customer tiers and the full test suite passes: `python3 -m unittest discover -s tests -t .` ran 17 tests, all OK. Six of those already existed and 11 are new. I haven't committed anything.\n\n**What changed:**\n- **`shop/models.py`:** `Cart` has a `tier` attribute, default `\"standard\"`.\n- **`shop/pricing.py`:** the rates live in one `TIER_DISCOUNTS` table: gold 10%, silver 5%, any other value 0. The tax calculation now applies the tier discount to the taxable lines before taxing them. `calc_total` is now subtotal minus discount plus tax. Amounts are still integer cents, rounded with the existing `percent()` helper.\n- **`shop/orders.py`:** `Order` already got its tax and total from those same functions, so it gets the discount automatically. It now also stores the tier.\n- **`shop/cli.py`:** `quote --tier <name>` defaults to `standard` and accepts any value.\n- **Tests:** cover the default, gold, silver, an unknown tier, tax on the discounted amount, `Order` matching the cart, and the CLI. They're in `tests/test_pricing.py`, `tests/test_orders.py` and a new `tests/test_cli.py`.\n\n**Decisions for you:**\n- **Bulk discount:** there's already a bulk discount in the code, and the tier discount is applied on top of it. If gold and silver customers shouldn't get both, tell me.\n- **Saved orders:** `storage.save_order` doesn't save the tier. I left the storage format alone; I can add it if you want.\n- **Rounding:** the discount on the taxable lines is rounded on its own, so tax on a cart with both taxed and untaxed items can be a cent different from an exact proportional split.\n- **Exact names:** tier names must match exactly, so `--tier Gold` gets no discount. That's the literal reading of \"any other value nothing\"; I can make matching case-insensitive if you prefer.\n\n`quote` only prints the total, so it doesn't show the discount as a separate line.",
+  "ttft_ms": 121007,
+  "type": "result",
+  "duration_ms": 219956,
+  "uuid": "3461b5a6-973d-4ee3-a97b-0b6232987435",
+  "ttft_stream_ms": 1897,
+  "time_to_request_ms": 213,
+  "first_content_frame_ms": 1897,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 32 ++++++++++++++++++++++++++------\n tests/test_orders.py  | 12 +++++++++++-\n tests/test_pricing.py | 46 +++++++++++++++++++++++++++++++++++++++++++++-\n 6 files changed, 86 insertions(+), 9 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.opus-max"
+}

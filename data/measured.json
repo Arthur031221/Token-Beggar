@@ -1,5 +1,2284 @@
 {
- "benchmark": {
+ "matrix": {
+  "claude-fable-5-1": {
+   "high": {
+    "function": {
+     "ratio": 1.06,
+     "token_ratio": 1.29,
+     "alone_tokens": 111686,
+     "with_tokens": 86450,
+     "alone_cost": 0.3261,
+     "with_cost": 0.3076,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 0.97,
+     "token_ratio": 0.97,
+     "alone_tokens": 141375,
+     "with_tokens": 146200,
+     "alone_cost": 0.3722,
+     "with_cost": 0.3834,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 2.19,
+     "token_ratio": 0.96,
+     "alone_tokens": 94304,
+     "with_tokens": 97959,
+     "alone_cost": 0.7312,
+     "with_cost": 0.3344,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 0.97,
+     "token_ratio": 1.43,
+     "alone_tokens": 63489,
+     "with_tokens": 44446,
+     "alone_cost": 0.2233,
+     "with_cost": 0.2306,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 0.96,
+     "token_ratio": 0.93,
+     "alone_tokens": 85713,
+     "with_tokens": 92364,
+     "alone_cost": 0.2462,
+     "with_cost": 0.2573,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.85,
+     "token_ratio": 1.37,
+     "alone_tokens": 73210,
+     "with_tokens": 53344,
+     "alone_cost": 0.3403,
+     "with_cost": 0.3982,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.9,
+     "token_ratio": 0.95,
+     "alone_tokens": 42642,
+     "with_tokens": 44894,
+     "alone_cost": 0.2003,
+     "with_cost": 0.2237,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 1.28,
+     "token_ratio": 1.44,
+     "alone_tokens": 170086,
+     "with_tokens": 117972,
+     "alone_cost": 0.4813,
+     "with_cost": 0.3761,
+     "quality_alone": 1.0,
+     "quality_with": 0.5,
+     "status": "measured"
+    }
+   },
+   "low": {
+    "function": {
+     "ratio": 1.17,
+     "token_ratio": 1.59,
+     "alone_tokens": 132100,
+     "with_tokens": 83148,
+     "alone_cost": 0.3096,
+     "with_cost": 0.2641,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 1.15,
+     "token_ratio": 1.73,
+     "alone_tokens": 136261,
+     "with_tokens": 78716,
+     "alone_cost": 0.3233,
+     "with_cost": 0.2808,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 2.29,
+     "token_ratio": 2.67,
+     "alone_tokens": 366332,
+     "with_tokens": 137343,
+     "alone_cost": 0.7402,
+     "with_cost": 0.3236,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 0.89,
+     "token_ratio": 0.95,
+     "alone_tokens": 42015,
+     "with_tokens": 44277,
+     "alone_cost": 0.1998,
+     "with_cost": 0.2251,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 0.99,
+     "token_ratio": 1.15,
+     "alone_tokens": 85338,
+     "with_tokens": 74236,
+     "alone_cost": 0.236,
+     "with_cost": 0.2378,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 1.04,
+     "token_ratio": 0.66,
+     "alone_tokens": 49216,
+     "with_tokens": 74941,
+     "alone_cost": 0.3326,
+     "with_cost": 0.3187,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.89,
+     "token_ratio": 0.95,
+     "alone_tokens": 42594,
+     "with_tokens": 44846,
+     "alone_cost": 0.1987,
+     "with_cost": 0.2229,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 1.02,
+     "token_ratio": 1.21,
+     "alone_tokens": 109716,
+     "with_tokens": 90890,
+     "alone_cost": 0.2809,
+     "with_cost": 0.2753,
+     "quality_alone": 0.5,
+     "quality_with": 0.0,
+     "status": "measured"
+    }
+   },
+   "max": {
+    "function": {
+     "ratio": 0.88,
+     "token_ratio": 1.42,
+     "alone_tokens": 118357,
+     "with_tokens": 83370,
+     "alone_cost": 0.4523,
+     "with_cost": 0.5145,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 1.51,
+     "token_ratio": 1.57,
+     "alone_tokens": 205088,
+     "with_tokens": 130510,
+     "alone_cost": 0.819,
+     "with_cost": 0.5411,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 3.0,
+     "token_ratio": 1.32,
+     "alone_tokens": 198291,
+     "with_tokens": 149708,
+     "alone_cost": 1.4674,
+     "with_cost": 0.4893,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 1.82,
+     "token_ratio": 1.37,
+     "alone_tokens": 93167,
+     "with_tokens": 68213,
+     "alone_cost": 0.5444,
+     "with_cost": 0.2995,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 2.07,
+     "token_ratio": 2.29,
+     "alone_tokens": 175025,
+     "with_tokens": 76413,
+     "alone_cost": 0.5682,
+     "with_cost": 0.2748,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 1.12,
+     "token_ratio": 0.9,
+     "alone_tokens": 100700,
+     "with_tokens": 111999,
+     "alone_cost": 0.5605,
+     "with_cost": 0.4992,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.93,
+     "token_ratio": 1.44,
+     "alone_tokens": 65776,
+     "with_tokens": 45818,
+     "alone_cost": 0.2382,
+     "with_cost": 0.2556,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 0.97,
+     "token_ratio": 1.11,
+     "alone_tokens": 288261,
+     "with_tokens": 258850,
+     "alone_cost": 1.1571,
+     "with_cost": 1.1937,
+     "quality_alone": 0.5,
+     "quality_with": 0.5,
+     "status": "measured"
+    }
+   },
+   "medium": {
+    "bugfix": {
+     "ratio": 1.26,
+     "status": "interpolated"
+    },
+    "bulk-read": {
+     "ratio": 1.01,
+     "status": "interpolated"
+    },
+    "design": {
+     "ratio": 1.28,
+     "status": "interpolated"
+    },
+    "edit": {
+     "ratio": 1.36,
+     "status": "interpolated"
+    },
+    "feature": {
+     "ratio": 2.56,
+     "status": "interpolated"
+    },
+    "function": {
+     "ratio": 1.0,
+     "status": "interpolated"
+    },
+    "read": {
+     "ratio": 0.91,
+     "status": "interpolated"
+    },
+    "review": {
+     "ratio": 1.04,
+     "status": "interpolated"
+    }
+   },
+   "xhigh": {
+    "bugfix": {
+     "ratio": 1.26,
+     "status": "interpolated"
+    },
+    "bulk-read": {
+     "ratio": 1.01,
+     "status": "interpolated"
+    },
+    "design": {
+     "ratio": 1.28,
+     "status": "interpolated"
+    },
+    "edit": {
+     "ratio": 1.36,
+     "status": "interpolated"
+    },
+    "feature": {
+     "ratio": 2.56,
+     "status": "interpolated"
+    },
+    "function": {
+     "ratio": 1.0,
+     "status": "interpolated"
+    },
+    "read": {
+     "ratio": 0.91,
+     "status": "interpolated"
+    },
+    "review": {
+     "ratio": 1.04,
+     "status": "interpolated"
+    }
+   }
+  },
+  "claude-haiku-5-5": {
+   "high": {
+    "function": {
+     "ratio": 0.72,
+     "token_ratio": 1.35,
+     "alone_tokens": 106175,
+     "with_tokens": 78589,
+     "alone_cost": 0.0038,
+     "with_cost": 0.0052,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 0.47,
+     "token_ratio": 0.58,
+     "alone_tokens": 111007,
+     "with_tokens": 191401,
+     "alone_cost": 0.0045,
+     "with_cost": 0.0097,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 0.97,
+     "token_ratio": 1.01,
+     "alone_tokens": 223141,
+     "with_tokens": 221101,
+     "alone_cost": 0.0108,
+     "with_cost": 0.0111,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 0.92,
+     "token_ratio": 0.96,
+     "alone_tokens": 42111,
+     "with_tokens": 43841,
+     "alone_cost": 0.003,
+     "with_cost": 0.0032,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 1.39,
+     "token_ratio": 1.53,
+     "alone_tokens": 125969,
+     "with_tokens": 82078,
+     "alone_cost": 0.0058,
+     "with_cost": 0.0042,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.84,
+     "token_ratio": 0.96,
+     "alone_tokens": 64691,
+     "with_tokens": 67057,
+     "alone_cost": 0.003,
+     "with_cost": 0.0036,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.88,
+     "token_ratio": 0.95,
+     "alone_tokens": 40693,
+     "with_tokens": 42779,
+     "alone_cost": 0.0021,
+     "with_cost": 0.0024,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 0.81,
+     "token_ratio": 0.81,
+     "alone_tokens": 140932,
+     "with_tokens": 174592,
+     "alone_cost": 0.0064,
+     "with_cost": 0.0079,
+     "quality_alone": 1.0,
+     "quality_with": 0.5,
+     "status": "measured"
+    }
+   },
+   "low": {
+    "function": {
+     "ratio": 0.58,
+     "token_ratio": 0.67,
+     "alone_tokens": 82944,
+     "with_tokens": 123749,
+     "alone_cost": 0.0032,
+     "with_cost": 0.0055,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 0.78,
+     "token_ratio": 0.82,
+     "alone_tokens": 132744,
+     "with_tokens": 161517,
+     "alone_cost": 0.0047,
+     "with_cost": 0.006,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 0.73,
+     "token_ratio": 1.02,
+     "alone_tokens": 166368,
+     "with_tokens": 163652,
+     "alone_cost": 0.0066,
+     "with_cost": 0.009,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 0.96,
+     "token_ratio": 0.96,
+     "alone_tokens": 40786,
+     "with_tokens": 42415,
+     "alone_cost": 0.0024,
+     "with_cost": 0.0025,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 0.7,
+     "token_ratio": 0.82,
+     "alone_tokens": 83637,
+     "with_tokens": 102396,
+     "alone_cost": 0.0031,
+     "with_cost": 0.0044,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.63,
+     "token_ratio": 0.76,
+     "alone_tokens": 61214,
+     "with_tokens": 80131,
+     "alone_cost": 0.0024,
+     "with_cost": 0.0039,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.87,
+     "token_ratio": 0.95,
+     "alone_tokens": 40570,
+     "with_tokens": 42746,
+     "alone_cost": 0.0021,
+     "with_cost": 0.0024,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 0.95,
+     "token_ratio": 0.95,
+     "alone_tokens": 83280,
+     "with_tokens": 87381,
+     "alone_cost": 0.0034,
+     "with_cost": 0.0036,
+     "quality_alone": 0.5,
+     "quality_with": 0.5,
+     "status": "measured"
+    }
+   },
+   "max": {
+    "function": {
+     "ratio": 1.03,
+     "token_ratio": 1.86,
+     "alone_tokens": 301691,
+     "with_tokens": 161769,
+     "alone_cost": 0.0177,
+     "with_cost": 0.0172,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 0.66,
+     "token_ratio": 1.04,
+     "alone_tokens": 566492,
+     "with_tokens": 545658,
+     "alone_cost": 0.0222,
+     "with_cost": 0.0338,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 0.67,
+     "token_ratio": 0.66,
+     "alone_tokens": 623187,
+     "with_tokens": 945023,
+     "alone_cost": 0.0399,
+     "with_cost": 0.0599,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 1.81,
+     "token_ratio": 1.46,
+     "alone_tokens": 130067,
+     "with_tokens": 89243,
+     "alone_cost": 0.0222,
+     "with_cost": 0.0122,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 0.92,
+     "token_ratio": 2.02,
+     "alone_tokens": 209873,
+     "with_tokens": 103670,
+     "alone_cost": 0.0132,
+     "with_cost": 0.0143,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.78,
+     "token_ratio": 0.92,
+     "alone_tokens": 67087,
+     "with_tokens": 72919,
+     "alone_cost": 0.0041,
+     "with_cost": 0.0052,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.59,
+     "token_ratio": 0.88,
+     "alone_tokens": 65347,
+     "with_tokens": 74571,
+     "alone_cost": 0.0034,
+     "with_cost": 0.0058,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 1.2,
+     "token_ratio": 1.22,
+     "alone_tokens": 387966,
+     "with_tokens": 317761,
+     "alone_cost": 0.0376,
+     "with_cost": 0.0314,
+     "quality_alone": 0.5,
+     "quality_with": 0.5,
+     "status": "measured"
+    }
+   },
+   "medium": {
+    "function": {
+     "ratio": 0.67,
+     "token_ratio": 0.98,
+     "alone_tokens": 83825,
+     "with_tokens": 85405,
+     "alone_cost": 0.0033,
+     "with_cost": 0.005,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 1.07,
+     "token_ratio": 1.19,
+     "alone_tokens": 139058,
+     "with_tokens": 116484,
+     "alone_cost": 0.0053,
+     "with_cost": 0.0049,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 0.91,
+     "token_ratio": 1.07,
+     "alone_tokens": 146936,
+     "with_tokens": 137603,
+     "alone_cost": 0.0073,
+     "with_cost": 0.008,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 0.92,
+     "token_ratio": 0.95,
+     "alone_tokens": 40537,
+     "with_tokens": 42481,
+     "alone_cost": 0.0024,
+     "with_cost": 0.0026,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 0.72,
+     "token_ratio": 1.12,
+     "alone_tokens": 81606,
+     "with_tokens": 72810,
+     "alone_cost": 0.0028,
+     "with_cost": 0.0039,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.86,
+     "token_ratio": 0.94,
+     "alone_tokens": 60719,
+     "with_tokens": 64546,
+     "alone_cost": 0.0024,
+     "with_cost": 0.0028,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.83,
+     "token_ratio": 0.94,
+     "alone_tokens": 40620,
+     "with_tokens": 43078,
+     "alone_cost": 0.0021,
+     "with_cost": 0.0025,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 0.82,
+     "token_ratio": 0.95,
+     "alone_tokens": 87490,
+     "with_tokens": 91801,
+     "alone_cost": 0.0039,
+     "with_cost": 0.0048,
+     "quality_alone": 0.5,
+     "quality_with": 1.0,
+     "status": "measured"
+    }
+   },
+   "xhigh": {
+    "function": {
+     "ratio": 0.91,
+     "token_ratio": 1.76,
+     "alone_tokens": 216688,
+     "with_tokens": 122943,
+     "alone_cost": 0.0068,
+     "with_cost": 0.0074,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 0.81,
+     "token_ratio": 0.93,
+     "alone_tokens": 279526,
+     "with_tokens": 302066,
+     "alone_cost": 0.0106,
+     "with_cost": 0.013,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 1.17,
+     "token_ratio": 2.08,
+     "alone_tokens": 524258,
+     "with_tokens": 252528,
+     "alone_cost": 0.0191,
+     "with_cost": 0.0163,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 1.03,
+     "token_ratio": 1.42,
+     "alone_tokens": 65096,
+     "with_tokens": 45868,
+     "alone_cost": 0.0043,
+     "with_cost": 0.0042,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 1.38,
+     "token_ratio": 2.54,
+     "alone_tokens": 200678,
+     "with_tokens": 78975,
+     "alone_cost": 0.0078,
+     "with_cost": 0.0056,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 1.17,
+     "token_ratio": 2.03,
+     "alone_tokens": 89820,
+     "with_tokens": 44169,
+     "alone_cost": 0.0035,
+     "with_cost": 0.003,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.86,
+     "token_ratio": 0.95,
+     "alone_tokens": 40862,
+     "with_tokens": 43222,
+     "alone_cost": 0.0022,
+     "with_cost": 0.0026,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 0.98,
+     "token_ratio": 1.06,
+     "alone_tokens": 218797,
+     "with_tokens": 206376,
+     "alone_cost": 0.0128,
+     "with_cost": 0.013,
+     "quality_alone": 0.5,
+     "quality_with": 0.5,
+     "status": "measured"
+    }
+   }
+  },
+  "claude-opus-5-5": {
+   "high": {
+    "function": {
+     "ratio": 0.78,
+     "token_ratio": 0.8,
+     "alone_tokens": 81074,
+     "with_tokens": 101093,
+     "alone_cost": 0.1113,
+     "with_cost": 0.142,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 1.1,
+     "token_ratio": 1.22,
+     "alone_tokens": 110230,
+     "with_tokens": 90431,
+     "alone_cost": 0.14,
+     "with_cost": 0.1276,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 0.91,
+     "token_ratio": 0.73,
+     "alone_tokens": 119788,
+     "with_tokens": 164661,
+     "alone_cost": 0.274,
+     "with_cost": 0.2999,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 0.94,
+     "token_ratio": 0.96,
+     "alone_tokens": 59361,
+     "with_tokens": 62069,
+     "alone_cost": 0.0899,
+     "with_cost": 0.0953,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 1.16,
+     "token_ratio": 1.44,
+     "alone_tokens": 100892,
+     "with_tokens": 69899,
+     "alone_cost": 0.1022,
+     "with_cost": 0.0884,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.84,
+     "token_ratio": 0.9,
+     "alone_tokens": 61276,
+     "with_tokens": 68207,
+     "alone_cost": 0.0991,
+     "with_cost": 0.1177,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 1.01,
+     "token_ratio": 1.5,
+     "alone_tokens": 68748,
+     "with_tokens": 45751,
+     "alone_cost": 0.1186,
+     "with_cost": 0.1172,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 1.3,
+     "token_ratio": 1.98,
+     "alone_tokens": 126480,
+     "with_tokens": 63825,
+     "alone_cost": 0.1527,
+     "with_cost": 0.1179,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    }
+   },
+   "low": {
+    "function": {
+     "ratio": 0.86,
+     "token_ratio": 0.99,
+     "alone_tokens": 79032,
+     "with_tokens": 79552,
+     "alone_cost": 0.0979,
+     "with_cost": 0.1134,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 0.91,
+     "token_ratio": 0.95,
+     "alone_tokens": 83550,
+     "with_tokens": 87779,
+     "alone_cost": 0.098,
+     "with_cost": 0.1071,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 1.54,
+     "token_ratio": 1.42,
+     "alone_tokens": 150548,
+     "with_tokens": 105686,
+     "alone_cost": 0.2636,
+     "with_cost": 0.1714,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 0.88,
+     "token_ratio": 0.95,
+     "alone_tokens": 38463,
+     "with_tokens": 40604,
+     "alone_cost": 0.072,
+     "with_cost": 0.0816,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 0.96,
+     "token_ratio": 1.26,
+     "alone_tokens": 77202,
+     "with_tokens": 61294,
+     "alone_cost": 0.0793,
+     "with_cost": 0.083,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.93,
+     "token_ratio": 0.96,
+     "alone_tokens": 58263,
+     "with_tokens": 60681,
+     "alone_cost": 0.0728,
+     "with_cost": 0.0781,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.88,
+     "token_ratio": 0.95,
+     "alone_tokens": 38809,
+     "with_tokens": 40919,
+     "alone_cost": 0.0669,
+     "with_cost": 0.0759,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 0.76,
+     "token_ratio": 0.69,
+     "alone_tokens": 57596,
+     "with_tokens": 83067,
+     "alone_cost": 0.0777,
+     "with_cost": 0.1018,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    }
+   },
+   "max": {
+    "function": {
+     "ratio": 1.69,
+     "token_ratio": 3.74,
+     "alone_tokens": 344214,
+     "with_tokens": 92118,
+     "alone_cost": 0.6439,
+     "with_cost": 0.3812,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 1.24,
+     "token_ratio": 1.1,
+     "alone_tokens": 291730,
+     "with_tokens": 264485,
+     "alone_cost": 0.4617,
+     "with_cost": 0.3731,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 1.51,
+     "token_ratio": 3.44,
+     "alone_tokens": 507085,
+     "with_tokens": 147615,
+     "alone_cost": 1.1323,
+     "with_cost": 0.7482,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 1.35,
+     "token_ratio": 1.1,
+     "alone_tokens": 186550,
+     "with_tokens": 168971,
+     "alone_cost": 0.8482,
+     "with_cost": 0.6269,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 1.01,
+     "token_ratio": 2.28,
+     "alone_tokens": 201289,
+     "with_tokens": 88465,
+     "alone_cost": 0.3173,
+     "with_cost": 0.3132,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.77,
+     "token_ratio": 0.64,
+     "alone_tokens": 93075,
+     "with_tokens": 144739,
+     "alone_cost": 0.1868,
+     "with_cost": 0.2417,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.68,
+     "token_ratio": 0.89,
+     "alone_tokens": 85573,
+     "with_tokens": 95798,
+     "alone_cost": 0.1225,
+     "with_cost": 0.1788,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 0.98,
+     "token_ratio": 0.74,
+     "alone_tokens": 403376,
+     "with_tokens": 546878,
+     "alone_cost": 0.8862,
+     "with_cost": 0.906,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    }
+   },
+   "medium": {
+    "function": {
+     "ratio": 0.63,
+     "token_ratio": 0.84,
+     "alone_tokens": 80526,
+     "with_tokens": 95934,
+     "alone_cost": 0.1073,
+     "with_cost": 0.1717,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 0.91,
+     "token_ratio": 0.95,
+     "alone_tokens": 85394,
+     "with_tokens": 89871,
+     "alone_cost": 0.1106,
+     "with_cost": 0.1218,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 1.9,
+     "token_ratio": 2.3,
+     "alone_tokens": 223503,
+     "with_tokens": 97065,
+     "alone_cost": 0.3385,
+     "with_cost": 0.1778,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 0.96,
+     "token_ratio": 1.42,
+     "alone_tokens": 57796,
+     "with_tokens": 40687,
+     "alone_cost": 0.0792,
+     "with_cost": 0.0825,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 0.97,
+     "token_ratio": 1.1,
+     "alone_tokens": 78091,
+     "with_tokens": 71240,
+     "alone_cost": 0.0855,
+     "with_cost": 0.0883,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.93,
+     "token_ratio": 0.95,
+     "alone_tokens": 60831,
+     "with_tokens": 64316,
+     "alone_cost": 0.0957,
+     "with_cost": 0.1033,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 1.03,
+     "token_ratio": 1.45,
+     "alone_tokens": 59637,
+     "with_tokens": 41004,
+     "alone_cost": 0.0791,
+     "with_cost": 0.0769,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 0.88,
+     "token_ratio": 0.95,
+     "alone_tokens": 80294,
+     "with_tokens": 84828,
+     "alone_cost": 0.1071,
+     "with_cost": 0.122,
+     "quality_alone": 1.0,
+     "quality_with": 0.5,
+     "status": "measured"
+    }
+   },
+   "xhigh": {
+    "function": {
+     "ratio": 0.93,
+     "token_ratio": 1.08,
+     "alone_tokens": 103540,
+     "with_tokens": 95452,
+     "alone_cost": 0.13,
+     "with_cost": 0.1403,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 0.9,
+     "token_ratio": 0.94,
+     "alone_tokens": 129443,
+     "with_tokens": 137791,
+     "alone_cost": 0.1527,
+     "with_cost": 0.1702,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 0.92,
+     "token_ratio": 1.1,
+     "alone_tokens": 187652,
+     "with_tokens": 171183,
+     "alone_cost": 0.315,
+     "with_cost": 0.3418,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 1.33,
+     "token_ratio": 1.31,
+     "alone_tokens": 110860,
+     "with_tokens": 84504,
+     "alone_cost": 0.1611,
+     "with_cost": 0.1215,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 1.16,
+     "token_ratio": 1.56,
+     "alone_tokens": 144238,
+     "with_tokens": 92354,
+     "alone_cost": 0.1249,
+     "with_cost": 0.1075,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.97,
+     "token_ratio": 1.29,
+     "alone_tokens": 84690,
+     "with_tokens": 65490,
+     "alone_cost": 0.1129,
+     "with_cost": 0.1166,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 1.22,
+     "token_ratio": 1.99,
+     "alone_tokens": 82301,
+     "with_tokens": 41419,
+     "alone_cost": 0.1022,
+     "with_cost": 0.0837,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 0.88,
+     "token_ratio": 0.94,
+     "alone_tokens": 107655,
+     "with_tokens": 114872,
+     "alone_cost": 0.1717,
+     "with_cost": 0.1958,
+     "quality_alone": 1.0,
+     "quality_with": 0.5,
+     "status": "measured"
+    }
+   }
+  },
+  "claude-sonnet-5-5": {
+   "high": {
+    "function": {
+     "ratio": 0.66,
+     "token_ratio": 0.85,
+     "alone_tokens": 79990,
+     "with_tokens": 93893,
+     "alone_cost": 0.0506,
+     "with_cost": 0.0765,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 0.89,
+     "token_ratio": 0.98,
+     "alone_tokens": 85004,
+     "with_tokens": 87089,
+     "alone_cost": 0.0532,
+     "with_cost": 0.0601,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 0.84,
+     "token_ratio": 0.81,
+     "alone_tokens": 91637,
+     "with_tokens": 113295,
+     "alone_cost": 0.092,
+     "with_cost": 0.1093,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 1.06,
+     "token_ratio": 1.45,
+     "alone_tokens": 58636,
+     "with_tokens": 40510,
+     "alone_cost": 0.0427,
+     "with_cost": 0.0403,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 0.8,
+     "token_ratio": 0.92,
+     "alone_tokens": 76960,
+     "with_tokens": 83987,
+     "alone_cost": 0.0378,
+     "with_cost": 0.0472,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.9,
+     "token_ratio": 0.95,
+     "alone_tokens": 61358,
+     "with_tokens": 64561,
+     "alone_cost": 0.046,
+     "with_cost": 0.0513,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.87,
+     "token_ratio": 0.95,
+     "alone_tokens": 38823,
+     "with_tokens": 40957,
+     "alone_cost": 0.0335,
+     "with_cost": 0.0386,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 0.89,
+     "token_ratio": 0.95,
+     "alone_tokens": 59115,
+     "with_tokens": 62470,
+     "alone_cost": 0.0462,
+     "with_cost": 0.0518,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    }
+   },
+   "low": {
+    "function": {
+     "ratio": 0.63,
+     "token_ratio": 0.78,
+     "alone_tokens": 78175,
+     "with_tokens": 99926,
+     "alone_cost": 0.045,
+     "with_cost": 0.0717,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 0.95,
+     "token_ratio": 0.97,
+     "alone_tokens": 83267,
+     "with_tokens": 86175,
+     "alone_cost": 0.0489,
+     "with_cost": 0.0516,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 0.87,
+     "token_ratio": 1.1,
+     "alone_tokens": 136357,
+     "with_tokens": 123734,
+     "alone_cost": 0.0957,
+     "with_cost": 0.1096,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 0.91,
+     "token_ratio": 0.95,
+     "alone_tokens": 38576,
+     "with_tokens": 40510,
+     "alone_cost": 0.0367,
+     "with_cost": 0.0404,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 0.85,
+     "token_ratio": 1.06,
+     "alone_tokens": 95304,
+     "with_tokens": 89769,
+     "alone_cost": 0.0398,
+     "with_cost": 0.0469,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.78,
+     "token_ratio": 0.93,
+     "alone_tokens": 57620,
+     "with_tokens": 62110,
+     "alone_cost": 0.0352,
+     "with_cost": 0.0452,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.89,
+     "token_ratio": 0.95,
+     "alone_tokens": 38829,
+     "with_tokens": 40795,
+     "alone_cost": 0.0335,
+     "with_cost": 0.0375,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 0.9,
+     "token_ratio": 0.95,
+     "alone_tokens": 57720,
+     "with_tokens": 60825,
+     "alone_cost": 0.0392,
+     "with_cost": 0.0437,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    }
+   },
+   "max": {
+    "function": {
+     "ratio": 1.86,
+     "token_ratio": 2.8,
+     "alone_tokens": 293712,
+     "with_tokens": 104946,
+     "alone_cost": 0.2508,
+     "with_cost": 0.1349,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 1.15,
+     "token_ratio": 1.17,
+     "alone_tokens": 307096,
+     "with_tokens": 261813,
+     "alone_cost": 0.2227,
+     "with_cost": 0.1935,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 0.64,
+     "token_ratio": 0.48,
+     "alone_tokens": 713531,
+     "with_tokens": 1472126,
+     "alone_cost": 0.5968,
+     "with_cost": 0.9263,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 1.91,
+     "token_ratio": 1.76,
+     "alone_tokens": 235110,
+     "with_tokens": 133632,
+     "alone_cost": 0.3839,
+     "with_cost": 0.2013,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 1.98,
+     "token_ratio": 1.89,
+     "alone_tokens": 182713,
+     "with_tokens": 96763,
+     "alone_cost": 0.1421,
+     "with_cost": 0.0717,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.46,
+     "token_ratio": 0.41,
+     "alone_tokens": 63370,
+     "with_tokens": 153224,
+     "alone_cost": 0.0622,
+     "with_cost": 0.1366,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 1.14,
+     "token_ratio": 1.55,
+     "alone_tokens": 65371,
+     "with_tokens": 42296,
+     "alone_cost": 0.0573,
+     "with_cost": 0.0502,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 1.3,
+     "token_ratio": 1.67,
+     "alone_tokens": 806548,
+     "with_tokens": 482501,
+     "alone_cost": 0.5983,
+     "with_cost": 0.46,
+     "quality_alone": 0.5,
+     "quality_with": 0.5,
+     "status": "measured"
+    }
+   },
+   "medium": {
+    "function": {
+     "ratio": 0.67,
+     "token_ratio": 0.87,
+     "alone_tokens": 80441,
+     "with_tokens": 92817,
+     "alone_cost": 0.0483,
+     "with_cost": 0.0725,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 0.89,
+     "token_ratio": 0.77,
+     "alone_tokens": 83855,
+     "with_tokens": 108635,
+     "alone_cost": 0.0501,
+     "with_cost": 0.0561,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 1.18,
+     "token_ratio": 1.14,
+     "alone_tokens": 113626,
+     "with_tokens": 99820,
+     "alone_cost": 0.1135,
+     "with_cost": 0.0965,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 0.87,
+     "token_ratio": 0.95,
+     "alone_tokens": 38449,
+     "with_tokens": 40554,
+     "alone_cost": 0.0356,
+     "with_cost": 0.0407,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 0.81,
+     "token_ratio": 0.85,
+     "alone_tokens": 76873,
+     "with_tokens": 90162,
+     "alone_cost": 0.0381,
+     "with_cost": 0.0472,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.79,
+     "token_ratio": 0.93,
+     "alone_tokens": 57250,
+     "with_tokens": 61616,
+     "alone_cost": 0.0339,
+     "with_cost": 0.0429,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.89,
+     "token_ratio": 0.95,
+     "alone_tokens": 38829,
+     "with_tokens": 40815,
+     "alone_cost": 0.0335,
+     "with_cost": 0.0376,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 0.82,
+     "token_ratio": 0.93,
+     "alone_tokens": 57716,
+     "with_tokens": 61837,
+     "alone_cost": 0.039,
+     "with_cost": 0.0479,
+     "quality_alone": 0.5,
+     "quality_with": 1.0,
+     "status": "measured"
+    }
+   },
+   "xhigh": {
+    "function": {
+     "ratio": 0.62,
+     "token_ratio": 0.79,
+     "alone_tokens": 80843,
+     "with_tokens": 102955,
+     "alone_cost": 0.0526,
+     "with_cost": 0.0849,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bugfix": {
+     "ratio": 0.85,
+     "token_ratio": 0.8,
+     "alone_tokens": 126840,
+     "with_tokens": 158993,
+     "alone_cost": 0.0723,
+     "with_cost": 0.0853,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "feature": {
+     "ratio": 0.74,
+     "token_ratio": 0.95,
+     "alone_tokens": 188838,
+     "with_tokens": 199239,
+     "alone_cost": 0.1424,
+     "with_cost": 0.1936,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "design": {
+     "ratio": 1.25,
+     "token_ratio": 1.38,
+     "alone_tokens": 85498,
+     "with_tokens": 62055,
+     "alone_cost": 0.0595,
+     "with_cost": 0.0477,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "edit": {
+     "ratio": 0.9,
+     "token_ratio": 0.86,
+     "alone_tokens": 79788,
+     "with_tokens": 92923,
+     "alone_cost": 0.0451,
+     "with_cost": 0.05,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "bulk-read": {
+     "ratio": 0.87,
+     "token_ratio": 0.94,
+     "alone_tokens": 60526,
+     "with_tokens": 64341,
+     "alone_cost": 0.0464,
+     "with_cost": 0.0531,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "read": {
+     "ratio": 0.88,
+     "token_ratio": 0.95,
+     "alone_tokens": 38902,
+     "with_tokens": 41037,
+     "alone_cost": 0.0341,
+     "with_cost": 0.0389,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    },
+    "review": {
+     "ratio": 0.85,
+     "token_ratio": 0.98,
+     "alone_tokens": 114704,
+     "with_tokens": 116731,
+     "alone_cost": 0.0811,
+     "with_cost": 0.0958,
+     "quality_alone": 1.0,
+     "quality_with": 1.0,
+     "status": "measured"
+    }
+   }
+  }
+ },
+ "matrix_note": "ratio is the price weighted spend (list price, cache included) of the run alone over the run with the skill, which is what the quota and the bill follow; token_ratio is kept for reference only. One run per cell and arm, so a single cell is noisy; the footer uses 'pooled' (spend summed over every measured effort of that model and kind). Cells marked interpolated were not run and carry the pooled ratio.",
+ "pooled": {
+  "claude-fable-5-1": {
+   "bugfix": {
+    "ratio": 1.26,
+    "token_ratio": 1.36,
+    "runs_per_arm": 3,
+    "cell_min": 0.97,
+    "cell_max": 1.51,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "bulk-read": {
+    "ratio": 1.01,
+    "token_ratio": 0.93,
+    "runs_per_arm": 3,
+    "cell_min": 0.85,
+    "cell_max": 1.12,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "design": {
+    "ratio": 1.28,
+    "token_ratio": 1.27,
+    "runs_per_arm": 3,
+    "cell_min": 0.89,
+    "cell_max": 1.82,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "edit": {
+    "ratio": 1.36,
+    "token_ratio": 1.42,
+    "runs_per_arm": 3,
+    "cell_min": 0.96,
+    "cell_max": 2.07,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "feature": {
+    "ratio": 2.56,
+    "token_ratio": 1.71,
+    "runs_per_arm": 3,
+    "cell_min": 2.19,
+    "cell_max": 3.0,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "function": {
+    "ratio": 1.0,
+    "token_ratio": 1.43,
+    "runs_per_arm": 3,
+    "cell_min": 0.88,
+    "cell_max": 1.17,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "read": {
+    "ratio": 0.91,
+    "token_ratio": 1.11,
+    "runs_per_arm": 3,
+    "cell_min": 0.89,
+    "cell_max": 0.93,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "review": {
+    "ratio": 1.04,
+    "token_ratio": 1.21,
+    "runs_per_arm": 3,
+    "cell_min": 0.97,
+    "cell_max": 1.28,
+    "quality_alone": 0.67,
+    "quality_with": 0.33,
+    "status": "measured"
+   }
+  },
+  "claude-haiku-5-5": {
+   "bugfix": {
+    "ratio": 0.7,
+    "token_ratio": 0.93,
+    "runs_per_arm": 5,
+    "cell_min": 0.47,
+    "cell_max": 1.07,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "bulk-read": {
+    "ratio": 0.83,
+    "token_ratio": 1.04,
+    "runs_per_arm": 5,
+    "cell_min": 0.63,
+    "cell_max": 1.17,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "design": {
+    "ratio": 1.39,
+    "token_ratio": 1.21,
+    "runs_per_arm": 5,
+    "cell_min": 0.92,
+    "cell_max": 1.81,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "edit": {
+    "ratio": 1.01,
+    "token_ratio": 1.6,
+    "runs_per_arm": 5,
+    "cell_min": 0.7,
+    "cell_max": 1.39,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "feature": {
+    "ratio": 0.8,
+    "token_ratio": 0.98,
+    "runs_per_arm": 5,
+    "cell_min": 0.67,
+    "cell_max": 1.17,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "function": {
+    "ratio": 0.86,
+    "token_ratio": 1.38,
+    "runs_per_arm": 5,
+    "cell_min": 0.58,
+    "cell_max": 1.03,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "read": {
+    "ratio": 0.76,
+    "token_ratio": 0.93,
+    "runs_per_arm": 5,
+    "cell_min": 0.59,
+    "cell_max": 0.88,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "review": {
+    "ratio": 1.06,
+    "token_ratio": 1.05,
+    "runs_per_arm": 5,
+    "cell_min": 0.81,
+    "cell_max": 1.2,
+    "quality_alone": 0.6,
+    "quality_with": 0.6,
+    "status": "measured"
+   }
+  },
+  "claude-opus-5-5": {
+   "bugfix": {
+    "ratio": 1.07,
+    "token_ratio": 1.04,
+    "runs_per_arm": 5,
+    "cell_min": 0.9,
+    "cell_max": 1.24,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "bulk-read": {
+    "ratio": 0.86,
+    "token_ratio": 0.89,
+    "runs_per_arm": 5,
+    "cell_min": 0.77,
+    "cell_max": 0.97,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "design": {
+    "ratio": 1.24,
+    "token_ratio": 1.14,
+    "runs_per_arm": 5,
+    "cell_min": 0.88,
+    "cell_max": 1.35,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "edit": {
+    "ratio": 1.04,
+    "token_ratio": 1.57,
+    "runs_per_arm": 5,
+    "cell_min": 0.96,
+    "cell_max": 1.16,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "feature": {
+    "ratio": 1.34,
+    "token_ratio": 1.73,
+    "runs_per_arm": 5,
+    "cell_min": 0.91,
+    "cell_max": 1.9,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "function": {
+    "ratio": 1.15,
+    "token_ratio": 1.48,
+    "runs_per_arm": 5,
+    "cell_min": 0.63,
+    "cell_max": 1.69,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "read": {
+    "ratio": 0.92,
+    "token_ratio": 1.26,
+    "runs_per_arm": 5,
+    "cell_min": 0.68,
+    "cell_max": 1.22,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "review": {
+    "ratio": 0.97,
+    "token_ratio": 0.87,
+    "runs_per_arm": 5,
+    "cell_min": 0.76,
+    "cell_max": 1.3,
+    "quality_alone": 1.0,
+    "quality_with": 0.8,
+    "status": "measured"
+   }
+  },
+  "claude-sonnet-5-5": {
+   "bugfix": {
+    "ratio": 1.0,
+    "token_ratio": 0.98,
+    "runs_per_arm": 5,
+    "cell_min": 0.85,
+    "cell_max": 1.15,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "bulk-read": {
+    "ratio": 0.68,
+    "token_ratio": 0.74,
+    "runs_per_arm": 5,
+    "cell_min": 0.46,
+    "cell_max": 0.9,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "design": {
+    "ratio": 1.51,
+    "token_ratio": 1.44,
+    "runs_per_arm": 5,
+    "cell_min": 0.87,
+    "cell_max": 1.91,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "edit": {
+    "ratio": 1.15,
+    "token_ratio": 1.13,
+    "runs_per_arm": 5,
+    "cell_min": 0.8,
+    "cell_max": 1.98,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "feature": {
+    "ratio": 0.72,
+    "token_ratio": 0.62,
+    "runs_per_arm": 5,
+    "cell_min": 0.64,
+    "cell_max": 1.18,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "function": {
+    "ratio": 1.02,
+    "token_ratio": 1.24,
+    "runs_per_arm": 5,
+    "cell_min": 0.62,
+    "cell_max": 1.86,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "read": {
+    "ratio": 0.95,
+    "token_ratio": 1.07,
+    "runs_per_arm": 5,
+    "cell_min": 0.87,
+    "cell_max": 1.14,
+    "quality_alone": 1.0,
+    "quality_with": 1.0,
+    "status": "measured"
+   },
+   "review": {
+    "ratio": 1.15,
+    "token_ratio": 1.4,
+    "runs_per_arm": 5,
+    "cell_min": 0.82,
+    "cell_max": 1.3,
+    "quality_alone": 0.8,
+    "quality_with": 0.9,
+    "status": "measured"
+   }
+  }
+ },
+ "agy": {
+  "bulk-read": {
+   "task": "a1-rates",
+   "runs": {
+    "alone": 3,
+    "dynamic": 3
+   },
+   "claude_tokens_alone": 59097,
+   "claude_tokens_with": 61714,
+   "ratio": 0.96,
+   "agy_tokens": 14886,
+   "handed_to_agy": 3,
+   "quality_alone": 1.0,
+   "quality_with": 1.0,
+   "status": "measured"
+  },
+  "draft": {
+   "task": "a2-draft",
+   "runs": {
+    "alone": 3,
+    "dynamic": 3
+   },
+   "claude_tokens_alone": 97103,
+   "claude_tokens_with": 97870,
+   "ratio": 0.99,
+   "agy_tokens": 6478,
+   "handed_to_agy": 1,
+   "quality_alone": 1.0,
+   "quality_with": 1.0,
+   "status": "measured"
+  },
+  "second-opinion": {
+   "task": "a3-second",
+   "runs": {
+    "alone": 3,
+    "dynamic": 3
+   },
+   "claude_tokens_alone": 38826,
+   "claude_tokens_with": 42160,
+   "ratio": 0.92,
+   "agy_tokens": 0,
+   "handed_to_agy": 0,
+   "quality_alone": 0.75,
+   "quality_with": 0.67,
+   "status": "measured"
+  }
+ },
+ "agy_note": "Claude Opus 5.5 high, 3 runs per arm; agy tokens are reported apart. The Gemini CLI was not logged in, so it was not measured.",
+ "router": {
+  "top_model": "claude-opus-5-5",
+  "top_effort": "high",
+  "tasks": 21,
+  "reps": 3,
+  "arms": {
+   "alone": {
+    "runs": 63,
+    "tokens": 105690,
+    "cost_usd": 0.1518,
+    "quality": 0.96
+   },
+   "table_v0_1": {
+    "runs": 63,
+    "tokens": 101446,
+    "cost_usd": 0.122,
+    "quality": 0.962
+   },
+   "dynamic": {
+    "runs": 63,
+    "tokens": 93501,
+    "cost_usd": 0.1332,
+    "quality": 0.974
+   }
+  },
+  "classes": {
+   "routine_code": {
+    "alone": {
+     "runs": 9,
+     "tokens": 92519,
+     "cost_usd": 0.1638,
+     "quality": 1.0
+    },
+    "table_v0_1": {
+     "runs": 9,
+     "tokens": 123880,
+     "cost_usd": 0.1462,
+     "quality": 1.0
+    },
+    "dynamic": {
+     "runs": 9,
+     "tokens": 96247,
+     "cost_usd": 0.1534,
+     "quality": 1.0
+    }
+   },
+   "debugging": {
+    "alone": {
+     "runs": 9,
+     "tokens": 146363,
+     "cost_usd": 0.1614,
+     "quality": 1.0
+    },
+    "table_v0_1": {
+     "runs": 9,
+     "tokens": 124514,
+     "cost_usd": 0.1436,
+     "quality": 1.0
+    },
+    "dynamic": {
+     "runs": 9,
+     "tokens": 130712,
+     "cost_usd": 0.1488,
+     "quality": 1.0
+    }
+   },
+   "multi_file": {
+    "alone": {
+     "runs": 9,
+     "tokens": 160462,
+     "cost_usd": 0.2739,
+     "quality": 1.0
+    },
+    "table_v0_1": {
+     "runs": 9,
+     "tokens": 135395,
+     "cost_usd": 0.1752,
+     "quality": 1.0
+    },
+    "dynamic": {
+     "runs": 9,
+     "tokens": 112791,
+     "cost_usd": 0.2242,
+     "quality": 1.0
+    }
+   },
+   "design": {
+    "alone": {
+     "runs": 9,
+     "tokens": 62063,
+     "cost_usd": 0.1037,
+     "quality": 1.0
+    },
+    "table_v0_1": {
+     "runs": 9,
+     "tokens": 55779,
+     "cost_usd": 0.0909,
+     "quality": 1.0
+    },
+    "dynamic": {
+     "runs": 9,
+     "tokens": 62190,
+     "cost_usd": 0.0978,
+     "quality": 0.972
+    }
+   },
+   "mechanical": {
+    "alone": {
+     "runs": 9,
+     "tokens": 116715,
+     "cost_usd": 0.1239,
+     "quality": 1.0
+    },
+    "table_v0_1": {
+     "runs": 9,
+     "tokens": 112538,
+     "cost_usd": 0.0886,
+     "quality": 1.0
+    },
+    "dynamic": {
+     "runs": 9,
+     "tokens": 98096,
+     "cost_usd": 0.087,
+     "quality": 1.0
+    }
+   },
+   "reading": {
+    "alone": {
+     "runs": 9,
+     "tokens": 69501,
+     "cost_usd": 0.1015,
+     "quality": 0.889
+    },
+    "table_v0_1": {
+     "runs": 9,
+     "tokens": 72089,
+     "cost_usd": 0.0838,
+     "quality": 0.861
+    },
+    "dynamic": {
+     "runs": 9,
+     "tokens": 64778,
+     "cost_usd": 0.0908,
+     "quality": 0.917
+    }
+   },
+   "review": {
+    "alone": {
+     "runs": 9,
+     "tokens": 92207,
+     "cost_usd": 0.1343,
+     "quality": 0.833
+    },
+    "table_v0_1": {
+     "runs": 9,
+     "tokens": 85928,
+     "cost_usd": 0.1259,
+     "quality": 0.87
+    },
+    "dynamic": {
+     "runs": 9,
+     "tokens": 89695,
+     "cost_usd": 0.1301,
+     "quality": 0.926
+    }
+   }
+  },
+  "shipped": "dynamic",
+  "note": "Dynamic uses fewer tokens than the fixed table and than no routing, at equal or better quality. The table costs fewer dollars because it sends reading to haiku.",
+  "dynamic_history": [
+   {
+    "variant": "dynamic-v2",
+    "runs": 63,
+    "tokens": 107635,
+    "quality": 0.956
+   },
+   {
+    "variant": "dynamic-v3",
+    "runs": 63,
+    "tokens": 109955,
+    "quality": 0.956
+   },
+   {
+    "variant": "dynamic-v4",
+    "runs": 63,
+    "tokens": 106617,
+    "quality": 0.956
+   },
+   {
+    "variant": "dynamic-v5",
+    "runs": 63,
+    "tokens": 112743,
+    "quality": 0.952
+   },
+   {
+    "variant": "dynamic-v6",
+    "runs": 63,
+    "tokens": 103393,
+    "quality": 0.964
+   }
+  ]
+ },
+ "benchmark_v0_1": {
   "top_model": "claude-opus-5-5",
   "top_effort": "high",
   "runs_per_arm": 63,
@@ -33,5 +2312,12 @@
     "quality_delta": 0.0
    }
   }
+ },
+ "effort_cost_x": {
+  "low": 0.93,
+  "medium": 1.0,
+  "high": 1.18,
+  "xhigh": 1.46,
+  "max": 4.71
  }
 }

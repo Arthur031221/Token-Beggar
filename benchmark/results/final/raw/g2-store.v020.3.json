@@ -1,0 +1,111 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "v020",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 13886,
+  "stop_reason": "end_turn",
+  "session_id": "4573e9e2-90cb-4357-ad08-486b6c1f107b",
+  "total_cost_usd": 0.0921462,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7671,
+   "cache_read_input_tokens": 52471,
+   "output_tokens": 1013,
+   "output_tokens_details": {
+    "thinking_tokens": 46
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7671,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 695,
+     "cache_read_input_tokens": 20183,
+     "cache_creation_input_tokens": 278,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 278
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1013,
+    "cacheReadInputTokens": 52471,
+    "cacheCreationInputTokens": 7671,
+    "webSearchRequests": 0,
+    "costUSD": 0.0921462,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 46,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move to SQLite in WAL mode. Don't patch the JSON file.**\n\n**Why the current design fails at your scale**\n- **It loses writes.** `save_order` reads the whole file, changes it in memory and writes it back, with no lock. When both processes do this at once, the last one to write erases the other's order.\n- **It can corrupt the file.** `write_text` isn't atomic, so a crash or a concurrent read partway through leaves a truncated, unparseable file.\n- **It's slow.** Every save re-reads and rewrites all 100k rows (around 10 MB), and the `id` lookup scans the whole list. Saving N orders costs O(N\u00b2) in total.\n\n**Why SQLite**\nIt's in the standard library, so there's no server to run, and it's still a single file. WAL mode lets readers keep going while one process writes, and `busy_timeout` makes the second writer wait its turn instead of failing. A primary key on `id` lets `INSERT \u2026 ON CONFLICT(id) DO UPDATE` replace the current filter-and-append in one atomic statement. 100k rows is tiny for SQLite. If you later need many writers or multiple hosts, move to Postgres; with SQL already behind `Store`, that switch is small.\n\n**Migration path**\n1. **Keep the interface.** `Store.load()` and `save_order()` stay the same, and `cli.py:26` is the only caller, so nothing else changes.\n2. **Write the SQLite version** with an `orders` table (`id` primary key, plus `customer`, `total`, `tax`, `state`) and WAL turned on at connect. Add a test with two processes writing at the same time that checks no order is lost.\n3. **Write a one-time import** that loads the JSON in a single transaction and checks the row count and totals against the source.\n4. **Cut over:** stop both writers, run the import, deploy, restart. Keep the JSON file as a read-only backup until you've confirmed the data.\n5. **Later:** if reports only need some orders, change `load()` to filter in SQL instead of returning everything.",
+  "ttft_ms": 2554,
+  "type": "result",
+  "duration_ms": 14348,
+  "uuid": "08b1a5c1-66f5-4985-beb9-9b44f280b3ec",
+  "ttft_stream_ms": 1967,
+  "time_to_request_ms": 371,
+  "first_content_frame_ms": 1967,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.v020.3",
+ "ledger": []
+}

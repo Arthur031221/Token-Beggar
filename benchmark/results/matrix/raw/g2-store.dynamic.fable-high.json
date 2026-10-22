@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": "fable-high",
+ "top": "claude-fable-5-1",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 17126,
+  "stop_reason": "end_turn",
+  "session_id": "13fa4403-18b5-442a-a395-2bd8b34146f6",
+  "total_cost_usd": 0.23063225,
+  "usage": {
+   "input_tokens": 34,
+   "cache_creation_input_tokens": 9282,
+   "cache_read_input_tokens": 34409,
+   "output_tokens": 721,
+   "output_tokens_details": {
+    "thinking_tokens": 50
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9282,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 563,
+     "cache_read_input_tokens": 21619,
+     "cache_creation_input_tokens": 453,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 453
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 34,
+    "outputTokens": 721,
+    "cacheReadInputTokens": 34409,
+    "cacheCreationInputTokens": 9282,
+    "webSearchRequests": 0,
+    "costUSD": 0.23063225,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 50,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the single JSON file with SQLite** (stdlib `sqlite3`, WAL mode), keeping the `Store` interface.\n\n**Why the current design fails at your scale**\n\n- **Lost writes with two processes.** Each `save_order` does read-all, modify, write-all with no locking. Two writers interleave and one overwrites the other's order silently.\n- **Corruption on crash.** `write_text` truncates then writes. A crash or a concurrent reader mid-write leaves a half-written or empty file.\n- **O(n) per write.** At 100k orders every save parses and reserializes the whole file, roughly tens of megabytes per order saved.\n\n**Why SQLite rather than file locks or Postgres**\n\n- File locks plus atomic rename fix safety but not the O(n) rewrite.\n- Postgres fixes everything but adds a server to run. Two writers and 100k rows are well inside SQLite's comfort zone.\n- SQLite gives you per-row upserts, an index on `id`, crash-safe transactions, and concurrent readers under WAL. One file, no new dependency.\n\n**Migration path**\n\n1. Add a `SqliteStore` with the same `load` and `save_order` methods. Table keyed on `id`, upsert on save, `busy_timeout` set so writers wait instead of failing.\n2. Write a one-off script that reads the existing JSON and inserts every row in one transaction.\n3. Switch the constructor behind a config flag. Run both stores in parallel for a day, diffing `load()` output.\n4. Remove the JSON store once counts match.\n5. Later, if `load()` returning all 100k rows becomes a problem, add `get(id)` and paged queries.",
+  "ttft_ms": 5851,
+  "type": "result",
+  "duration_ms": 17555,
+  "uuid": "91dc50c8-5285-47f8-be4a-57aa402ab7d1",
+  "ttft_stream_ms": 2837,
+  "time_to_request_ms": 255,
+  "first_content_frame_ms": 2837,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.fable-high"
+}

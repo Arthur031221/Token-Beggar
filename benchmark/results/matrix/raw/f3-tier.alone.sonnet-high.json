@@ -1,0 +1,110 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": "sonnet-high",
+ "top": "claude-sonnet-5-5",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 22378,
+  "stop_reason": "end_turn",
+  "session_id": "d0284545-abcd-4c82-ad6b-8b6306dad69a",
+  "total_cost_usd": 0.09197829999999999,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 13468,
+   "cache_read_input_tokens": 75103,
+   "output_tokens": 3058,
+   "output_tokens_details": {
+    "thinking_tokens": 258
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 13468,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 474,
+     "cache_read_input_tokens": 23881,
+     "cache_creation_input_tokens": 2377,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2377
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3058,
+    "cacheReadInputTokens": 75103,
+    "cacheCreationInputTokens": 13468,
+    "webSearchRequests": 0,
+    "costUSD": 0.09197829999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 258,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in. All 17 tests pass, including the new ones.\n\n- **Cart:** `Cart` now has `tier`, defaulting to `\"standard\"` (`shop/models.py`).\n- **Discount:** gold takes 10% off and silver 5%. Any other tier gets nothing (`shop/pricing.py`).\n- **Tax:** the discount comes off the subtotal before tax is added. `calc_tax` taxes the discounted taxable amount, and `calc_total` is the discounted subtotal plus that tax. The tier discount stacks with the existing bulk discount.\n- **Rounding:** each discount is rounded half up to the cent, using the existing `percent` helper.\n- **Order:** it gets the discount through `calc_total` and `calc_tax`, and I also added an `order.tier` attribute (`shop/orders.py`). I did not add the tier to what `Store` saves.\n- **CLI:** `quote --tier gold` (or any other value) works, defaulting to `standard` (`shop/cli.py`).\n\nNew tests are in `tests/test_pricing.py`, `tests/test_orders.py` and a new `tests/test_cli.py`. They cover:\n- the default tier;\n- gold and silver on taxable items;\n- unknown tiers;\n- gold on an untaxable item;\n- stacking with the bulk discount;\n- `Order` totals and tier;\n- the `--tier` option end to end.",
+  "ttft_ms": 3690,
+  "type": "result",
+  "duration_ms": 22671,
+  "uuid": "04811566-ad97-4808-80de-81256eb8ff65",
+  "ttft_stream_ms": 2921,
+  "time_to_request_ms": 76,
+  "first_content_frame_ms": 2924,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 17 +++++++++++++----\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 35 +++++++++++++++++++++++++++++++++++\n 6 files changed, 60 insertions(+), 5 deletions(-)\n",
+ "workdir": "f3-tier.alone.sonnet-high"
+}

@@ -1,0 +1,111 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "final",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 23538,
+  "stop_reason": "end_turn",
+  "session_id": "9edc75f6-4d00-4d91-a9de-09abec1e5ec2",
+  "total_cost_usd": 0.19925879999999999,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 15871,
+   "cache_read_input_tokens": 131314,
+   "output_tokens": 2299,
+   "output_tokens_details": {
+    "thinking_tokens": 354
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 15871,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 904,
+     "cache_read_input_tokens": 28078,
+     "cache_creation_input_tokens": 583,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 583
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 2299,
+    "cacheReadInputTokens": 131314,
+    "cacheCreationInputTokens": 15871,
+    "webSearchRequests": 0,
+    "costUSD": 0.19925879999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 354,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found two inconsistencies that would break code calling the registry. The other 15 carrier modules are identical except for their names and numbers. Nothing outside `shop/carriers/` calls these methods today, so this is about the interface that `REGISTRY` / `get()` promises.\n\n**1. `shop/carriers/maple.py` takes weight in grams; every other carrier takes kilograms.**\nIts docstring says \"weight in grams\". It uses `PER_GRAMS = 3` and `MAX_GRAMS = 30000`, where the others have `PER_KG` and `MAX_KG`. The method signature is still `rate(self, weight: float, zone)`, so nothing warns a caller that the unit is different.\n- If a caller passes kg the way they would for any other carrier, they get a far-too-low price with no error. For example, `get(\"maple\").rate(2.5)` returns 501 cents (494 + 3 \u00d7 2.5). Similar carriers return roughly 1,200\u20131,800 cents for the same weight.\n- The weight limit is wrong in kg terms too. Maple accepts any kg value up to 30000, so the 30 kg cap never kicks in.\n- This is the more dangerous of the two problems because it is silent: prices come out wrong and nothing raises.\n\n**2. `shop/carriers/delta.py`, `kestrel.py`, `onyx.py` and `tundra.py` have no `tracking_url()` method.**\nThe other 16 carriers define `tracking_url(code) -> str`. Calling `get(\"delta\").tracking_url(...)`, or the same on kestrel, onyx or tundra, raises `AttributeError`. So would any loop over `REGISTRY.values()` that builds tracking links.\n\n**How I checked:** I replaced each module's name tokens and all numbers with placeholders, then hashed the result. That splits the 20 modules into three groups: 15 identical, the 4 missing `tracking_url`, and `maple` alone. I then read the differing modules in full. The class names and keys in `__init__.py` match their modules, and every carrier has the same zone keys (`local`, `regional`, `national`). I made no edits.",
+  "ttft_ms": 2010,
+  "type": "result",
+  "duration_ms": 25212,
+  "uuid": "30660835-ac6e-4f0a-b035-83de49c65e3b",
+  "ttft_stream_ms": 987,
+  "time_to_request_ms": 387,
+  "first_content_frame_ms": 987,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.final.2",
+ "ledger": []
+}

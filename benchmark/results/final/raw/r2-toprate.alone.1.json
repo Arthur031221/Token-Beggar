@@ -1,0 +1,111 @@
+{
+ "task": "r2-toprate",
+ "class": "reading",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 5903,
+  "stop_reason": "end_turn",
+  "session_id": "3e741074-062b-455e-a907-4a424bc0edd8",
+  "total_cost_usd": 0.08561200000000001,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 8404,
+   "cache_read_input_tokens": 51480,
+   "output_tokens": 403,
+   "output_tokens_details": {
+    "thinking_tokens": 93
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8404,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 64,
+     "cache_read_input_tokens": 20076,
+     "cache_creation_input_tokens": 1118,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1118
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 403,
+    "cacheReadInputTokens": 51480,
+    "cacheCreationInputTokens": 8404,
+    "webSearchRequests": 0,
+    "costUSD": 0.08561200000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 93,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Kestrel Freight has the highest BASE_RATE at 845 cents ($8.45), set in `shop/carriers/kestrel.py:7`, ahead of Iris at 796.",
+  "ttft_ms": 2082,
+  "type": "result",
+  "duration_ms": 6124,
+  "uuid": "e4148185-2bde-488d-bd81-d3f3ff8722cd",
+  "ttft_stream_ms": 1218,
+  "time_to_request_ms": 106,
+  "first_content_frame_ms": 1219,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r2-toprate.alone.1",
+ "ledger": []
+}

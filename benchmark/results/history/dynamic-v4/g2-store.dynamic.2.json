@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 11549,
+  "stop_reason": "end_turn",
+  "session_id": "023e9802-7df9-49f5-8bd0-2502519349de",
+  "total_cost_usd": 0.07269400000000001,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6023,
+   "cache_read_input_tokens": 34570,
+   "output_tokens": 879,
+   "output_tokens_details": {
+    "thinking_tokens": 67
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6023,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 683,
+     "cache_read_input_tokens": 19985,
+     "cache_creation_input_tokens": 623,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 623
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 879,
+    "cacheReadInputTokens": 34570,
+    "cacheCreationInputTokens": 6023,
+    "webSearchRequests": 0,
+    "costUSD": 0.07269400000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 67,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Move orders to SQLite in WAL mode.**\n\n**The problem:** `shop/storage.py` keeps every order in one JSON file. Each `save_order` reads the whole file, rewrites it, and does so without a lock or an atomic write.\n- **Lost updates:** if both writers load at the same time, the second write silently drops the first writer's order.\n- **Corruption:** a crash partway through `write_text` leaves a truncated file, and every order is lost.\n- **Cost grows with size:** at 100k orders, each save parses and rewrites about 10 MB, and a save scans every row.\n\n**Why SQLite:** it ships with Python, so there's no new service. It gives atomic transactions and crash safety. In WAL mode, readers don't block the writer, and the two writers queue cleanly on SQLite's lock (set `busy_timeout`). Saving an order becomes an indexed upsert (`INSERT \u2026 ON CONFLICT(id) DO UPDATE`). Postgres is only worth it if the writers end up on different machines; SQLite needs a local filesystem, not NFS.\n\n**Migration path:**\n1. **Keep the interface.** Add a `SqliteStore` with the same `load()` and `save_order()` methods. Use a table `orders(id PRIMARY KEY, customer, total, tax, state)`, with integer cents as now, plus indexes on `customer` and `state`.\n2. **One-off import.** Stop both writers, read the JSON, insert all rows in one transaction, and check that the row count and the sum of `total` match. Keep the JSON as a backup.\n3. **Switch over.** Point the config at the new store and restart the writers.\n4. **Follow-up.** `load()` returns every order, so replace those calls with targeted queries (`get(id)`, filter by state) in `reports.py` and wherever else it's used, then remove the JSON code.\n\nFor a zero-downtime cutover, dual-write for a short time before step 3. With only two processes, a brief stop is simpler.",
+  "ttft_ms": 1716,
+  "type": "result",
+  "duration_ms": 12116,
+  "uuid": "ca21180e-e674-4886-b208-af5850c41e25",
+  "ttft_stream_ms": 1305,
+  "time_to_request_ms": 315,
+  "first_content_frame_ms": 1305,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.2"
+}

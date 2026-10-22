@@ -1,0 +1,110 @@
+{
+ "task": "r3-flow",
+ "class": "reading",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 11930,
+  "stop_reason": "end_turn",
+  "session_id": "6981e164-b6a2-435d-871d-91e776d5358e",
+  "total_cost_usd": 0.11442999999999999,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 9619,
+   "cache_read_input_tokens": 80630,
+   "output_tokens": 1066,
+   "output_tokens_details": {
+    "thinking_tokens": 61
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9619,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 515,
+     "cache_read_input_tokens": 23697,
+     "cache_creation_input_tokens": 508,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 508
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1066,
+    "cacheReadInputTokens": 80630,
+    "cacheCreationInputTokens": 9619,
+    "webSearchRequests": 0,
+    "costUSD": 0.11442999999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 61,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**How state changes are checked** (`shop/orders.py`)\n- `STATES` (line 6) lists the four states: `new`, `paid`, `shipped`, `cancelled`.\n- `ALLOWED` (line 7) maps each state to the states it can move to: `new \u2192 paid/cancelled`, `paid \u2192 shipped/cancelled`. `shipped` and `cancelled` are final.\n- `Order.__init__` sets `self.state = \"new\"`.\n- `Order.move(state)` (line 19) raises `ValueError(\"cannot go from X to Y\")` if the target isn't in `ALLOWED[self.state]`. Otherwise it sets `self.state`. This is the only check. Nothing stops code from assigning `order.state` directly, and `STATES` is never used to validate anything.\n\n**How it's stored** (`shop/storage.py`)\n- `Store` keeps all orders in a single JSON file.\n- `Store.save_order(order)` loads every row and drops any row with the same `id`. It then appends `{id, customer, total, tax, state}` and rewrites the whole file. Saving is a separate step: `move()` doesn't save anything.\n- `Store.load()` returns plain dicts and never rebuilds `Order` objects, so loaded state is never checked against `ALLOWED`.\n- Nothing in the repo calls `save_order`, and only the tests call `move()`.\n\n**Tests**\n- `tests/test_orders.py` (lines 20\u201323) moves an order `new \u2192 paid \u2192 shipped`, then checks that `cancelled` is rejected.",
+  "ttft_ms": 1084,
+  "type": "result",
+  "duration_ms": 12713,
+  "uuid": "e379703f-e919-4765-82c0-8d46c5848300",
+  "ttft_stream_ms": 894,
+  "time_to_request_ms": 166,
+  "first_content_frame_ms": 895,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r3-flow.dynamic.2"
+}

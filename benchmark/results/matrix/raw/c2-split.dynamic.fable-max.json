@@ -1,0 +1,126 @@
+{
+ "task": "c2-split",
+ "class": "routine_code",
+ "arm": "dynamic",
+ "rep": "fable-max",
+ "top": "claude-fable-5-1",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 58207,
+  "stop_reason": "end_turn",
+  "session_id": "1c6c7068-db6f-4d8d-b6f0-6561f2613d8e",
+  "total_cost_usd": 0.514474,
+  "usage": {
+   "input_tokens": 34,
+   "cache_creation_input_tokens": 12655,
+   "cache_read_input_tokens": 34436,
+   "output_tokens": 3490,
+   "output_tokens_details": {
+    "thinking_tokens": 2048
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12655,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 420,
+     "cache_read_input_tokens": 21646,
+     "cache_creation_input_tokens": 3799,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 3799
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 34,
+    "outputTokens": 3490,
+    "cacheReadInputTokens": 34436,
+    "cacheCreationInputTokens": 12655,
+    "webSearchRequests": 0,
+    "costUSD": 0.436549,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 2048,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1386,
+    "cacheReadInputTokens": 22215,
+    "cacheCreationInputTokens": 9146,
+    "webSearchRequests": 0,
+    "costUSD": 0.077925,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Done. The worker added `split` to `shop/money.py` and a new test file, and the full suite passes.\n\n**What changed**\n\n- `shop/money.py`: new function `split(cents: int, parts: int) -> list[int]` at the end of the module. It uses `divmod` and gives the first `rem` elements one extra cent, so `split(10, 3)` returns `[4, 3, 3]`. A `parts` value below 1 raises `ValueError`, with a message in the same style as the existing `to_cents` error.\n- `tests/test_money.py`: new file, since money.py had no tests before. It uses `unittest` like the other test files. It covers an even split, remainder going to the first elements, `parts == 1`, a sum-and-length invariant over several inputs, and `ValueError` for `parts` of 0 and -1.\n\n**Test run**\n\nThe worker ran the command the README documents:\n\n```\npython3 -m unittest discover -s tests -t . -v\n```\n\nResult:\n\n```\nRan 11 tests in 0.001s\nOK\n```\n\nNothing was committed. One note: `split` with negative `cents` follows Python floor division, so `split(-7, 3)` gives `[-2, -2, -3]`, which still sums correctly. The spec did not cover negatives, so no guard was added.",
+  "ttft_ms": 27258,
+  "type": "result",
+  "duration_ms": 59169,
+  "uuid": "604afb5c-99e9-4a54-9c10-5e9ea986b710",
+  "ttft_stream_ms": 1191,
+  "time_to_request_ms": 186,
+  "first_content_frame_ms": 1192,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 8 ++++++++\n 1 file changed, 8 insertions(+)\n",
+ "workdir": "c2-split.dynamic.fable-max"
+}

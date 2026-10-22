@@ -1,0 +1,110 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": "opus-medium",
+ "top": "claude-opus-5-5",
+ "effort": "medium",
+ "result": {
+  "duration_api_ms": 46679,
+  "stop_reason": "end_turn",
+  "session_id": "33dd6d89-1c28-4d8d-8815-1f4bf90bc0c9",
+  "total_cost_usd": 0.3385498,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 24555,
+   "cache_read_input_tokens": 193769,
+   "output_tokens": 5165,
+   "output_tokens_details": {
+    "thinking_tokens": 495
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 24555,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 598,
+     "cache_read_input_tokens": 35347,
+     "cache_creation_input_tokens": 1998,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1998
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 5165,
+    "cacheReadInputTokens": 193769,
+    "cacheCreationInputTokens": 24555,
+    "webSearchRequests": 0,
+    "costUSD": 0.3385498,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 495,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 14,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and all 14 tests pass: the 6 that were already there plus 8 new ones in `tests/test_tiers.py`.\n\n- **Cart** (`shop/models.py`): new `tier` field, default `\"standard\"`.\n- **Pricing** (`shop/pricing.py`): a `TIER_DISCOUNTS = {\"gold\": 10.0, \"silver\": 5.0}` table and an `apply_tier()` helper. Any tier not in the table gets no discount.\n  - `calc_total` takes the discount off the subtotal before adding tax, and now gets its tax from `calc_tax`, so the two always agree.\n  - `calc_tax` takes the same discount off the taxable amount before working out the 8.25%.\n- **Order** (`shop/orders.py`): the discount flows through automatically because it calls `calc_total` and `calc_tax`. I also added `self.tier` so an order records its tier. The JSON store doesn't save it yet.\n- **CLI** (`shop/cli.py`): `shop quote --tier gold a:10.00:2` prints `19.49`; without `--tier` it's `21.65` as before.\n\nTwo choices you might want to change:\n- **Bulk discount:** the tier discount is applied after the bulk discount, so they stack. A gold cart of 10 items at $1.00 gets 5% off for bulk, then 10% off the result, for a total of $9.26.\n- **Rounding:** the discount is worked out separately on the full subtotal and on the taxable part, each rounded half-up to the cent the same way the bulk discount already is.\n\nThe new tests cover the default tier, gold and silver, an unknown tier, a cart mixing taxed and untaxed items, the bulk discount combined with gold, Order picking up the discount, and the `--tier` option.",
+  "ttft_ms": 2967,
+  "type": "result",
+  "duration_ms": 47685,
+  "uuid": "73befa35-4ed9-4a72-a160-447762cc7fc9",
+  "ttft_stream_ms": 1982,
+  "time_to_request_ms": 366,
+  "first_content_frame_ms": 1983,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py     |  3 ++-\n shop/models.py  |  1 +\n shop/orders.py  |  1 +\n shop/pricing.py | 15 ++++++++++-----\n 4 files changed, 14 insertions(+), 6 deletions(-)\n",
+ "workdir": "f3-tier.alone.opus-medium"
+}

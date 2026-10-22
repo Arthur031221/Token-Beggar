@@ -1,0 +1,111 @@
+{
+ "task": "a2-draft",
+ "class": "draft",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 25307,
+  "stop_reason": "end_turn",
+  "session_id": "f762e3d1-5b91-4243-b896-ea1592f412bc",
+  "total_cost_usd": 0.1677304,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 13859,
+   "cache_read_input_tokens": 84932,
+   "output_tokens": 1992,
+   "output_tokens_details": {
+    "thinking_tokens": 891
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 13859,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 469,
+     "cache_read_input_tokens": 27526,
+     "cache_creation_input_tokens": 919,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 919
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1992,
+    "cacheReadInputTokens": 84932,
+    "cacheCreationInputTokens": 13859,
+    "webSearchRequests": 0,
+    "costUSD": 0.1677304,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 891,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added a Carriers section to `README.md` (about 85 words):\n\n> ## Carriers\n>\n> Carrier rate cards live in `shop/carriers/`, one module per carrier (20 in total, `acme.py` through `tundra.py`). Each module defines a `BASE_RATE` in cents and a `rate(weight, zone=\"local\")` method that returns a quote in cents: `BASE_RATE` plus a per-unit weight charge, multiplied by a zone factor. A weight outside the carrier's allowed range raises `ValueError`.\n>\n> Every carrier takes weight in kilograms except **Maple** (`maple.py`), which takes grams. Convert the weight before you ask Maple for a quote.\n\nI checked these points against the code with one search across all 20 carrier files:\n- Each file sets `BASE_RATE`.\n- Only `shop/carriers/maple.py:2` says \"weight in grams\"; it uses `MAX_GRAMS` and `PER_GRAMS`.\n- Every other carrier says \"weight in kg\".\n\nBecause one search gave me every fact I needed, I wrote the draft myself instead of asking the external AI for one as I'd planned.\n\nNothing is committed. If you'd rather it be shorter, you could cut the sentences about the `rate()` formula and the `ValueError`, which leaves just the three things you asked for.",
+  "ttft_ms": 5556,
+  "type": "result",
+  "duration_ms": 26221,
+  "uuid": "be0290c2-3d51-46f1-939e-eb395c3787e9",
+  "ttft_stream_ms": 2937,
+  "time_to_request_ms": 154,
+  "first_content_frame_ms": 2937,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " README.md | 6 ++++++\n 1 file changed, 6 insertions(+)\n",
+ "workdir": "a2-draft.dynamic.2",
+ "ledger": []
+}

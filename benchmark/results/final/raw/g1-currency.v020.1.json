@@ -1,0 +1,111 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "v020",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15935,
+  "stop_reason": "end_turn",
+  "session_id": "5ca80621-b759-4f08-89a9-6a72ac1c0ba1",
+  "total_cost_usd": 0.14116599999999999,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 12100,
+   "cache_read_input_tokens": 76470,
+   "output_tokens": 1452,
+   "output_tokens_details": {
+    "thinking_tokens": 146
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12100,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 801,
+     "cache_read_input_tokens": 24096,
+     "cache_creation_input_tokens": 794,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 794
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1452,
+    "cacheReadInputTokens": 76470,
+    "cacheCreationInputTokens": 12100,
+    "webSearchRequests": 0,
+    "costUSD": 0.14116599999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 146,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Design: multi-currency support**\n\n**Core idea:** stop passing bare integer cents around. Store each amount as minor units plus an ISO currency code. Each cart, and so each order, uses one currency, and amounts in different currencies are never added together implicitly.\n\n**Changes by file**\n- `shop/money.py`: add a `Money(amount_minor, currency)` value type and a currency table giving each code's number of decimals (JPY 0, USD 2, KWD 3). `to_cents`, `fmt` and `percent` currently assume 2 decimals and a \".\". Make them take the currency, and have adding two different currencies raise an error.\n- `shop/models.py`: `Item.price_cents` becomes a `Money` value, and `Cart` gets a `currency`. `Cart.add` rejects items whose currency doesn't match.\n- `shop/pricing.py`: `TAX_RATE` is one flat rate and the bulk threshold is fixed, so currency and tax region get tangled here. Keep tax keyed by region, not currency, and return `Money`.\n- `shop/orders.py`: record the currency on `Order`, and store each line's price with its currency.\n- `shop/storage.py`: add a `currency` field to saved rows. Rows already saved have none, so read them as a default (USD).\n- `shop/reports.py`: `sales_by_customer` adds up totals across all rows. It needs to group by (customer, currency), or convert using a rate fixed at a known date.\n- `shop/cli.py`: add a `--currency` option to `quote` and show currency in the output.\n- `shop/carriers/*.py` (20 files): all quote \"in cents\" with hard-coded rates. Each carrier needs a declared currency, or one shared base class.\n- Tests: add cases for 0- and 3-decimal currencies, mixed-currency errors and loading old rows.\n\n**Main risks**\n1. **Silent mixing:** reports and carrier shipping costs could add up different currencies with no error.\n2. **Rounding:** `percent` rounds using floats, and its errors grow in 3-decimal currencies.\n3. **Old data:** saved JSON rows without a currency must load safely.\n4. **Exchange rates:** the source, the date a rate applies to, and caching (`cache.py`) are a separate decision. Keep conversion out of v1 if you can.",
+  "ttft_ms": 1959,
+  "type": "result",
+  "duration_ms": 16285,
+  "uuid": "c03233a7-69d6-43df-81bc-e0b9bb042f67",
+  "ttft_stream_ms": 891,
+  "time_to_request_ms": 207,
+  "first_content_frame_ms": 892,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.v020.1",
+ "ledger": []
+}

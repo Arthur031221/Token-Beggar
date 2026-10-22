@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16466,
+  "stop_reason": "end_turn",
+  "session_id": "876f10dd-2f8d-43d5-b3c7-2f39e717dfaf",
+  "total_cost_usd": 0.0917312,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 7444,
+   "cache_read_input_tokens": 32616,
+   "output_tokens": 1282,
+   "output_tokens_details": {
+    "thinking_tokens": 551
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7444,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1178,
+     "cache_read_input_tokens": 19826,
+     "cache_creation_input_tokens": 408,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 408
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1282,
+    "cacheReadInputTokens": 32616,
+    "cacheCreationInputTokens": 7444,
+    "webSearchRequests": 0,
+    "costUSD": 0.0917312,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 551,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read `shop/cache.py` (23 lines). Issues in order of severity:\n\n1. **Memory grows without limit.** Expired entries are only replaced, never removed. Every SKU ever requested stays in `_data` for the life of the process. *Fix:* cap the size with an LRU (an `OrderedDict` or `cachetools.TTLCache`) and drop expired entries when you touch them.\n\n2. **Many threads load the same key at once.** `get` checks the cache, then loads, then stores, with no coordination. When a popular SKU expires, every thread that asks for it calls `loader` at the same moment and can flood the backend. *Fix:* single-flight loading. Keep one in-progress `Future` per key; the first thread to miss runs the loader and the others wait on its result.\n\n3. **Invalidation can be lost.** Thread A starts loading the old price. Thread B updates the price and calls `invalidate`. A then writes the stale value back (line 18), and it stays cached for a full TTL. *Fix:* keep a version number per key that `invalidate` increments. A loader only stores its result if the version hasn't changed since it started; this also cancels any load in progress.\n\n4. **The timestamp is taken after the load.** With a slow loader, the entry is already \"load time\" old when it's stamped, so real staleness can exceed `ttl`. *Fix:* read `clock()` before calling `loader`.\n\n5. **Failures aren't cached.** When the backend is down, every request retries it right away, which makes issue 2 worse. *Fix:* cache errors for a short time, or let waiters share the failed `Future`.\n\n**Approach I'd take:** guard `_data`, the in-progress futures and the version numbers with one `threading.Lock`, and never hold it while `loader` runs. Inside that, use a size-bounded LRU with TTL. Individual dict operations happen to be atomic under the GIL, but the check-load-store sequence isn't, and free-threaded Python makes that worse.",
+  "ttft_ms": 3268,
+  "type": "result",
+  "duration_ms": 17298,
+  "uuid": "0bb01c38-111e-486c-a4b3-edb4a29560c2",
+  "ttft_stream_ms": 2171,
+  "time_to_request_ms": 504,
+  "first_content_frame_ms": 2172,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.1"
+}

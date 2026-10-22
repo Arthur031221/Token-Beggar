@@ -1,0 +1,110 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 28124,
+  "stop_reason": "end_turn",
+  "session_id": "59ef4fa3-ae18-4e7c-9673-6826b557c623",
+  "total_cost_usd": 0.1825426,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 13621,
+   "cache_read_input_tokens": 129933,
+   "output_tokens": 2377,
+   "output_tokens_details": {
+    "thinking_tokens": 737
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 13621,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 753,
+     "cache_read_input_tokens": 27654,
+     "cache_creation_input_tokens": 554,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 554
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 2377,
+    "cacheReadInputTokens": 129933,
+    "cacheCreationInputTokens": 13621,
+    "webSearchRequests": 0,
+    "costUSD": 0.1825426,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 737,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The module that breaks registry callers is **`shop/carriers/maple.py`**. It takes weight in grams, while the other 19 carriers take kilograms.\n\n**maple.py: wrong weight unit, same signature**\n- `maple.py:2` says \"weight in grams\". Every other carrier says \"weight in kg\".\n- It uses `PER_GRAMS = 3` and `MAX_GRAMS = 30000` where the others use `PER_KG` and `MAX_KG`.\n- `rate(self, weight: float, zone)` has the same signature as every other carrier, so code that calls `get(name).rate(weight_kg, zone)` gets no error from maple, just a wrong number:\n  - **2 kg is undercharged.** It is priced as 2 grams: `(494 + 3*2) * 1.0` = 500 cents. At the same per-unit rate in kg it would be about 6,494.\n  - **Over-limit parcels are accepted.** Maple allows up to 30,000 \"units\", so a 500 kg parcel gets a quote. Every other carrier rejects anything above its 30\u201349 kg limit.\n  - **Converting to grams breaks the others.** A caller who passes grams for maple would make every other carrier raise `ValueError`. No single unit works for the whole registry.\n\nThis one fails silently with wrong prices, which makes it the most serious problem.\n\n**Second issue: `tracking_url` is missing from four carriers**\n`delta.py`, `kestrel.py`, `onyx.py` and `tundra.py` don't define `tracking_url(code)`. The other 16 do. Calling `get(\"delta\").tracking_url(...)` raises `AttributeError`. This one at least fails loudly, and nothing in the repo outside `shop/carriers/` calls `tracking_url` (or `rate`) right now.\n\nEverything else is consistent across all 20 modules:\n- The class shape, the `name` attribute and the `label`/`valid_label` formats (`<NAME>-%08d`) all match.\n- The zone keys (`local`/`regional`/`national`) match.\n- The registry keys in `__init__.py` match each carrier's `CARRIER` name.\n\nI didn't edit any files.",
+  "ttft_ms": 1728,
+  "type": "result",
+  "duration_ms": 28982,
+  "uuid": "66cd1f21-4e1e-4392-a3e4-3c82bfba1221",
+  "ttft_stream_ms": 1463,
+  "time_to_request_ms": 224,
+  "first_content_frame_ms": 1464,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.dynamic.1"
+}

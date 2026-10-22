@@ -1,0 +1,127 @@
+{
+ "task": "h4-linediscount",
+ "class": "multi_file",
+ "arm": "final-no-batch",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 82188,
+  "stop_reason": "end_turn",
+  "session_id": "68ce363b-1b8e-4942-8742-01c96507ccc3",
+  "total_cost_usd": 0.2184203,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 9833,
+   "cache_read_input_tokens": 55456,
+   "output_tokens": 1902,
+   "output_tokens_details": {
+    "thinking_tokens": 243
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9833,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 622,
+     "cache_read_input_tokens": 22261,
+     "cache_creation_input_tokens": 362,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 362
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1902,
+    "cacheReadInputTokens": 55456,
+    "cacheCreationInputTokens": 9833,
+    "webSearchRequests": 0,
+    "costUSD": 0.12781920000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 243,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 5144,
+    "cacheReadInputTokens": 77106,
+    "cacheCreationInputTokens": 12569,
+    "webSearchRequests": 0,
+    "costUSD": 0.0906011,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1207,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Per-line discounts are in and the tests pass: I ran `python3 -m unittest discover -s tests -t .` and all 16 tests pass. Nothing is committed.\n\n**What changed:**\n- **`shop/models.py`:** `Line` has a new `discount_percent` field that defaults to 0. `Cart.add(item, qty=1, discount_percent=0)` merges into an existing line only when both the sku and the discount match; otherwise it starts a new line.\n- **`shop/pricing.py`:** `line_subtotal` works out price \u00d7 qty, subtracts `money.percent(base, discount_percent)` from it, and then applies the bulk rule to what's left. `money.percent` does round half up, so 10% of 25 cents rounds to 3 cents.\n- **`shop/cli.py`:** `quote` accepts `sku:price:qty` or `sku:price:qty:discount`.\n- **Tests:** new cases in `tests/test_pricing.py` and a new `tests/test_cli.py`. They cover the default of 0, the discount being applied before the bulk rule (including half-up rounding), merging versus starting a new line, and the CLI with 3 and 4 fields.\n\n**Things you may want to decide:**\n- **No range check on the discount.** The codebase doesn't validate qty either, so I didn't add one. A discount over 100 gives a negative price. A 0\u2013100 check would be easy to add.\n- **Whole-number discounts only on the command line.** The CLI parses the discount as an integer, so something like `12.5` is rejected. Bad input still raises `ValueError`, as it did before.\n- **`__pycache__/` folders.** Running the tests created untracked `__pycache__/` folders in `shop/` and `tests/`. The repo has no `.gitignore` entry for them.",
+  "ttft_ms": 2447,
+  "type": "result",
+  "duration_ms": 84993,
+  "uuid": "ad1a580d-67e0-4b3c-8ada-a69566de1405",
+  "ttft_stream_ms": 1336,
+  "time_to_request_ms": 644,
+  "first_content_frame_ms": 1337,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  9 ++++++---\n shop/models.py        |  7 ++++---\n shop/pricing.py       |  1 +\n tests/test_pricing.py | 39 +++++++++++++++++++++++++++++++++++++--\n 4 files changed, 48 insertions(+), 8 deletions(-)\n",
+ "workdir": "h4-linediscount.final-no-batch.2",
+ "ledger": []
+}

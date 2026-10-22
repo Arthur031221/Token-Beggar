@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15446,
+  "stop_reason": "end_turn",
+  "session_id": "05e1658f-2be5-45e9-8ef6-2395ede8717b",
+  "total_cost_usd": 0.1208616,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 10398,
+   "cache_read_input_tokens": 54568,
+   "output_tokens": 1337,
+   "output_tokens_details": {
+    "thinking_tokens": 170
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10398,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 898,
+     "cache_read_input_tokens": 20300,
+     "cache_creation_input_tokens": 4684,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4684
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1337,
+    "cacheReadInputTokens": 54568,
+    "cacheCreationInputTokens": 10398,
+    "webSearchRequests": 0,
+    "costUSD": 0.1208616,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 170,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Multi-currency design\n\n**Core idea:** Every amount carries its currency, stored as integer minor units with an ISO 4217 code. Amounts in different currencies never mix without an explicit conversion step.\n\n**Changes by file**\n- `shop/money.py`: Add a `Money(amount_minor, currency)` value type and a table of minor-unit counts (JPY 0, USD 2, BHD 3). `to_cents`, `fmt` and `percent` currently assume 2 decimals. Make them take the currency into account, and make adding two different currencies raise an error.\n- `shop/models.py`: Change `Item.price_cents` to a `Money` price. Give `Cart` a single currency and have `add()` reject items in any other currency.\n- `shop/pricing.py`: Return `Money` from the totals. `TAX_RATE` is one hard-coded US-style rate, so it probably needs to vary by currency or region.\n- `shop/orders.py`: Store the currency on `Order`, and keep the exchange rate if any conversion happened.\n- `shop/storage.py`: Add a `currency` field to saved rows. Old rows have none, so when loading, assume they are USD.\n- `shop/reports.py`: `sales_by_customer` adds up raw ints. Group totals by currency, or convert them to one reporting currency at a stated rate.\n- `shop/cli.py`: Add a `--currency` flag to `quote`, and show the currency code in the output.\n- `shop/cache.py`: The cache key and value must include the currency.\n- `shop/carriers/*.py` (20 files): Each rate card quotes plain cents. Give each one its own currency and convert the quote into the cart's currency.\n\n**Main risks**\n1. **Silent mixing:** Old code that still adds bare ints will produce wrong totals without any error. Making `Money` strict catches this.\n2. **Rounding:** `percent` rounds with floats. Use `Decimal`, and decide when conversion happens (per line or per total).\n3. **Existing data:** Rows saved before the change carry no currency. The USD assumption must be correct for them.\n4. **Exchange rates:** Where rates come from, how stale they can be, and recording the rate on each order for audit.\n5. **Carrier spread:** 20 near-identical files are easy to update inconsistently. `maple` also measures weight in grams, not kg.",
+  "ttft_ms": 1697,
+  "type": "result",
+  "duration_ms": 16213,
+  "uuid": "81f7b758-2224-4f67-b842-f2300588522d",
+  "ttft_stream_ms": 1266,
+  "time_to_request_ms": 169,
+  "first_content_frame_ms": 1267,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.2"
+}

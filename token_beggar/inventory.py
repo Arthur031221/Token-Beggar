@@ -1,6 +1,8 @@
 """List every model the user can already reach, without asking for any new key."""
 
 import json
+import os
+import re
 import shutil
 import time
 from pathlib import Path
@@ -19,7 +21,7 @@ def _json(path: Path) -> dict:
 
 def _mcp_servers(cwd: str | None) -> list[str]:
     names: set[str] = set()
-    sources = [Path.home() / ".claude.json"]
+    sources = [(paths.claude_dir() / ".claude.json") if os.environ.get("CLAUDE_CONFIG_DIR") else Path.home() / ".claude.json"]
     if cwd:
         sources.append(Path(cwd) / ".mcp.json")
     for source in sources:
@@ -46,11 +48,23 @@ def _denied_aliases(cwd: str | None) -> set[str]:
     return denied
 
 
+AI_SERVER = re.compile(r"(gemini|codex|openai|gpt|llm|ollama|agy|antigravity|deepseek|mistral|grok|perplexity)", re.IGNORECASE)
+
+
 def discover(cwd: str | None = None) -> dict:
+    from . import external as external_ais  # late import: external uses this module
+
     external = []
+    only = os.environ.get("TOKEN_BEGGAR_EXTERNAL")  # a comma list of the external tools routing may use; "none" turns them all off
+    allowed = None if only is None else {n.strip() for n in only.split(",") if n.strip()}
     for tool in catalog.load()["external"]:
+        if allowed is not None and tool["name"] not in allowed:
+            continue
         if shutil.which(tool["binary"]):
-            external.append({"name": tool["name"], "kind": "cli", "note": tool["note"]})
+            external.append({"name": tool["name"], "kind": "cli", "note": tool["note"], "models": external_ais.detect_models(tool["name"])})
+    for server in _mcp_servers(cwd):  # an MCP server that fronts another AI is a route too
+        if allowed is None and AI_SERVER.search(server) and not any(server in e["name"] for e in external):
+            external.append({"name": server, "kind": "mcp", "note": f"MCP server {server}: call its tools directly", "models": []})
     return {
         "checked_at": int(time.time()),
         "claude": [m.alias for m in catalog.models() if m.alias not in _denied_aliases(cwd)],

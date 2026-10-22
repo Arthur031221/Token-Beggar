@@ -1,0 +1,110 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16608,
+  "stop_reason": "end_turn",
+  "session_id": "8d283aea-270e-47a2-907b-530c7943d4ea",
+  "total_cost_usd": 0.1579666,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 14443,
+   "cache_read_input_tokens": 83153,
+   "output_tokens": 1288,
+   "output_tokens_details": {
+    "thinking_tokens": 107
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14443,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 783,
+     "cache_read_input_tokens": 28776,
+     "cache_creation_input_tokens": 254,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 254
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1288,
+    "cacheReadInputTokens": 83153,
+    "cacheCreationInputTokens": 14443,
+    "webSearchRequests": 0,
+    "costUSD": 0.1579666,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 107,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read all 20 carrier modules and the registry in `shop/carriers/__init__.py`. Two inconsistencies would break code that uses the registry without knowing which carrier it has. No code outside `shop/carriers/` calls the registry yet, so these are risks for future callers, not current failures. I didn't edit any files.\n\n### 1. `shop/carriers/maple.py` takes weight in grams; every other carrier takes kg\n- The module docstring says \"weight in grams\". It uses `PER_GRAMS = 3` and `MAX_GRAMS = 30000` (`maple.py:8,10`) where the other 19 carriers use `PER_KG` and `MAX_KG`.\n- The method signature is the same as the others, `rate(self, weight: float, zone=\"local\") -> int`, so nothing flags the difference when it's called.\n- **What breaks:** a caller that passes kilograms, as it would for any other carrier, gets the wrong price with no error. For example, `get(\"maple\").rate(5)` prices 5 g and returns 509 cents. Priced as 5 kg it should be about 15,494 cents, so it's roughly 30\u00d7 too cheap. Weight validation is also off: a 31 kg parcel passed as `31` is accepted because it's under 30000. If a caller converts to grams for maple only, it now needs a special case for that carrier.\n\n### 2. `delta.py`, `kestrel.py`, `onyx.py` and `tundra.py` have no `tracking_url()` method\n- The other 16 carriers all define `tracking_url(self, code) -> str`. These four end after `valid_label` (they are the 26-line files).\n- **What breaks:** a generic call like `get(name).tracking_url(code)` raises `AttributeError` for `\"delta\"`, `\"kestrel\"`, `\"onyx\"` and `\"tundra\"`.\n\n### Consistent across all carriers\n- Every carrier defines `name`, `rate()` with the same signature, `ZONES` with the same keys (`local`, `regional`, `national`), `label()` returning `<NAME>-%08d`, and a `valid_label()` that matches its own label.\n- Every registry key matches its class's `name`.\n\nThe registry has no base class or Protocol that would catch these differences at import time. Adding one, or a test that checks every carrier against the same interface, would catch both problems.",
+  "ttft_ms": 2572,
+  "type": "result",
+  "duration_ms": 18096,
+  "uuid": "5200e92d-3302-4a3e-bbe4-5ca0fcafccf0",
+  "ttft_stream_ms": 2299,
+  "time_to_request_ms": 1005,
+  "first_content_frame_ms": 2299,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.dynamic.3"
+}

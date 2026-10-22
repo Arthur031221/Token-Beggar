@@ -1,0 +1,126 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 45974,
+  "stop_reason": "end_turn",
+  "session_id": "588bb470-04ed-41bb-b9a5-5e5a8c84749b",
+  "total_cost_usd": 0.16308659999999997,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7207,
+   "cache_read_input_tokens": 55764,
+   "output_tokens": 1893,
+   "output_tokens_details": {
+    "thinking_tokens": 368
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7207,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 623,
+     "cache_read_input_tokens": 21420,
+     "cache_creation_input_tokens": 374,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 374
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1893,
+    "cacheReadInputTokens": 55764,
+    "cacheCreationInputTokens": 7207,
+    "webSearchRequests": 0,
+    "costUSD": 0.10669279999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 368,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3141,
+    "cacheReadInputTokens": 31378,
+    "cacheCreationInputTokens": 8732,
+    "webSearchRequests": 0,
+    "costUSD": 0.05639380000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 776,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `Cart.apply_coupon(code)` with the two coupons in a new `shop/coupons.py`, and `calc_total` now takes them into account. The full test suite passes (`Ran 11 tests \u2026 OK`). A worker did the implementation; I checked which files changed, but I didn't re-read the code.\n\n**Files:** `shop/coupons.py` is new. `shop/models.py`, `shop/pricing.py` and `tests/test_pricing.py` were changed.\n\n**How coupons work:**\n- **Stacking:** SAVE10's 10 percent is taken from the original subtotal, then FLAT500's 500 cents comes off. So you get the same total whichever order the coupons are applied in.\n- **Before tax:** the discount comes off the subtotal before tax is worked out. The discounted subtotal can't go below 0.\n- **Rounding:** the 10 percent uses the existing round-half-up helper `money.percent`.\n- **Mixed carts:** if only some items are taxable, the taxable amount shrinks by the same proportion as the subtotal.\n- **`calc_tax` also changed:** `Order` calls both `calc_total` and `calc_tax`, so `calc_tax` now applies the coupons too, to keep them consistent.\n- **Carts with no coupons** go through exactly the same code as before.\n- **Unknown codes** raise `ValueError`.\n\n**Tests added:** SAVE10 alone, FLAT500 alone, both together (checking that tax is charged on the discounted subtotal), the zero floor, and an unknown code.\n\n**Decision for you:** at the moment, applying the same code twice gives the discount twice. You didn't say how repeats should behave. If you'd rather a repeat be ignored or raise an error, it's a small change. I'd make it raise a `ValueError` so a mistake doesn't go unnoticed.",
+  "ttft_ms": 5536,
+  "type": "result",
+  "duration_ms": 47331,
+  "uuid": "f7edb479-39f0-43ff-8f61-7116effb649c",
+  "ttft_stream_ms": 3759,
+  "time_to_request_ms": 311,
+  "first_content_frame_ms": 3759,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py        |  6 ++++++\n shop/pricing.py       | 20 ++++++++++++++++----\n tests/test_pricing.py | 34 ++++++++++++++++++++++++++++++++++\n 3 files changed, 56 insertions(+), 4 deletions(-)\n",
+ "workdir": "c1-coupon.dynamic.2"
+}

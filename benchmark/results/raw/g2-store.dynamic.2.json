@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 11613,
+  "stop_reason": "end_turn",
+  "session_id": "3f5c2c59-1d2c-45d1-93b0-e281dabd18ca",
+  "total_cost_usd": 0.078849,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6171,
+   "cache_read_input_tokens": 54785,
+   "output_tokens": 925,
+   "output_tokens_details": {
+    "thinking_tokens": 69
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6171,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 636,
+     "cache_read_input_tokens": 20509,
+     "cache_creation_input_tokens": 247,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 247
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 925,
+    "cacheReadInputTokens": 54785,
+    "cacheCreationInputTokens": 6171,
+    "webSearchRequests": 0,
+    "costUSD": 0.078849,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 69,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move to SQLite (WAL mode), keeping the `Store` interface.**\n\n**Why the current design fails at your scale**\n\n`shop/storage.py:16` reads the whole JSON file, rewrites every row, then writes the file back on each save.\n- **Lost updates:** with two writers, both read the file, each adds its own order, and the second write erases the first. Nothing locks the file.\n- **Torn files:** `write_text` overwrites the file in place. A crash or a concurrent read partway through leaves invalid JSON, and every order is unreadable.\n- **Cost:** each save is O(n). With 100k orders, every save parses and rewrites about 10 MB, so total work grows quadratically.\n\n**Why SQLite**\n\nIt's in the standard library and needs no server. It handles writers in several processes with transactions and locking. `INSERT \u2026 ON CONFLICT(id) DO UPDATE` replaces the current filter-and-append with a single-row upsert. WAL mode lets readers, such as `cli.py`'s report, run while a write is in progress. Postgres would be more than you need for two writers on one host. Switch only if the writers end up on different machines.\n\n**Migration path**\n\n1. Add a `SqliteStore` with the same `load()` and `save_order()` methods. Use `id` as the primary key, set `journal_mode=WAL` and a `busy_timeout`, and keep money in integer cents.\n2. Write a one-off import script that loads the JSON file and inserts all rows in one transaction. Check that the row count and the sum of totals match.\n3. Choose the backend from the `--db` file extension in `cli.py`. Add a test with two concurrent writers.\n4. Stop the writers, run the import, switch over, and keep the JSON file read-only as a rollback.\n5. After that, add indexed queries such as `load(state=\u2026)` so reports don't load all 100k rows.",
+  "ttft_ms": 1403,
+  "type": "result",
+  "duration_ms": 12213,
+  "uuid": "928bc5fa-8174-44d3-852b-531fe531bc07",
+  "ttft_stream_ms": 1078,
+  "time_to_request_ms": 276,
+  "first_content_frame_ms": 1078,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.2"
+}

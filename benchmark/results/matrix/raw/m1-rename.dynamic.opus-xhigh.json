@@ -1,0 +1,131 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "dynamic",
+ "rep": "opus-xhigh",
+ "top": "claude-opus-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 29174,
+  "stop_reason": "end_turn",
+  "session_id": "ba6b972c-d965-4016-81cc-fb5da5c0dd36",
+  "total_cost_usd": 0.10754323500000001,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 853,
+   "cache_read_input_tokens": 20990,
+   "output_tokens": 275,
+   "output_tokens_details": {
+    "thinking_tokens": 21
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 853,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 275,
+     "cache_read_input_tokens": 20990,
+     "cache_creation_input_tokens": 853,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 853
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1168,
+    "cacheReadInputTokens": 53477,
+    "cacheCreationInputTokens": 9053,
+    "webSearchRequests": 0,
+    "costUSD": 0.10650340000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 288,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 964,
+    "cacheReadInputTokens": 25241,
+    "cacheCreationInputTokens": 2437,
+    "webSearchRequests": 0,
+    "costUSD": 0.001039835,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 207,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjippeo-af9a2f54"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I renamed `calc_total` to `order_total` across the repo, and all 6 tests pass.\n\n**Files changed:**\n- `shop/pricing.py`: the function definition\n- `shop/orders.py`: import and call\n- `shop/cli.py`: import and call\n- `tests/test_orders.py`: import and call\n- `tests/test_pricing.py`: import and calls\n\nA search for `calc_total` now returns nothing. No other names contained it, and it didn't appear in any docs, `__all__` lists or string mock targets.\n\n**Tests:** I ran `python3 -m unittest discover -s tests -t .`, the command from the README:\n```\nRan 6 tests in 0.000s\n\nOK\n```\n\nThe changes are not committed. Tell me if you want me to commit them.",
+  "ttft_ms": 5912,
+  "type": "result",
+  "duration_ms": 8335,
+  "uuid": "a55801e8-b6ba-4b46-baed-d605ea49a72c",
+  "ttft_stream_ms": 5665,
+  "time_to_request_ms": 244,
+  "first_content_frame_ms": 5666,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.dynamic.opus-xhigh"
+}

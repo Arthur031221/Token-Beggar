@@ -1,0 +1,126 @@
+{
+ "task": "f1-shipping",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 52029,
+  "stop_reason": "end_turn",
+  "session_id": "ad117940-f283-48ea-8155-304a63127f44",
+  "total_cost_usd": 0.2895496,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 19438,
+   "cache_read_input_tokens": 88976,
+   "output_tokens": 2538,
+   "output_tokens_details": {
+    "thinking_tokens": 716
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 19438,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 692,
+     "cache_read_input_tokens": 32459,
+     "cache_creation_input_tokens": 1566,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1566
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2538,
+    "cacheReadInputTokens": 88976,
+    "cacheCreationInputTokens": 19438,
+    "webSearchRequests": 0,
+    "costUSD": 0.2240912,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 716,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2448,
+    "cacheReadInputTokens": 46449,
+    "cacheCreationInputTokens": 14527,
+    "webSearchRequests": 0,
+    "costUSD": 0.0654584,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 164,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Orders now include shipping, and the full suite passes: `python3 -m unittest discover -s tests -t .` ran 11 tests, all OK. I read the diff myself because it touches money.\n\n**What changed**\n- **`shop/orders.py`**: `Order(cart, carrier=None, weight=0, zone=\"local\")` looks up the carrier in the registry and sets `shipping_cents` from its rate for that weight and zone. It's 0 when there's no carrier, and `total_cents` now includes it. Existing calls to `Order(cart)` behave as before.\n- **`shop/storage.py`**: `save_order` saves `\"shipping\"`. `load` treats a missing value in older saved orders as 0.\n- **`shop/reports.py`**: unchanged. The report adds up each saved order's `total`, which now includes shipping, so nothing is counted twice. Nothing else in `shop/` reads `total_cents`.\n- **`tests/test_orders.py`**: 5 new tests cover:\n  - no carrier;\n  - a carrier, weight and zone giving the right shipping and total;\n  - an unknown carrier;\n  - `shipping` being saved;\n  - the report with both new orders and older ones that have no `shipping` field.\n\n**Behaviour to be aware of**\n- **Errors:** an unknown carrier name raises `KeyError`. A weight of 0 or less, or above that carrier's limit, raises `ValueError`. So a carrier with the default `weight=0` raises an error rather than charging nothing.\n- **Unit mismatch:** `maple` prices by the gram and every other carrier by the kg. `Order` passes the weight straight through, so a kg weight sent to maple is charged about 1000\u00d7 too little: 2 kg costs 500\u00a2 instead of 6,494\u00a2. I left this alone because I don't know which unit your callers use. If they use kg, I'd convert the weight to grams for maple inside `Order` and add a test for it.\n\nNothing is committed.",
+  "ttft_ms": 3605,
+  "type": "result",
+  "duration_ms": 53363,
+  "uuid": "bcd37940-e5ad-4b34-abac-117588a4deec",
+  "ttft_stream_ms": 1571,
+  "time_to_request_ms": 215,
+  "first_content_frame_ms": 1571,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/orders.py       |  9 +++++++--\n shop/storage.py      |  7 +++++--\n tests/test_orders.py | 53 ++++++++++++++++++++++++++++++++++++++++++++++++++++\n 3 files changed, 65 insertions(+), 4 deletions(-)\n",
+ "workdir": "f1-shipping.dynamic.3"
+}

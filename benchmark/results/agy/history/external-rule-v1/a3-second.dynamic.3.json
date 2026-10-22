@@ -1,0 +1,111 @@
+{
+ "task": "a3-second",
+ "class": "second-opinion",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15078,
+  "stop_reason": "end_turn",
+  "session_id": "3f043b8d-8020-481f-8a94-314588b2c57c",
+  "total_cost_usd": 0.0813124,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6009,
+   "cache_read_input_tokens": 34722,
+   "output_tokens": 1314,
+   "output_tokens_details": {
+    "thinking_tokens": 551
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6009,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1161,
+     "cache_read_input_tokens": 20137,
+     "cache_creation_input_tokens": 457,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 457
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1314,
+    "cacheReadInputTokens": 34722,
+    "cacheCreationInputTokens": 6009,
+    "webSearchRequests": 0,
+    "costUSD": 0.0813124,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 551,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I'd flag four problems in `shop/cache.py`, in order of severity:\n\n1. **The cache never shrinks (lines 11 and 18).** Expired entries are only overwritten, never removed. Every SKU that is ever looked up stays in memory for the life of the process, so memory grows without limit in a long-running service.\n\n2. **A slow load can undo an invalidation (lines 17\u201318 vs 22).** Thread A misses and starts a slow `loader(sku)`. Meanwhile the price changes and thread B calls `invalidate(sku)`. Thread A then writes the old price back, and it is served as fresh for a full `ttl`. This is the bug most likely to produce wrong prices.\n\n3. **Many threads can load the same SKU at once (lines 14\u201317).** When a popular SKU expires, every thread that asks for it calls `loader` at the same moment. That multiplies load on the backend exactly when it is busiest.\n\n4. **Entries can live longer than `ttl` (line 18).** The timestamp is taken after the load finishes, so a value fetched at the start of a slow load can be served for `ttl` plus the load time. This one is minor.\n\nThere's no risk of dict corruption: individual dict operations are atomic in CPython. The problems are all races between steps.\n\n**The fix I'd choose:** one `threading.Lock` guarding a size-limited `OrderedDict` (least recently used entries evicted first), plus a record of loads already in progress:\n- On a miss, the first thread registers a `Future` for that SKU and calls `loader` outside the lock. Other threads wait on that Future, so each SKU is loaded once per expiry.\n- `invalidate` removes the entry and bumps a version number for that SKU. A load that finishes under an old version returns its value but doesn't store it.\n- Take the timestamp before calling `loader`, enforce a `maxsize`, and drop expired entries when reading or evicting.\n- If `loader` raises, clear the in-progress record and pass the error to the waiting threads.",
+  "ttft_ms": 2722,
+  "type": "result",
+  "duration_ms": 16305,
+  "uuid": "1dddfcfe-1aa7-4e25-911f-3dd2a49f00c8",
+  "ttft_stream_ms": 2097,
+  "time_to_request_ms": 852,
+  "first_content_frame_ms": 2097,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "a3-second.dynamic.3",
+ "ledger": []
+}

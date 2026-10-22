@@ -1,0 +1,111 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 24022,
+  "stop_reason": "end_turn",
+  "session_id": "bdd662fb-5f9b-4110-b110-12c9609f15c9",
+  "total_cost_usd": 0.1361018,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 9471,
+   "cache_read_input_tokens": 92369,
+   "output_tokens": 2091,
+   "output_tokens_details": {
+    "thinking_tokens": 608
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9471,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1400,
+     "cache_read_input_tokens": 21203,
+     "cache_creation_input_tokens": 1058,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1058
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2091,
+    "cacheReadInputTokens": 92369,
+    "cacheCreationInputTokens": 9471,
+    "webSearchRequests": 0,
+    "costUSD": 0.1361018,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 608,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found one bug that breaks every order outright, two more that surface once the obvious fix is made, and one risky change that does nothing today.\n\n### 1. `_ids_seen` is never defined, so creating any order crashes (critical)\n`shop/orders.py:12` now reads `self.id = len(_ids_seen)`, but the diff never creates `_ids_seen`. It leaves `_ids = itertools.count(1000)` in place and adds nothing else. Every `Order(cart)` raises `NameError: name '_ids_seen' is not defined`, so no order can be created and both tests in `tests/test_orders.py` fail in `make()`. Removing the only use of `_ids` also leaves `_ids` and `import itertools` unused.\n\n### 2. Even with `_ids_seen = []` added, the new IDs are wrong\n- **IDs restart at 0 in every process.** `itertools.count(1000)` also resets per process, but the new scheme changes where IDs start, and new orders would never reach the 1000+ IDs already saved by the old code.\n- **Saved orders get overwritten silently.** `Store.save_order` (`shop/storage.py:17`) treats `id` as the key: it removes any existing row with the same `id` before appending. Each new process hands out 0, 1, 2\u2026 again, so saving those orders replaces whatever orders were stored under those IDs earlier, with no error.\n- **Two threads can get the same ID.** `len(...)` followed by `append(...)` is two separate steps. Two threads creating orders at the same time can both read the same length and get the same ID. `next(itertools.count())` hands out each number exactly once, so the old code didn't have this problem.\n- **Memory grows forever.** The list keeps every ID ever issued, only so its length can serve as a counter.\n\n### 3. `ALLOWED.get(self.state, STATES)` fails open (lower severity, at `shop/orders.py:20`)\nBefore, an unknown current state caused a `KeyError`, which stopped the transition. Now an unknown current state falls back to allowing a move to any state in `STATES`, including going back to `\"new\"` or `\"paid\"`. A typo or a state added later without an `ALLOWED` entry would then accept any transition instead of being rejected. Nothing in the repo sets `state` to anything outside `ALLOWED` today, so this has no effect now, but it hides bad data instead of reporting it. The original strict lookup was the safer behaviour.\n\n**Recommendation:** revert both parts of the diff. If the goal was predictable IDs, keep `itertools.count` (perhaps seeded from the store's largest saved ID) rather than a list length.",
+  "ttft_ms": 2070,
+  "type": "result",
+  "duration_ms": 24468,
+  "uuid": "799078d3-1c8e-47d5-a166-767e2a1139b7",
+  "ttft_stream_ms": 1103,
+  "time_to_request_ms": 174,
+  "first_content_frame_ms": 1103,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.alone.1",
+ "ledger": []
+}

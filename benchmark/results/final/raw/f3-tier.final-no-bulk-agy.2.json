@@ -1,0 +1,127 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "final-no-bulk-agy",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 34424,
+  "stop_reason": "end_turn",
+  "session_id": "8726bf0e-62e9-4993-b3c7-1278d8770b3c",
+  "total_cost_usd": 0.16066729999999999,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 8733,
+   "cache_read_input_tokens": 32670,
+   "output_tokens": 1502,
+   "output_tokens_details": {
+    "thinking_tokens": 236
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8733,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 653,
+     "cache_read_input_tokens": 19880,
+     "cache_creation_input_tokens": 1643,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1643
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1502,
+    "cacheReadInputTokens": 32670,
+    "cacheCreationInputTokens": 8733,
+    "webSearchRequests": 0,
+    "costUSD": 0.106454,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 236,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3159,
+    "cacheReadInputTokens": 29198,
+    "cacheCreationInputTokens": 7875,
+    "webSearchRequests": 0,
+    "costUSD": 0.0542133,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 358,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and the full suite passes (`python3 -m unittest discover -s tests -t .`: 17 run, 17 passed). Nothing is committed. A subagent made the changes and ran the tests; I haven't re-read its code myself.\n\n- **Cart:** `Cart.tier` defaults to `'standard'`. Existing code that creates a `Cart` works unchanged.\n- **Pricing (`shop/pricing.py`):** gold takes 10% off and silver 5%; any other tier gets nothing. One shared helper applies the discount, and both `calc_tax` and `calc_total` use it, so tax is worked out on the discounted amount.\n- **Order:** no change was needed. `Order` already gets its numbers from `calc_total` and `calc_tax`, so the tier discount carries through.\n- **CLI:** `quote --tier` was added, defaulting to `standard`.\n- **Tests:** there are new tests in `tests/test_pricing.py` and `tests/test_orders.py`, and a new `tests/test_cli.py` for the `--tier` option.\n\nDecisions worth checking:\n- **Order with the bulk discount:** the existing per-line bulk discount comes off first, then the tier discount, then tax.\n- **Untaxable items:** they still get the tier discount, but that discount doesn't change the tax.\n- **Rounding:** amounts stay in whole cents with the existing round-half-up rule. The discount is rounded separately on the full subtotal and on the taxable part, so the two can differ by a cent in edge cases.",
+  "ttft_ms": 1784,
+  "type": "result",
+  "duration_ms": 35794,
+  "uuid": "3f1ec7cb-6338-4016-b221-21ca2d11ade3",
+  "ttft_stream_ms": 938,
+  "time_to_request_ms": 175,
+  "first_content_frame_ms": 938,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/pricing.py       | 17 ++++++++++++-----\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 37 +++++++++++++++++++++++++++++++++++++\n 5 files changed, 60 insertions(+), 6 deletions(-)\n",
+ "workdir": "f3-tier.final-no-bulk-agy.2",
+ "ledger": []
+}

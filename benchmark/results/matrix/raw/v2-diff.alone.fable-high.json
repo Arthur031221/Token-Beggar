@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": "fable-high",
+ "top": "claude-fable-5-1",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 76851,
+  "stop_reason": "end_turn",
+  "session_id": "26bd7126-10d6-451e-b522-5759878e749e",
+  "total_cost_usd": 0.4813185,
+  "usage": {
+   "input_tokens": 194,
+   "cache_creation_input_tokens": 14255,
+   "cache_read_input_tokens": 152514,
+   "output_tokens": 3123,
+   "output_tokens_details": {
+    "thinking_tokens": 1027
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14255,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 835,
+     "cache_read_input_tokens": 26916,
+     "cache_creation_input_tokens": 129,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 129
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 194,
+    "outputTokens": 3123,
+    "cacheReadInputTokens": 152514,
+    "cacheCreationInputTokens": 14255,
+    "webSearchRequests": 0,
+    "costUSD": 0.4813185,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 1027,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The change touches two lines in `shop/orders.py` and introduces four problems. I confirmed the first one by applying the diff to a scratch copy and running the test suite, which fails with two errors.\n\n**1. `_ids_seen` is never defined, so every `Order(...)` raises `NameError`.** The diff replaces `next(_ids)` with `len(_ids_seen)` and an `append`, but adds no module-level `_ids_seen = []`. Nothing else in the repo defines that name. Constructing any order crashes at `shop/orders.py:12`, and both tests in `tests/test_orders.py` error out. This also leaves the `itertools` import and `_ids` counter as dead code.\n\n**2. Even with `_ids_seen` defined, the id scheme regresses.** Ids now start at 0 instead of 1000, which changes persisted ids in `Store` and carrier labels. The list grows by one entry per order for the life of the process purely to compute its length, which is an unbounded memory leak. And `len()` followed by `append()` is not atomic, so two threads creating orders at once can receive the same id, whereas `next()` on an `itertools.count` is safe under the GIL. Duplicate ids matter here because `Store.save_order` at `shop/storage.py:17` dedupes rows by id, so a collision silently overwrites another order.\n\n**3. `ALLOWED.get(self.state, STATES)` turns an invariant violation into a permissive path.** Previously an order whose state was not a key in `ALLOWED` raised `KeyError`, which exposed corruption. Now the fallback is the full `STATES` tuple, so an order in any unrecognized state may move to any known state, including back to `\"new\"`. I verified that setting `order.state = \"bogus\"` and calling `move(\"new\")` succeeds after this change. Since `ALLOWED` already covers every entry in `STATES`, the fallback is never hit by valid orders. Its only effect is to mask bad state.\n\n**4. The fallback also bypasses terminal states in spirit.** `STATES` includes states that are supposed to be dead ends, so the fallback contradicts the point of `ALLOWED`. If the intent was to be defensive, the correct fallback is an empty set, which rejects every transition from an unknown state.\n\nA side note: the hunk headers in `change.diff` use `@@ class Order:` with no line ranges, so `git apply` and `patch` will reject the file as written. That is a problem with the patch artifact rather than the code, but it means the change cannot be applied as-is.",
+  "ttft_ms": 4107,
+  "type": "result",
+  "duration_ms": 77191,
+  "uuid": "5c14c769-f264-4e98-8e4f-e7e0186459e6",
+  "ttft_stream_ms": 2965,
+  "time_to_request_ms": 83,
+  "first_content_frame_ms": 2966,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.alone.fable-high"
+}

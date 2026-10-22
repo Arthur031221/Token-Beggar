@@ -1,0 +1,111 @@
+{
+ "task": "h6-partial",
+ "class": "design",
+ "arm": "v020",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 23702,
+  "stop_reason": "end_turn",
+  "session_id": "dec120b6-962b-4b4e-89ca-abea54766d7c",
+  "total_cost_usd": 0.1479842,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11592,
+   "cache_read_input_tokens": 76081,
+   "output_tokens": 2000,
+   "output_tokens_details": {
+    "thinking_tokens": 811
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11592,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1449,
+     "cache_read_input_tokens": 23670,
+     "cache_creation_input_tokens": 712,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 712
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2000,
+    "cacheReadInputTokens": 76081,
+    "cacheCreationInputTokens": 11592,
+    "webSearchRequests": 0,
+    "costUSD": 0.1479842,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 811,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Design: partial shipments and returns**\n\n**What has to change**\n\n- **`shop/orders.py`**: each line is currently stored as `(sku, qty, price)`. It needs to become a record with `taxable`, the discounted line subtotal, `shipped_qty` and `returned_qty`. Add `ship(qtys, carrier)` and `return_items(qtys)`, both checking that quantities never exceed what is still available. Add the states `partially_shipped` and `partially_returned`/`returned` to `STATES` and `ALLOWED`, and set state from the line quantities rather than by hand. Decide whether cancelling after a partial shipment cancels only the unshipped items.\n- **`shop/models.py`**: add `Shipment` (id, carrier, label, line quantities) and `Return` (id, line quantities, refund in cents).\n- **`shop/pricing.py`**: add a refund calculation. A partial return from a line that got the bulk discount (qty \u2265 10) should refund at the discounted unit price, not lose the discount.\n- **`shop/storage.py`**: `save_order` only saves totals and state, so lines, shipments and returns are never written. Add them, and give old rows defaults when they load.\n- **`shop/reports.py`**: `sales_by_customer` only counts `paid`/`shipped`. Include the new states and subtract refunds.\n- **Carriers**: don't change the 20 carrier files. Pass a unique shipment id to `label()` instead of the order id, so each shipment gets its own label.\n- **`shop/cli.py`, `tests/`**: optional `ship`/`return` commands. Add tests for over-shipping, over-returning, refund rounding and loading old JSON.\n\n**Main risks**\n\n1. **Tax rounding.** Tax is rounded once on the whole taxable subtotal. Rounding it per return can refund more than was charged, so cap total refunds at what was paid.\n2. **Old data.** Existing JSON has no line data, so returns can't be checked for those orders.\n3. **Non-atomic writes.** `Store` rewrites the whole file on every save, so frequent shipment and return events increase the chance of losing data.",
+  "ttft_ms": 2983,
+  "type": "result",
+  "duration_ms": 24143,
+  "uuid": "6e259730-bba1-4adf-9ce3-9cf860d8805a",
+  "ttft_stream_ms": 1337,
+  "time_to_request_ms": 201,
+  "first_content_frame_ms": 1337,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h6-partial.v020.1",
+ "ledger": []
+}

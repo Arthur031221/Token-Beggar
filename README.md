@@ -2,13 +2,13 @@
 
 # Token Beggar
 
-**Begs every token back. Same answers, a fraction of the bill.**
+**Begs every token back. Same answers, fewer tokens.**
 
 [English](README.md) | [Traditional Chinese](README.zh-TW.md)
 
 ![Token Beggar demo](assets/demo.gif)
 
-I'm a skill for a terminal coding agent with one habit: before the big model does a job, I check whether a cheaper one can do it just as well. Reading logs, renaming things and running test loops go to a small model in a worker. Design and root causes stay with the model you picked.
+I'm a skill for a terminal coding agent with one habit: before the big model does a job, I check whether a cheaper route can do it just as well. The chat model splits your prompt into subtasks and sends each one to the cheapest provider, model and effort that keeps the quality: a small model in a worker, an outside tool's CLI such as `agy`, or itself. Design, root causes and the final answer stay with the model you picked.
 
 ```
 /plugin marketplace add Arthur031221/Token-Beggar
@@ -17,36 +17,84 @@ I'm a skill for a terminal coding agent with one habit: before the big model doe
 
 Restart the agent or run `/reload-plugins`, then run `token-beggar doctor` to confirm the hooks run. Needs Python 3.10 or newer, standard library only.
 
+At the end of every reply where I acted, you get one line:
+
+```
+Token Beggar: about 1.6x fewer tokens than Opus 5.5 high alone (est. 86k vs 135k) | exact edits | routed 1: haiku low x1
+```
+
+The first number (86k) is counted: the main chat plus every worker, input, output and cache. The second is that count times a ratio I measured, so it's an estimate and says so. Tokens used by an outside tool are shown apart, because they don't come out of your chat quota. If routing measured no gain for that kind of task, the line says that instead of claiming one.
+
 ## What it saves
 
-Measured on 21 tasks in 7 classes, 3 runs each, with and without me. The chat model was Opus 5.5 at high effort. Cost is list price from the agent's own usage report.
+All numbers are chat-side tokens (what your plan is billed for), with Opus 5.5 at high effort as the chat model. 21 tasks in 7 classes, 3 runs each, three arms with the same prompt and tools: the model alone, my first version (a fixed table of classes), and the dynamic router in this release.
 
-| Class | Without | With | Cheaper | Quality without / with |
+| Arm | Tokens per task | Cost per task | Quality |
+| --- | --- | --- | --- |
+| Alone | 105,690 | $0.152 | 0.96 |
+| Fixed table (v0.1) | 101,446 (1.04x fewer) | $0.122 | 0.96 |
+| **Dynamic router (v0.2)** | **93,501 (1.13x fewer)** | $0.133 | **0.97** |
+
+The dynamic router uses fewer tokens at equal or better quality, so it replaces the table. The table is cheaper in dollars, though: $0.122 against $0.133. Dollars weight tokens by the price of the model that used them, so the two measures can rank the arms differently. Both are measured and both are in the repository. Per class:
+
+| Class | Tokens alone | Fixed table | Dynamic | Dynamic vs alone | Quality alone / table / dynamic |
+| --- | --- | --- | --- | --- | --- |
+| Multi-file feature | 160,462 | 135,395 | 112,791 | **1.42x** | 1.00 / 1.00 / 1.00 |
+| Mechanical edits | 116,715 | 112,538 | 98,096 | **1.19x** | 1.00 / 1.00 / 1.00 |
+| Bug root cause | 146,363 | 124,514 | 130,712 | 1.12x | 1.00 / 1.00 / 1.00 |
+| Reading and summarising | 69,501 | 72,089 | 64,778 | 1.07x | 0.89 / 0.86 / 0.92 |
+| Code review | 92,207 | 85,928 | 89,695 | 1.03x | 0.83 / 0.87 / 0.93 |
+| Design | 62,063 | 55,779 | 62,190 | 1.00x | 1.00 / 1.00 / 0.97 |
+| Routine code | 92,519 | 123,880 | 96,247 | 0.96x | 1.00 / 1.00 / 1.00 |
+
+The honest headline is 1.13x over a mixed set and 1.42x on multi-file work. It's not 10x. The tasks are small and every worker pays a fixed cost to start, so the saving grows with task size. I treat anything under about 1.15x as no different from no saving: with 3 runs per arm that's inside the spread I saw.
+
+The reading quality drop in v0.1 (0.89 to 0.86) was one checklist item on a synthesis task, plus noise. The dynamic router scores 0.92 on the same tasks. The routing rules were tuned on these 21 tasks over six iterations (the first card, a soft menu, never routed at all, and every variant is in `data/measured.json`), so this measures this setup. It doesn't forecast yours.
+
+<p align="center"><img src="assets/chart-tokens.svg" alt="Mean billed tokens per task by class and arm"><img src="assets/chart-quality.svg" alt="Mean quality per task by class and arm"></p>
+
+### The footer ratios
+
+The footer needs a ratio for the model you run, the effort and the kind of task. I measured all of them: 4 models (Opus 5.5, Sonnet 5.5, Haiku 5.5, Fable 5.1), 5 efforts (low to max), 8 kinds of task, one small task per kind, each run alone and with the skill. That's 288 runs in print mode with JSON output. A single cell is noisy, so the footer quotes the pooled ratio of a model and kind (tokens summed over every effort measured). Ratio above 1 means fewer tokens with the skill.
+
+| Kind | Opus 5.5 | Sonnet 5.5 | Haiku 5.5 | Fable 5.1 |
 | --- | --- | --- | --- | --- |
-| Multi-file feature | $2.47 | $1.58 | **1.56x** | 1.00 / 1.00 |
-| Mechanical edits | $1.11 | $0.80 | **1.4x** | 1.00 / 1.00 |
-| Reading and summarising | $0.91 | $0.75 | 1.21x | 0.89 / 0.86 |
-| Design | $0.93 | $0.82 | 1.14x | 1.00 / 1.00 |
-| Routine code | $1.47 | $1.32 | 1.12x | 1.00 / 1.00 |
-| Bug root cause | $1.45 | $1.29 | 1.12x | 1.00 / 1.00 |
-| Code review | $1.21 | $1.13 | 1.07x | 0.83 / 0.87 |
-| **All 63 runs per arm** | **$9.56** | **$7.69** | **1.24x** | **0.96 / 0.96** |
+| Multi-file feature | 1.73 | 0.62 | 0.98 | 1.71 |
+| Exact edits | 1.57 | 1.13 | 1.60 | 1.42 |
+| One function with tests | 1.48 | 1.24 | 1.38 | 1.43 |
+| Design | 1.14 | 1.44 | 1.21 | 1.27 |
+| Read and answer | 1.26 | 1.07 | 0.93 | 1.11 |
+| Review | 0.87 | 1.40 | 1.05 | 1.21 |
+| Bug fix | 1.04 | 0.98 | 0.93 | 1.36 |
+| Summarise many files | 0.89 | 0.74 | 1.04 | 0.93 |
 
-The headline is 1.56x on multi-file work and 1.24x over a mixed day. It's not 10x. The tasks are small and every worker pays a fixed cost to start, so the saving grows with task size.
+Below 1.15 the footer says "about the same" or "alone would likely use fewer", and where I have no ratio it prints the count only. Things to know before you lean on a number:
 
-Read the small numbers with care. Design, bug root cause and review never go to a worker, yet they came out 1.07x to 1.14x cheaper. That's run to run variation, plus a shorter path the routing card seems to give the chat model. So I treat anything under about 1.15x as indistinguishable from no saving. Three classes clear that bar: multi-file work, mechanical edits and reading. Reading comes with a small quality dip, noted below.
+- Sonnet 5.5 as the chat model loses on multi-file features (0.62) and on reading many files (0.74): the worker start cost is larger than what it saves. The footer says so.
+- Fable 5.1 was measured at low, high and max effort. Medium and xhigh are marked `interpolated` in `data/measured.json` and in the footer, and carry the pooled ratio. Everything else was run.
+- Without the skill, the median task used about 3.4x the tokens at max effort that it used at medium, and 1.5x at xhigh. Running `max` for small jobs is the biggest single token cost I saw.
+- One run per cell and arm. The spread across efforts inside one pooled ratio is in the data (`cell_min`, `cell_max`).
 
-I'm a beggar, not a magician. Where a cheaper model doesn't hold quality, I stay out. Review went to a worker in my first pass and came out at 0.86x, so it now stays inline. Reading still goes to a worker and quality was 0.86 against 0.89, one checklist item on average. That's inside the judge's noise, but it doesn't prove there's no loss. The routes were tuned on these same 21 tasks, so the table measures this setup. It doesn't forecast yours.
+### Outside tools
 
-<p align="center"><img src="assets/chart-cost.svg" alt="Mean cost per task by class"><img src="assets/chart-quality.svg" alt="Mean quality per task by class"></p>
+With `agy` on the PATH and logged in, I measured three jobs where handing bulk work to an outside tool should save chat tokens: reading every carrier module into one sorted list, a first draft, and a second opinion on a design. 3 runs per arm, Opus 5.5 high.
+
+| Job | Chat tokens alone | With the skill | Ratio | Handed to agy | Quality alone / with |
+| --- | --- | --- | --- | --- | --- |
+| Read many files | 59,097 | 61,714 | 0.96x | 3 of 3 | 1.00 / 1.00 |
+| First draft | 97,103 | 97,870 | 0.99x | 1 of 3 | 1.00 / 1.00 |
+| Second opinion | 38,826 | 42,160 | 0.92x | 0 of 3 | 0.75 / 0.67 |
+
+This showed no saving. When the work was handed over (the reading job, every run, using 14,886 agy tokens in total), the chat total still came out level with working alone, because the files here are small: the chat model pays for the dispatch, the prompt and the check about as much as it would pay to read them. The second opinion was never handed over. I expect the gap to open on inputs of hundreds of thousands of tokens, but I haven't measured that, so I don't claim it. The Gemini CLI wasn't logged in on the machine I measured on, so Gemini isn't measured at all.
 
 ### How it was measured
 
-- 21 tasks on a small Python shop project: 3 each for mechanical edits, reading, routine code, multi-file features, debugging, design and review.
-- Two arms per task, same prompt, same allowed tools, same chat model (Opus 5.5, high effort). One arm has the plugin, one doesn't.
-- Code tasks are scored by a hidden check plus the project tests. Answer tasks are scored against a checklist by a blind judge that doesn't see which arm produced the text.
-- Cost and token counts come from the agent's JSON output in print mode. Raw runs are in [`benchmark/results/raw`](benchmark/results/raw), scores in [`scores.json`](benchmark/results/scores.json), the table in [`report.md`](benchmark/results/report.md).
-- Reproduce it with `python3 benchmark/run.py && python3 benchmark/score.py && python3 benchmark/report.py`. A full pass costs about $18 in list price.
+- A small Python shop project. 21 tasks: 3 each for mechanical edits, reading, routine code, multi-file features, debugging, design and review.
+- Same prompt, same allowed tools, same chat model and effort in every arm.
+- Code tasks are scored by a hidden check plus the project tests. Answer tasks are scored against a checklist by a blind judge that doesn't see which arm wrote the text.
+- Tokens are input + output + cache read + cache write of the chat and every subagent, from the agent's own JSON (`modelUsage`). An outside tool's tokens are counted apart.
+- Raw runs: [`benchmark/results/raw`](benchmark/results/raw) (router), [`matrix/raw`](benchmark/results/matrix/raw) (footer ratios), [`agy/raw`](benchmark/results/agy/raw) (other AIs). Tables: [`report.md`](benchmark/results/report.md).
+- Reproduce: `python3 benchmark/run.py --arms alone,beggar,dynamic`, then `score.py` and `report.py`. The matrix is `matrix.py run|score|fit` and the outside tool jobs are `agy_bench.py`. A full router pass costs about $20 in list price.
 
 ## Install
 
@@ -55,7 +103,7 @@ To try it for one session without installing, clone the repository and start the
 <details>
 <summary>Other hosts</summary>
 
-The routing card, the worker and the hooks use features of the host above, so the plugin doesn't run in other agents. Two things do work. On a supported host, `codex`, `agy` and `gemini` are used as extra workers when they're installed. And `skills/token-beggar/SKILL.md` is plain Markdown you can copy into any agent that reads skills.
+The routing card, the worker and the hooks use features of the host above, so the plugin doesn't run in other agents. Two things do work. On a supported host, `agy`, `gemini` and `codex` are routing targets when they're installed. And `skills/token-beggar/SKILL.md` is plain Markdown you can copy into any agent that reads skills.
 </details>
 
 <details>
@@ -68,29 +116,45 @@ Details in [docs/install.md](docs/install.md).
 
 ## How I work
 
-1. **Grade.** A hook adds a card with the 7 class table to the first real prompt of a session, and a one line reminder to the prompts after it. Very short prompts and slash commands get nothing. I grade the task before reading any code.
-2. **Respect the ceiling.** The model and effort of your chat are the cap for models of the same vendor. If you run Sonnet at medium, I never send work to Opus or to high effort. Other providers aren't capped unless you say so, for example "agy max flash".
-3. **Delegate only when it pays.** Many tool calls or large reads go to a worker with its own context. Short answers, design and the final word stay inline.
-4. **Check cheaply.** One test run or `git diff --stat`, not a second read of everything.
-5. **Report.** After a delegated reply I add one line, such as `Token Beggar: about 1.56x less spend than the top model at high effort alone (measured, multi_file)`. The multiplier comes only from the benchmark table above, only for classes at 1.15x or more, and only when your model and effort match the ones I was measured on. Otherwise the line states no number.
+1. **Decompose.** A hook adds a menu to the first real prompt of a session and a one line reminder after it. The menu lists every provider, model and effort you can use, with what each is good and weak at, a capability score and a price. Very short prompts and slash commands get nothing. The chat model splits the prompt into subtasks.
+2. **Choose per subtask.** Decision rules ask about size, ambiguity, risk, how much has to be read, and whether a test can verify the result. The cheapest combination that clears the bar wins. A one line answer or a short edit stays inline, since a worker starts with its own base context.
+3. **Respect the ceiling.** The model and effort of your chat are the cap for models of the same vendor. If you run Sonnet at medium, nothing goes to Opus or to high effort. Other providers aren't capped unless you say so in the prompt: "agy max flash" keeps agy to its flash models and "no gemini" switches it off for the session.
+4. **Check cheaply.** One test run or `git diff --stat`, not a second read of everything. Judgement and the final answer stay with the chat model.
+5. **Report.** The Stop hook adds the footer above. The model doesn't write it. The hook counts the transcript, so the number can't be made up in prose.
 
 Say `/token-beggar` or "token beggar" to switch me on for a prompt that didn't trigger me on its own.
 
-### Check it and see what it did
+### Outside tools as routes
 
-`token-beggar doctor` lists what can quietly stop routing: an unsupported Python, an unwritable state directory, a worker model forced by the environment, an unset compaction window, logged hook errors, and whether the hook entry point runs. It exits 1 when something is broken.
+`agy`, `gemini` and `codex` on the PATH, and MCP servers, appear on the menu. `token-beggar inventory` lists them and detects each tool's models (`agy models`). The prior is the host's own models first, then Codex, then Gemini, so bulk and first draft work can go out and anything that needs this conversation, edits files or is risky can't. I never send secrets: file names and text that look like keys are refused.
 
-`token-beggar stats` reads your own recent sessions (7 days by default, `--days N` to change it). Per worker model it prints how many workers ran, the tokens they used, what that cost, and what the same tokens would have cost at the model that started them. The last column is an upper bound on what delegation moved, not a net saving, because the chat model wouldn't have used identical tokens. The measured net saving is still the table above.
+```
+token-beggar ask agy --model gemini-3.8-flash-low --file 'src/**/*.py' "list every public function with its arguments"
+token-beggar cap agy flash
+```
 
-### Models
-
-`data/models.json` lists the model families by newest version with price and default effort. A GitHub Action refreshes it every week from the vendor's public models page, and a local weekly check does the same for installed copies. When a worker call fails with a usage limit, `token-beggar exhausted <alias>` marks that model so routing skips it for a few hours. The card also lists `codex`, `agy` and `gemini` when they're on your PATH.
+`--file` takes globs and directories. When a tool answers with a usage limit I parse the error for the reset time and keep that tool (or that model) off the menu until then. If the text names no time, it's five hours for a quota and a day for a login problem. An outside answer is a draft. The chat model reads it before using it.
 
 ### Compaction
 
-When the conversation nears the compaction point I warn you. If you're in the middle of a step, I defer the compaction up to 3 times and ask you to finish the step and run the tests. Before any compaction I write a note with the goal, edited files and open steps to the state directory, and a session start hook reads it back afterwards.
+Works with no setup. The host compacts at a point derived from the context window, 33k tokens short of it by default. I find that point myself (`token-beggar window` prints it), so you don't need to set the compaction window variable. If you do set it, I use it.
 
-The warning and the deferral need the host's compaction window variable to be set (`token-beggar env` names it), because I won't guess your model's window. Without it I only write the note. Edits made inside a worker are invisible to me, so I don't defer for them and they don't show up in the note. I can't change when the host compacts beyond deferring it, and the setting has a floor, so very small windows never trigger compaction. I tested 60k and 100k. See [docs/architecture.md](docs/architecture.md).
+- **Check often.** On every prompt and after every tool call in a long turn.
+- **Warn early.** At 87.5 percent of the point, or 30k tokens before it, whichever comes first, I ask the chat model to judge whether it's in the middle of a step (edits unverified, a change half done across files, a plan in progress) and to save a note with `token-beggar note`, a few lines on the goal, what is done and what is next. A mechanical extract (the request, edited files, the last commands) is the fallback if the model doesn't.
+- **Defer a mid-step compaction.** Exit code 2 from the `PreCompact` hook postpones an automatic compaction. I do it up to 3 times by 5 percent of the window each, never closer than 5k tokens to the level where the host refuses requests, and only when the note says mid-step. A manual `/compact` is never blocked.
+- **Read it back.** After a compaction the session start hook puts the note back with the menu. A note written long before the compaction is labelled as old.
+
+Tested in real sessions in print mode and a 100k window on 8 long documents read one by one: the warning arrived at 47k and 63k of a 67k point, the model wrote the note mid-step, two compactions were deferred, the host compacted once at 95k, and afterwards the model carried on from the note and listed all eight first words correctly. Limits: edits made inside a worker are invisible to me, so I neither defer for them nor list them. One tool result bigger than the margin before the point can jump past it. The host clamps the window to 100k to 1M. See [docs/architecture.md](docs/architecture.md).
+
+### Check it and see what it did
+
+`token-beggar doctor` lists what can quietly stop routing: an unsupported Python, an unwritable state directory, a worker model forced by the environment, logged hook errors, and whether the hook entry point runs. It exits 1 when something is broken.
+
+`token-beggar stats` reads your own recent sessions (7 days by default, `--days N` to change it). Per worker model it prints how many workers ran, the tokens they used, what that cost, and what the same tokens would have cost at the model that started them. That last column is an upper bound on what delegation moved, not a net saving.
+
+### Models
+
+`data/models.json` lists the model families with price and default effort. A GitHub Action refreshes it every week from the vendor's public models page, and a local weekly check does the same for installed copies. `data/profiles.json` holds the capability and cost profiles and the decision rules the menu is built from.
 
 ## Similar tools
 
@@ -107,12 +171,13 @@ If I missed one, open an issue.
 
 ## Limits
 
-- Savings on tasks under about $0.15 are small because of the worker start cost.
-- The benchmark covers one project, one chat model and one effort. Other setups use a card without a measured number.
-- Hooks can't see the chat model, so the model is read from the transcript first, then the launch flags of the running agent process, the environment and settings. Effort comes from the same flags, the environment and settings. If none says which model runs, the card says the ceiling is unknown and tells me never to go above my own model.
+- Savings on small tasks are small because of the worker start cost. Under about 1.15x I can't tell it from none.
+- The router comparison covers one project and one chat model and effort (Opus 5.5, high). The footer ratios cover four models and five efforts, one run per cell, so a single cell is noisy and 16 Fable cells are interpolated.
+- The dynamic router costs more dollars than the fixed table ($0.133 against $0.122 per task) while using fewer tokens. If you pay by the dollar rather than by the quota, check that trade for your mix.
+- No saving from another AI is shown on the small files I tested, and the Gemini CLI wasn't measured.
+- The footer is estimated from a ratio. The count in it is real, and the "vs" figure isn't a measurement of your task. When the host runs the Stop hook before the last message is written I wait up to 4 seconds for it, and print "at least" if it still isn't there.
+- Hooks can't see the chat model, so the model is read from the transcript first, then the launch flags of the running agent process, the environment and settings. If none says which model runs, the card says the ceiling is unknown and tells me never to go above my own model.
 - Workers load your project memory file like any session. The benchmark project has none, so that cost isn't in the numbers.
-- Each task ran 3 times per arm. Differences under about 15 percent are within the run to run spread I saw.
-- One scoring bug turned up late: a stale bytecode file made a correct fix look broken in 5 of 6 runs of one debugging task. The scorer now clears bytecode before checking, and both arms were rescored.
 - A task graded by a model can be graded wrong. The checks in the benchmark are there to catch that, not to remove it.
 
 More in [docs/usage.md](docs/usage.md), [docs/config.md](docs/config.md) and [docs/architecture.md](docs/architecture.md). Contributions: [CONTRIBUTING.md](CONTRIBUTING.md). MIT license.

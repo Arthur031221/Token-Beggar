@@ -1,0 +1,110 @@
+{
+ "task": "v1-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16832,
+  "stop_reason": "end_turn",
+  "session_id": "793c89ab-0446-4110-b596-e8a458622b68",
+  "total_cost_usd": 0.1091232,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 8102,
+   "cache_read_input_tokens": 77376,
+   "output_tokens": 1440,
+   "output_tokens_details": {
+    "thinking_tokens": 240
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8102,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 920,
+     "cache_read_input_tokens": 21938,
+     "cache_creation_input_tokens": 750,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 750
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1440,
+    "cacheReadInputTokens": 77376,
+    "cacheCreationInputTokens": 8102,
+    "webSearchRequests": 0,
+    "costUSD": 0.1091232,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 240,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces three bugs, one in each hunk. I read the code but didn't apply the diff or run the tests.\n\n**1. The bulk discount no longer applies at exactly the threshold** (`shop/pricing.py`, `line_subtotal`)\n`>=` became `>`. With `BULK_THRESHOLD = 10`, a line with exactly 10 units used to get the 5% discount and now pays full price; only 11 or more qualify. This is an off-by-one that quietly changes the business rule. Because `line_subtotal` feeds both `calc_total` and (before this change) `calc_tax`, every order with exactly 10 units of a line is overcharged.\n\n**2. Tax is now calculated on prices before the bulk discount** (`shop/pricing.py`, `calc_tax`)\n`calc_tax` now sums `price_cents * qty` instead of `line_subtotal(l)`, so the bulk discount is ignored when computing taxable value. Two problems follow:\n- Customers are overtaxed on discounted bulk lines (tax on 100% of the price instead of 95%).\n- `calc_total` still computes tax on the discounted subtotal, so the two functions now disagree. `Order.__init__` (`shop/orders.py:15-16`) stores both, which means `order.tax_cents` no longer matches the tax inside `order.total_cents` for any order with a discounted taxable line. Reports or invoices showing subtotal + tax = total would be inconsistent.\n\n**3. Cache entries now live 1000 times longer than intended** (`shop/cache.py`, `PriceCache.get`)\nThe check became `elapsed < self.ttl * 1000`, but nothing in the code works in milliseconds:\n- The default clock is `time.monotonic`, which returns seconds.\n- The class docstring says it \"Caches price lookups for ttl seconds.\"\n- The test passes `ttl=10` with an injected clock that counts in the same unit as `ttl`.\n\nSo the default `ttl=60` now means about 16.7 hours instead of 60 seconds. Stale prices keep being returned long after they should have been reloaded, and any test that advances the clock past `ttl` to check expiry will get a cache hit instead of a reload.",
+  "ttft_ms": 1675,
+  "type": "result",
+  "duration_ms": 18280,
+  "uuid": "389a4897-bcc0-4506-aac9-9190487158a7",
+  "ttft_stream_ms": 1213,
+  "time_to_request_ms": 305,
+  "first_content_frame_ms": 1213,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v1-diff.dynamic.2"
+}

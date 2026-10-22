@@ -1,0 +1,111 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "v020",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 23916,
+  "stop_reason": "end_turn",
+  "session_id": "5f16b311-7330-49d8-a4c0-fc4ba26f65c2",
+  "total_cost_usd": 0.146786,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 12519,
+   "cache_read_input_tokens": 52350,
+   "output_tokens": 1807,
+   "output_tokens_details": {
+    "thinking_tokens": 596
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12519,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1394,
+     "cache_read_input_tokens": 20067,
+     "cache_creation_input_tokens": 5242,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 5242
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1807,
+    "cacheReadInputTokens": 52350,
+    "cacheCreationInputTokens": 12519,
+    "webSearchRequests": 0,
+    "costUSD": 0.146786,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 596,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I'd use one rule throughout: each amount is an integer in the currency's smallest unit (cents, yen, fils) plus an ISO currency code, and amounts in different currencies are never added together.\n\n**Changes**\n- **`shop/money.py`**: Add a small `Money(minor: int, currency: str)` type and a table of decimal places per currency (USD 2, JPY 0, KWD 3). `to_cents` and `fmt` assume two decimals; they become `parse(amount, currency)` and `fmt(money)`. Adding two `Money` values in different currencies should raise an error. Rewrite `percent` with `Decimal`, because it uses float maths today.\n- **`shop/models.py`**: Rename `Item.price_cents` to `price: Money`. `Cart` gets a `currency`, and `add()` rejects items in a different currency.\n- **`shop/pricing.py`**: Totals and tax return `Money`. `TAX_RATE` is one hardcoded rate; it should come from the region, not the currency.\n- **`shop/orders.py`**: Store the currency on the order and in each line tuple.\n- **`shop/storage.py`**: Save a `\"currency\"` field. Old rows don't have one, so load them as USD.\n- **`shop/reports.py`**: `sales_by_customer` adds up every order's total. Group by (customer, currency) instead, or convert using a stated exchange rate and date.\n- **`shop/cli.py`**: Add a `--currency` option to `quote`.\n- **`shop/cache.py`**: Cache by (sku, currency) instead of sku alone.\n- **`shop/carriers/*` (20 files)**: Rates are bare integers described as \"cents\". Give each carrier a `CURRENCY` constant. Carriers aren't connected to pricing yet, so nothing else changes there now.\n- **Tests**: Cover a zero-decimal and a three-decimal currency, rejecting mixed currencies, and loading old rows.\n\n**Main risks**\n1. **Silent mixing**: integer sums in reports and pricing won't fail; they'll just give wrong totals. The `Money` type exists mainly to stop this.\n2. **Rounding**: the float `percent` and the fixed `/100` give wrong results for JPY and KWD.\n3. **Old data**: rows without a currency could be misread.\n4. **Exchange rates**: when and at what rate to convert has to be decided and recorded per order.\n5. **Rename breakage**: renaming `price_cents` touches every caller and test.",
+  "ttft_ms": 2576,
+  "type": "result",
+  "duration_ms": 24458,
+  "uuid": "453e9471-f92c-4c90-80eb-5ac00d420fb3",
+  "ttft_stream_ms": 1834,
+  "time_to_request_ms": 234,
+  "first_content_frame_ms": 1834,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.v020.3",
+ "ledger": []
+}

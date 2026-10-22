@@ -1,0 +1,111 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "v020",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15215,
+  "stop_reason": "end_turn",
+  "session_id": "cef8bca7-1d15-4e33-8bf4-d5e78dc06115",
+  "total_cost_usd": 0.08760820000000001,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 7097,
+   "cache_read_input_tokens": 32281,
+   "output_tokens": 1218,
+   "output_tokens_details": {
+    "thinking_tokens": 508
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7097,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1126,
+     "cache_read_input_tokens": 19491,
+     "cache_creation_input_tokens": 396,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 396
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1218,
+    "cacheReadInputTokens": 32281,
+    "cacheCreationInputTokens": 7097,
+    "webSearchRequests": 0,
+    "costUSD": 0.08760820000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 508,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "No single dict operation here will corrupt the cache, because CPython dicts handle that themselves. The problems are in the logic around them, and they get worse the longer the service runs.\n\n1. **Memory grows without limit.** Expired entries are never removed. Every SKU ever requested, including made-up or mistyped ones, stays in `_data` for the life of the process.\n   *Fix:* add a size cap using an `OrderedDict` that drops the least recently used entry when full, and remove an expired entry when it's found.\n\n2. **Many threads load the same item at once.** When an entry is missing or expired, every thread asking for that SKU calls `loader` together. A popular SKU expiring can send N identical calls to the backend.\n   *Fix:* only one load per key at a time. Keep a per-key \"load in progress\" `Future` under a short lock. The first thread runs the load outside the lock. Other threads wait on the `Future`. If the load fails, the error goes to all waiting threads and the `Future` is removed, so the failure isn't cached.\n\n3. **`invalidate` can be undone.** If thread A starts loading, thread B then calls `invalidate`, and A finishes, A stores the old price again for a full TTL. The invalidation is silently lost.\n   *Fix:* keep a version number per key and increase it in `invalidate`. A load only stores its result if the version hasn't changed since it started.\n\n4. **The timestamp is taken after the load finishes.** With a slow loader, data can be up to TTL plus the load time old.\n   *Fix:* read `clock()` before calling `loader`.\n\n5. **Small issue:** `if hit` relies on the tuple being truthy. That works, but `hit is not None` says what's meant.\n\n**What I'd choose overall:** one `threading.Lock` around the dict, the version numbers and the in-progress table, with `loader` always called outside that lock. That covers 1\u20134 without holding a global lock during slow backend calls.",
+  "ttft_ms": 1697,
+  "type": "result",
+  "duration_ms": 15408,
+  "uuid": "1315be69-b2a4-4638-81b6-e46d72f98b59",
+  "ttft_stream_ms": 1473,
+  "time_to_request_ms": 166,
+  "first_content_frame_ms": 1473,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.v020.2",
+ "ledger": []
+}

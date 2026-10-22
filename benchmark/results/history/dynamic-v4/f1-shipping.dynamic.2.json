@@ -1,0 +1,126 @@
+{
+ "task": "f1-shipping",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 62706,
+  "stop_reason": "end_turn",
+  "session_id": "2c93c650-6a1b-48c2-bf30-dd03ee30592e",
+  "total_cost_usd": 0.3063104,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 20068,
+   "cache_read_input_tokens": 89342,
+   "output_tokens": 3187,
+   "output_tokens_details": {
+    "thinking_tokens": 1001
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 20068,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 698,
+     "cache_read_input_tokens": 32838,
+     "cache_creation_input_tokens": 1817,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1817
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3187,
+    "cacheReadInputTokens": 89342,
+    "cacheCreationInputTokens": 20068,
+    "webSearchRequests": 0,
+    "costUSD": 0.24218440000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1001,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 3098,
+    "cacheReadInputTokens": 59095,
+    "cacheCreationInputTokens": 10885,
+    "webSearchRequests": 0,
+    "costUSD": 0.06412599999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 221,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Orders now include shipping, and all 12 tests pass (`python3 -m unittest discover -s tests -t .`).\n\n**What changed**\n- **`shop/orders.py`**: `Order(cart, carrier=None, weight=0, zone='local')` looks the carrier up with `shop.carriers.get()` and sets `shipping_cents`. It is 0 when there's no carrier, and it's added to `total_cents`.\n- **`shop/storage.py`**: `Store.save_order` writes a `'shipping'` field. Older saved rows without it still load.\n- **`shop/reports.py`**: no changes needed. The report only adds up each row's `total`, so shipping is counted once and older rows still work.\n- **`tests/test_orders.py`**: new tests cover:\n  - no carrier\n  - a kg carrier with a zone\n  - maple's gram pricing, including the float case\n  - an unknown carrier\n  - saving with `'shipping'`, then the report, including older rows\n\n**Decisions you may want to check**\n- **Shipping is added after tax and isn't taxed.** The spec didn't say either way.\n- **`weight` is in kg.** The maple carrier is the one exception: it prices by the gram. I added `weight_unit = \"g\"` to `shop/carriers/maple.py`, and `Order` converts kg to grams for it. Without that, maple would charge as if 2 kg were 2 g.\n- **Float fix in that conversion.** A plain \u00d71000 can come out a cent short (4.35 kg becomes 4349.999\u2026 g), so the grams are rounded first. A test covers this case.\n- **Bad input raises an error.** An unknown carrier name raises `KeyError`. A carrier with weight 0 raises `ValueError` from that carrier's own range check. Nothing is silently charged 0.\n\nI used a cheaper model to write the change, then reviewed it myself and made the float fix and a small cleanup. Nothing is committed.",
+  "ttft_ms": 5442,
+  "type": "result",
+  "duration_ms": 65442,
+  "uuid": "2b0f7375-ee1f-48dc-b45e-2f46bf5cee57",
+  "ttft_stream_ms": 2379,
+  "time_to_request_ms": 195,
+  "first_content_frame_ms": 2379,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/maple.py |  1 +\n shop/orders.py         | 19 +++++++++++++++--\n shop/storage.py        |  2 +-\n tests/test_orders.py   | 58 ++++++++++++++++++++++++++++++++++++++++++++++++++\n 4 files changed, 77 insertions(+), 3 deletions(-)\n",
+ "workdir": "f1-shipping.dynamic.2"
+}

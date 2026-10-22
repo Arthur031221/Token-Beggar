@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 17367,
+  "stop_reason": "end_turn",
+  "session_id": "481ca9be-0a74-4283-8b4d-0849f8e9ba30",
+  "total_cost_usd": 0.1425054,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 13182,
+   "cache_read_input_tokens": 53027,
+   "output_tokens": 1321,
+   "output_tokens_details": {
+    "thinking_tokens": 96
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 13182,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 847,
+     "cache_read_input_tokens": 20412,
+     "cache_creation_input_tokens": 5560,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 5560
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1321,
+    "cacheReadInputTokens": 53027,
+    "cacheCreationInputTokens": 13182,
+    "webSearchRequests": 0,
+    "costUSD": 0.1425054,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 96,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Here's a design that keeps money as integers but measures it in each currency's smallest unit and carries a currency code with every amount. Right now everything is a bare integer number of cents, implicitly USD.\n\n**Changes**\n\n- **`shop/money.py`**: Add a `Money(amount_minor: int, currency: str)` value type and a currency table with each currency's number of decimals (USD/EUR 2, JPY 0, KWD 3). Change `to_cents`, `fmt` and `percent` to take the currency instead of assuming 2 decimals. Adding or comparing two different currencies should raise an error.\n- **`shop/models.py`**: Give `Item` a price that carries its currency. Pin `Cart` to one currency and make `add()` reject items in any other currency.\n- **`shop/pricing.py`**: Calculate totals in the cart's currency. `TAX_RATE` and the bulk rules become settings per currency or region; each currency's own decimals decide the rounding.\n- **`shop/orders.py`**: Save the currency on the `Order` and on each line.\n- **`shop/storage.py`**: Write a `currency` field. On load, treat rows without one as `\"USD\"`.\n- **`shop/reports.py`**: Group sales by customer *and* currency. Never add amounts in different currencies together unless an explicit, dated exchange rate is supplied.\n- **`shop/cli.py`**: Add a `--currency` option to `quote` (default USD).\n- **`shop/cache.py`**: Key the cache on `(sku, currency)`.\n- **`shop/carriers/*.py`** (20 files): All rate cards are in USD cents. Either tag each quote as USD or add a shared base class; don't edit 20 copies.\n\n**Main risks**\n\n1. **Rounding:** `percent` uses float math with round-half-up. Switch to `Decimal` with an explicit rounding mode for each currency.\n2. **Old data:** existing JSON rows have no currency field. Getting the default wrong silently mislabels past totals.\n3. **Silent mixing:** integer amounts in different currencies still add up without error, so this needs the `Money` type plus tests.\n4. **Exchange rates** bring in staleness, a source of truth and auditability. Keep them out of scope unless you need them.\n5. **Carrier copies:** the 20 carrier files are duplicates, and `maple` uses grams, not kg. A refactor could break this quietly.",
+  "ttft_ms": 3540,
+  "type": "result",
+  "duration_ms": 18985,
+  "uuid": "616f363f-bbf7-4310-8bae-eb06cf891c9c",
+  "ttft_stream_ms": 2847,
+  "time_to_request_ms": 931,
+  "first_content_frame_ms": 2847,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.3"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 48648,
+  "stop_reason": "end_turn",
+  "session_id": "597c4e3c-cc47-4bfa-98ad-8101c06b6778",
+  "total_cost_usd": 0.24304220000000004,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 14560,
+   "cache_read_input_tokens": 114311,
+   "output_tokens": 5183,
+   "output_tokens_details": {
+    "thinking_tokens": 1557
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14560,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 643,
+     "cache_read_input_tokens": 28423,
+     "cache_creation_input_tokens": 724,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 724
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 5183,
+    "cacheReadInputTokens": 114311,
+    "cacheCreationInputTokens": 14560,
+    "webSearchRequests": 0,
+    "costUSD": 0.24304220000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1557,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 10,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `Cart.apply_coupon(code)` and `calc_total` now includes coupon discounts. All 13 tests pass: the 6 existing ones and 7 new coupon tests.\n\n**What changed**\n- **`shop/coupons.py`** (new): defines `SAVE10` (10% off) and `FLAT500` (500 cents off). An unknown code raises `ValueError`.\n- **`shop/models.py`**: `Cart` now stores its applied codes, and `apply_coupon` checks a code before adding it.\n- **`shop/pricing.py`**: coupons come off the subtotal before tax, so tax is charged on the reduced amount. `calc_tax` uses the same discounted figures, so an order's saved total and tax still match.\n- **`tests/test_coupons.py`** (new): covers each coupon on its own, both together, an unknown code, and the edge cases below.\n\n**Choices I made that you may want to change**\n1. **Stacking:** each coupon is worked out on the original subtotal and the discounts are added up, so the order you apply them in doesn't matter. On a 2000-cent cart, SAVE10 + FLAT500 takes off 200 + 500, giving 1300 before tax. The alternative is applying them one after another (10% of 1500 instead of 2000), which makes the order matter.\n2. **Same code twice:** applying a code that's already on the cart does nothing. Otherwise SAVE10 applied ten times would make the cart free.\n3. **Floor at zero:** the discount can't be more than the subtotal, so a total never goes negative.\n4. **Carts with untaxed items:** the discount is split between taxed and untaxed items in proportion to their share of the subtotal, rounded half up.\n5. **Code matching** is exact and case-sensitive, so `save10` is rejected.\n\nThe `shop quote` command line doesn't accept coupons yet; that would need a new option.",
+  "ttft_ms": 5253,
+  "type": "result",
+  "duration_ms": 49524,
+  "uuid": "8ff63c2a-8892-4623-aa09-9cf28ec8147b",
+  "ttft_stream_ms": 2071,
+  "time_to_request_ms": 287,
+  "first_content_frame_ms": 2071,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py  |  9 +++++++++\n shop/pricing.py | 22 +++++++++++++++++++---\n 2 files changed, 28 insertions(+), 3 deletions(-)\n",
+ "workdir": "c1-coupon.dynamic.3"
+}

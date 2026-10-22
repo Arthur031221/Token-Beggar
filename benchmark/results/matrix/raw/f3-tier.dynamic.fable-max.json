@@ -1,0 +1,126 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": "fable-max",
+ "top": "claude-fable-5-1",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 74950,
+  "stop_reason": "end_turn",
+  "session_id": "53af76db-fe82-4f52-8977-35753a936c89",
+  "total_cost_usd": 0.48932375000000006,
+  "usage": {
+   "input_tokens": 34,
+   "cache_creation_input_tokens": 11948,
+   "cache_read_input_tokens": 34477,
+   "output_tokens": 2996,
+   "output_tokens_details": {
+    "thinking_tokens": 1601
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11948,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 739,
+     "cache_read_input_tokens": 21687,
+     "cache_creation_input_tokens": 3051,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 3051
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 34,
+    "outputTokens": 2996,
+    "cacheReadInputTokens": 34477,
+    "cacheCreationInputTokens": 11948,
+    "webSearchRequests": 0,
+    "costUSD": 0.39771925,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 1601,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 5058,
+    "cacheReadInputTokens": 82065,
+    "cacheCreationInputTokens": 13116,
+    "webSearchRequests": 0,
+    "costUSD": 0.09160449999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 455,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in and the full suite passes. Nothing was committed.\n\n**What changed** (all under `shop/` and `tests/`):\n- `shop/models.py`: Cart gains a `tier` attribute defaulting to `standard`.\n- `shop/pricing.py`: a tier discount table and helper were added. The tax calculation now taxes the discounted amount, and calc_total is the discounted subtotal plus that tax. Both use the existing rounding helper.\n- `shop/orders.py`: Order stores the cart's tier and its totals flow through the updated pricing functions, so they reflect the discount.\n- `shop/cli.py`: the quote command takes a `--tier` option, defaulting to `standard`, and builds the cart with it.\n- Tests: new tier cases in the pricing tests, an Order test that checks tier pickup and matching totals, and a new CLI test file covering default, gold, and silver quotes.\n\n**Test run**\n\n```\npython3 -m unittest discover -s tests -t .\nRan 18 tests in 0.003s\nOK\n```\n\n**One judgment call to be aware of.** The existing code distinguishes taxable from untaxable items. The discount is applied to the whole subtotal, and tax is then computed on the discounted taxable portion only. So untaxable items still get the tier discount but never pick up tax. If you wanted the discount restricted to taxable items only, that is a one-line change in the pricing module.",
+  "ttft_ms": 18627,
+  "type": "result",
+  "duration_ms": 76500,
+  "uuid": "5842b478-73b4-451b-8b11-a0d7587480a6",
+  "ttft_stream_ms": 2070,
+  "time_to_request_ms": 139,
+  "first_content_frame_ms": 2072,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 16 +++++++++++-----\n tests/test_orders.py  |  9 +++++++++\n tests/test_pricing.py | 42 ++++++++++++++++++++++++++++++++++++++++++\n 6 files changed, 66 insertions(+), 6 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.fable-max"
+}

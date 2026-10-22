@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 22955,
+  "stop_reason": "end_turn",
+  "session_id": "0d063d04-5764-4907-bed8-6cafedbd2d2c",
+  "total_cost_usd": 0.12036540000000001,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 7723,
+   "cache_read_input_tokens": 76947,
+   "output_tokens": 2158,
+   "output_tokens_details": {
+    "thinking_tokens": 734
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7723,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1538,
+     "cache_read_input_tokens": 21680,
+     "cache_creation_input_tokens": 629,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 629
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2158,
+    "cacheReadInputTokens": 76947,
+    "cacheCreationInputTokens": 7723,
+    "webSearchRequests": 0,
+    "costUSD": 0.12036540000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 734,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff touches only `shop/orders.py`. It introduces two definite bugs and a few smaller problems.\n\n### 1. `_ids_seen` doesn't exist, so every `Order()` crashes (critical)\n`shop/orders.py:12` now reads `self.id = len(_ids_seen)` and then calls `_ids_seen.append(...)`. Nothing in the diff or the rest of the repo defines `_ids_seen`; the module still only defines `_ids = itertools.count(1000)` at line 5. Building any order therefore raises `NameError: name '_ids_seen' is not defined`. That breaks `Order` creation in `shop/cli.py` and makes both tests in `tests/test_orders.py` fail in `make()`. It also leaves `_ids` and `import itertools` unused.\n\n### 2. Even if `_ids_seen = []` were added, the new ID scheme is worse\n- **IDs start at 0 instead of 1000.** Code or data that relies on the old range changes behaviour, and ID `0` is falsy, so any `if order.id:` check would misfire.\n- **Duplicate IDs under concurrency.** `len()` followed by `append()` is a read-then-write race. Two threads can read the same length and get the same ID. `next(itertools.count())` hands out each number exactly once. Duplicate IDs cause real data loss here: `Store.save_order` (`shop/storage.py:17`) drops the existing row with the same `id` before appending, so one order silently overwrites another.\n- **Memory grows forever.** Every ID ever issued is kept in a list for the life of the process, only so its length can serve as a counter.\n\n### 3. The state machine now allows any move from an unknown state\nAt `shop/orders.py:20`, `ALLOWED[self.state]` became `ALLOWED.get(self.state, STATES)`. Before, an order in an unknown or corrupted state (for example a typo, or a state loaded from stored data) raised `KeyError`. Now it falls back to `STATES`, which lists every state. Such an order can jump straight to `\"paid\"`, `\"shipped\"`, `\"new\"` or `\"cancelled\"` with no check. The guard now fails open, hides the bad state instead of reporting it, and lets an order skip the `new \u2192 paid \u2192 shipped` path. That matters for `reports.py`, which counts `paid` and `shipped` orders as revenue.\n\nTerminal states are not affected: `\"shipped\"` and `\"cancelled\"` map to an empty `set()`, and `.get` returns that set rather than the fallback.\n\n**Suggested fix:** revert both hunks. Keep `next(_ids)` for IDs. If unknown states need a clearer error, raise a `ValueError` for them explicitly rather than falling back to \"everything is allowed\".\n\nI didn't edit any files or run the tests; the conclusions come from reading the code.",
+  "ttft_ms": 1124,
+  "type": "result",
+  "duration_ms": 24058,
+  "uuid": "88354083-222c-4d8e-812c-e316023bcc06",
+  "ttft_stream_ms": 961,
+  "time_to_request_ms": 328,
+  "first_content_frame_ms": 961,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.1"
+}

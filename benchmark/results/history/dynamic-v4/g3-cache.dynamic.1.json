@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14881,
+  "stop_reason": "end_turn",
+  "session_id": "2d40746e-67a4-4377-9c21-2e5bdad3c1dc",
+  "total_cost_usd": 0.08014460000000001,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5827,
+   "cache_read_input_tokens": 34563,
+   "output_tokens": 1330,
+   "output_tokens_details": {
+    "thinking_tokens": 546
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5827,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1198,
+     "cache_read_input_tokens": 19977,
+     "cache_creation_input_tokens": 436,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 436
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1330,
+    "cacheReadInputTokens": 34563,
+    "cacheCreationInputTokens": 5827,
+    "webSearchRequests": 0,
+    "costUSD": 0.08014460000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 546,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I reviewed `shop/cache.py`. Single dict reads and writes are safe under CPython, and the `if hit` check is fine because the stored tuple is always truthy. The problems come from the multi-step logic and from running for a long time:\n\n1. **Memory grows without limit** (`cache.py:18`). Expired entries are only replaced, never removed, so every SKU ever looked up stays in memory for the life of the process.\n   *Fix:* use an `OrderedDict` with a `maxsize` and evict the least recently used entry. Also drop expired entries when they are found.\n\n2. **Many threads load the same SKU at once** (`cache.py:14-18`). When an entry is missing or expired, every thread that asks for it calls `loader`. A popular SKU expiring can flood the backend.\n   *Fix:* keep one in-progress load per key, such as a `Future` stored in a dict protected by a lock. The first thread loads and the others wait for its result. Call `loader` outside the lock.\n\n3. **`invalidate` can be undone** (`cache.py:17-18` vs `:22`). Thread A starts loading the old price. Thread B calls `invalidate` after the price changes. A then writes the stale price back, and it is served for the full TTL.\n   *Fix:* keep a counter per key that `invalidate` increases. A load only writes its result if the counter hasn't changed since the load started.\n\n4. **The timestamp is taken after the load** (`cache.py:18`). With a slow loader, a value is served for longer than `ttl` after it was actually read.\n   *Fix:* read `clock()` before calling `loader`.\n\n5. **Loader errors are retried on every call.** When the backend is down, every request hits it again, which makes problem 2 worse.\n   *Fix:* send the exception to the waiting threads through the shared `Future`. Optionally, cache the failure for a few seconds.\n\n**What I'd choose overall:** one `threading.Lock` around the dict, the counters and the in-progress loads, held only for short bookkeeping and never during `loader`.",
+  "ttft_ms": 1122,
+  "type": "result",
+  "duration_ms": 15296,
+  "uuid": "5fc4f565-9b3f-43da-b7ae-88c20d2675ce",
+  "ttft_stream_ms": 911,
+  "time_to_request_ms": 194,
+  "first_content_frame_ms": 911,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.1"
+}

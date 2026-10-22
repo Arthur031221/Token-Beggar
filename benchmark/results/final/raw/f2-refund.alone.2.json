@@ -1,0 +1,111 @@
+{
+ "task": "f2-refund",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 44527,
+  "stop_reason": "end_turn",
+  "session_id": "f12021a8-2ae7-4441-97ad-267a407c5224",
+  "total_cost_usd": 0.236504,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 18955,
+   "cache_read_input_tokens": 146080,
+   "output_tokens": 2780,
+   "output_tokens_details": {
+    "thinking_tokens": 149
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 18955,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 460,
+     "cache_read_input_tokens": 30972,
+     "cache_creation_input_tokens": 773,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 773
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 2780,
+    "cacheReadInputTokens": 146080,
+    "cacheCreationInputTokens": 18955,
+    "webSearchRequests": 0,
+    "costUSD": 0.236504,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 149,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added the `refunded` state and tests for it. All 13 tests pass (the 7 new ones and the 6 that were already there).\n\n**The code change:** only `shop/orders.py` needed editing. `refunded` is now one of the order states, and the allowed moves are:\n- `paid` can go to `shipped`, `cancelled` or `refunded`\n- `shipped` can go to `refunded` (before, shipped was a dead end)\n- `refunded` can't go anywhere\n\n**Sales report:** `sales_by_customer` in `shop/reports.py` didn't need changing. It already only counts orders that are `paid` or `shipped`, so refunded orders were left out automatically. Saving orders in `shop/storage.py` just writes `order.state` as it is, so that file didn't need changing either. Nothing else in the repo refers to order states.\n\n**New tests** (in `tests/test_orders.py`):\n- Refunding works from `paid` and from `shipped`.\n- Refunding is rejected from `new` and from `cancelled`.\n- A refunded order can't move to any other state.\n- Every state has an entry in the table of allowed moves, which catches a state being added without its moves.\n- Refunded orders are left out of `sales_by_customer`, including a customer whose only order was refunded.\n- A refunded order saved to the JSON file and loaded back still doesn't count in sales.\n\nNothing is committed yet.",
+  "ttft_ms": 8433,
+  "type": "result",
+  "duration_ms": 44916,
+  "uuid": "31742639-223a-4a78-9053-26f2ba384959",
+  "ttft_stream_ms": 6925,
+  "time_to_request_ms": 67,
+  "first_content_frame_ms": 6927,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/orders.py       | 10 +++++++--\n tests/test_orders.py | 63 +++++++++++++++++++++++++++++++++++++++++++++++++++-\n 2 files changed, 70 insertions(+), 3 deletions(-)\n",
+ "workdir": "f2-refund.alone.2",
+ "ledger": []
+}

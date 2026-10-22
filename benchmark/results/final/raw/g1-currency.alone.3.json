@@ -1,0 +1,111 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 24575,
+  "stop_reason": "end_turn",
+  "session_id": "d09bd121-ea64-4da6-a19e-3b37c76dedfd",
+  "total_cost_usd": 0.1440374,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11211,
+   "cache_read_input_tokens": 73987,
+   "output_tokens": 1976,
+   "output_tokens_details": {
+    "thinking_tokens": 668
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11211,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1420,
+     "cache_read_input_tokens": 23391,
+     "cache_creation_input_tokens": 610,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 610
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1976,
+    "cacheReadInputTokens": 73987,
+    "cacheCreationInputTokens": 11211,
+    "webSearchRequests": 0,
+    "costUSD": 0.1440374,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 668,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Multi-currency design\n\n**Core idea:** amounts stay as integers in each currency's minor unit, and every amount carries an ISO currency code. Don't convert between currencies yet; refuse to mix them instead.\n\n**What changes, by file**\n- **`shop/money.py`**: Add a table of currencies and their decimal places (USD 2, JPY 0, KWD 3). Add a small `Money(amount, currency)` type that raises an error when two different currencies are added. Today `to_cents` and `fmt` assume 100 cents per unit; make them use the table.\n- **`shop/models.py`**: Give `Item` a `currency`. `Cart` should accept only one currency and reject items in any other.\n- **`shop/pricing.py`**: Totals and tax come back with the cart's currency. Rounding has to follow each currency's decimal places.\n- **`shop/orders.py`**: Store `currency` on `Order` and in each line tuple.\n- **`shop/storage.py`**: Save a `currency` field. Old rows have none, so treat them as USD.\n- **`shop/reports.py`**: `sales_by_customer` adds raw totals together. Group by customer and currency instead, and format each total with its currency.\n- **`shop/cli.py`**: Add a `--currency` option to `quote`.\n- **`shop/cache.py`**: Key cached prices by SKU and currency if prices differ per currency.\n- **`shop/carriers/*` (20 files)**: Rates are cents with USD implied. Give each carrier a `CURRENCY` constant so shipping can't silently go onto a cart in another currency.\n- **`tests/`**: Add tests for 0- and 3-decimal currencies, rejected mixing, and loading old rows.\n\n**Main risks**\n1. **Silent mixing:** adding plain integers in different currencies gives wrong numbers with no error. Reports and shipping are most exposed.\n2. **Hard-coded 100s:** `// 100` and `% 100` hide the assumption, so grep for them.\n3. **Rounding:** `percent` uses floats and rounds half up, while carriers use `int()` and round down. Results drift between currencies, so pick one rule.\n4. **Old data:** stored JSON without a currency needs a default you've confirmed is correct.\n5. **Conversion:** if you later convert between currencies, you'll need a rate source, a rule for when the rate is fixed, and a rounding rule.",
+  "ttft_ms": 3138,
+  "type": "result",
+  "duration_ms": 24834,
+  "uuid": "7aa6f3c8-af01-49be-8ca1-64edd486f132",
+  "ttft_stream_ms": 2713,
+  "time_to_request_ms": 139,
+  "first_content_frame_ms": 2714,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.alone.3",
+ "ledger": []
+}

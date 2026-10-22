@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": "haiku-xhigh",
+ "top": "claude-haiku-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 21203,
+  "stop_reason": "end_turn",
+  "session_id": "2c4aa633-508a-4b92-85a8-66d154aadecc",
+  "total_cost_usd": 0.00419637,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 8297,
+   "cache_read_input_tokens": 33157,
+   "output_tokens": 4410,
+   "output_tokens_details": {
+    "thinking_tokens": 3775
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8297,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 3985,
+     "cache_read_input_tokens": 20367,
+     "cache_creation_input_tokens": 720,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 720
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 4410,
+    "cacheReadInputTokens": 33157,
+    "cacheCreationInputTokens": 8297,
+    "webSearchRequests": 0,
+    "costUSD": 0.00419637,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3775,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move orders to SQLite (stdlib `sqlite3`, WAL mode) and keep the `Store` interface.**\n\n**Why the current code breaks at 100k orders with two writers**\n- `save_order` reads the whole file, filters it, and rewrites it. Nothing locks, so the two processes can interleave and one silently drops the other's order.\n- `write_text` truncates the file before writing. A crash or a concurrent `load()` can hit partial JSON and fail or lose data.\n- Each save parses and reserialises the whole file (about 10 MB at this size), so every write costs O(N).\n\nSQLite gives row-level transactions, cross-process locking, and an upsert on `id` in place of a list scan.\n\n**Migration path**\n1. Import the existing JSON once with a script. Keep the JSON file as a backup.\n2. Verify the row count and the sums of `total` and `tax` against the JSON.\n3. Reimplement `load` and `save_order` on SQLite so callers don't change. Add `get(id)` so single lookups stop loading everything.\n4. Make `id` the primary key. Index only the columns you filter by, such as `state`.\n5. Load-test two writer processes at 100k orders and assert zero lost updates.\n6. Remove the JSON path after one clean release.\n\n**Stopgap if cutover slips:** guard the read-modify-write with an `fcntl` lock and write to a temp file, then `os.replace`. This prevents lost updates and torn files, but not the O(N) cost.\n\n**Caveat:** if the writers run on separate hosts, SQLite on a network filesystem is unsafe. Use PostgreSQL instead.",
+  "ttft_ms": 3097,
+  "type": "result",
+  "duration_ms": 21529,
+  "uuid": "d8a1cf02-724e-4274-9f09-cd3c80c3811e",
+  "ttft_stream_ms": 1555,
+  "time_to_request_ms": 201,
+  "first_content_frame_ms": 1556,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.haiku-xhigh"
+}

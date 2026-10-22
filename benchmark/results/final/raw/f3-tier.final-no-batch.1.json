@@ -1,0 +1,127 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "final-no-batch",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 46803,
+  "stop_reason": "end_turn",
+  "session_id": "d89e33b0-3910-425c-b2c9-3a1f03c2afdb",
+  "total_cost_usd": 0.1759234,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 9333,
+   "cache_read_input_tokens": 33152,
+   "output_tokens": 1780,
+   "output_tokens_details": {
+    "thinking_tokens": 328
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9333,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 766,
+     "cache_read_input_tokens": 20362,
+     "cache_creation_input_tokens": 1761,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1761
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1780,
+    "cacheReadInputTokens": 33152,
+    "cacheCreationInputTokens": 9333,
+    "webSearchRequests": 0,
+    "costUSD": 0.1169104,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 328,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3445,
+    "cacheReadInputTokens": 29670,
+    "cacheCreationInputTokens": 8632,
+    "webSearchRequests": 0,
+    "costUSD": 0.059012999999999996,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 329,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in and the full test suite passes: 16 tests, OK, run with `python3 -m unittest discover -s tests -t .`. That result comes from the agent that did the work; I didn't re-run the tests or review its diff myself. Nothing is committed.\n\n**What changed**\n- **Cart:** has a `tier` attribute that defaults to `'standard'` (in `shop/models.py`).\n- **Discount:** the gold (10%) and silver (5%) rates live in one table with a `tier_discount` helper in `shop/pricing.py`. Any other tier gets no discount. Both `calc_total` and `calc_tax` use it, so the discount comes off before tax.\n- **Order:** it already gets its totals and tax from `calc_total` and `calc_tax`, so it reflects the tier with no extra logic. It also has a `tier` field now.\n- **Quote command:** has a `--tier` option, defaulting to `standard` (in `shop/cli.py`).\n- **Tests:** new and updated tests in `tests/test_pricing.py`, `tests/test_orders.py` and a new `tests/test_cli.py`.\n\n**Decision for you**\n- **Saved orders:** `Store.save_order` (in `shop/storage.py`) now writes a `\"tier\"` key into every saved order. I didn't ask for that change. If anything else reads those saved orders and expects a fixed set of keys, it could break, so keep it or drop it?\n\n**Worth knowing**\n- **Cent rounding:** the discount is rounded separately on the full subtotal and on the taxable part. Untaxed items still get the discount but don't change the tax. Because of the separate rounding, tax can be a cent off what you'd get by computing it from the discounted total.\n- **Leftover files:** the test run left untracked `__pycache__` folders in `shop/` and `tests/`.",
+  "ttft_ms": 2918,
+  "type": "result",
+  "duration_ms": 48301,
+  "uuid": "f7cea77c-072e-4a58-b7fa-a00195ef83c6",
+  "ttft_stream_ms": 1180,
+  "time_to_request_ms": 235,
+  "first_content_frame_ms": 1181,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 18 +++++++++++++++---\n shop/storage.py       |  2 +-\n tests/test_orders.py  | 14 ++++++++++++++\n tests/test_pricing.py | 38 +++++++++++++++++++++++++++++++++++++-\n 7 files changed, 71 insertions(+), 6 deletions(-)\n",
+ "workdir": "f3-tier.final-no-batch.1",
+ "ledger": []
+}

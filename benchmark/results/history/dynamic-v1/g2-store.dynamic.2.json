@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16135,
+  "stop_reason": "end_turn",
+  "session_id": "ac38e31a-b591-44f8-969b-c49648c0b57f",
+  "total_cost_usd": 0.10892940000000001,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 8621,
+   "cache_read_input_tokens": 53287,
+   "output_tokens": 1464,
+   "output_tokens_details": {
+    "thinking_tokens": 496
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8621,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1144,
+     "cache_read_input_tokens": 20662,
+     "cache_creation_input_tokens": 749,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 749
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1464,
+    "cacheReadInputTokens": 53287,
+    "cacheCreationInputTokens": 8621,
+    "webSearchRequests": 0,
+    "costUSD": 0.10892940000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 496,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move orders from the single JSON file to SQLite.**\n\n**Why the current design won't hold up**\n\n`shop/storage.py:16`: `save_order` reads every order, rebuilds the list and rewrites the whole file on each save.\n- **It gets slow.** At 100k orders the file is around 10 MB, and every save parses and rewrites all of it. The total cost of all saves grows with the square of the order count.\n- **Orders get lost.** Two writers each load the file, append their own order and write it back. The second write silently drops the first writer's order. Nothing locks the file.\n- **The file can be corrupted.** `write_text` overwrites the file in place, so a crash halfway through truncates it and every order is gone. A reader running mid-write can also see half a file.\n\n**Why SQLite**\n\nIt's in the standard library and still a single file. Saving one order becomes a single-row upsert keyed on `id`, so the cost stays flat as orders grow. Transactions are atomic and survive crashes. WAL mode with a `busy_timeout` lets the two writers take turns safely while readers keep working. Totals and tax are already integer cents, so they map straight to `INTEGER` columns.\n\nIf the writers ever run on different hosts or a network filesystem, use Postgres instead.\n\n**Migration path**\n\n1. **Add tests for current behaviour.** There are none for storage today. Cover: missing file returns `[]`, saving appends, and saving the same `id` replaces the row.\n2. **Build a SQLite store with the same interface** (`load()`, `save_order()`). `cli.py` is the only caller, so it doesn't need to change. Run the step-1 tests against it.\n3. **Write a one-off import script.** Copy the JSON into SQLite in one transaction, then check that row counts and summed totals match.\n4. **Cut over.** Stop both writers, run the import, point `--db` at the new file and restart. Keep the JSON file as a backup.\n5. **Later:** `load()` still returns every order for reports. Replace it with targeted queries.",
+  "ttft_ms": 1610,
+  "type": "result",
+  "duration_ms": 16963,
+  "uuid": "10cd0ab4-007e-4d4c-bc79-d660396b2189",
+  "ttft_stream_ms": 1008,
+  "time_to_request_ms": 375,
+  "first_content_frame_ms": 1008,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.2"
+}

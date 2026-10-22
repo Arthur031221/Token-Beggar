@@ -1,0 +1,111 @@
+{
+ "task": "h7-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 33936,
+  "stop_reason": "end_turn",
+  "session_id": "be515f3c-790f-45e8-9524-8c87809d1dd9",
+  "total_cost_usd": 0.1678478,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 10953,
+   "cache_read_input_tokens": 118179,
+   "output_tokens": 2827,
+   "output_tokens_details": {
+    "thinking_tokens": 570
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10953,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1682,
+     "cache_read_input_tokens": 23383,
+     "cache_creation_input_tokens": 360,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 360
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 2827,
+    "cacheReadInputTokens": 118179,
+    "cacheCreationInputTokens": 10953,
+    "webSearchRequests": 0,
+    "costUSD": 0.1678478,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 570,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've finished reading the diff and the code it touches. It introduces three bugs, and two of them make each other worse. I applied nothing and edited nothing; the existing tests would pass either way, because none of them cover these paths.\n\n## 1. `shop/storage.py` (`save_order`): saving an order again now adds a duplicate row\n\n**Change:** `rows = [r for r in self.load() if r[\"id\"] != order.id]` became `rows = self.load()`.\n\n**Why it's a bug:** `save_order` used to be an upsert: it dropped the order's old row, then appended the current one. Now it only appends. Orders change state over time (`new \u2192 paid \u2192 shipped`, or `\u2192 cancelled`, see `shop/orders.py:7`), so saving after each change is the normal pattern. Each save now adds another row with the same `id`.\n- The file ends up with several conflicting rows for one order (`new`, `paid`, `shipped`), and nothing marks which one is current.\n- `reports.sales_by_customer` sums every row, so one order's total is counted more than once. Even with the old report filter, an order saved as `paid` and again as `shipped` is counted twice.\n- The file also grows with every save.\n\n## 2. `shop/money.py` (`percent`): rounding now truncates instead of rounding half up\n\n**Change:** `int(cents * rate_percent / 100 + 0.5)` became `int(cents * rate_percent / 100)`.\n\n**Why it's a bug:**\n- **The docstring is now wrong.** It still says \"Round half up, in cents\", but the code truncates, so any fraction of a cent is dropped.\n- **Tax is under-collected.** `calc_tax` and `calc_total` in `pricing.py` use `percent(taxable, TAX_RATE)`. With the 8.25% rate:\n  - 1999\u00a2 \u2192 164.9175: was 165, now 164.\n  - 700\u00a2 \u2192 57.75: was 58, now 57.\n  - 10\u00a2 \u2192 0.825: was 1, now 0, so small items pay no tax at all.\n- **Bulk discounts shift the other way.** `line_subtotal` subtracts `percent(base, BULK_DISCOUNT)`. A truncated discount is smaller, so bulk customers now pay up to a cent more per line.\n- **Float error is exposed.** Plain `int()` on a float result cuts off values that should be whole numbers. For example, `percent(1500, 8.2)` computes `122.99999999999999` and returns 122 instead of 123. The old `+ 0.5` hid this. The current rates (8.25 and 5.0) don't trigger it in my search, but any rate change could.\n- The current tests happen to use amounts where the result is exact (2000\u00a2 \u2192 165.0, 950\u00a2 \u2192 78.375 \u2192 78), so they don't catch any of this.\n\n## 3. `shop/reports.py` (`sales_by_customer`): unpaid orders now count as sales\n\n**Change:** `if row[\"state\"] in (\"paid\", \"shipped\")` became `if row[\"state\"] != \"cancelled\"`.\n\n**Why it's a bug:**\n- **Unpaid orders are counted.** The state machine has four states. The old allowlist counted only orders that had actually been paid. The new denylist also counts `\"new\"` orders, which are unpaid carts that may never be paid, so the report overstates revenue.\n- **Unknown states are counted too.** Any typo'd or future state (for example `\"refunded\"`) would count as a sale; the allowlist excluded these safely.\n- **It compounds bug #1.** With duplicate rows, an order saved as `new`, then `paid`, then `shipped` is now counted three times. An order saved as `new` and then `cancelled` still has its stale `new` row, so a cancelled order shows up as revenue. The `!= \"cancelled\"` check exists to prevent exactly that case.\n\n## Suggested fixes\n- **Storage:** keep the filter that removes the order's existing row, or key the rows by `id`.\n- **Money:** keep round-half-up. Ideally use integer or `Decimal` arithmetic so float error can't creep in.\n- **Reports:** keep the `(\"paid\", \"shipped\")` allowlist.\n- **Tests:** add cases that would catch these: re-saving an order, rounding at amounts like 1999\u00a2 and 10\u00a2, and a report containing `new` orders.",
+  "ttft_ms": 2532,
+  "type": "result",
+  "duration_ms": 34464,
+  "uuid": "c12d71a6-c0e8-4a12-85bd-fefa36a78fb9",
+  "ttft_stream_ms": 1517,
+  "time_to_request_ms": 89,
+  "first_content_frame_ms": 1518,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "h7-diff.alone.1",
+ "ledger": []
+}

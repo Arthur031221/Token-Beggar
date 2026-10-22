@@ -1,0 +1,110 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": "haiku-xhigh",
+ "top": "claude-haiku-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 79010,
+  "stop_reason": "end_turn",
+  "session_id": "f4c375f8-5106-4258-8a5d-83667e3a83be",
+  "total_cost_usd": 0.01907168,
+  "usage": {
+   "input_tokens": 30,
+   "cache_creation_input_tokens": 31234,
+   "cache_read_input_tokens": 476888,
+   "output_tokens": 16106,
+   "output_tokens_details": {
+    "thinking_tokens": 9129
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 31234,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 937,
+     "cache_read_input_tokens": 43319,
+     "cache_creation_input_tokens": 705,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 705
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 30,
+    "outputTokens": 16106,
+    "cacheReadInputTokens": 476888,
+    "cacheCreationInputTokens": 31234,
+    "webSearchRequests": 0,
+    "costUSD": 0.01907168,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 9129,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 28,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in: gold takes 10% off, silver 5%, and any other value nothing. All 16 tests pass (6 existing, 10 new). I haven't committed anything.\n\n**What changed**\n- **`shop/models.py`**: `Cart` has `tier: str = \"standard\"`.\n- **`shop/pricing.py`**: `TIER_DISCOUNTS = {\"gold\": 10.0, \"silver\": 5.0}` and a `tier_discount()` helper. `calc_tax` takes the tier discount off the taxable base before applying tax. `calc_total` takes it off the subtotal and adds `calc_tax`, so the two can't drift apart.\n- **`shop/orders.py`**: `Order` records `self.tier = cart.tier`. Its totals come from `calc_total`/`calc_tax`, so they already reflect the tier.\n- **`shop/cli.py`**: `quote --tier` (default `standard`) passes the value into the `Cart`.\n\n**Choices I made that you may want to change**\n- The tier discount applies after bulk pricing, to the resulting subtotal.\n- Untaxable items get the tier discount in the total, but tax is computed only on the discounted taxable amount.\n- Tier names match exactly and are case-sensitive, so `Gold` gets no discount.\n- `--tier` accepts any string rather than a fixed list, matching the \"any other value\" rule.\n\n**Tests**\n- `tests/test_pricing.py`: gold and silver with tax, unknown tier, default tier, untaxable items, and stacking with bulk.\n- `tests/test_orders.py`: `Order` picks up the tier and the discounted totals.\n- `tests/test_cli.py` (new): `quote` with no tier, `--tier gold`, and `--tier silver`.\n- As a regression check, I made the tax path ignore the tier in a scratch copy. Seven tier tests failed, so they do exercise the discount.\n\n**Not done**\n- `Store.save_order` still writes only id, customer, total, tax, and state to the JSON file. The tier isn't persisted, since the request didn't mention storage. Say if you want it added.",
+  "ttft_ms": 1439,
+  "type": "result",
+  "duration_ms": 80366,
+  "uuid": "55720108-ad21-47ef-a115-5ea2b3eaae38",
+  "ttft_stream_ms": 1397,
+  "time_to_request_ms": 78,
+  "first_content_frame_ms": 1397,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 12 +++++++++---\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 34 ++++++++++++++++++++++++++++++++++\n 6 files changed, 55 insertions(+), 4 deletions(-)\n",
+ "workdir": "f3-tier.alone.haiku-xhigh"
+}

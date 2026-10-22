@@ -1,0 +1,132 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 44233,
+  "stop_reason": "end_turn",
+  "session_id": "a7fb426b-5d4c-43f1-811e-929bed2af083",
+  "total_cost_usd": 0.19261560000000003,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 1301,
+   "cache_read_input_tokens": 21961,
+   "output_tokens": 671,
+   "output_tokens_details": {
+    "thinking_tokens": 115
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1301,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 671,
+     "cache_read_input_tokens": 21961,
+     "cache_creation_input_tokens": 1301,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1301
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 2061,
+    "cacheReadInputTokens": 55188,
+    "cacheCreationInputTokens": 10472,
+    "webSearchRequests": 0,
+    "costUSD": 0.1360576,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 501,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 3533,
+    "cacheReadInputTokens": 38705,
+    "cacheCreationInputTokens": 6935,
+    "webSearchRequests": 0,
+    "costUSD": 0.056558000000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 240,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjm0ewu-76078763"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`Cart.apply_coupon(code)` is in and the full test suite passes (13 tests, 0 failures). The worker ran `python3 -m unittest discover -s tests -t .`. I took its report as the check and didn't re-read the changed files myself. Nothing is committed.\n\n**What changed:**\n- **`shop/coupons.py` (new):** defines SAVE10 and FLAT500. An unknown code raises `ValueError`.\n- **`shop/models.py`:** adds `Cart.apply_coupon`. Applying a code the cart already has does nothing, and an unknown code raises before the cart is changed.\n- **`shop/pricing.py`:** `calc_total` and `calc_tax` now use the discounted amounts. Their signatures are unchanged.\n- **`tests/test_pricing.py`:** 7 new tests covering each coupon alone, both stacked, tax after discount, the zero floor, a repeated code, and an unknown code.\n\n**Two choices you should check:**\n1. **The 10% is taken after the existing bulk discount.** The cart already had a bulk discount, which I didn't know about when I set the order. SAVE10 is worked out on the subtotal after that discount, not before it. I think that's the more natural reading of \"pre-tax subtotal\", but it's a pricing decision for you.\n2. **The discount is split across taxable and untaxable items.** Some items aren't taxed, so the discount is shared between taxed and untaxed items in proportion to their totals. Only the taxed share lowers the tax, rounded half up. If every item is taxed, this is the same as taxing the discounted subtotal.\n\nTell me if either should be different, and whether you want this committed.",
+  "ttft_ms": 2432,
+  "type": "result",
+  "duration_ms": 7824,
+  "uuid": "7280c40d-082a-4b90-bf13-ec85ed081462",
+  "ttft_stream_ms": 1274,
+  "time_to_request_ms": 126,
+  "first_content_frame_ms": 1274,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py        |  8 ++++++++\n shop/pricing.py       | 30 +++++++++++++++++++++++++++---\n tests/test_pricing.py | 49 +++++++++++++++++++++++++++++++++++++++++++++++++\n 3 files changed, 84 insertions(+), 3 deletions(-)\n",
+ "workdir": "c1-coupon.final.3",
+ "ledger": []
+}

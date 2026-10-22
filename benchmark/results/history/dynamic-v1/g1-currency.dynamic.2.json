@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 18373,
+  "stop_reason": "end_turn",
+  "session_id": "82a3deca-a494-4aae-a3cf-8063d62f9927",
+  "total_cost_usd": 0.15009,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 12960,
+   "cache_read_input_tokens": 53030,
+   "output_tokens": 1789,
+   "output_tokens_details": {
+    "thinking_tokens": 605
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12960,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1330,
+     "cache_read_input_tokens": 20415,
+     "cache_creation_input_tokens": 5335,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 5335
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1789,
+    "cacheReadInputTokens": 53030,
+    "cacheCreationInputTokens": 12960,
+    "webSearchRequests": 0,
+    "costUSD": 0.15009,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 605,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Core decision:** every amount carries a currency. Add a `Money(minor: int, currency: str)` value type, with a table of how many decimal places each currency uses (JPY 0, USD 2, KWD 3). Combining two different currencies should raise an error instead of silently adding them. Leave FX conversion out of scope for now.\n\n**Changes by file**\n- `shop/money.py`: `to_cents` and `fmt` assume two decimals, so they need to use the currency's decimal places. `percent` rounds with floats; switch it to `Decimal` with an explicit rounding mode.\n- `shop/models.py`: change `Item.price_cents` to `Money`. Give `Cart` a currency and reject items in any other currency.\n- `shop/pricing.py`: subtotals and tax return `Money`. `TAX_RATE` is one global US rate; it depends on where the buyer is, not on the currency, so flag it rather than tying it to currency.\n- `shop/orders.py`: record the currency on the order and in each line tuple.\n- `shop/storage.py`: add a `\"currency\"` field. Rows saved before the change have none, so read them as USD.\n- `shop/reports.py`: `sales_by_customer` adds up totals from all rows. With several currencies it must group by (customer, currency).\n- `shop/cache.py`: the cache key is the SKU alone; make it (sku, currency).\n- `shop/cli.py`: add a `--currency` flag to `quote`, and make `report` show currency codes.\n- `shop/carriers/*.py` (20 files): rates are plain integer cents with no currency. Add a `CURRENCY` constant to each carrier and return `Money`.\n- Tests: add cases for zero- and three-decimal currencies, mixed-currency errors, and old data.\n\n**Main risks**\n1. **Silently adding different currencies**, especially in reports. That's why mixing must raise an error.\n2. **Rounding**: the current float rounding goes wrong for three-decimal currencies and for negative amounts.\n3. **Old data**: existing JSON has no currency field and must still load correctly.\n4. **Carriers**: 20 near-identical files, and their units already differ (`maple` takes grams, the rest kg). A missed currency default would go unnoticed.\n5. **Scope creep**: FX rates, and where and when they're fixed, should be a separate design.",
+  "ttft_ms": 1593,
+  "type": "result",
+  "duration_ms": 19171,
+  "uuid": "96de9687-7d52-4425-b8c9-b6303493a91b",
+  "ttft_stream_ms": 937,
+  "time_to_request_ms": 271,
+  "first_content_frame_ms": 938,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.2"
+}

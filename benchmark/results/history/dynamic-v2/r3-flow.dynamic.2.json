@@ -1,0 +1,110 @@
+{
+ "task": "r3-flow",
+ "class": "reading",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 13244,
+  "stop_reason": "end_turn",
+  "session_id": "2f924477-0027-467b-8266-4660f3105f47",
+  "total_cost_usd": 0.097978,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 7239,
+   "cache_read_input_tokens": 76670,
+   "output_tokens": 1235,
+   "output_tokens_details": {
+    "thinking_tokens": 180
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7239,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 614,
+     "cache_read_input_tokens": 21523,
+     "cache_creation_input_tokens": 302,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 302
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1235,
+    "cacheReadInputTokens": 76670,
+    "cacheCreationInputTokens": 7239,
+    "webSearchRequests": 0,
+    "costUSD": 0.097978,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 180,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "There are two steps, validation and storage, and nothing in the code connects them.\n\n**Validation: `shop/orders.py`**\n- `STATES` lists the four states: `new`, `paid`, `shipped`, `cancelled`. No code reads it, so it only serves as documentation.\n- `ALLOWED` maps each state to the states it can move to: `new` \u2192 `paid` or `cancelled`, and `paid` \u2192 `shipped` or `cancelled`. `shipped` and `cancelled` are final.\n- `Order.__init__` sets `self.state = \"new\"`.\n- `Order.move(state)` checks that the target state is in `ALLOWED[self.state]`. If it isn't, it raises `ValueError(\"cannot go from X to Y\")`. If it is, it assigns the new state. Nothing else is checked, and no history or timestamp is kept.\n\n**Storage: `shop/storage.py`**\n- `Store` keeps every order in a single JSON file.\n- `Store.save_order(order)` loads all rows, drops the row with the same `id`, appends a new row (`id`, `customer`, `total`, `tax`, `state`) and rewrites the whole file. There is no locking and no atomic write. The order's lines aren't saved.\n- `Store.load()` returns the rows, or `[]` if the file doesn't exist.\n\n**How they connect**\nThey don't. `move()` changes the state only in memory, and nothing in the repo calls `save_order`. `shop/cli.py:26` only calls `Store(...).load()`. A caller has to call `save_order` after `move()` themselves. The only test is `tests/test_orders.py:20-23`, which moves an order new \u2192 paid \u2192 shipped and checks that cancelling it then raises an error. Storage has no tests.",
+  "ttft_ms": 2750,
+  "type": "result",
+  "duration_ms": 14365,
+  "uuid": "68a966ef-d8b8-439d-baec-95a882277a00",
+  "ttft_stream_ms": 967,
+  "time_to_request_ms": 302,
+  "first_content_frame_ms": 967,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r3-flow.dynamic.2"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "alone",
+ "rep": "opus-low",
+ "top": "claude-opus-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 6571,
+  "stop_reason": "end_turn",
+  "session_id": "0cb09795-0c0d-4d0c-a29e-3e241325226c",
+  "total_cost_usd": 0.0793228,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 6889,
+   "cache_read_input_tokens": 69794,
+   "output_tokens": 511,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6889,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 152,
+     "cache_read_input_tokens": 19297,
+     "cache_creation_input_tokens": 382,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 382
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 511,
+    "cacheReadInputTokens": 69794,
+    "cacheCreationInputTokens": 6889,
+    "webSearchRequests": 0,
+    "costUSD": 0.0793228,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I renamed `calc_total` to `order_total` everywhere it appeared: the definition in `shop/pricing.py`, plus its uses in `shop/cli.py`, `shop/orders.py`, `tests/test_pricing.py` and `tests/test_orders.py`. A search afterwards found no `calc_total` left in the repo.\n\nAll 6 tests pass. I ran them with `python3 -m unittest`, because there is no `python` command on this machine.",
+  "ttft_ms": 1847,
+  "type": "result",
+  "duration_ms": 6952,
+  "uuid": "7f2fdc39-6fe4-4a1c-82ed-d2a9db050b08",
+  "ttft_stream_ms": 922,
+  "time_to_request_ms": 91,
+  "first_content_frame_ms": 923,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.alone.opus-low"
+}

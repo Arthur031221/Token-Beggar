@@ -1,5 +1,6 @@
 """The durable note written before a compaction, and handed back right after it."""
 
+import json
 import time
 from pathlib import Path
 
@@ -69,6 +70,44 @@ def read(session_id: str) -> str | None:
 
 def prune(days: int = 14) -> None:
     cutoff = time.time() - days * 86400
-    for old in (paths.home() / "handoff").glob("*.md"):
+    for old in (paths.home() / "handoff").glob("*.*"):
         if old.stat().st_mtime < cutoff:
             old.unlink(missing_ok=True)
+
+
+def write_model(
+    session_id: str, text: str, mid_step: bool, used: int, progress: float | None = None, phase_done: bool = False, needs_detail: bool = False
+) -> Path:
+    """The note the chat model wrote itself. `used` is the context size when it wrote it, so a stale note can be told apart."""
+    path = note_path(session_id).with_suffix(".model.md")
+    path.write_text(text.strip() + "\n")
+    path.with_suffix(".json").write_text(
+        json.dumps(
+            {
+                "mid_step": mid_step,
+                "used": used,
+                "at": time.time(),
+                "progress": progress,
+                "phase": "done" if phase_done else "",
+                "needs_detail": needs_detail,
+            }
+        )
+    )
+    return path
+
+
+def read_model(session_id: str) -> dict | None:
+    path = note_path(session_id).with_suffix(".model.md")
+    try:
+        meta = json.loads(path.with_suffix(".json").read_text())
+        return {
+            "text": path.read_text(),
+            "mid_step": bool(meta["mid_step"]),
+            "used": int(meta["used"]),
+            "at": meta.get("at", 0),
+            "progress": meta.get("progress"),
+            "phase": meta.get("phase", ""),
+            "needs_detail": bool(meta.get("needs_detail", False)),
+        }
+    except (OSError, json.JSONDecodeError, KeyError, ValueError):
+        return None

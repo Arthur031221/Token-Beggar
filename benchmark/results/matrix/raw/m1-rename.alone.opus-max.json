@@ -1,0 +1,110 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "alone",
+ "rep": "opus-max",
+ "top": "claude-opus-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 69127,
+  "stop_reason": "end_turn",
+  "session_id": "10ef1544-3b81-4136-9f52-53a442712ab9",
+  "total_cost_usd": 0.31730499999999995,
+  "usage": {
+   "input_tokens": 16,
+   "cache_creation_input_tokens": 17026,
+   "cache_read_input_tokens": 176965,
+   "output_tokens": 7282,
+   "output_tokens_details": {
+    "thinking_tokens": 4216
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 17026,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1228,
+     "cache_read_input_tokens": 29274,
+     "cache_creation_input_tokens": 542,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 542
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 7282,
+    "cacheReadInputTokens": 176965,
+    "cacheCreationInputTokens": 17026,
+    "webSearchRequests": 0,
+    "costUSD": 0.31730499999999995,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 4216,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 22,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I renamed `calc_total` to `order_total` across the repo, and all 6 tests pass, the same as before the change.\n\n**What changed** (11 references in 5 files):\n- `shop/pricing.py:15`: the function definition\n- `shop/orders.py` and `shop/cli.py`: the imports and calls\n- `tests/test_orders.py` and `tests/test_pricing.py`: the imports and test assertions\n\n**Checks:**\n- No `calc_total` is left anywhere. I also searched for other spellings, `getattr`/`__all__` references and mentions in the README, and found none. `order_total` wasn't already used, so nothing clashes.\n- No test covers `shop/cli.py`, so I ran its `quote a:10.00:2` command by hand. It printed `21.65`, which matches the 2165 cents the pricing test expects for the same cart.\n\n**Notes:**\n- I didn't keep `calc_total` as an alias. Any code outside this repo that imports `calc_total` will now fail; if that matters, I can add `calc_total = order_total` to `pricing.py`.\n- Running the tests created untracked `__pycache__/` folders. The repo has no `.gitignore`, so `git add -A` would pick them up.\n- I haven't committed anything.",
+  "ttft_ms": 1683,
+  "type": "result",
+  "duration_ms": 69471,
+  "uuid": "5b478f4e-20b5-4aba-b98c-6c2a83e4d829",
+  "ttft_stream_ms": 1143,
+  "time_to_request_ms": 79,
+  "first_content_frame_ms": 1143,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.alone.opus-max"
+}

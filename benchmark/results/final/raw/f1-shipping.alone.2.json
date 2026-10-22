@@ -1,0 +1,111 @@
+{
+ "task": "f1-shipping",
+ "class": "multi_file",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 55674,
+  "stop_reason": "end_turn",
+  "session_id": "8e2244b0-0d56-4bae-bb08-b14199854da8",
+  "total_cost_usd": 0.37930899999999995,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 28756,
+   "cache_read_input_tokens": 206825,
+   "output_tokens": 5392,
+   "output_tokens_details": {
+    "thinking_tokens": 981
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 28756,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 790,
+     "cache_read_input_tokens": 41250,
+     "cache_creation_input_tokens": 296,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 296
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 5392,
+    "cacheReadInputTokens": 206825,
+    "cacheCreationInputTokens": 28756,
+    "webSearchRequests": 0,
+    "costUSD": 0.37930899999999995,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 981,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 11,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Orders now carry shipping, and all 17 tests pass: the 6 that were already there and 11 new ones. I haven't committed anything.\n\n**Changes**\n- **`shop/orders.py`**: `Order(cart, carrier=None, weight=0, zone='local')` looks up the carrier by name with `carriers.get()` and sets `shipping_cents`. It's 0 when there's no carrier. `total_cents` is the cart total plus shipping. Shipping isn't taxed, so `tax_cents` hasn't changed. The lookup lives in a small `calc_shipping()` helper.\n- **`shop/storage.py`**: `save_order` writes a `shipping` field on each row.\n- **`shop/reports.py`**: unchanged. The report only reads `customer`, `state` and `total`, so it works with rows saved before this change (no `shipping` key) and with new ones. Because totals now include shipping, the sales figures in the report will too.\n\n**Maple uses grams.** The other 19 carriers quote by kg, but maple's rate card is per gram (max 30000). Passing an order's kg weight straight to it would quote about 1000\u00d7 too low. I added `weight_unit = \"g\"` to `MapleCarrier`, and the order converts kg to grams for it. This assumes `Order.weight` is in kg, which matches the other carriers. If your callers meant something else, tell me.\n\n**Behaviour to be aware of**\n- If you give a carrier but no weight, it raises `ValueError`, because the carriers reject weights \u2264 0. I left that as is rather than quietly charging 0.\n- An unknown carrier name raises `KeyError`, and an unknown zone does too, because that's what the registry and rate cards do.\n\n**Tests** (`tests/test_shipping.py`) cover:\n- no carrier means zero shipping\n- shipping is added to the total but not taxed\n- the zone multiplier is applied\n- every kg carrier gives the same price as its rate card in the registry\n- maple's gram conversion\n- an unknown carrier, and a carrier with no weight, both raise errors\n- `shipping` is saved, including 0 when there's no carrier\n- the report works on a file mixing old and new rows\n\n**Already broken before this change:** `shop/cli.py` has no `if __name__ == \"__main__\"` block, so `python3 -m shop.cli ...` does nothing. I didn't touch it.",
+  "ttft_ms": 2312,
+  "type": "result",
+  "duration_ms": 56525,
+  "uuid": "6893c8b0-406d-480f-9023-23b917a55d88",
+  "ttft_stream_ms": 1327,
+  "time_to_request_ms": 103,
+  "first_content_frame_ms": 1328,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/maple.py |  1 +\n shop/orders.py         | 17 +++++++++++++++--\n shop/storage.py        |  9 ++++++++-\n 3 files changed, 24 insertions(+), 3 deletions(-)\n",
+ "workdir": "f1-shipping.alone.2",
+ "ledger": []
+}

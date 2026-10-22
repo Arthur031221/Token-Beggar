@@ -1,0 +1,111 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 45455,
+  "stop_reason": "end_turn",
+  "session_id": "b6680242-9b8e-466a-a586-72f5d5b2b4de",
+  "total_cost_usd": 0.2396178,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 14746,
+   "cache_read_input_tokens": 106449,
+   "output_tokens": 5016,
+   "output_tokens_details": {
+    "thinking_tokens": 1849
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14746,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 568,
+     "cache_read_input_tokens": 26913,
+     "cache_creation_input_tokens": 623,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 623
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 5016,
+    "cacheReadInputTokens": 106449,
+    "cacheCreationInputTokens": 14746,
+    "webSearchRequests": 0,
+    "costUSD": 0.2396178,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1849,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 10,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `Cart.apply_coupon(code)` and `calc_total` now reflects coupons. All 12 tests pass: the 6 new ones in `tests/test_coupons.py` and the 6 that were already there. (`python` isn't on this machine, so I ran them with `python3 -m unittest`.)\n\n**Changes:**\n- **`shop/coupons.py`** (new): defines SAVE10 (10% of the subtotal) and FLAT500 (500 cents). An unknown code raises `ValueError`.\n- **`shop/models.py`**: `Cart` has a new `coupons` list, and `apply_coupon(code)` checks the code before adding it.\n- **`shop/pricing.py`**: `calc_total` and `calc_tax` now take coupons off the subtotal before working out tax. So with a 2000-cent cart and both coupons, the subtotal drops to 1300 and the total is 1407.\n\n**Decisions you may want to change:**\n- **Tax is charged on the discounted amount.** In a cart that mixes taxed and untaxed items, the discount is split between them in proportion to their value. `calc_tax` uses the same rule, so an `Order`'s tax still matches its total.\n- **Each coupon is worked out from the original subtotal, not one after the other.** SAVE10 is always 10% of the full subtotal, whatever order the coupons are applied in.\n- **Applying the same code twice has no effect.** \"Stack\" here means different coupons combine; SAVE10 can't be used twice.\n- **The discount can't be larger than the subtotal**, so the total never goes below 0.\n- **Codes are case-sensitive**: `save10` is rejected as unknown.",
+  "ttft_ms": 2219,
+  "type": "result",
+  "duration_ms": 45738,
+  "uuid": "5e377d1a-bfa6-41bd-ab56-3a4ecf4f98f7",
+  "ttft_stream_ms": 1358,
+  "time_to_request_ms": 68,
+  "first_content_frame_ms": 1358,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py  |  7 +++++++\n shop/pricing.py | 16 +++++++++++++---\n 2 files changed, 20 insertions(+), 3 deletions(-)\n",
+ "workdir": "c1-coupon.alone.3",
+ "ledger": []
+}

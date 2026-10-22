@@ -1,0 +1,110 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 36818,
+  "stop_reason": "end_turn",
+  "session_id": "1f821e43-c881-4905-842c-c26ef6044a5c",
+  "total_cost_usd": 0.2405526,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 16409,
+   "cache_read_input_tokens": 105603,
+   "output_tokens": 4406,
+   "output_tokens_details": {
+    "thinking_tokens": 772
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 16409,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 818,
+     "cache_read_input_tokens": 26689,
+     "cache_creation_input_tokens": 2510,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2510
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 4406,
+    "cacheReadInputTokens": 105603,
+    "cacheCreationInputTokens": 16409,
+    "webSearchRequests": 0,
+    "costUSD": 0.2405526,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 772,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and all 16 tests pass (the 6 that were already there plus 10 new ones). Nothing is committed.\n\n**What changed**\n- **`shop/models.py`**: `Cart` has a new `tier` field that defaults to `\"standard\"`.\n- **`shop/pricing.py`**:\n  - A `TIER_DISCOUNTS` table holds the rates: gold 10%, silver 5%, any other value 0%.\n  - A new helper, `tier_discounted()`, applies the tier discount.\n  - A new `calc_subtotal()` returns the line subtotals after the tier discount.\n  - `calc_tax()` now taxes the taxable amount after the tier discount, and `calc_total()` is the discounted subtotal plus that tax. So the discount comes off before tax.\n- **`shop/orders.py`**: `Order` already got its totals from `calc_total`/`calc_tax`, so it picks up the discount without further changes. I also store the tier on the order as `order.tier`.\n- **`shop/cli.py`**: `quote` takes `--tier` (default `standard`). For example, `shop quote --tier gold a:10.00:2` prints `19.49`, against `21.65` with no tier.\n\n**Tests** (run with `python3 -m unittest discover -s tests -t .`):\n- **`tests/test_pricing.py`**: the default tier; gold and silver totals; an unknown tier getting no discount; discount before tax with a non-taxable item in the cart; and the tier discount on top of the existing bulk discount.\n- **`tests/test_orders.py`**: an order made from a gold cart gets the tier and the discounted total and tax.\n- **`tests/test_cli.py`** (new): `quote` with no tier, `--tier gold` and `--tier silver`.\n\n**Things to know**\n- **Rounding:** the tier discount is worked out on the cart's full subtotal and again on the taxable part, not line by line. In a cart that mixes taxable and non-taxable items, the two results could differ by a cent of rounding. That doesn't change the total, which is the discounted subtotal plus tax.\n- **Storage:** `Store.save_order` doesn't save the tier. You didn't ask for that, so I left the saved file format alone.",
+  "ttft_ms": 2317,
+  "type": "result",
+  "duration_ms": 38351,
+  "uuid": "17c06d04-38ab-49c8-af4f-31979ce38cb0",
+  "ttft_stream_ms": 918,
+  "time_to_request_ms": 265,
+  "first_content_frame_ms": 919,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 21 +++++++++++++++------\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 38 +++++++++++++++++++++++++++++++++++++-\n 6 files changed, 64 insertions(+), 8 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.3"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "alone",
+ "rep": "fable-high",
+ "top": "claude-fable-5-1",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 34343,
+  "stop_reason": "end_turn",
+  "session_id": "6f562ed5-3cf3-40c2-b5b5-3e1f9fd991bb",
+  "total_cost_usd": 0.2461515,
+  "usage": {
+   "input_tokens": 98,
+   "cache_creation_input_tokens": 9073,
+   "cache_read_input_tokens": 75646,
+   "output_tokens": 896,
+   "output_tokens_details": {
+    "thinking_tokens": 159
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9073,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 196,
+     "cache_read_input_tokens": 21437,
+     "cache_creation_input_tokens": 426,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 426
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 98,
+    "outputTokens": 896,
+    "cacheReadInputTokens": 75646,
+    "cacheCreationInputTokens": 9073,
+    "webSearchRequests": 0,
+    "costUSD": 0.2461515,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 159,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Done. `calc_total` is now `order_total` everywhere, and all 6 tests pass.\n\n**Files changed** (11 references, all whole-word matches, nothing left behind):\n- `shop/pricing.py` has the definition.\n- `shop/orders.py`, `shop/cli.py` import and call it.\n- `tests/test_pricing.py`, `tests/test_orders.py` import and assert on it.\n\n**Test result:**\n\n```\nRan 6 tests in 0.000s\nOK\n```\n\nThe changes are uncommitted in the working tree on `master`. Let me know if you want them committed.",
+  "ttft_ms": 5568,
+  "type": "result",
+  "duration_ms": 34623,
+  "uuid": "40f3c650-e9c0-4382-9027-94a3de632ba8",
+  "ttft_stream_ms": 3270,
+  "time_to_request_ms": 69,
+  "first_content_frame_ms": 3272,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.alone.fable-high"
+}

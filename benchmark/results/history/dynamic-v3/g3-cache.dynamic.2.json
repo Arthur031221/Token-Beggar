@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16368,
+  "stop_reason": "end_turn",
+  "session_id": "526654f1-ab9e-4011-bae0-da858072f0b3",
+  "total_cost_usd": 0.0797422,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5846,
+   "cache_read_input_tokens": 34591,
+   "output_tokens": 1302,
+   "output_tokens_details": {
+    "thinking_tokens": 546
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5846,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1179,
+     "cache_read_input_tokens": 20005,
+     "cache_creation_input_tokens": 427,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 427
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1302,
+    "cacheReadInputTokens": 34591,
+    "cacheCreationInputTokens": 5846,
+    "webSearchRequests": 0,
+    "costUSD": 0.0797422,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 546,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found four problems in `shop/cache.py`. Plain dict reads and writes won't corrupt under threads, but the logic around them is unsafe.\n\n1. **Memory grows forever (`get`, line 18).** Expired entries are only replaced, never removed. Every SKU ever asked for stays in `_data`, including bad or attacker-supplied ones, so a long-running service leaks memory.\n   *Fix:* cap the size with an LRU (`OrderedDict` plus `maxsize`) and drop expired entries on access.\n\n2. **Many threads load the same SKU at once (lines 14\u201318).** When an entry expires, every thread that misses at the same moment calls `loader` for it. That hammers the backend, and if the loader keeps failing, every request retries it.\n   *Fix:* allow one load per key at a time. A lock protects the map and a per-key in-flight `Future`. The first thread runs `loader` outside the lock, and the others wait on its `Future`.\n\n3. **A refresh can undo an invalidate (lines 17\u201318 vs. 22).** Thread A starts loading the old price. Thread B updates the price and calls `invalidate`. Then A writes the old value back, and it is served for a full `ttl`.\n   *Fix:* keep a version number per key and bump it in `invalidate`. A load only stores its result if the version hasn't changed since it started. `invalidate` also detaches any in-flight load, so its result goes to the threads already waiting but is never cached.\n\n4. **The timestamp is taken after the load (line 18).** A slow loader makes the value older than its recorded age, so it can be served past `ttl`.\n   *Fix:* read `clock()` before calling `loader`.\n\n**My choice:** one class with a lock, a size-capped LRU, a version counter per key, and a single in-flight load per key. I wouldn't wrap something like `cachetools.TTLCache` in a lock: it still allows duplicate loads and doesn't fix the invalidate race.",
+  "ttft_ms": 2233,
+  "type": "result",
+  "duration_ms": 16799,
+  "uuid": "a82df83d-cf5c-4957-98b1-71d70d6d7aed",
+  "ttft_stream_ms": 2068,
+  "time_to_request_ms": 200,
+  "first_content_frame_ms": 2069,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.2"
+}

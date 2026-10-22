@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16717,
+  "stop_reason": "end_turn",
+  "session_id": "0f9e9b40-8aac-48a7-9d45-06f4f20ae2c2",
+  "total_cost_usd": 0.126037,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 10068,
+   "cache_read_input_tokens": 78605,
+   "output_tokens": 1487,
+   "output_tokens_details": {
+    "thinking_tokens": 121
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10068,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 785,
+     "cache_read_input_tokens": 24198,
+     "cache_creation_input_tokens": 456,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 456
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1487,
+    "cacheReadInputTokens": 78605,
+    "cacheCreationInputTokens": 10068,
+    "webSearchRequests": 0,
+    "costUSD": 0.126037,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 121,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read the repo and wrote this design. No code was written.\n\n**Approach:** keep amounts as integers in each currency's smallest unit (cents, yen, fils). Add a currency code to each amount, and refuse to mix currencies unless you explicitly convert.\n\n**Changes**\n- `shop/money.py`: add an ISO\u20114217 table with the number of decimal places per currency (JPY 0, USD 2, KWD 3). `to_cents` and `fmt` currently assume 2 decimals, so they need a `currency` argument. Either add a small `Money(amount, currency)` type or pass the code alongside the integer.\n- `shop/models.py`: add `currency` to `Item` and `Cart`. `Cart.add` should reject an item whose currency differs from the cart's.\n- `shop/pricing.py`: `TAX_RATE` is a single US-style rate. Make it a lookup by currency or region. `percent` rounding can stay as it is.\n- `shop/orders.py` and `shop/storage.py`: save `currency` on each order. Rows already on disk have no currency field, so loading must treat a missing value as `\"USD\"`.\n- `shop/reports.py`: `sales_by_customer` adds totals together with no currency check. Group by (customer, currency), or convert to one reporting currency using a stated rate and date.\n- `shop/cli.py`: add a `--currency` flag to `quote`.\n- `shop/cache.py`: the cache key and stored value should include the currency.\n- `shop/carriers/*.py` (all 20): every rate card is in cents, presumably USD. Tag each with a `CURRENCY` constant rather than converting the rates.\n- `tests/`: add cases for 0\u2011 and 3\u2011decimal currencies, mixed-currency rejection and loading old JSON files.\n\n**Main risks**\n1. **Silent mixing:** adding or reporting amounts in different currencies without an error.\n2. **Wrong number of decimals:** `fmt` and `to_cents` would make \u00a51000 show as 10.00.\n3. **Old data:** orders saved before this change have no currency.\n4. **Exchange rates:** where they come from, how old they are, and how converted amounts are rounded. Store the rate used on each order.\n5. **Tax:** a single rate does not work across countries.",
+  "ttft_ms": 1380,
+  "type": "result",
+  "duration_ms": 17667,
+  "uuid": "bacd37f9-1fb4-4757-ae2a-67a4c023ad8d",
+  "ttft_stream_ms": 988,
+  "time_to_request_ms": 122,
+  "first_content_frame_ms": 988,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.3"
+}

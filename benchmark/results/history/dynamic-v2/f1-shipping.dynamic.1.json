@@ -1,0 +1,110 @@
+{
+ "task": "f1-shipping",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 40434,
+  "stop_reason": "end_turn",
+  "session_id": "85fdd7fe-ae96-4912-a29e-263eea1fea2b",
+  "total_cost_usd": 0.31352100000000005,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 23934,
+   "cache_read_input_tokens": 139645,
+   "output_tokens": 4704,
+   "output_tokens_details": {
+    "thinking_tokens": 1123
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23934,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 683,
+     "cache_read_input_tokens": 37704,
+     "cache_creation_input_tokens": 817,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 817
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 4704,
+    "cacheReadInputTokens": 139645,
+    "cacheCreationInputTokens": 23934,
+    "webSearchRequests": 0,
+    "costUSD": 0.31352100000000005,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1123,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Orders now include shipping, and all 16 tests pass (6 that were already there, 10 new ones in `tests/test_shipping.py`).\n\n**What changed**\n- **`shop/orders.py`**: `Order(cart, carrier=None, weight=0, zone='local')` sets `shipping_cents` using a new `shipping_cost()` helper, which looks the carrier up with `carriers.get()`. With no carrier, shipping is 0. `total_cents` is now the cart total plus shipping. The order also keeps `carrier`, `weight` and `zone`.\n- **`shop/storage.py`**: `save_order` saves a `shipping` field on each row.\n- **`shop/reports.py`**: no change was needed. The report adds up each row's `total`, so new orders' totals in the report now include shipping. Orders saved before this change don't have a `shipping` field, and the report still handles them; a test covers this.\n\n**Maple uses grams.** Every carrier takes weight in kg except `maple`, which takes grams. Without a fix, a 2 kg Maple order would be priced as 2 g and charged about 5.00 too little. I added `weight_unit = \"g\"` to `MapleCarrier` (in `shop/carriers/maple.py`), and `shipping_cost` multiplies the kg weight by 1000 for it. `weight` on an `Order` is always in kg.\n\n**Decisions you may want to change**\n- **Shipping isn't taxed.** `tax_cents` covers only the cart items.\n- **Some inputs raise errors instead of returning 0:**\n  - An unknown carrier name raises `KeyError`.\n  - A weight of 0 or less, or above the carrier's limit, raises the carrier's own `ValueError`. Because the default weight is 0, `Order(cart, carrier=\"acme\")` without a weight raises an error.\n  - An unknown zone raises `KeyError`.\n- **Rounding follows the carriers' rate cards**, which cut off fractions of a cent rather than rounding.",
+  "ttft_ms": 2474,
+  "type": "result",
+  "duration_ms": 41681,
+  "uuid": "7e71d1bb-bb4c-4e05-8ecd-e8d4cd47527c",
+  "ttft_stream_ms": 811,
+  "time_to_request_ms": 173,
+  "first_content_frame_ms": 812,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/maple.py |  1 +\n shop/orders.py         | 19 +++++++++++++++++--\n shop/storage.py        |  3 ++-\n 3 files changed, 20 insertions(+), 3 deletions(-)\n",
+ "workdir": "f1-shipping.dynamic.1"
+}

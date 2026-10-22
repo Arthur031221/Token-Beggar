@@ -1,0 +1,111 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "final",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16958,
+  "stop_reason": "end_turn",
+  "session_id": "0de6f855-63a5-4f76-bc53-00eab9cb1d0f",
+  "total_cost_usd": 0.1364556,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 12257,
+   "cache_read_input_tokens": 54178,
+   "output_tokens": 1377,
+   "output_tokens_details": {
+    "thinking_tokens": 186
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12257,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 868,
+     "cache_read_input_tokens": 21023,
+     "cache_creation_input_tokens": 4024,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4024
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1377,
+    "cacheReadInputTokens": 54178,
+    "cacheCreationInputTokens": 12257,
+    "webSearchRequests": 0,
+    "costUSD": 0.1364556,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 186,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Design: multi-currency support**\n\n**Core idea:** change bare `int` cents into a `Money(amount_minor: int, currency: str)` value object. Keep integer minor units, and give each currency an exponent (JPY 0, USD 2, BHD 3). Don't do implicit conversion. Adding or comparing two different currencies should raise an error.\n\n**Changes by file**\n- `shop/money.py`: add `Money` and a currency table. `to_cents`, `fmt` and `percent` must take the exponent into account, because they hardcode 100 and 2 decimals today. `percent` also rounds through a float, so switch it to `Decimal`.\n- `shop/models.py`: `Item.price_cents` becomes `price: Money`. `Cart` gets a `currency` and `add()` rejects items in a different currency.\n- `shop/pricing.py`: `TAX_RATE` is a single global, and tax really depends on region rather than currency. Make it configurable. Totals return `Money`.\n- `shop/orders.py`: store the currency on `Order` and keep `Money` in lines, total and tax.\n- `shop/storage.py`: add `\"currency\"` to each row. Old rows have none, so read them as `\"USD\"`.\n- `shop/reports.py`: `sales_by_customer` adds totals across all orders. Group by (customer, currency), or convert using a stated FX rate and date.\n- `shop/cache.py`: key the cache by (sku, currency).\n- `shop/cli.py`: add a `--currency` flag to `quote`.\n- `shop/carriers/*.py` (20 near-identical files): rates are cents with no currency. Declare a currency per carrier, and convert when it differs from the cart's.\n- `tests/`: the existing tests compare plain ints, so they need updating.\n\n**Main risks**\n1. **Silent mixing:** reports and carts adding JPY to USD. `Money` must refuse to add different currencies.\n2. **Rounding:** float rounding in `percent` and `int()` truncation in the carrier `rate()` methods. Totals differ by currency exponent.\n3. **Stored data:** old JSON has no currency field. You need an explicit default and a one-off migration.\n4. **FX:** where rates come from, how stale they can be, and which date applies to historical reports.\n5. **Size of the change:** 20 carrier files and every caller of the int API change. Roll it out behind a compatibility shim.",
+  "ttft_ms": 3152,
+  "type": "result",
+  "duration_ms": 17792,
+  "uuid": "75d7cc87-d38d-415d-9d9e-89a8c9d8eb96",
+  "ttft_stream_ms": 1304,
+  "time_to_request_ms": 209,
+  "first_content_frame_ms": 1305,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.final.2",
+ "ledger": []
+}

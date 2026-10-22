@@ -1,0 +1,110 @@
+{
+ "task": "c2-split",
+ "class": "routine_code",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 22865,
+  "stop_reason": "end_turn",
+  "session_id": "da54ed16-d14c-4e68-93d9-43dcdbf9c6b6",
+  "total_cost_usd": 0.11644099999999999,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 8054,
+   "cache_read_input_tokens": 77185,
+   "output_tokens": 1827,
+   "output_tokens_details": {
+    "thinking_tokens": 313
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8054,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 408,
+     "cache_read_input_tokens": 21591,
+     "cache_creation_input_tokens": 1048,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1048
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1827,
+    "cacheReadInputTokens": 77185,
+    "cacheCreationInputTokens": 8054,
+    "webSearchRequests": 0,
+    "costUSD": 0.11644099999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 313,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `split(cents, parts)` to `shop/money.py` with tests in a new file, `tests/test_money.py`. The full suite passes: 11 tests, including the 5 new ones.\n\n- **How it works:** it divides `cents` evenly across `parts`, then gives one extra cent to each of the first elements until the leftover is used up. For example, `split(1000, 3)` returns `[334, 333, 333]`.\n- **Invalid input:** `parts` below 1 raises `ValueError`.\n- **Tests cover:** an even split, leftover cents going to the first elements, more parts than cents (`split(2, 4)` returns `[1, 1, 0, 0]`), a single part, and `parts` of 0 and -2.\n\nDecision for you: negative amounts aren't handled the way you'd probably expect. `split(-7, 3)` returns `[-2, -2, -3]`. That still adds up to -7, but the odd cent lands on the last element instead of the first. If refunds go through `split`, I can make negative amounts mirror positive ones (`[-3, -2, -2]`). I left it alone because you didn't say how negatives should behave.",
+  "ttft_ms": 3993,
+  "type": "result",
+  "duration_ms": 23752,
+  "uuid": "74f9aea9-c8c3-4047-8251-107546d7e986",
+  "ttft_stream_ms": 2253,
+  "time_to_request_ms": 255,
+  "first_content_frame_ms": 2253,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 8 ++++++++\n 1 file changed, 8 insertions(+)\n",
+ "workdir": "c2-split.dynamic.3"
+}

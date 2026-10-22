@@ -1,0 +1,117 @@
+{
+ "task": "f3-tier",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": "sonnet-medium",
+ "top": "claude-sonnet-5-5",
+ "effort": "medium",
+ "result": {
+  "duration_api_ms": 30163,
+  "stop_reason": "end_turn",
+  "session_id": "ea11f653-f408-44e2-9147-627b5a165ddb",
+  "total_cost_usd": 0.0964806,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 1101,
+   "cache_read_input_tokens": 20723,
+   "output_tokens": 523,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 1101,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 523,
+     "cache_read_input_tokens": 20723,
+     "cache_creation_input_tokens": 1101,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1101
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 3654,
+    "cacheReadInputTokens": 80841,
+    "cacheCreationInputTokens": 15311,
+    "webSearchRequests": 0,
+    "costUSD": 0.0964806,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 163,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjicwt7-e1c5b318"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Customer tiers are in, and the full suite passes: 14 tests, all OK (`python3 -m unittest discover -s tests -t .`). That is the worker's reported result; I didn't rerun the suite or read the diff myself.\n\n**What changed**\n- **Cart:** `Cart.tier` defaults to `\"standard\"`. The change is in `shop/models.py`.\n- **Discounts:** gold takes 10%, silver 5%, and any other value takes nothing. The rates are in a `TIER_DISCOUNTS` table in `shop/pricing.py`.\n- **Tax:** `calc_total` applies the discount before tax, and `calc_tax` works on the discounted amount. `calc_total` calls `calc_tax`, so the two agree.\n- **Order:** `Order` takes the discount through `calc_total` and `calc_tax`. It also records `self.tier`.\n- **CLI:** `quote --tier` defaults to `standard` and is passed to `Cart` (`shop/cli.py`).\n- **Tests:** new tests cover gold, silver, standard, an unknown tier, tax on the discounted amount, a gold order, and `quote` with and without `--tier gold`. The CLI tests are in a new `tests/test_cli.py`.\n\n**Choices the worker made that you may want to check**\n- The tier discount stacks on top of the existing bulk discount.\n- Untaxable items still get the tier discount in the total, but only taxable items count toward the discounted tax base.\n- Rounding is half up, using the existing `percent` helper.\n\nNothing is committed.",
+  "ttft_ms": 4194,
+  "type": "result",
+  "duration_ms": 4558,
+  "uuid": "45d09f35-605d-44ab-9a28-376d8c5bbf30",
+  "ttft_stream_ms": 1003,
+  "time_to_request_ms": 106,
+  "first_content_frame_ms": 1003,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           |  3 ++-\n shop/models.py        |  1 +\n shop/orders.py        |  1 +\n shop/pricing.py       | 16 ++++++++++++----\n tests/test_orders.py  |  8 ++++++++\n tests/test_pricing.py | 26 ++++++++++++++++++++++++++\n 6 files changed, 50 insertions(+), 5 deletions(-)\n",
+ "workdir": "f3-tier.dynamic.sonnet-medium"
+}

@@ -15,6 +15,14 @@ def _cells(line: str) -> list[str]:
     return [c.strip() for c in line.strip().strip("|").split("|")]
 
 
+def _tokens(cell: str) -> int:
+    """'1M tokens' or '200k tokens'. A model whose window is not stated gets the 1M every current model has."""
+    match = re.search(r"([\d.]+)\s*([KkMm])", cell)
+    if not match:
+        return 1_000_000
+    return int(float(match.group(1)) * (1_000_000 if match.group(2).lower() == "m" else 1_000))
+
+
 def parse_overview(markdown: str) -> list[dict]:
     """Read the 'Compare models' table: one column per current model."""
     rows = {}
@@ -29,6 +37,8 @@ def parse_overview(markdown: str) -> list[dict]:
             rows["id"] = cells[1:]
         elif "Default effort" in cells[0]:
             rows["effort"] = cells[1:]
+        elif cells[0].startswith("[Context window]") or cells[0] == "Context window":
+            rows["window"] = cells[1:]
         elif "Pricing" in cells[0]:
             rows["price"] = cells[1:]
     if not header or not {"id", "price"} <= rows.keys():
@@ -48,6 +58,7 @@ def parse_overview(markdown: str) -> list[dict]:
                 "input_per_mtok": float(prices.group(1)),
                 "output_per_mtok": float(prices.group(2)),
                 "default_effort": effort.group(1) if effort else "high",
+                "context_window": _tokens(rows.get("window", [""] * len(header))[index]),
             }
         )
     found.sort(key=lambda m: m["input_per_mtok"])
@@ -64,6 +75,13 @@ def fetch(timeout: float = 15.0) -> str:
 
 def merged(found: list[dict]) -> dict:
     base = catalog.load()
+    known = {row["id"]: row for row in base.get("claude", [])}
+    for row in found:  # the overview page has no cache prices: keep the ones already known while the input price is unchanged
+        old = known.get(row["id"])
+        if old and old.get("input_per_mtok") == row["input_per_mtok"]:
+            for key in ("cache_read_per_mtok", "cache_write_per_mtok"):
+                if key in old:
+                    row[key] = old[key]
     return {**base, "updated": time.strftime("%Y-%m-%d"), "claude": found}
 
 

@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "sonnet-max",
+ "top": "claude-sonnet-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 191989,
+  "stop_reason": "end_turn",
+  "session_id": "82e7ec21-de7a-43af-8818-9d3db10e613f",
+  "total_cost_usd": 0.3839447,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 32182,
+   "cache_read_input_tokens": 179187,
+   "output_tokens": 23727,
+   "output_tokens_details": {
+    "thinking_tokens": 20830
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 32182,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 586,
+     "cache_read_input_tokens": 43150,
+     "cache_creation_input_tokens": 1822,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1822
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 23727,
+    "cacheReadInputTokens": 179187,
+    "cacheCreationInputTokens": 32182,
+    "webSearchRequests": 0,
+    "costUSD": 0.3839447,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 20830,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 13,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Move to SQLite (stdlib `sqlite3`, WAL mode), keeping `Store`'s `load()`/`save_order()` interface.**\n\n**Why**\n- **Lost updates:** `save_order` is an unlocked read-modify-write of the whole file; two writers will drop each other's orders.\n- **Corruption:** `write_text` truncates first, so a crash or concurrent `report` read sees a partial file.\n- **Cost:** every save re-parses and rewrites all rows, roughly 10 MB at 100k orders. File locking would fix the races, not this.\n- SQLite gives atomic row upserts, queued writers, non-blocking readers, and no new dependency. Choose Postgres only if writers run on different hosts; WAL needs one host.\n\n**A bigger problem no store fixes:** `Order.id` comes from a per-process `itertools.count(1000)`. If your writers build `Order`s as this repo does (nothing here calls `save_order`), both issue 1000, 1001, \u2026, and `save_order` replaces same-id rows, so they silently overwrite each other. A restart does the same. Have the database assign integer ids at first save; existing ids stay valid.\n\n**Migration path**\n1. Add a SQLite `Store` with identical method signatures and row dicts, so `cli.py` and `reports.py` don't change. Include DB-assigned ids and old-state-conditional updates, so a stale writer can't regress an order.\n2. Stop writers, import the JSON in one transaction keeping ids, then verify row counts and `report` output match. The JSON stays untouched, so rollback is trivial.\n3. Repoint writers and `--db`, restart. Don't dual-write; the JSON side is the racy one.\n4. Archive the JSON as a backup.",
+  "ttft_ms": 5863,
+  "type": "result",
+  "duration_ms": 192470,
+  "uuid": "3b94b3de-6e6d-462a-a13e-a0134fae091d",
+  "ttft_stream_ms": 5681,
+  "time_to_request_ms": 97,
+  "first_content_frame_ms": 5683,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.sonnet-max"
+}

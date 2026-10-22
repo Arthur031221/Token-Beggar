@@ -1,0 +1,127 @@
+{
+ "task": "f1-shipping",
+ "class": "multi_file",
+ "arm": "v020",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 46628,
+  "stop_reason": "end_turn",
+  "session_id": "9e62d1c3-b209-4e93-90fa-f78899057023",
+  "total_cost_usd": 0.1638118,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 8635,
+   "cache_read_input_tokens": 53462,
+   "output_tokens": 1521,
+   "output_tokens_details": {
+    "thinking_tokens": 128
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8635,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 490,
+     "cache_read_input_tokens": 21118,
+     "cache_creation_input_tokens": 307,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 307
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1521,
+    "cacheReadInputTokens": 53462,
+    "cacheCreationInputTokens": 8635,
+    "webSearchRequests": 0,
+    "costUSD": 0.11021639999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 128,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2767,
+    "cacheReadInputTokens": 41079,
+    "cacheCreationInputTokens": 8719,
+    "webSearchRequests": 0,
+    "costUSD": 0.0535954,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 242,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Orders now include shipping, and all 13 tests pass when I run `python3 -m unittest discover -s tests -t .`.\n\n- **Shipping cost:** `Order(cart, carrier=None, weight=0, zone='local')` sets `shipping_cents` from the carrier registry's rate for that weight and zone. It is 0 when there's no carrier, and `total_cents` is the cart total plus shipping. The changes are in `shop/orders.py`.\n- **Saving:** `Store.save_order` writes the value as `'shipping'`. Orders saved before this change load with shipping set to 0 (`shop/storage.py`).\n- **Report:** `shop/reports.py` didn't need changing. It adds up each order's saved total, which now includes shipping, so nothing is counted twice. The tests check it with orders that have shipping and orders that don't.\n- **Tests:** 7 new tests in `tests/test_orders.py`. They cover no carrier, a carrier with a weight and zone, the total, saving, old orders and the report.\n\n**Decision for you:** an unknown carrier name raises a `KeyError` instead of quietly charging 0 shipping. A weight out of range or an unknown zone raises an error the same way. I think failing loudly is right, but if you'd rather fall back to free shipping, that's a small change in `Order`.\n\nNothing is committed.\n\nToken Beggar: about 1.56x less spend than claude-opus-5-5 high alone (measured, multi_file)",
+  "ttft_ms": 2079,
+  "type": "result",
+  "duration_ms": 47306,
+  "uuid": "4bf68e7d-9552-4507-856d-e9b5ecf5fb07",
+  "ttft_stream_ms": 1076,
+  "time_to_request_ms": 152,
+  "first_content_frame_ms": 1077,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/orders.py       | 10 +++++++--\n shop/storage.py      |  7 ++++--\n tests/test_orders.py | 60 ++++++++++++++++++++++++++++++++++++++++++++++++++++\n 3 files changed, 73 insertions(+), 4 deletions(-)\n",
+ "workdir": "f1-shipping.v020.1",
+ "ledger": []
+}

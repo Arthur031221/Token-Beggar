@@ -1,0 +1,111 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 20122,
+  "stop_reason": "end_turn",
+  "session_id": "e5a52f55-7956-4471-8cae-6014e836e54d",
+  "total_cost_usd": 0.09733639999999999,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7270,
+   "cache_read_input_tokens": 50862,
+   "output_tokens": 1449,
+   "output_tokens_details": {
+    "thinking_tokens": 468
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7270,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1161,
+     "cache_read_input_tokens": 19434,
+     "cache_creation_input_tokens": 626,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 626
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1449,
+    "cacheReadInputTokens": 50862,
+    "cacheCreationInputTokens": 7270,
+    "webSearchRequests": 0,
+    "costUSD": 0.09733639999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 468,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I recommend moving orders to **SQLite in WAL mode**. It's in the standard library, there's no server to run, and it handles two writer processes at this scale easily.\n\n**Why the current design won't hold** (`shop/storage.py`)\n- **Slow:** every `save_order` reads, rebuilds and rewrites the whole file. At 100k orders that's about 10 MB per save, so total cost grows quadratically as orders accumulate.\n- **Lost updates:** there is no locking. If both processes read the file, each adds an order and writes it back, the second write silently deletes the first process's order.\n- **Corruption on crash:** `write_text` isn't atomic. A crash mid-write leaves broken JSON, and a reader can see a half-written file.\n\n**Target design**\n- An `orders` table with `id` as the primary key and integer cents columns, as now.\n- Each save is one upsert (`INSERT \u2026 ON CONFLICT(id) DO UPDATE`) in its own transaction.\n- WAL mode plus a `busy_timeout`. Writers take turns briefly, and readers never block them.\n- Keep the `Store.load()` / `save_order()` interface so callers don't change. Today the only caller is `cli.py report`.\n\n**Migration path**\n1. Write `SqliteStore` with the same interface. Add tests for upsert and for two processes writing at once.\n2. Write a one-time import script that loads the JSON in a single transaction. Check that the row count and the sums of `total` and `tax` match the JSON.\n3. Cutover: stop both writers, run the import, switch the configured path, restart. Keep the JSON file read-only as a rollback backup.\n4. Delete the JSON code path after a stable period.\n5. Later, move report totals into SQL so `load()` doesn't pull all 100k rows into memory.\n\n**Caveats**\n- Don't put the SQLite file on a network filesystem. If writers ever run on more than one host, use Postgres instead.\n- If you need a stopgap first, a file lock plus write-to-temp-then-rename fixes lost updates and corruption, but it's still slow.",
+  "ttft_ms": 3453,
+  "type": "result",
+  "duration_ms": 20314,
+  "uuid": "8148a8e1-149a-4deb-92d0-4f62681ebd03",
+  "ttft_stream_ms": 2393,
+  "time_to_request_ms": 110,
+  "first_content_frame_ms": 2394,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.3",
+ "ledger": []
+}

@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": "opus-medium",
+ "top": "claude-opus-5-5",
+ "effort": "medium",
+ "result": {
+  "duration_api_ms": 10335,
+  "stop_reason": "end_turn",
+  "session_id": "3f662984-5cbc-446e-a007-ceb26d92d14f",
+  "total_cost_usd": 0.0825442,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 7334,
+   "cache_read_input_tokens": 32481,
+   "output_tokens": 868,
+   "output_tokens_details": {
+    "thinking_tokens": 30
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7334,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 730,
+     "cache_read_input_tokens": 19691,
+     "cache_creation_input_tokens": 433,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 433
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 868,
+    "cacheReadInputTokens": 32481,
+    "cacheCreationInputTokens": 7334,
+    "webSearchRequests": 0,
+    "costUSD": 0.0825442,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 30,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: switch `shop/storage.py` to SQLite in WAL mode.**\n\n**Why the current design fails**\n- **Lost writes.** `save_order` reads the whole file, changes it in memory and writes it back, with no lock. If both processes save at once, the later write silently erases the other's order.\n- **Corrupted files.** `write_text` overwrites the file in place, so a crash partway through, or a read during a write, can leave or see truncated JSON.\n- **Slows down as orders grow.** Every save reads, filters and writes all orders. At 100k orders that's roughly 10 MB per save, and saving N orders costs O(N\u00b2) overall.\n\n**Why SQLite**\n- It's in Python's standard library: no server to run, still a single file.\n- Two writers are safe: transactions serialize them. WAL mode lets reads continue during a write, and `busy_timeout` makes a blocked writer wait instead of failing.\n- With `id` as the primary key, a save becomes one `INSERT \u2026 ON CONFLICT(id) DO UPDATE` that touches one row.\n- You can add indexes on `customer` and `state` later for queries.\n\nMove to Postgres only if writers end up on different hosts or the write rate gets much higher.\n\n**Migration path**\n1. Keep the same `Store` interface (`load`, `save_order`) and add a SQLite version behind it. Columns: `id` (primary key), `customer`, `total`, `tax`, `state`. Store amounts as integer cents.\n2. Write a one-off import script that reads the JSON file, inserts every order in one transaction, then compares row counts and totals.\n3. Cutover: stop both writers, run the import, deploy the SQLite store, restart. Keep the JSON file read-only as a backup.\n4. Run the existing tests against the new store, plus a test where two processes save at the same time.\n5. Add store-level methods like `get(id)` and `by_state`, so callers stop using `load()` to fetch everything. Then retire the JSON version.\n\nIf you can't migrate yet: guard each save with a file lock (`fcntl.flock`), and write to a temp file then `os.replace` it. That stops lost and torn writes, but saves still rewrite every order.",
+  "ttft_ms": 1226,
+  "type": "result",
+  "duration_ms": 10717,
+  "uuid": "31f5cfb9-f29a-43a8-915b-db4c43589d2e",
+  "ttft_stream_ms": 942,
+  "time_to_request_ms": 191,
+  "first_content_frame_ms": 942,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.opus-medium"
+}

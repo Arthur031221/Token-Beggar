@@ -1,0 +1,111 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15640,
+  "stop_reason": "end_turn",
+  "session_id": "b8a91a4e-997c-4df1-b10f-85174e5075a5",
+  "total_cost_usd": 0.078692,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6219,
+   "cache_read_input_tokens": 31420,
+   "output_tokens": 1132,
+   "output_tokens_details": {
+    "thinking_tokens": 413
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6219,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1057,
+     "cache_read_input_tokens": 18630,
+     "cache_creation_input_tokens": 379,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 379
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1132,
+    "cacheReadInputTokens": 31420,
+    "cacheCreationInputTokens": 6219,
+    "webSearchRequests": 0,
+    "costUSD": 0.078692,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 413,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I reviewed `shop/cache.py` (23 lines) by reading it. I didn't run anything.\n\n**Problems**\n\n1. **Concurrent misses all hit the loader (`get`, lines 14\u201318).** When an entry is missing or expired, every thread asking for that SKU calls `loader` at the same time. A popular SKU expiring can flood the price backend, and a slow or failing backend makes it worse.\n2. **`invalidate` can be undone (lines 17\u201318 vs. 22).** Thread A starts loading the old price. Thread B updates the price and calls `invalidate`. Thread A then writes the old value back, and it is served for a full `ttl`.\n3. **Memory grows without limit (`_data`).** Expired entries are only replaced if the same SKU is asked for again. They are never removed. In a long-running service with many SKUs, this is a slow memory leak.\n4. **The timestamp is taken after the load (line 18).** A slow load makes the entry live longer than `ttl`, measured from when the data was actually read.\n5. **No locking at all.** Single dict operations are safe in CPython today, but the read, check, load and write sequence is not atomic. Nothing guarantees safety on free-threaded Python either.\n\n**Fixes I'd choose**\n\n- **One load per key:** keep a dict from SKU to an in-flight `Future`, guarded by one short-held lock. The first thread to miss runs the loader outside the lock and later threads wait on the Future. If the load fails, remove the Future so the error isn't cached.\n- **Invalidation counter:** keep a number per SKU that `invalidate` increases. A load only stores its result if the number hasn't changed since the load started, so stale writes are dropped.\n- **Size limit:** replace the dict with an `OrderedDict` capped at a maximum size (LRU), and remove expired entries when they're found or during writes.\n- **Timing:** read `clock()` before calling `loader` and store that time.",
+  "ttft_ms": 2673,
+  "type": "result",
+  "duration_ms": 15754,
+  "uuid": "c43e0fc2-4e62-4d5d-bef8-f45f35598afe",
+  "ttft_stream_ms": 2288,
+  "time_to_request_ms": 76,
+  "first_content_frame_ms": 2289,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.alone.2",
+ "ledger": []
+}

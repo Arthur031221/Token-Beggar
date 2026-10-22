@@ -1,0 +1,111 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 51289,
+  "stop_reason": "end_turn",
+  "session_id": "0eb23a25-d384-4ede-9f71-5826ca833dde",
+  "total_cost_usd": 0.25871720000000004,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 15484,
+   "cache_read_input_tokens": 130286,
+   "output_tokens": 5437,
+   "output_tokens_details": {
+    "thinking_tokens": 1692
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 15484,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 588,
+     "cache_read_input_tokens": 26376,
+     "cache_creation_input_tokens": 1898,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1898
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 5437,
+    "cacheReadInputTokens": 130286,
+    "cacheCreationInputTokens": 15484,
+    "webSearchRequests": 0,
+    "costUSD": 0.25871720000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1692,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 12,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `Cart.apply_coupon(code)` and coupon support in `calc_total`. All 13 tests pass, including 7 new ones in `tests/test_coupons.py`.\n\n**What changed**\n- **`shop/coupons.py`** (new): holds the coupon list, `SAVE10` (10% off) and `FLAT500` (500 cents off). An unknown code raises `ValueError`, and applying it leaves the cart unchanged.\n- **`shop/models.py`**: `Cart` now stores its applied coupons, and `apply_coupon(code)` checks the code before adding it.\n- **`shop/pricing.py`**: `calc_total` and `calc_tax` now take the coupon discount off the subtotal before tax is worked out. I updated `calc_tax` too, so the tax saved on an `Order` matches its total.\n\n**Choices I made where the spec didn't say**\n- **Stacking:** each coupon is worked out from the original subtotal, so the order you apply them in doesn't change the result. For a 2000-cent cart, SAVE10 + FLAT500 gives 2000 \u2212 200 \u2212 500 = 1300, plus 107 tax, for a total of 1407.\n- **Floor at zero:** the discount can't exceed the subtotal, so the total never goes below 0.\n- **Duplicates:** applying the same code twice does nothing the second time. If you'd rather it stack or raise an error, it's a one-line change.\n- **Items that aren't taxed:** the discount is split between taxed and untaxed items by their share of the subtotal, so a coupon only lowers the tax on the taxed part.\n- **Case:** codes must match exactly, so `save10` is rejected as unknown.\n\nI haven't committed anything.",
+  "ttft_ms": 2778,
+  "type": "result",
+  "duration_ms": 51699,
+  "uuid": "10a4e223-96ed-4e00-8a1b-b184aebdae27",
+  "ttft_stream_ms": 1636,
+  "time_to_request_ms": 117,
+  "first_content_frame_ms": 1637,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py  |  9 +++++++++\n shop/pricing.py | 21 ++++++++++++++++++---\n 2 files changed, 27 insertions(+), 3 deletions(-)\n",
+ "workdir": "c1-coupon.alone.1",
+ "ledger": []
+}

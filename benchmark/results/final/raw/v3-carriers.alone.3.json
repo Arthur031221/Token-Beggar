@@ -1,0 +1,111 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 26400,
+  "stop_reason": "end_turn",
+  "session_id": "af4f4b83-6769-4dbc-ac8c-cd6f5edff5aa",
+  "total_cost_usd": 0.1597634,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 13394,
+   "cache_read_input_tokens": 75297,
+   "output_tokens": 1876,
+   "output_tokens_details": {
+    "thinking_tokens": 362
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 13394,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1235,
+     "cache_read_input_tokens": 24630,
+     "cache_creation_input_tokens": 1554,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1554
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1876,
+    "cacheReadInputTokens": 75297,
+    "cacheCreationInputTokens": 13394,
+    "webSearchRequests": 0,
+    "costUSD": 0.1597634,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 362,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found two inconsistencies that would break callers. The more serious one is in **`shop/carriers/maple.py`**.\n\n### 1. `maple.py` expects grams; the other 19 carriers expect kilograms\n\nEvery other carrier's docstring says \"weight in kg\" and its code uses `PER_KG` / `MAX_KG`. Maple says \"weight in grams\" and uses `PER_GRAMS = 3` / `MAX_GRAMS = 30000` (`shop/carriers/maple.py:2,8,10,17,20`). The `rate(weight, zone)` signature is the same everywhere, so a caller looping over `REGISTRY` gets no warning. Maple will just treat the number as a different unit:\n\n- Passing `2.5` (meaning 2.5 kg) gives Maple a quote of about 501 cents for 2.5 g. That's a silent underquote, and no exception is raised.\n- The weight limit is broken too. Every kg carrier rejects weights above its 30\u201349 kg limit, but Maple accepts anything up to 30000. So an order of, say, 500 kg gets a cheap quote from Maple and can't be used with any other carrier.\n\nThis is the most dangerous issue because nothing fails loudly. Maple just quietly wins any price comparison.\n\nA side note: even if a caller sends grams correctly, 3 cents/g works out to 3000 cents/kg. That's roughly 10\u00d7 the other carriers' 310\u2013389 cents/kg, so the rate constant may also be wrong. Worth checking with whoever owns the rate card.\n\n### 2. Four modules are missing `tracking_url`\n\n`acme` and 15 others define `tracking_url(code)`. These four stop after `valid_label`:\n\n- `shop/carriers/delta.py`\n- `shop/carriers/kestrel.py`\n- `shop/carriers/onyx.py`\n- `shop/carriers/tundra.py`\n\nAny caller that does `get(name).tracking_url(code)` will raise `AttributeError` for these carriers.\n\n### Everything else matches\n\nThe other differences are expected per-carrier data: `BASE_RATE`, `PER_KG`, zone multipliers, `MAX_KG`, and the owner tags in the TODO comments. All 20 modules share the same zone keys (`local`/`regional`/`national`), the same `label`/`valid_label` format (`NAME-%08d`), and the same `name` attribute. All 20 are registered correctly in `__init__.py`.\n\nI found no code outside `shop/carriers/` that calls the registry, so these are breaks waiting to happen rather than ones already being hit. I didn't edit any files.",
+  "ttft_ms": 2818,
+  "type": "result",
+  "duration_ms": 26681,
+  "uuid": "7c0e2ff1-5db6-4535-94b6-c8445526cf21",
+  "ttft_stream_ms": 1974,
+  "time_to_request_ms": 85,
+  "first_content_frame_ms": 1975,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.alone.3",
+ "ledger": []
+}

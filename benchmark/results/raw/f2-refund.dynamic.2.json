@@ -1,0 +1,126 @@
+{
+ "task": "f2-refund",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 43574,
+  "stop_reason": "end_turn",
+  "session_id": "ecad66fa-06df-4f8a-a338-5c28ebe71200",
+  "total_cost_usd": 0.1434866,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7485,
+   "cache_read_input_tokens": 55656,
+   "output_tokens": 1690,
+   "output_tokens_details": {
+    "thinking_tokens": 354
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7485,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 391,
+     "cache_read_input_tokens": 21363,
+     "cache_creation_input_tokens": 708,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 708
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1690,
+    "cacheReadInputTokens": 55656,
+    "cacheCreationInputTokens": 7485,
+    "webSearchRequests": 0,
+    "costUSD": 0.10483519999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 354,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2119,
+    "cacheReadInputTokens": 37739,
+    "cacheCreationInputTokens": 5467,
+    "webSearchRequests": 0,
+    "costUSD": 0.0386514,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 60,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've added the `refunded` state and tests for it. The full suite passes: `python3 -m unittest discover -s tests -t .` ran 12 tests, all OK. Nothing is committed.\n\n**What changed (`shop/orders.py`)**\n- `refunded` is now one of the allowed states.\n- Paid and shipped orders can move to `refunded`.\n- `refunded` has no way out, so it's a final state.\n\n**`sales_by_customer` needed no change.** `shop/reports.py:9` already counts only paid and shipped orders, so refunded orders are left out without any edit.\n\n**Nothing else needed updating.** I searched the whole repo for the state names. Apart from those two files and the tests, nothing else lists order states: no database schema, migrations, fixtures, command-line options or README text.\n\n**New tests (`tests/test_orders.py`)**\n- Paid and shipped orders can move to `refunded`.\n- New, cancelled and already-refunded orders can't move to `refunded`.\n- A refunded order can't move to any other state.\n- Every state has a list of allowed next states.\n- `sales_by_customer` leaves out refunded orders, checked on a set of seven orders in different states.",
+  "ttft_ms": 1937,
+  "type": "result",
+  "duration_ms": 45283,
+  "uuid": "c808f104-95d4-45b7-8289-8307edabd1e8",
+  "ttft_stream_ms": 910,
+  "time_to_request_ms": 109,
+  "first_content_frame_ms": 911,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/orders.py       | 10 ++++++++--\n tests/test_orders.py | 49 ++++++++++++++++++++++++++++++++++++++++++++++++-\n 2 files changed, 56 insertions(+), 3 deletions(-)\n",
+ "workdir": "f2-refund.dynamic.2"
+}

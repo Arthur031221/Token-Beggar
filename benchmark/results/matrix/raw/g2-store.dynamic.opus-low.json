@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": "opus-low",
+ "top": "claude-opus-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 9952,
+  "stop_reason": "end_turn",
+  "session_id": "ac25afba-6b25-4bfa-9d76-cc9ca9b8f72f",
+  "total_cost_usd": 0.0815622,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 7294,
+   "cache_read_input_tokens": 32471,
+   "output_tokens": 835,
+   "output_tokens_details": {
+    "thinking_tokens": 14
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7294,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 727,
+     "cache_read_input_tokens": 19681,
+     "cache_creation_input_tokens": 403,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 403
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 835,
+    "cacheReadInputTokens": 32471,
+    "cacheCreationInputTokens": 7294,
+    "webSearchRequests": 0,
+    "costUSD": 0.0815622,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 14,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move to SQLite in WAL mode.**\n\n**Why the current design breaks**\n- **Lost updates.** `save_order` (`shop/storage.py:16-21`) reads the whole file, changes it in memory, and writes it all back. If both writers do this at the same time, the second write silently erases the first one's order.\n- **Torn files.** `write_text` isn't atomic. A crash or a read in the middle of a write can leave truncated JSON, and then `load()` fails for everyone.\n- **Slow at scale.** Every save re-parses and re-writes all 100k orders, roughly 10 MB of JSON per write.\n\n**Why SQLite**\n- It ships with Python, so there's no server to run.\n- WAL mode lets readers keep reading while one process writes. Two writers is well within its limits.\n- `INSERT ... ON CONFLICT(id) DO UPDATE` saves one row at a time.\n- A primary key on `id` makes lookups fast. Add indexes on `customer` and `state` if you query by them.\n\nSwitch to Postgres only if you later need writers on several machines or much higher write concurrency. Keep `Store` as the only access point so that change stays local too.\n\n**Migration path**\n1. **Keep the interface.** Leave `Store.load()` and `save_order()` as they are and add a `SqliteStore` that implements both. Callers don't change.\n2. **Schema.** Table `orders(id PRIMARY KEY, customer, total, tax, state)`, plus a `schema_version` table. Turn on `journal_mode=WAL` and set `busy_timeout` to about 5s.\n3. **Backfill.** Write a one-off script that reads the JSON file and inserts every row in a single transaction. Check that the row count and the sums of `total` and `tax` match the JSON.\n4. **Cutover.** Stop both writers, run the backfill, switch the config to `SqliteStore`, and restart. Keep the JSON file read-only as a rollback.\n5. **Follow-up.** Callers that use `load()` to fetch everything should move to targeted queries (by id, by state), so 100k rows aren't pulled on every call.",
+  "ttft_ms": 1489,
+  "type": "result",
+  "duration_ms": 10633,
+  "uuid": "b25be359-5a86-4487-a5f0-e0bddddb3104",
+  "ttft_stream_ms": 1049,
+  "time_to_request_ms": 187,
+  "first_content_frame_ms": 1049,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.opus-low"
+}

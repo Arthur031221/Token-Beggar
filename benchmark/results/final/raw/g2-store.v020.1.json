@@ -1,0 +1,111 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "v020",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 11615,
+  "stop_reason": "end_turn",
+  "session_id": "8af5a362-3899-47a5-823b-e3577d0d4143",
+  "total_cost_usd": 0.08856800000000001,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7523,
+   "cache_read_input_tokens": 52400,
+   "output_tokens": 894,
+   "output_tokens_details": {
+    "thinking_tokens": 44
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7523,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 669,
+     "cache_read_input_tokens": 20111,
+     "cache_creation_input_tokens": 202,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 202
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 894,
+    "cacheReadInputTokens": 52400,
+    "cacheCreationInputTokens": 7523,
+    "webSearchRequests": 0,
+    "costUSD": 0.08856800000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 44,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the single JSON file with SQLite in WAL mode, behind the same `Store` interface.**\n\n**What's wrong now** (`shop/storage.py:16-21`):\n- **Lost writes:** `save_order` reads the whole file, changes it, then writes the whole file back. If two processes do this at once, the second write erases the first one's order. There is no locking.\n- **Corrupt reads:** `write_text` overwrites the file in place, so a reader that catches it halfway through gets broken JSON.\n- **Cost grows with size:** each save parses and rewrites every order. At 100k orders that's several MB per order saved, so it gets slower as the store grows.\n\n**Why SQLite:**\n- It's in the standard library and stays a single file, so there's nothing new to deploy.\n- WAL mode lets two writers take turns safely (set `busy_timeout` so one waits instead of failing), and readers aren't blocked while a write is in progress.\n- An upsert on `id` (the primary key) touches one row, so a save costs about the same at any store size.\n- 100k rows is small for SQLite. Postgres is only worth it if the writers move to separate machines or you need many concurrent writers.\n\n**Migration path:**\n1. Add an `SqliteStore` with the same `load()` / `save_order()` methods. Columns: `id` (primary key), `customer`, `total`, `tax`, `state`, plus a `schema_version` table.\n2. Write a one-off import script: read the JSON file, insert every row in one transaction, then check that the row count and the sums of `total` and `tax` match.\n3. Point `cli.py:26` (the only caller) at the new store through a config flag. Stop both writers, run the import, restart them. Keep the JSON file as a read-only backup.\n4. Add a test that runs two processes saving orders at the same time and asserts none are lost. The current code would fail this test.\n5. After a stable period, delete the JSON store and the flag.",
+  "ttft_ms": 1803,
+  "type": "result",
+  "duration_ms": 12247,
+  "uuid": "b0520c2f-8e80-4d2c-af3a-805c34fca65c",
+  "ttft_stream_ms": 1034,
+  "time_to_request_ms": 314,
+  "first_content_frame_ms": 1034,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.v020.1",
+ "ledger": []
+}

@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": "fable-max",
+ "top": "claude-fable-5-1",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 29382,
+  "stop_reason": "end_turn",
+  "session_id": "025d88b1-1968-4a7a-9487-f8091ebc56d6",
+  "total_cost_usd": 0.29948525,
+  "usage": {
+   "input_tokens": 66,
+   "cache_creation_input_tokens": 9721,
+   "cache_read_input_tokens": 56621,
+   "output_tokens": 1805,
+   "output_tokens_details": {
+    "thinking_tokens": 988
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9721,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 1333,
+     "cache_read_input_tokens": 22201,
+     "cache_creation_input_tokens": 310,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 310
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 66,
+    "outputTokens": 1805,
+    "cacheReadInputTokens": 56621,
+    "cacheCreationInputTokens": 9721,
+    "webSearchRequests": 0,
+    "costUSD": 0.29948525,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 988,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the single JSON file with SQLite in WAL mode, keeping the current Store interface.**\n\nThe present design in `shop/storage.py` breaks under your two stated requirements:\n\n- **Two writers lose orders.** Each save does read-modify-write of the whole file with no lock. Two processes saving at once both read the same list, and the second write silently discards the first's order.\n- **Writes are not atomic.** The file is truncated before it is rewritten. A reader or crash in that window sees a partial file, and the next load fails or returns nothing.\n- **Every save is O(n).** At 100k orders each save parses and reserialises roughly 15 MB of indented JSON. Write latency grows with the table.\n\nSQLite fixes all three. It is in the standard library, stays a single file at the path the CLI already passes, gives ACID transactions, and serialises concurrent writers itself. A primary key on id turns the current dedupe loop into an upsert.\n\n**Migration path:**\n\n1. Add a SQLite-backed Store with the same load and save_order methods. Set WAL journal mode and a busy timeout so the second writer waits instead of raising \"database is locked\".\n2. Write a one-shot import that reads the old JSON and inserts all rows in one transaction. Run it once at deploy. Keep the JSON as a backup until verified.\n3. Switch the CLI to the new backend. No call-site change is needed because the interface is preserved.\n4. Later, replace full load calls with filtered queries, since rendering 100k rows becomes the next bottleneck.\n\nIf SQLite cannot ship immediately, an interim fix is an exclusive file lock around save plus write-to-temp-then-rename. That restores correctness but keeps the O(n) cost.",
+  "ttft_ms": 3678,
+  "type": "result",
+  "duration_ms": 30041,
+  "uuid": "3ec2c079-5030-4ac3-9db5-2b8c286cffac",
+  "ttft_stream_ms": 1052,
+  "time_to_request_ms": 170,
+  "first_content_frame_ms": 1053,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.fable-max"
+}

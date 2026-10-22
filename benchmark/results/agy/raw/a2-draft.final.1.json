@@ -1,0 +1,120 @@
+{
+ "task": "a2-draft",
+ "class": "draft",
+ "arm": "final",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 28348,
+  "stop_reason": "end_turn",
+  "session_id": "dde0e2f1-8ced-414d-81aa-cf3934fc20ae",
+  "total_cost_usd": 0.15194680000000002,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 14893,
+   "cache_read_input_tokens": 55794,
+   "output_tokens": 1081,
+   "output_tokens_details": {
+    "thinking_tokens": 208
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14893,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 406,
+     "cache_read_input_tokens": 22684,
+     "cache_creation_input_tokens": 4999,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4999
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1081,
+    "cacheReadInputTokens": 55794,
+    "cacheCreationInputTokens": 14893,
+    "webSearchRequests": 0,
+    "costUSD": 0.15194680000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 208,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Here's the draft. I haven't added it to `README.md`.\n\n```markdown\n## Carriers\n\nCarrier rate cards live in `shop/carriers/`, one module per carrier (Acme through Tundra, 20 in all). Each module defines a `BASE_RATE` in cents. A quote is that base rate plus a per-unit weight charge, multiplied by a zone factor. Every carrier takes weight in kilograms except **Maple** (`shop/carriers/maple.py`), which takes weight in grams. Convert the weight before you ask Maple for a quote.\n```\n\nIt's about 65 words. I checked it against the code: all 20 carrier modules define `BASE_RATE`. Maple is the only one that works in grams: its docstring says \"weight in grams\" and it uses `MAX_GRAMS` and `PER_GRAMS`. Every other carrier uses `MAX_KG` and `PER_KG`.\n\nThe external model's first draft was accurate but thin, so I added the pricing formula and the note about converting weight for Maple.",
+  "ttft_ms": 6641,
+  "type": "result",
+  "duration_ms": 37413,
+  "uuid": "bd14b97f-14a4-4249-a5c1-d8c3c25d6a9d",
+  "ttft_stream_ms": 4310,
+  "time_to_request_ms": 283,
+  "first_content_frame_ms": 4310,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "a2-draft.final.1",
+ "ledger": [
+  {
+   "t": 1792679593.9482768,
+   "kind": "external",
+   "tool": "agy",
+   "model": "gemini-3.8-flash-medium",
+   "tokens": 13682,
+   "source": "reported"
+  }
+ ]
+}

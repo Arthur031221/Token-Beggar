@@ -1,0 +1,111 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "v020",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14598,
+  "stop_reason": "end_turn",
+  "session_id": "f40e1bab-4129-4549-b06f-4d876dd4e9a8",
+  "total_cost_usd": 0.08805639999999999,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 7098,
+   "cache_read_input_tokens": 32282,
+   "output_tokens": 1240,
+   "output_tokens_details": {
+    "thinking_tokens": 496
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7098,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1148,
+     "cache_read_input_tokens": 19492,
+     "cache_creation_input_tokens": 396,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 396
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1240,
+    "cacheReadInputTokens": 32282,
+    "cacheCreationInputTokens": 7098,
+    "webSearchRequests": 0,
+    "costUSD": 0.08805639999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 496,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read `shop/cache.py` and didn't run anything.\n\n**Problems**\n\n1. **Many threads load the same SKU at once.** There is no lock. When an entry is missing or expired, every thread that asks for that SKU calls `loader` at the same moment. For a popular SKU at expiry, that means N identical backend calls together.\n2. **`invalidate` can be undone by a load already in progress.** Thread A starts `loader(sku)`. The price changes and thread B calls `invalidate(sku)`. Then A finishes and writes the old value back with a new timestamp (line 18). The old price is then served for a full TTL even though someone invalidated it.\n3. **Memory grows without limit.** Expired entries are never removed, so every SKU ever looked up stays in `_data`. In a long-running service this is a slow leak.\n4. **The timestamp is taken after the load finishes.** `clock()` runs after `loader` returns, so a slow load makes the entry live longer than `ttl` past when the data was actually read. This is minor.\n5. **Failures pile onto the backend.** Exceptions from `loader` aren't cached, which is fine. But combined with problem 1, a failing backend gets hit by every waiting thread at once.\n\n**Fix I'd choose**\n\n- **One `threading.Lock` around `_data`, plus a single in-flight load per SKU.** On a miss, the first thread puts a `Future` in a per-SKU in-flight map, releases the lock and calls `loader`. Other threads wait on that same `Future`. Errors are passed to the waiters and not cached. `loader` never runs while the lock is held.\n- **A per-SKU generation counter.** `invalidate` increments it. A finished load is stored only if the counter hasn't changed since the load started. This fixes problem 2.\n- **Record the time before calling `loader`.** This fixes problem 4.\n- **Cap the size.** Use an `OrderedDict` as an LRU with a `max_entries` limit, and drop expired entries when they're found or evicted.",
+  "ttft_ms": 1550,
+  "type": "result",
+  "duration_ms": 14795,
+  "uuid": "379ad2fb-7aed-40fd-993a-01766ced126b",
+  "ttft_stream_ms": 1332,
+  "time_to_request_ms": 170,
+  "first_content_frame_ms": 1333,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.v020.3",
+ "ledger": []
+}

@@ -1,0 +1,111 @@
+{
+ "task": "d2-store",
+ "class": "debugging",
+ "arm": "v020",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 41420,
+  "stop_reason": "end_turn",
+  "session_id": "af476ac4-48a4-489f-af87-1d7d6d936118",
+  "total_cost_usd": 0.25320560000000003,
+  "usage": {
+   "input_tokens": 18,
+   "cache_creation_input_tokens": 18638,
+   "cache_read_input_tokens": 237448,
+   "output_tokens": 2827,
+   "output_tokens_details": {
+    "thinking_tokens": 323
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 18638,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 482,
+     "cache_read_input_tokens": 30858,
+     "cache_creation_input_tokens": 570,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 570
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 2827,
+    "cacheReadInputTokens": 237448,
+    "cacheCreationInputTokens": 18638,
+    "webSearchRequests": 0,
+    "costUSD": 0.25320560000000003,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 323,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 11,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Fixed. All 8 tests pass.\n\n**Root cause:** `Store.save_order` in `shop/storage.py:17` is meant to replace any existing row with the same id and then append the new one. Its filter was backwards:\n\n```python\nrows = [r for r in self.load() if r[\"id\"] == order.id]   # before\nrows = [r for r in self.load() if r[\"id\"] != order.id]   # after\n```\n\nWith `==`, every save threw away all the other orders and kept only an older copy of the order being saved. So only the most recently saved order survived. Saving the same order twice also left two copies of it.\n\n**Tests:** I added `tests/test_storage.py` with two cases:\n- Two different orders saved: both come back from `load()`.\n- One order saved again after its state changes: there's still one row, and it shows the new state.\n\n`python3 -m unittest` runs 8 tests and all pass (there's no `python` on this machine, only `python3`). Run against the original `Store`, both new tests fail, so they do catch this bug.\n\nOne more thing: my first try at that original-code check used `git stash push`, and a hook blocked it. Nothing was stashed. I checked afterwards that the fix was still in place, then ran the check from a copy of the original file in `/tmp/orig_check`.\n\nNothing is committed.",
+  "ttft_ms": 3969,
+  "type": "result",
+  "duration_ms": 42394,
+  "uuid": "91097a1c-6f93-4f67-9034-00637f7e2e47",
+  "ttft_stream_ms": 3474,
+  "time_to_request_ms": 320,
+  "first_content_frame_ms": 3475,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/storage.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n",
+ "workdir": "d2-store.v020.1",
+ "ledger": []
+}

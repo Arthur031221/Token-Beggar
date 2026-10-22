@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "sonnet-xhigh",
+ "top": "claude-sonnet-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 27547,
+  "stop_reason": "end_turn",
+  "session_id": "e2ccfe01-1447-49b9-9693-8afa72a7aaf7",
+  "total_cost_usd": 0.0958406,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 14149,
+   "cache_read_input_tokens": 99646,
+   "output_tokens": 2926,
+   "output_tokens_details": {
+    "thinking_tokens": 734
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14149,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 969,
+     "cache_read_input_tokens": 24967,
+     "cache_creation_input_tokens": 1972,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1972
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2926,
+    "cacheReadInputTokens": 99646,
+    "cacheCreationInputTokens": 14149,
+    "webSearchRequests": 0,
+    "costUSD": 0.0958406,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 734,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces two bugs, both in `shop/orders.py`. I didn't edit any files. To check, I applied the diff to a scratch copy of the repo and ran it there. The scratch copy is now deleted.\n\n**1. `_ids_seen` is never defined, so every `Order(...)` crashes (critical)**\n- The new code uses `len(_ids_seen)` and `_ids_seen.append(...)`, but the diff doesn't add `_ids_seen = []` or any definition of it.\n- The first `Order(cart)` raises `NameError: name '_ids_seen' is not defined`.\n- In the scratch copy, 2 of the 6 existing tests fail with that error: `test_total_matches_cart` and `test_state_flow`.\n- The old `_ids = itertools.count(1000)` and the `itertools` import are now dead code.\n\nIf someone fixes that by adding `_ids_seen = []`, the ID change is still wrong:\n- **IDs start at 0, not 1000.** The old counter started at 1000, so the first order gets `id == 0`. That is falsy, and any `if order.id` check would misbehave.\n- **IDs can collide with saved orders.** `Store.save_order` in `shop/storage.py` upserts by `r[\"id\"] != order.id`. After a restart, new orders count up from 0 again and the old counter's 1000+ range is abandoned. An order that reuses an existing ID silently overwrites that stored order.\n- **IDs are no longer atomic.** `next(itertools.count)` is a single operation. `len(...)` followed by `append(...)` is two steps, so two threads can read the same length and get the same ID. The list also grows without bound, and it holds IDs for no reason.\n\n**2. `ALLOWED.get(self.state, STATES)` makes the state machine fail open (moderate)**\n- Before, an unrecognised `self.state` raised `KeyError`, so a corrupted or hand-set state was caught.\n- Now an unknown state falls back to `STATES`, which is every state. The check passes for any valid target, and `ValueError` is never raised for it.\n- In the scratch copy, setting `o.state = \"bogus\"` and calling `o.move(\"paid\")` succeeded. This bypasses the rule that `shipped` and `cancelled` are terminal, for any order whose state doesn't match a known key. That could happen if state were ever loaded from the JSON store or set directly.\n- Known states behave exactly as before. `shipped` to `paid` still raises, which is why the existing state-flow test would pass if the order could be created. The bug only shows up on bad input, and no test covers that case.\n\nI'd revert both hunks: restore `next(_ids)` and `ALLOWED[self.state]`.",
+  "ttft_ms": 3541,
+  "type": "result",
+  "duration_ms": 29346,
+  "uuid": "776c94b4-4025-4902-ae5d-267aa748af8f",
+  "ttft_stream_ms": 2696,
+  "time_to_request_ms": 202,
+  "first_content_frame_ms": 2697,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.sonnet-xhigh"
+}

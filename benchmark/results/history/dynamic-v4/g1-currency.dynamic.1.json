@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15234,
+  "stop_reason": "end_turn",
+  "session_id": "71e40385-ec0b-427b-8108-ff7c94cba6db",
+  "total_cost_usd": 0.1255196,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 10923,
+   "cache_read_input_tokens": 55158,
+   "output_tokens": 1354,
+   "output_tokens_details": {
+    "thinking_tokens": 114
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10923,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 864,
+     "cache_read_input_tokens": 20596,
+     "cache_creation_input_tokens": 4913,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4913
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1354,
+    "cacheReadInputTokens": 55158,
+    "cacheCreationInputTokens": 10923,
+    "webSearchRequests": 0,
+    "costUSD": 0.1255196,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 114,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Multi-currency design\n\n**Core idea:** amounts become `(minor_units: int, currency: str)` pairs, and each currency gets a minor-unit exponent (USD 2, JPY 0, BHD 3). Nothing ever adds amounts in different currencies.\n\n**Changes by file**\n- **`shop/money.py`**: add a `Money` value type and a currency table. Make `to_cents` / `fmt` take the currency so they use its exponent instead of the hard-coded 100 and two decimals. `percent` stays as it is, but it rounds through a float, which needs fixing (see risks).\n- **`shop/models.py`**: `Item.price_cents` becomes `price: Money`. `Cart` gets a `currency`, and `add()` rejects items in a different currency.\n- **`shop/pricing.py`**: totals carry the cart's currency. `TAX_RATE` and the bulk rules become per-currency or per-region config, not module constants.\n- **`shop/orders.py`**: `Order` stores the currency next to `total_cents` / `tax_cents` and in `lines`.\n- **`shop/storage.py`**: write a `currency` field. Rows that don't have one load as `\"USD\"`.\n- **`shop/reports.py`**: `sales_by_customer` groups by `(customer, currency)`. The alternative is converting at a stored rate, which is a product decision.\n- **`shop/cli.py`**: add a `--currency` flag to `quote`.\n- **`shop/cache.py`**: the cache key becomes `(sku, currency)`.\n- **`shop/carriers/*.py`** (20 files): rates are bare cents. Either tag each carrier with its native currency or convert at the boundary. Maple's weights are in grams, not kg, so take care in any sweep.\n\n**Main risks**\n1. **Silent mixing.** Bare ints let USD and EUR be summed without error. `Money` must raise on a mismatch.\n2. **Rounding.** `percent` uses float math, and the code assumes two decimals. JPY and 3-decimal currencies will produce wrong amounts.\n3. **Data migration.** Existing JSON order files have no currency, so the USD default must be explicit and tested.\n4. **FX.** If you need conversion, rates need a source, a timestamp and a rounding policy, and the rate used should be stored with the order.\n5. **Broad API break.** Every caller of `price_cents` breaks.",
+  "ttft_ms": 1886,
+  "type": "result",
+  "duration_ms": 16219,
+  "uuid": "f518bab6-e6dd-4d86-b71a-d0e333b1b457",
+  "ttft_stream_ms": 1141,
+  "time_to_request_ms": 184,
+  "first_content_frame_ms": 1141,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.1"
+}

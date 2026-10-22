@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "haiku-medium",
+ "top": "claude-haiku-5-5",
+ "effort": "medium",
+ "result": {
+  "duration_api_ms": 19492,
+  "stop_reason": "end_turn",
+  "session_id": "1e68e233-dbf4-4e94-8f03-23d5819f3531",
+  "total_cost_usd": 0.0047671200000000006,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 11396,
+   "cache_read_input_tokens": 76962,
+   "output_tokens": 3435,
+   "output_tokens_details": {
+    "thinking_tokens": 1814
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11396,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1642,
+     "cache_read_input_tokens": 22673,
+     "cache_creation_input_tokens": 1513,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1513
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-haiku-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3435,
+    "cacheReadInputTokens": 76962,
+    "cacheCreationInputTokens": 11396,
+    "webSearchRequests": 0,
+    "costUSD": 0.0047671200000000006,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1814,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I did not edit any files. The diff breaks `Order` construction, and it also weakens the state machine. Running the existing tests on the current tree passes (6 OK), but that tree does not have the diff applied, so it says nothing about the change. `change.diff` also isn't a valid unified diff: its hunk headers have no line numbers and no `+++`/`---` counts, so `git apply` would reject it. I read the hunks against `shop/orders.py` by hand.\n\n**Bugs, most severe first**\n\n1. **`NameError` on every `Order()` construction.** The first hunk replaces `next(_ids)` with `len(_ids_seen)` and `_ids_seen.append(...)`. Nothing in the diff defines `_ids_seen`, and `shop/orders.py` doesn't have it either. `Order.__init__` raises `NameError: name '_ids_seen' is not defined`. This breaks `test_total_matches_cart` and `test_state_flow` in `tests/test_orders.py`, and it breaks any caller of `Order`.\n\n2. **Order IDs change from 1000+ to 0+, and they can collide.** Even with `_ids_seen` defined, `len()` starts at 0, so the first order gets ID 0 rather than 1000. `shop/storage.py:17` keys rows by `order.id`, so a new order can overwrite a stored row with the same ID. The original `itertools.count` also restarts each process, so this is partly pre-existing, but the diff moves the range into the low numbers where stored IDs are more likely to collide.\n\n3. **Not safe under concurrency.** `len(list)` followed by `append` is two steps. Two threads building orders at once can read the same length and get the same ID. `itertools.count` gave unique IDs without this race.\n\n4. **Unbounded growth.** `_ids_seen` keeps every ID ever issued for the life of the process. That is a memory leak for a long-running service, and the original counter had no such cost.\n\n5. **The transition guard can be bypassed.** The second hunk changes `ALLOWED[self.state]` to `ALLOWED.get(self.state, STATES)`. For any current state not in `ALLOWED`, the fallback permits every state in `STATES`. For example, an order loaded with state `\"shipped \"` (typo) or any unknown value can move to `\"new\"`, `\"paid\"`, or `\"cancelled\"`. The original raised `KeyError`, which surfaces bad data. The new code silently lets it move. The fallback can't be reached for the four valid states, so it only matters for bad data, and in that case it defeats the guard.\n\n6. **Silent acceptance of the fallback target.** Because of (5), `move()` never checks that the target is a known state for unknown current states. This is part of the same bypass and has no test.\n\n**Test gaps:** nothing tests ID allocation, uniqueness, or the behavior of `move()` on an unknown current state. Adding a test for either would have caught items 1 and 5.\n\nI haven't changed the repo or the diff file. If you want, I can fix the diff and the tests, or write a test that exercises items 1 and 5.",
+  "ttft_ms": 2331,
+  "type": "result",
+  "duration_ms": 20414,
+  "uuid": "0dc86ff5-6c6e-4b92-9726-de999725e26a",
+  "ttft_stream_ms": 1365,
+  "time_to_request_ms": 165,
+  "first_content_frame_ms": 1366,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.haiku-medium"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "r3-flow",
+ "class": "reading",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 12185,
+  "stop_reason": "end_turn",
+  "session_id": "0fd2f185-1715-4cb7-9cc5-93e4b1c5fdc0",
+  "total_cost_usd": 0.08856860000000001,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 6555,
+   "cache_read_input_tokens": 74883,
+   "output_tokens": 1056,
+   "output_tokens_details": {
+    "thinking_tokens": 55
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6555,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 576,
+     "cache_read_input_tokens": 20744,
+     "cache_creation_input_tokens": 397,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 397
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1056,
+    "cacheReadInputTokens": 74883,
+    "cacheCreationInputTokens": 6555,
+    "webSearchRequests": 0,
+    "costUSD": 0.08856860000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 55,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Order state is checked in memory, then written out separately as one JSON file.\n\n**Validation (`shop/orders.py`)**\n- `STATES` (line 6) lists the four states: `new`, `paid`, `shipped`, `cancelled`.\n- `ALLOWED` (line 7) maps each state to the states it can move to: `new` \u2192 `paid` or `cancelled`, `paid` \u2192 `shipped` or `cancelled`. `shipped` and `cancelled` are final.\n- `Order.__init__` starts every order in `\"new\"`.\n- `Order.move(state)` (line 19) is the only checked way to change state. If the target isn't in `ALLOWED[self.state]`, it raises `ValueError(\"cannot go from X to Y\")`. Otherwise it sets `self.state`.\n- `STATES` isn't actually used anywhere, and nothing stops code from setting `order.state = ...` directly and skipping the check.\n\n**Storage (`shop/storage.py`)**\n- `Store.save_order(order)` (line 16) reads the whole file with `load()`, drops any row with the same `id`, and adds a new row with `id`, `customer`, `total`, `tax` and `state`. It then rewrites the entire JSON file.\n- `move()` doesn't save anything, so the caller has to call `save_order()` afterwards. The write isn't atomic or locked, and order lines aren't saved.\n\n**Consumers**\n- `shop/reports.py:9` only counts rows whose state is `paid` or `shipped`.\n- `shop/cli.py:26` loads the stored rows to render the report.\n- `tests/test_orders.py:18` (`test_state_flow`) checks new \u2192 paid \u2192 shipped, and that cancelling after shipping raises an error.",
+  "ttft_ms": 1332,
+  "type": "result",
+  "duration_ms": 12799,
+  "uuid": "44e32754-183c-422e-b3a7-e0093bcecee0",
+  "ttft_stream_ms": 1037,
+  "time_to_request_ms": 148,
+  "first_content_frame_ms": 1038,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r3-flow.dynamic.2"
+}

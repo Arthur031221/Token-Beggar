@@ -1,0 +1,131 @@
+{
+ "task": "m1-rename",
+ "class": "mechanical",
+ "arm": "dynamic",
+ "rep": "sonnet-high",
+ "top": "claude-sonnet-5-5",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 17635,
+  "stop_reason": "end_turn",
+  "session_id": "69fd044f-5390-4404-8c24-02b6e8e02d20",
+  "total_cost_usd": 0.047200005,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 863,
+   "cache_read_input_tokens": 20454,
+   "output_tokens": 247,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 863,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 247,
+     "cache_read_input_tokens": 20454,
+     "cache_creation_input_tokens": 863,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 863
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 674,
+    "cacheReadInputTokens": 52871,
+    "cacheCreationInputTokens": 8527,
+    "webSearchRequests": 0,
+    "costUSD": 0.046147099999999996,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-haiku-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1023,
+    "cacheReadInputTokens": 17993,
+    "cacheCreationInputTokens": 2887,
+    "webSearchRequests": 0,
+    "costUSD": 0.001052905,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 182,
+    "canonicalModel": "claude-haiku-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvjj8gpv-b3152ce9"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`calc_total` is now `order_total` everywhere in the repo, and all 6 tests pass.\n\n- **Files changed:**\n  - `shop/pricing.py` (the definition)\n  - `shop/orders.py`\n  - `shop/cli.py`\n  - `tests/test_orders.py`\n  - `tests/test_pricing.py`\n- **Leftovers:** a repo-wide grep (excluding `.git`) finds no remaining `calc_total`. The README and docs never mentioned it.\n- **Tests:** pytest isn't installed, so the worker ran `python3 -m unittest discover -v`, which reported `Ran 6 tests ... OK`. I haven't re-run them myself.\n- **Git:** nothing is committed.",
+  "ttft_ms": 4832,
+  "type": "result",
+  "duration_ms": 4952,
+  "uuid": "9b4ab591-c867-4c55-bba7-9434269e37e6",
+  "ttft_stream_ms": 3260,
+  "time_to_request_ms": 128,
+  "first_content_frame_ms": 3261,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "diff_stat": " shop/cli.py           | 4 ++--\n shop/orders.py        | 4 ++--\n shop/pricing.py       | 2 +-\n tests/test_orders.py  | 4 ++--\n tests/test_pricing.py | 8 ++++----\n 5 files changed, 11 insertions(+), 11 deletions(-)\n",
+ "workdir": "m1-rename.dynamic.sonnet-high"
+}

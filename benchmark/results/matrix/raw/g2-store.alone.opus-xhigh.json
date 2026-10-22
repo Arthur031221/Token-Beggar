@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "alone",
+ "rep": "opus-xhigh",
+ "top": "claude-opus-5-5",
+ "effort": "xhigh",
+ "result": {
+  "duration_api_ms": 27816,
+  "stop_reason": "end_turn",
+  "session_id": "51c10912-17c0-4db9-9d84-9d2669e2f383",
+  "total_cost_usd": 0.16111419999999999,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 10698,
+   "cache_read_input_tokens": 97351,
+   "output_tokens": 2801,
+   "output_tokens_details": {
+    "thinking_tokens": 1448
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10698,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 2142,
+     "cache_read_input_tokens": 22998,
+     "cache_creation_input_tokens": 490,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 490
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2801,
+    "cacheReadInputTokens": 97351,
+    "cacheCreationInputTokens": 10698,
+    "webSearchRequests": 0,
+    "costUSD": 0.16111419999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1448,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 9,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move orders from the JSON file to SQLite in WAL mode.**\n\n**Why the current store fails at this scale**\n- **Lost orders when both processes write:** `save_order` (`shop/storage.py:16-21`) reads the whole file, changes it, and writes it all back. If both processes do this at once, the second write erases the first one's order.\n- **A crash can wipe everything:** `write_text` replaces the file in one non-atomic write, so a crash partway through leaves it truncated or corrupt.\n- **It gets slow:** at 100k orders (about 10 MB), every save rewrites the entire file.\n- **Duplicate IDs, already a bug today:** `shop/orders.py:5` numbers orders with a counter that starts at 1000 in every process and on every restart. Since `save_order` replaces rows with the same ID, orders overwrite each other even with file locking.\n\n**Why SQLite:** it ships with Python, keeps everything in one file, and saves one row at a time with real transactions. WAL mode lets reads run alongside a write. With `busy_timeout` set, two writers just wait briefly for each other. Move to Postgres only if the writers run on different machines or the file must sit on a network drive (SQLite is unsafe there).\n\n**Migration path**\n1. **Fix IDs first:** let the database assign them (`INTEGER PRIMARY KEY`) or switch to UUIDs.\n2. **Add a `SqliteStore`** with the same `load()`/`save_order()` methods. `save_order` becomes an insert-or-update on `id`. Use table `orders(id, customer, total, tax, state)` with an index on `state`, and turn on WAL and `busy_timeout`.\n3. **Write a one-time import:** copy the JSON rows in a single transaction, then check that row counts and `shop report` output match.\n4. **Cut over:** stop both writers, run the import, point `--db` at SQLite, and restart. Keep the JSON file as a read-only backup.\n5. **Later:** compute `sales_by_customer` with a SQL `GROUP BY` instead of loading all 100k rows. Make status changes conditional (`UPDATE \u2026 WHERE state = ?`) so two processes can't move the same order at once.",
+  "ttft_ms": 1254,
+  "type": "result",
+  "duration_ms": 28078,
+  "uuid": "e6d8d951-1eec-427c-a342-aea88f79b9d7",
+  "ttft_stream_ms": 731,
+  "time_to_request_ms": 86,
+  "first_content_frame_ms": 731,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.alone.opus-xhigh"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 22178,
+  "stop_reason": "end_turn",
+  "session_id": "0354339c-58b2-428f-b3f8-b1ce44bccce0",
+  "total_cost_usd": 0.0798594,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6038,
+   "cache_read_input_tokens": 54557,
+   "output_tokens": 1031,
+   "output_tokens_details": {
+    "thinking_tokens": 85
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6038,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 685,
+     "cache_read_input_tokens": 20317,
+     "cache_creation_input_tokens": 306,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 306
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1031,
+    "cacheReadInputTokens": 54557,
+    "cacheCreationInputTokens": 6038,
+    "webSearchRequests": 0,
+    "costUSD": 0.0798594,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 85,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move to SQLite in WAL mode.**\n\n**What's wrong with the current design.** `shop/storage.py:16` handles every save by reading the whole JSON file, filtering it, and writing all of it back.\n- **Lost writes:** with two writer processes, both can load the file, and whichever writes last silently erases the other's order. There is no lock.\n- **Corruption:** `write_text` isn't atomic, so a crash or a reader opening the file mid-write sees a truncated file.\n- **Slow saves:** at 100k orders, each save rewrites several MB and scans the full list, so cost grows with the store size.\n\n**Why SQLite:**\n- It's in the standard library, with no server to run.\n- WAL mode lets readers keep reading while one process writes. Writes are serialized by the database, and `busy_timeout` makes the second writer wait instead of failing.\n- `INSERT ... ON CONFLICT(id) DO UPDATE` with `id` as the primary key replaces the read-filter-rewrite step with one indexed write per order.\n- Each transaction is atomic, which removes the corruption risk.\n\nPostgres would be overkill for two local writers. Adding a file lock to the JSON store fixes the race but still rewrites the whole file on every save.\n\n**Migration path:**\n1. Add a `SqliteStore` with the same interface (`load()`, `save_order()`). Use an `orders(id PRIMARY KEY, customer, total, tax, state)` table and integer cents.\n2. Write a one-off import script: read the JSON in one transaction, upsert every row, and check that the row counts and the sum of totals match.\n3. Stop both writers, run the import, and point `cli.py` (the only caller, via `args.db`) at the new store. Restart the writers.\n4. Keep the JSON file read-only as a rollback for a release, then delete it.\n5. Later, replace `load()` (which returns every row) with filtered queries in `reports.py`.\n\nTests should cover two processes saving at the same time with no orders lost.",
+  "ttft_ms": 3080,
+  "type": "result",
+  "duration_ms": 22683,
+  "uuid": "eab0b9b6-3a80-4274-87b3-a66c5630901d",
+  "ttft_stream_ms": 2751,
+  "time_to_request_ms": 172,
+  "first_content_frame_ms": 2751,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.1"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "m3-todo",
+ "class": "mechanical",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 17174,
+  "stop_reason": "end_turn",
+  "session_id": "6c0ad612-9dd9-4121-9ba7-e546780b67b4",
+  "total_cost_usd": 0.11923460000000001,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 9329,
+   "cache_read_input_tokens": 96513,
+   "output_tokens": 1263,
+   "output_tokens_details": {
+    "thinking_tokens": 324
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9329,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 246,
+     "cache_read_input_tokens": 21678,
+     "cache_creation_input_tokens": 441,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 441
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 1263,
+    "cacheReadInputTokens": 96513,
+    "cacheCreationInputTokens": 9329,
+    "webSearchRequests": 0,
+    "costUSD": 0.11923460000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 324,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I deleted all 20 `# TODO(...)` lines under `shop/` and the tests pass: 6 of 6.\n\n- **What was there:** every one was line 1 of a file in `shop/carriers/` (e.g. `# TODO(owner-0): confirm zone table with acme account manager`). Nothing else under `shop/` mentions TODO.\n- **Diff:** 20 files changed, 20 deletions and no additions. No other lines were touched.\n- **Tests:** pytest isn't installed here, so I ran them with `python3 -m unittest`.\n\nOne side effect: the docstring that came right after each comment is now the first line of its file, so Python reads it as the module's docstring (`__doc__` is now set). The tests don't depend on this.",
+  "ttft_ms": 4236,
+  "type": "result",
+  "duration_ms": 18715,
+  "uuid": "51159781-d56b-4fd9-8347-6b8caf9d1322",
+  "ttft_stream_ms": 1775,
+  "time_to_request_ms": 333,
+  "first_content_frame_ms": 1776,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/acme.py     | 1 -\n shop/carriers/borealis.py | 1 -\n shop/carriers/cedar.py    | 1 -\n shop/carriers/delta.py    | 1 -\n shop/carriers/ember.py    | 1 -\n shop/carriers/fjord.py    | 1 -\n shop/carriers/gale.py     | 1 -\n shop/carriers/harbor.py   | 1 -\n shop/carriers/iris.py     | 1 -\n shop/carriers/juniper.py  | 1 -\n shop/carriers/kestrel.py  | 1 -\n shop/carriers/lumen.py    | 1 -\n shop/carriers/maple.py    | 1 -\n shop/carriers/nimbus.py   | 1 -\n shop/carriers/onyx.py     | 1 -\n shop/carriers/prairie.py  | 1 -\n shop/carriers/quartz.py   | 1 -\n shop/carriers/ridge.py    | 1 -\n shop/carriers/summit.py   | 1 -\n shop/carriers/tundra.py   | 1 -\n 20 files changed, 20 deletions(-)\n",
+ "workdir": "m3-todo.dynamic.1"
+}

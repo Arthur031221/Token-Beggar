@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16463,
+  "stop_reason": "end_turn",
+  "session_id": "776d194e-8c77-45ac-b948-17a981a6aff0",
+  "total_cost_usd": 0.1269182,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 9998,
+   "cache_read_input_tokens": 78811,
+   "output_tokens": 1557,
+   "output_tokens_details": {
+    "thinking_tokens": 134
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9998,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 869,
+     "cache_read_input_tokens": 24292,
+     "cache_creation_input_tokens": 292,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 292
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1557,
+    "cacheReadInputTokens": 78811,
+    "cacheCreationInputTokens": 9998,
+    "webSearchRequests": 0,
+    "costUSD": 0.1269182,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 134,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Multi-currency design\n\n**Core idea:** add a `Money(amount_minor: int, currency: str)` value type. Arithmetic between different currencies raises an error. Each currency knows its minor-unit exponent (JPY 0, USD 2, KWD 3).\n\n**Changes by file**\n- `shop/money.py`: add `Money` and a currency table. `to_cents` and `fmt` take a currency and use its exponent instead of the hard-coded 2 decimals / `//100`. `percent()` returns `Money` and keeps its round-half-up behaviour.\n- `shop/models.py`: replace `Item.price_cents` with `price: Money`. `Cart` gets a `currency` field, and `Cart.add` rejects items in a different currency.\n- `shop/pricing.py`: `TAX_RATE` and the bulk discount become per-currency or per-region config. Totals come back as `Money`.\n- `shop/orders.py`: `Order` stores `currency`. Line tuples keep each price's currency.\n- `shop/storage.py`: write a `currency` field to the JSON. Rows saved before this change have no `currency` field, so read them as `USD`.\n- `shop/reports.py`: group sales by customer and currency. Never add amounts in different currencies together, or convert them through an explicit FX step.\n- `shop/cli.py`: add a `--currency` flag to `quote` and print the currency code.\n- `shop/cache.py`: key the cache on `(sku, currency)`.\n- `shop/carriers/*.py` (20 files): rates are implicitly USD cents. Add a `CURRENCY` constant per carrier and have `rate()` return `Money`. This is a mechanical sweep.\n- `tests/`: update the existing tests and add cases for JPY (zero decimals) and mixed-currency rejection.\n\n**Main risks**\n1. **Silent mixing:** `reports.sales_by_customer` currently adds raw ints. Keeping plain `int` anywhere lets USD and EUR amounts be summed without error.\n2. **Rounding:** tax and discount rounding differs by exponent. Currency conversion needs a rate source, a timestamp and a rounding policy.\n3. **Stored data:** existing JSON rows have no currency, so the load-time default must be right.\n4. **API break:** removing `price_cents` breaks callers. Consider a deprecation shim.\n5. **Carrier rates:** the 20 rate tables may really be per-country, so check them with the carrier owners (see the existing TODOs).",
+  "ttft_ms": 1395,
+  "type": "result",
+  "duration_ms": 17189,
+  "uuid": "9aa517be-4b33-4855-bc87-4a64e8d35d2b",
+  "ttft_stream_ms": 826,
+  "time_to_request_ms": 191,
+  "first_content_frame_ms": 827,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.1"
+}

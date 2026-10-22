@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16365,
+  "stop_reason": "end_turn",
+  "session_id": "17512787-2605-449a-8f9c-5c1e123cd83d",
+  "total_cost_usd": 0.0859234,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6605,
+   "cache_read_input_tokens": 55397,
+   "output_tokens": 1099,
+   "output_tokens_details": {
+    "thinking_tokens": 77
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6605,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 754,
+     "cache_read_input_tokens": 20868,
+     "cache_creation_input_tokens": 322,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 322
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1099,
+    "cacheReadInputTokens": 55397,
+    "cacheCreationInputTokens": 6605,
+    "webSearchRequests": 0,
+    "costUSD": 0.0859234,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 77,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move `Store` to SQLite (stdlib `sqlite3`) with WAL mode, behind the same `load()`/`save_order()` interface.**\n\n**What's wrong now**\n- **Lost updates.** `save_order` (`shop/storage.py:16`) reads the whole file, changes it in memory, then rewrites it, with no lock. If both writers do this at once, the second write silently drops the first writer's order.\n- **Torn files.** `write_text` writes in place. A crash or a read during the write can leave invalid JSON, which breaks every later `load()`.\n- **It doesn't scale.** At 100k orders, every save parses and rewrites several MB, so 100k saves means about O(n\u00b2) I/O.\n\n**Why SQLite**\n- Each write is an atomic transaction, and SQLite handles locking between processes for you.\n- WAL mode lets one process read while another writes. A `busy_timeout` makes the two writers wait for each other instead of failing.\n- `INSERT \u2026 ON CONFLICT(id) DO UPDATE` replaces the remove-then-append logic in one statement.\n- 100k rows is tiny for SQLite. There's no server to run and no new dependency.\n- Postgres is only worth it if the writers end up on different machines.\n\n**Migration path**\n1. Add `SqliteStore` with the same methods. Schema: `orders(id PRIMARY KEY, customer, total, tax, state)`, plus an index on `customer`/`state` if reports filter by them. Turn on WAL and `busy_timeout` when connecting.\n2. Write a one-off import from `orders.json` to SQLite inside a single transaction, and check the row counts match.\n3. Choose the backend from the `--db` file extension in `shop/cli.py`. Run the existing tests against both backends, and add a test with two processes writing at the same time.\n4. Stop both writers, import, switch them over, and keep the JSON file read-only as a backup.\n5. Once a release has run cleanly, delete the JSON backend.\n\n**Stopgap if you can't migrate yet:** take an `fcntl.flock` lock around the whole read-modify-write, and write to a temp file then `os.replace` it. That fixes correctness but not the slowness.",
+  "ttft_ms": 2810,
+  "type": "result",
+  "duration_ms": 17527,
+  "uuid": "f7ea340a-bc45-4e86-9e1a-64ede72d7387",
+  "ttft_stream_ms": 2509,
+  "time_to_request_ms": 599,
+  "first_content_frame_ms": 2510,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.2"
+}

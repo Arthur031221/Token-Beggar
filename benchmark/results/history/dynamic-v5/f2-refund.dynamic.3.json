@@ -1,0 +1,110 @@
+{
+ "task": "f2-refund",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 28433,
+  "stop_reason": "end_turn",
+  "session_id": "78b2eb2a-659d-40f1-a872-796f005a8cda",
+  "total_cost_usd": 0.18341460000000004,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 11340,
+   "cache_read_input_tokens": 146993,
+   "output_tokens": 3162,
+   "output_tokens_details": {
+    "thinking_tokens": 309
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11340,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 472,
+     "cache_read_input_tokens": 25225,
+     "cache_creation_input_tokens": 701,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 701
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 3162,
+    "cacheReadInputTokens": 146993,
+    "cacheCreationInputTokens": 11340,
+    "webSearchRequests": 0,
+    "costUSD": 0.18341460000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 309,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 10,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added the `refunded` order state, and all 12 tests pass (6 of them new).\n\nOrder state only matters in two places in the code, and I updated both:\n\n- **`shop/orders.py`**: `refunded` is now a valid state. Paid and shipped orders can move to it, and nothing can move out of it. New and cancelled orders still can't be refunded.\n- **`shop/reports.py`**: `sales_by_customer` now names the states that count (paid and shipped) in a constant, `COUNTED_STATES`, with a comment saying refunded and cancelled orders are left out. The filter already only counted paid and shipped orders, so refunded ones were never counted; this just makes it explicit.\n\nThe storage code saves whatever state an order has, and the CLI report just calls `render`, so neither needed changes.\n\n**Tests added** in `tests/test_orders.py`:\n- Paid and shipped orders can be refunded.\n- New and cancelled orders can't be refunded.\n- A refunded order can't move to any other state.\n- Every state has an entry in the transition table, so a future state can't be added without saying where it can go.\n- A sales-report test with paid, shipped, refunded and cancelled orders checks that only paid and shipped totals are counted. One customer has only a refunded order, and they don't appear in the result at all.\n\nNothing is committed.",
+  "ttft_ms": 3423,
+  "type": "result",
+  "duration_ms": 30161,
+  "uuid": "e5675904-21c4-4e83-a372-8d960f65cfb1",
+  "ttft_stream_ms": 1307,
+  "time_to_request_ms": 639,
+  "first_content_frame_ms": 1308,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/orders.py       | 10 ++++++++--\n shop/reports.py      |  5 ++++-\n tests/test_orders.py | 47 ++++++++++++++++++++++++++++++++++++++++++++++-\n 3 files changed, 58 insertions(+), 4 deletions(-)\n",
+ "workdir": "f2-refund.dynamic.3"
+}

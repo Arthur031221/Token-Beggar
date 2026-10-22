@@ -1,0 +1,110 @@
+{
+ "task": "g1-currency",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 26329,
+  "stop_reason": "end_turn",
+  "session_id": "68ab4ee1-3ff1-4121-9c75-3efcb5f1804b",
+  "total_cost_usd": 0.1436022,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 11170,
+   "cache_read_input_tokens": 55291,
+   "output_tokens": 2158,
+   "output_tokens_details": {
+    "thinking_tokens": 876
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11170,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1418,
+     "cache_read_input_tokens": 20769,
+     "cache_creation_input_tokens": 4987,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4987
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 2158,
+    "cacheReadInputTokens": 55291,
+    "cacheCreationInputTokens": 11170,
+    "webSearchRequests": 0,
+    "costUSD": 0.1436022,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 876,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Design: multi-currency support\n\n**Core idea:** every amount carries a currency code. Keep amounts as integer minor units (cents, yen, fils). Don't convert between currencies at first; refuse to mix them.\n\n**Changes**\n- `shop/money.py`: Add a `CURRENCIES` table of minor-unit digits (USD 2, JPY 0, KWD 3). Rewrite `to_cents`/`fmt` as `to_minor(amount, ccy)` and `fmt(minor, ccy)`, since both assume 2 decimals and \u00d7100 today. Consider a frozen `Money(minor, ccy)` type.\n- `shop/models.py`: `Item` gets a `currency`. `Cart` takes its currency from the first item and rejects items in another currency.\n- `shop/pricing.py`: Make `TAX_RATE` and the bulk discount configurable per currency or region, and check that all lines share one currency.\n- `shop/orders.py`: `Order` stores `currency`, including on each line tuple.\n- `shop/storage.py`: Save `currency`. On load, old rows with no currency default to `\"USD\"`.\n- `shop/reports.py`: Group sales by `(customer, currency)`. Today it adds raw ints, so mixed currencies would be silently wrong.\n- `shop/cli.py`: Add a `--currency` flag to `quote` and print the currency code.\n- `shop/cache.py`: Include the currency in the cache key.\n- `shop/carriers/*.py` (20 files): Each needs a `currency` attribute. Rates are implicit USD cents today.\n- `tests/`: Cover JPY/KWD parsing and formatting, mixed-currency rejection, and loading legacy JSON.\n\n**Main risks**\n1. **Silent mixing:** adding ints across currencies won't raise an error, so reports and totals go wrong with no warning.\n2. **Rounding:** `percent` uses float math plus 0.5, which rounds negative numbers the wrong way. Switch to `Decimal` with an explicit rounding mode.\n3. **Data migration:** existing JSON files have no currency field.\n4. **API break:** renaming `price_cents`/`total_cents` breaks callers, so keep deprecated aliases for a while.\n5. **Scope creep into FX:** conversion brings in rates, timestamps and staleness. Make it a separate, deliberate decision.",
+  "ttft_ms": 4611,
+  "type": "result",
+  "duration_ms": 27163,
+  "uuid": "6aab6f87-4a29-40a2-a52a-2546783c98ce",
+  "ttft_stream_ms": 1673,
+  "time_to_request_ms": 272,
+  "first_content_frame_ms": 1674,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g1-currency.dynamic.2"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "c2-split",
+ "class": "routine_code",
+ "arm": "alone",
+ "rep": "fable-max",
+ "top": "claude-fable-5-1",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 45560,
+  "stop_reason": "end_turn",
+  "session_id": "a70d6837-00e4-494e-bfdc-455e026de8a7",
+  "total_cost_usd": 0.45226475,
+  "usage": {
+   "input_tokens": 130,
+   "cache_creation_input_tokens": 12765,
+   "cache_read_input_tokens": 102059,
+   "output_tokens": 3403,
+   "output_tokens_details": {
+    "thinking_tokens": 1538
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12765,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 347,
+     "cache_read_input_tokens": 24930,
+     "cache_creation_input_tokens": 625,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 625
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 130,
+    "outputTokens": 3403,
+    "cacheReadInputTokens": 102059,
+    "cacheCreationInputTokens": 12765,
+    "webSearchRequests": 0,
+    "costUSD": 0.45226475,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 1538,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 9,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Done. All 12 tests pass, including the 6 new ones.\n\n**What I added**\n\n- `split(cents, parts)` in `shop/money.py:24`. It uses `divmod` to get the base share and remainder, then gives one extra cent to each of the first `remainder` elements. Any `parts` value below 1 raises `ValueError`.\n- `tests/test_money.py`, a new unittest file matching the style of the existing tests. It covers an even split, remainder landing on the leading elements, a single part, zero cents, negative cents, and the `ValueError` for parts of 0 and -2.\n\n**One behavior to be aware of**\n\nNegative amounts split via Python floor division, so `split(-10, 3)` gives `[-3, -3, -4]`. The list still sums correctly, and the test pins only the sum and length rather than the exact layout, since your spec did not define the negative case. If you want the extra cents to come off the front for negatives instead, that's a two-line change.\n\nNothing is committed. The working tree has the modified `shop/money.py` and the new test file.",
+  "ttft_ms": 1372,
+  "type": "result",
+  "duration_ms": 46041,
+  "uuid": "e0aa006b-6c95-4304-a51b-d6ef4a2ea49a",
+  "ttft_stream_ms": 1122,
+  "time_to_request_ms": 99,
+  "first_content_frame_ms": 1123,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 12 ++++++++++++\n 1 file changed, 12 insertions(+)\n",
+ "workdir": "c2-split.alone.fable-max"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "c2-split",
+ "class": "routine_code",
+ "arm": "alone",
+ "rep": "sonnet-max",
+ "top": "claude-sonnet-5-5",
+ "effort": "max",
+ "result": {
+  "duration_api_ms": 116490,
+  "stop_reason": "end_turn",
+  "session_id": "aa1bc15a-c1dd-43c7-ae46-bb9376161f6f",
+  "total_cost_usd": 0.2508404,
+  "usage": {
+   "input_tokens": 20,
+   "cache_creation_input_tokens": 23333,
+   "cache_read_input_tokens": 257184,
+   "output_tokens": 13175,
+   "output_tokens_details": {
+    "thinking_tokens": 9117
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23333,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 778,
+     "cache_read_input_tokens": 35022,
+     "cache_creation_input_tokens": 1101,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1101
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 20,
+    "outputTokens": 13175,
+    "cacheReadInputTokens": 257184,
+    "cacheCreationInputTokens": 23333,
+    "webSearchRequests": 0,
+    "costUSD": 0.2508404,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 9117,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 18,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `split(cents, parts)` to `shop/money.py` and a new `tests/test_money.py`. All 12 tests pass: the 6 existing ones and 6 new ones, run with the README's `python3 -m unittest discover -s tests -t .`. Nothing is committed.\n\n```python\ndef split(cents: int, parts: int) -> list[int]:\n    \"\"\"split(10, 4) -> [3, 3, 2, 2]. The remainder goes one cent at a time from the first part.\"\"\"\n    if parts < 1:\n        raise ValueError(f\"parts must be at least 1: {parts}\")\n    base, remainder = divmod(cents, parts)\n    return [base + 1 if i < remainder else base for i in range(parts)]\n```\n\nThe `parts` check runs before the division. Otherwise `parts=0` would raise `ZeroDivisionError`, and a negative `parts` would quietly return a wrong list.\n\nThe tests cover these cases:\n- **Examples:** the remainder going to the first parts (`split(100, 3) == [34, 33, 33]`), an even split, more parts than cents, a single part, and zero cents.\n- **Sum check:** the result always has `parts` entries that sum to `cents`, with no two differing by more than 1. It runs over 880 `(cents, parts)` combinations.\n- **Errors:** `parts` of 0 and -1 both raise `ValueError`.\n\nI also ran the new tests against three deliberately broken versions of `split` (remainder given to the last parts, remainder dropped, no `parts` check). Each was caught by the tests meant to catch it.\n\nYou didn't say how negative `cents` should split. It uses Python's floor division, so `split(-10, 3)` gives `[-3, -3, -4]`. The sum is still exact, and the extra cent still goes to the earlier parts. A refund split would not mirror the charge split (`[4, 3, 3]`) this way. The tests only check the sum and that no two parts differ by more than 1 for negatives. They don't fix which part gets the extra cent, so changing that later won't break them. If you want the mirrored `[-4, -3, -3]`, it's a small change.\n\nRunning the tests created `__pycache__/` directories, and the repo has no `.gitignore`, so I deleted them. `git status` now shows only `shop/money.py` modified and `tests/test_money.py` added.",
+  "ttft_ms": 3479,
+  "type": "result",
+  "duration_ms": 117100,
+  "uuid": "37a2f40b-f777-46bb-b364-8ea5b68ea51a",
+  "ttft_stream_ms": 3391,
+  "time_to_request_ms": 73,
+  "first_content_frame_ms": 3391,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/money.py | 8 ++++++++\n 1 file changed, 8 insertions(+)\n",
+ "workdir": "c2-split.alone.sonnet-max"
+}

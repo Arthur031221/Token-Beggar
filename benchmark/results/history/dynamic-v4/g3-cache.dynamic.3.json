@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14773,
+  "stop_reason": "end_turn",
+  "session_id": "cf862706-96b2-438c-8411-33bca2ca7263",
+  "total_cost_usd": 0.0800246,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5827,
+   "cache_read_input_tokens": 34563,
+   "output_tokens": 1324,
+   "output_tokens_details": {
+    "thinking_tokens": 570
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5827,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1192,
+     "cache_read_input_tokens": 19977,
+     "cache_creation_input_tokens": 436,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 436
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1324,
+    "cacheReadInputTokens": 34563,
+    "cacheCreationInputTokens": 5827,
+    "webSearchRequests": 0,
+    "costUSD": 0.0800246,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 570,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I'd rewrite it rather than patch it. The class has no locking, and its cache never shrinks.\n\n**Problems in `shop/cache.py`**\n\n1. **Thundering herd (lines 14\u201318).** The check and the store are separate steps with no lock. When a popular SKU expires, every thread that misses calls `loader` at the same moment, which can overload the price backend.\n2. **Invalidation can be undone.** Thread A starts loading the old price. Thread B updates the price and calls `invalidate`. Thread A then writes the old value back at line 18, and that stale price is served for a full `ttl`.\n3. **Unbounded memory.** Expired entries are only replaced, never removed. Every SKU ever requested stays in `_data` forever, so a long-running service leaks memory, especially if SKUs come from user input.\n4. **Entries live too long.** The timestamp is taken after `loader` returns. A slow load therefore extends the entry's life beyond `ttl` from when the data was actually read. Take the time before the call.\n5. **Failures aren't throttled.** When `loader` raises, nothing is recorded, so during a backend outage every request hits the failing backend again.\n\n**Fix I'd choose**\n\n- **One lock for the cache.** Guard `_data` with a `threading.Lock`, held only for the short dict operations and never while `loader` runs.\n- **One load per SKU.** Keep a map of SKU to an in-progress `Future`. The first thread to miss runs the load and the others wait on its result.\n- **Version check on invalidate.** Keep a counter per SKU that `invalidate` increments. A load records the counter before it starts and only stores its result if the counter hasn't changed.\n- **Size limit.** Store entries in an `OrderedDict` with a `maxsize`, evicting the least recently used entry and removing expired ones when they're found.\n- **Optional:** cache failures for a few seconds so an outage doesn't send every request to the backend.",
+  "ttft_ms": 1251,
+  "type": "result",
+  "duration_ms": 15192,
+  "uuid": "a159087d-8625-4e16-bab9-1c8019f8616a",
+  "ttft_stream_ms": 1010,
+  "time_to_request_ms": 176,
+  "first_content_frame_ms": 1010,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.3"
+}

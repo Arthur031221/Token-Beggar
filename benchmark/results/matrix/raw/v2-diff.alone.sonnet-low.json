@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": "sonnet-low",
+ "top": "claude-sonnet-5-5",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 12234,
+  "stop_reason": "end_turn",
+  "session_id": "0900c233-3f23-491b-b692-5d5488a11ba1",
+  "total_cost_usd": 0.0392241,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6592,
+   "cache_read_input_tokens": 50341,
+   "output_tokens": 781,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6592,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 569,
+     "cache_read_input_tokens": 18912,
+     "cache_creation_input_tokens": 470,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 470
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 781,
+    "cacheReadInputTokens": 50341,
+    "cacheCreationInputTokens": 6592,
+    "webSearchRequests": 0,
+    "costUSD": 0.0392241,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I read `change.diff` and `shop/orders.py`, and I found two bugs. I didn't edit any files or run any code.\n\n1. **Order IDs change and can collide.**\n   - The old code took IDs from `_ids = itertools.count(1000)`, so they started at 1000 and rose by one each time.\n   - The new code uses `len(_ids_seen)`, so IDs start at 0 and shift from the existing 1000-based scheme. Anything that relies on IDs being 1000 or higher will break.\n   - `_ids_seen` isn't defined in `orders.py`, and the diff doesn't add it. The first `Order(...)` call will raise `NameError`.\n   - If someone did define it, the ID would depend on the list's length. Clearing or resetting the list, or two lists in different modules, would produce duplicate IDs.\n   - The ID is also no longer taken atomically from the counter, so concurrent order creation could hand out the same ID twice.\n   - `_ids` is left defined but unused.\n\n2. **State transitions are no longer checked for unknown states.**\n   - `ALLOWED.get(self.state, STATES)` falls back to `STATES`, which is every state, whenever `self.state` isn't a key in `ALLOWED`.\n   - An order in an unrecognised state could therefore move to any state without raising `ValueError`.\n   - The old `ALLOWED[self.state]` raised `KeyError` in that case, which exposed the bad state.\n   - The fallback should be an empty set, or the lookup should stay strict. As written, the validation fails open.\n   - Today `self.state` can only be one of the four listed states, so this only bites if a state is ever set directly or a new state is added without updating `ALLOWED`.",
+  "ttft_ms": 3108,
+  "type": "result",
+  "duration_ms": 12400,
+  "uuid": "3749c193-23cc-40c1-ae35-d1eca9279321",
+  "ttft_stream_ms": 2382,
+  "time_to_request_ms": 80,
+  "first_content_frame_ms": 2382,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.alone.sonnet-low"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "fable-high",
+ "top": "claude-fable-5-1",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 36268,
+  "stop_reason": "end_turn",
+  "session_id": "38a6d259-08a0-4298-9a80-338182b712fe",
+  "total_cost_usd": 0.37606900000000004,
+  "usage": {
+   "input_tokens": 130,
+   "cache_creation_input_tokens": 11849,
+   "cache_read_input_tokens": 103756,
+   "output_tokens": 2237,
+   "output_tokens_details": {
+    "thinking_tokens": 998
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 11849,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 1558,
+     "cache_read_input_tokens": 23939,
+     "cache_creation_input_tokens": 700,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 700
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 130,
+    "outputTokens": 2237,
+    "cacheReadInputTokens": 103756,
+    "cacheCreationInputTokens": 11849,
+    "webSearchRequests": 0,
+    "costUSD": 0.37606900000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 998,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Reviewed the diff against `shop/orders.py` and its callers in `shop/storage.py` and the tests. The diff is not applied in the working tree. Findings, most severe first.\n\n**1. `_ids_seen` is never defined, so every `Order(...)` raises `NameError`.**\nThe diff replaces `next(_ids)` with `len(_ids_seen)` and `_ids_seen.append(...)` but adds no module-level `_ids_seen = []`. Nothing else in the package defines that name. Both tests in `tests/test_orders.py` construct an order in `make()` and will fail immediately. `_ids` and `import itertools` also become dead code.\n\n**2. Even with the list defined, the new id scheme is worse than the counter it replaces.**\n- Ids now start at 0 instead of 1000, a silent change to externally visible ids that `Store.save_order` persists and dedupes on.\n- `len(...)` followed by `append(...)` is not atomic. Two threads creating orders can read the same length and get the same id. `itertools.count` was safe under the GIL. Duplicate ids make `save_order` in `shop/storage.py:17` drop one order when it filters rows by id.\n- The list grows forever, holding one entry per order ever created, purely to recompute a number a counter already tracked.\n\n**3. `ALLOWED.get(self.state, STATES)` turns an invariant violation into a silent, fully permissive transition.**\n`self.state` can only leave the known set if something assigns it directly, for example rehydrating a corrupt row from the JSON store. Before, that raised `KeyError` at the first `move`, exposing the corruption. Now an unknown state falls back to `STATES`, which lets the order jump to any state at all, including straight to `shipped` or back to `new`. The fallback also never applies to a valid state, so it fixes nothing for correct data and only weakens the state machine for bad data.\n\nThe `move` test in `tests/test_orders.py` still passes with change 3 alone, so it would not catch the weakened check. Change 1 breaks the whole test module.",
+  "ttft_ms": 3538,
+  "type": "result",
+  "duration_ms": 37076,
+  "uuid": "308b8708-5fbf-4b60-b5b4-455938359664",
+  "ttft_stream_ms": 1541,
+  "time_to_request_ms": 183,
+  "first_content_frame_ms": 1541,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.fable-high"
+}

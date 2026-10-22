@@ -1,0 +1,127 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "final-no-bulk-agy",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 50883,
+  "stop_reason": "end_turn",
+  "session_id": "812bf67c-8ffc-4362-b8a6-15305016e054",
+  "total_cost_usd": 0.17387829999999999,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 9015,
+   "cache_read_input_tokens": 32678,
+   "output_tokens": 1600,
+   "output_tokens_details": {
+    "thinking_tokens": 329
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9015,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 565,
+     "cache_read_input_tokens": 19888,
+     "cache_creation_input_tokens": 1917,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1917
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1600,
+    "cacheReadInputTokens": 32678,
+    "cacheCreationInputTokens": 9015,
+    "webSearchRequests": 0,
+    "costUSD": 0.1106716,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 329,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3907,
+    "cacheReadInputTokens": 33382,
+    "cacheCreationInputTokens": 8313,
+    "webSearchRequests": 0,
+    "costUSD": 0.0632067,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 390,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `Cart.apply_coupon(code)` and the new `shop/coupons.py`, and `calc_total` now takes coupons into account. All 11 tests pass (`python3 -m unittest`), including five new ones: SAVE10 alone, FLAT500 alone, both together, an unknown code raising `ValueError`, and a discount larger than the subtotal stopping at 0. Nothing is committed. I haven't read the changed code myself; this is based on the helper agent's report and its test run.\n\n**How the total works now:**\n- Both discounts are worked out from the same pre-tax subtotal, after any bulk discount, so they don't compound. SAVE10 uses the existing rounding, and the discounted subtotal can't go below 0.\n- Tax is then charged on the discounted amount. Carts without coupons are calculated exactly as before.\n\n**Choices you didn't specify, worth checking:**\n1. **Tax when part of the cart isn't taxed:** the discount is spread across taxed and untaxed items in proportion to their value. The tax calculation was changed to match, because orders store the tax figure.\n2. **Same code applied twice:** it currently counts twice, so SAVE10 twice takes 20% off. If each code should only count once per cart, a second apply could either be ignored or raise an error. That's a small change; tell me which you want.\n\nThe changes are in `shop/models.py`, `shop/pricing.py` and `tests/test_pricing.py`, plus the new `shop/coupons.py`.",
+  "ttft_ms": 4018,
+  "type": "result",
+  "duration_ms": 52350,
+  "uuid": "8f63e78c-defe-46cb-86fe-8fa869366317",
+  "ttft_stream_ms": 871,
+  "time_to_request_ms": 189,
+  "first_content_frame_ms": 871,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py        |  6 ++++++\n shop/pricing.py       | 20 +++++++++++++++++---\n tests/test_pricing.py | 30 ++++++++++++++++++++++++++++++\n 3 files changed, 53 insertions(+), 3 deletions(-)\n",
+ "workdir": "c1-coupon.final-no-bulk-agy.1",
+ "ledger": []
+}

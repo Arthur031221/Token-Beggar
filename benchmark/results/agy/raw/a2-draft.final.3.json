@@ -1,0 +1,109 @@
+{
+ "task": "a2-draft",
+ "class": "draft",
+ "arm": "final",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 6064,
+  "stop_reason": "stop_sequence",
+  "session_id": "6dcf107b-7407-4e7e-9a91-a3c89be00a31",
+  "total_cost_usd": 0.069454,
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 7531,
+   "cache_read_input_tokens": 12790,
+   "output_tokens": 332,
+   "output_tokens_details": {
+    "thinking_tokens": 241
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7531,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 332,
+     "cache_read_input_tokens": 12790,
+     "cache_creation_input_tokens": 7531,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 7531
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 2,
+    "outputTokens": 332,
+    "cacheReadInputTokens": 12790,
+    "cacheCreationInputTokens": 7531,
+    "webSearchRequests": 0,
+    "costUSD": 0.069454,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 241,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "api_error",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": true,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": 429,
+  "api_error_origin": "first_party",
+  "api_error": "usage_limit_reached",
+  "result": "You've hit your session limit \u00b7 resets 11:30pm (Asia/Taipei)",
+  "type": "result",
+  "duration_ms": 7203,
+  "uuid": "b182e34a-437b-4737-9255-47213354df42",
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "a2-draft.final.3",
+ "ledger": []
+}

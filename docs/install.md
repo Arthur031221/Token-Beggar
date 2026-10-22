@@ -9,7 +9,7 @@ Token Beggar is a plugin for a terminal coding agent (the agent with a plugin ma
 /plugin install token-beggar@token-beggar
 ```
 
-Restart the agent or run `/reload-plugins`. The next non-trivial prompt of a session carries the routing card.
+Restart the agent or run `/reload-plugins`. The next non-trivial prompt of a session carries the menu.
 
 ## Try it for one session without installing
 
@@ -26,9 +26,9 @@ Run:
 token-beggar doctor
 ```
 
-It prints one line per check and exits 1 if something is broken. A warning is not a failure, but each one names something that would change routing: a forced worker model, an unset compaction window, a hook error in the log, or a catalog older than 30 days. After a few sessions, `token-beggar stats` shows the workers that ran. To see the routing table, run `token-beggar route`.
+It prints one line per check and exits 1 if something is broken. A warning is not a failure, but each one names something that would change routing: a forced worker model, a hook error in the log, or a catalog older than 30 days. After a few sessions, `token-beggar stats` shows the workers that ran. To see the menu the model gets, run `token-beggar menu`.
 
-The plugin puts `token-beggar` on the PATH of the agent's shell. Outside the agent, run `python3 -m token_beggar route` from the repository root.
+The plugin puts `token-beggar` on the PATH of the agent's shell. Outside the agent, run `python3 -m token_beggar menu` from the repository root.
 
 ## Turn it off
 
@@ -38,4 +38,4 @@ The plugin puts `token-beggar` on the PATH of the agent's shell. Outside the age
 
 ## Where it keeps files
 
-Everything lives in one state directory, printed by `token-beggar env`: the model inventory, quota marks, handoff notes and an `errors.log`. Nothing is sent anywhere. The only network call is the weekly download of the model vendor's public models page.
+Everything lives in one state directory, printed by `token-beggar env`: the model inventory, quota marks, caps, notes, the usage ledger and an `errors.log`. Nothing is sent anywhere. The only network call is the weekly download of the model vendor's public models page.

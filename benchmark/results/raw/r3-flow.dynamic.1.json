@@ -1,0 +1,110 @@
+{
+ "task": "r3-flow",
+ "class": "reading",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15611,
+  "stop_reason": "end_turn",
+  "session_id": "fe75d9f6-3987-4e6e-9ef9-d97d6331d71a",
+  "total_cost_usd": 0.0883404,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 6477,
+   "cache_read_input_tokens": 74862,
+   "output_tokens": 1076,
+   "output_tokens_details": {
+    "thinking_tokens": 60
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6477,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 631,
+     "cache_read_input_tokens": 20733,
+     "cache_creation_input_tokens": 330,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 330
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1076,
+    "cacheReadInputTokens": 74862,
+    "cacheCreationInputTokens": 6477,
+    "webSearchRequests": 0,
+    "costUSD": 0.0883404,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 60,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Validation and storage are two separate steps, and nothing connects them automatically.\n\n**Validation: `shop/orders.py`**\n- `STATES` (line 6) lists the states: `new`, `paid`, `shipped`, `cancelled`.\n- `ALLOWED` (line 7) is the transition table: `new \u2192 paid/cancelled`, `paid \u2192 shipped/cancelled`. `shipped` and `cancelled` are final.\n- `Order.__init__` sets every new order to `\"new\"`.\n- `Order.move(state)` (lines 19\u201322) checks the target against `ALLOWED[self.state]`. If it's not allowed, it raises `ValueError(\"cannot go from X to Y\")`. Otherwise it changes `self.state`, in memory only.\n\n**Storage: `shop/storage.py`**\n- `Store.save_order(order)` loads every row with `Store.load()`, removes any row with the same `id`, adds a new row (`id`, `customer`, `total`, `tax`, `state`), and rewrites the whole JSON file.\n- `Store.load()` returns `[]` if the file doesn't exist.\n\n**Things to know**\n- `move()` doesn't save anything. The caller has to call `save_order()` afterward. Nothing in the repo does this yet; only the tests call `move()`.\n- `save_order()` doesn't check the state. Changing `order.state` directly skips validation, and the bad state still gets saved.\n- `STATES` is defined but never used.\n- Saving isn't atomic: it reads the file, changes it, and rewrites it, with no locking.\n- `shop/reports.py:9` reads the saved `state` and counts only `paid`/`shipped` orders.\n- `tests/test_orders.py::test_state_flow` tests the allowed path and checks that `shipped \u2192 cancelled` is rejected.",
+  "ttft_ms": 2392,
+  "type": "result",
+  "duration_ms": 16535,
+  "uuid": "5bcc03e4-e5d2-40c9-b3bd-5ebdbe4c729f",
+  "ttft_stream_ms": 2119,
+  "time_to_request_ms": 191,
+  "first_content_frame_ms": 2120,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "r3-flow.dynamic.1"
+}

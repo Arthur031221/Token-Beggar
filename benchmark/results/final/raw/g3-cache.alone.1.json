@@ -1,0 +1,111 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16178,
+  "stop_reason": "end_turn",
+  "session_id": "0a660356-d783-47bc-93ba-9815d862fdce",
+  "total_cost_usd": 0.0810756,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 6217,
+   "cache_read_input_tokens": 31418,
+   "output_tokens": 1252,
+   "output_tokens_details": {
+    "thinking_tokens": 516
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6217,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1177,
+     "cache_read_input_tokens": 18628,
+     "cache_creation_input_tokens": 379,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 379
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1252,
+    "cacheReadInputTokens": 31418,
+    "cacheCreationInputTokens": 6217,
+    "webSearchRequests": 0,
+    "costUSD": 0.0810756,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 516,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I reviewed `shop/cache.py`. It works with one thread, but it has four problems when many threads use it in a long-running service.\n\n1. **Memory grows forever.** Nothing removes expired entries, and there is no size limit. Every SKU ever looked up stays in `_data` for the life of the process.\n   *Fix:* Add a `maxsize` and keep entries in least-recently-used order (`OrderedDict`), dropping the oldest when full. Also remove an entry when a lookup finds it expired.\n\n2. **Many threads load the same item at once (line 17).** When an entry is missing or expired, every thread that asks for it calls `loader` together. A popular SKU expiring can flood the backend.\n   *Fix:* Let only one thread load each SKU. Keep a record of loads in progress, keyed by SKU, under a short lock. The first thread runs the loader and later threads wait for its result. If the loader fails, pass the error to everyone waiting and clear the record so the next call retries.\n\n3. **`invalidate` can be undone by a load already running.** Thread A starts loading, thread B calls `invalidate` because the price changed, then A writes the old price back. That stale price is then served for a full `ttl`.\n   *Fix:* Keep a version number per SKU. `invalidate` increases it, and a load only saves its result if the version hasn't changed since it started.\n\n4. **The timestamp is taken after the load finishes (line 18).** With a slow loader, the data lives longer than `ttl` measured from when it was fetched.\n   *Fix:* Read the clock before calling the loader and store that time.\n\n**What I'd build:** One `threading.Lock` that guards only the in-memory changes (the entries, the in-progress loads, the versions), never held while `loader` runs. Combine it with the per-SKU single loader, the version check and the size-limited LRU. This doesn't depend on the GIL (Python's global interpreter lock) to keep the check-then-write steps safe, so it also works on free-threaded Python builds.",
+  "ttft_ms": 2570,
+  "type": "result",
+  "duration_ms": 16348,
+  "uuid": "1be42c34-3ef6-4f2d-b5b1-2182ce61b9d9",
+  "ttft_stream_ms": 2183,
+  "time_to_request_ms": 125,
+  "first_content_frame_ms": 2184,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.alone.1",
+ "ledger": []
+}

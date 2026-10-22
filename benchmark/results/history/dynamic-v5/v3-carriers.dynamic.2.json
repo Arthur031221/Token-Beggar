@@ -1,0 +1,110 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 26743,
+  "stop_reason": "end_turn",
+  "session_id": "d21f6b28-5d1b-4f8e-a2db-a7440f333dc4",
+  "total_cost_usd": 0.216884,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 18051,
+   "cache_read_input_tokens": 143840,
+   "output_tokens": 2183,
+   "output_tokens_details": {
+    "thinking_tokens": 147
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 18051,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 664,
+     "cache_read_input_tokens": 32226,
+     "cache_creation_input_tokens": 412,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 412
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 2183,
+    "cacheReadInputTokens": 143840,
+    "cacheCreationInputTokens": 18051,
+    "webSearchRequests": 0,
+    "costUSD": 0.216884,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 147,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found two inconsistencies that would break callers of `REGISTRY`/`get()`. No files were edited.\n\n**1. `shop/carriers/maple.py` expects grams; every other carrier expects kg.**\n- The docstring says \"weight in grams\". The module uses `PER_GRAMS = 3` and `MAX_GRAMS = 30000` instead of `PER_KG`/`MAX_KG` (`maple.py:8-10`, used at `maple.py:17,20`).\n- The `rate(weight, zone)` signature is the same as the others, so nothing fails visibly. A caller that passes kg the way it does for every other carrier gets the wrong price.\n- Example: 5 kg local is quoted as `494 + 3*5 = 509` cents. In grams it would be `494 + 3*5000 = 15494` cents. The quote is about 30\u00d7 too low.\n- The weight limit is also off. Maple accepts \"weights\" up to 30000, so a 25 kg parcel is never rejected.\n- This is the most dangerous of the two because it fails silently.\n\n**2. Four carriers have no `tracking_url`: `delta.py`, `kestrel.py`, `onyx.py`, `tundra.py`.**\n- The other 16 carriers define `tracking_url(self, code) -> str`. These four stop after `valid_label`.\n- Any caller that loops over `REGISTRY` or calls `get(name).tracking_url(...)` gets an `AttributeError` for these four.\n\n**Consistent everywhere else:**\n- All 20 carriers share the same `rate`, `label` and `valid_label` signatures, the `name = CARRIER` attribute, and the zone keys `local`, `regional` and `national`.\n- All registry keys match each module's `CARRIER` constant.\n- All quotes are in cents.\n\nNothing else in the repo calls the registry, so these are breaks in the interface, not failures in existing call sites.",
+  "ttft_ms": 1733,
+  "type": "result",
+  "duration_ms": 27762,
+  "uuid": "b5cefc9b-09a6-473f-971d-24c5666f21d0",
+  "ttft_stream_ms": 1541,
+  "time_to_request_ms": 246,
+  "first_content_frame_ms": 1541,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.dynamic.2"
+}

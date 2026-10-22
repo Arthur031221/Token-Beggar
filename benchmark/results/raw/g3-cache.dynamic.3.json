@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 16786,
+  "stop_reason": "end_turn",
+  "session_id": "2858c884-4c99-4778-8d90-30dd27ff2e0d",
+  "total_cost_usd": 0.0754176,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5531,
+   "cache_read_input_tokens": 34268,
+   "output_tokens": 1215,
+   "output_tokens_details": {
+    "thinking_tokens": 433
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5531,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1084,
+     "cache_read_input_tokens": 19682,
+     "cache_creation_input_tokens": 435,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 435
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1215,
+    "cacheReadInputTokens": 34268,
+    "cacheCreationInputTokens": 5531,
+    "webSearchRequests": 0,
+    "costUSD": 0.0754176,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 433,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found five problems in `shop/cache.py`. The worst one can keep serving an outdated price after it has been invalidated.\n\n1. **Invalidation can be lost (lines 17\u201318, 21\u201322).** Thread A misses and starts calling `loader`. Meanwhile the price changes and thread B calls `invalidate`. A then finishes and writes the old price back, and that wrong price is served for a full TTL.\n   *Fix:* keep a version number per key and have `invalidate` increase it. A loader thread writes its result only if the version hasn't changed since it started.\n\n2. **Many threads load the same key at once (lines 14\u201317).** When a popular SKU expires, every thread that asks for it calls `loader` at the same moment. That puts a burst of load on the price backend.\n   *Fix:* let only one thread load each key. The first thread to miss records a pending result, and the others wait on it. Never call `loader` while holding the shared lock.\n\n3. **Memory grows without limit (line 11).** Expired entries are never removed, so in a long-running service `_data` keeps every SKU ever looked up.\n   *Fix:* put a size limit on the cache and evict the least recently used entry (an `OrderedDict` behind a lock), and drop expired entries when they are read.\n\n4. **Each entry lives longer than the TTL (line 18).** The time is recorded after `loader` returns, so a slow load adds its duration to the entry's lifetime.\n   *Fix:* record the time before calling `loader`.\n\n5. **Errors bypass the single-load fix (line 17).** If `loader` raises, the exception must still reach the threads waiting on the same key. Otherwise they hang, or they all retry and hit the backend at once.\n   *Fix:* hand the exception to the waiting threads, and optionally remember the failure for a short time.\n\n**What I would build:** one `threading.Lock` that guards the dictionary, the pending loads and the version numbers. Each key loads at most once at a time, `loader` is called outside the lock, and the cache is size-limited with LRU and TTL eviction.",
+  "ttft_ms": 3110,
+  "type": "result",
+  "duration_ms": 17441,
+  "uuid": "728e3e1b-912f-4de2-9046-8de7040718e6",
+  "ttft_stream_ms": 2902,
+  "time_to_request_ms": 172,
+  "first_content_frame_ms": 2904,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.3"
+}

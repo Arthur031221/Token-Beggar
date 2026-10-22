@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from token_beggar import __version__, routes
+from token_beggar import __version__
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -30,7 +30,7 @@ class PackageTests(unittest.TestCase):
 
     def test_hooks_call_the_module_through_the_plugin_root(self):
         hooks = json.loads((ROOT / "hooks" / "hooks.json").read_text())["hooks"]
-        self.assertEqual(set(hooks), {"UserPromptSubmit", "PreCompact", "SessionStart"})
+        self.assertEqual(set(hooks), {"UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure", "PreCompact", "SessionStart", "Stop"})
         for groups in hooks.values():
             for group in groups:
                 for hook in group["hooks"]:
@@ -59,10 +59,14 @@ class PackageTests(unittest.TestCase):
         agent = frontmatter(ROOT / "agents" / "beggar-worker.md")
         self.assertEqual(agent["model"].strip(), "haiku")
 
-    def test_every_route_class_has_a_rubric_line_in_the_skill(self):
-        text = (ROOT / "skills" / "token-beggar" / "SKILL.md").read_text()
-        for spec in routes.classes():
-            self.assertIn(spec["id"], text)
+    def test_the_skill_explains_the_decision_rules_the_card_carries(self):
+        text = (ROOT / "skills" / "token-beggar" / "SKILL.md").read_text().lower()
+        for word in ("subtask", "ceiling", "verif", "token-beggar ask", "note"):
+            self.assertIn(word, text)
+
+    def test_the_old_fixed_table_is_gone(self):
+        self.assertFalse((ROOT / "data" / "routes.json").exists())
+        self.assertFalse((ROOT / "token_beggar" / "routes.py").exists())
 
     def test_no_brand_names_in_the_package_name(self):
         for name in ("claude", "anthropic"):

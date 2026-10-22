@@ -55,6 +55,24 @@ def context_tokens(items: list[dict]) -> int:
     return 0
 
 
+def tail_context_tokens(path: str | Path, window: int = 600_000) -> int:
+    """context_tokens() from the end of a transcript only, so a hook that runs on every tool call stays cheap."""
+    try:
+        size = Path(path).stat().st_size
+        with open(path, "rb") as handle:
+            handle.seek(max(0, size - window))
+            lines = handle.read().decode("utf-8", "ignore").splitlines()
+    except OSError:
+        return 0
+    items = []
+    for line in lines[1:] if size > window else lines:
+        try:
+            items.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return context_tokens(items)
+
+
 def user_prompts(items: list[dict]) -> list[str]:
     """What the human typed, without tool results and without the compaction summary."""
     prompts = []

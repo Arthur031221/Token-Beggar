@@ -1,0 +1,110 @@
+{
+ "task": "g3-cache",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 15133,
+  "stop_reason": "end_turn",
+  "session_id": "c91f75c2-6870-45a1-a593-8e9814f2de3a",
+  "total_cost_usd": 0.07749059999999999,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 5496,
+   "cache_read_input_tokens": 34233,
+   "output_tokens": 1333,
+   "output_tokens_details": {
+    "thinking_tokens": 549
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5496,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1202,
+     "cache_read_input_tokens": 19647,
+     "cache_creation_input_tokens": 435,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 435
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 1333,
+    "cacheReadInputTokens": 34233,
+    "cacheCreationInputTokens": 5496,
+    "webSearchRequests": 0,
+    "costUSD": 0.07749059999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 549,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "No single line in `shop/cache.py` will crash. Each dict operation is atomic on its own. The problems come from what happens across calls, especially between the read and the write in `get()`.\n\n**1. Unbounded memory growth (lines 11 and 18).** Expired entries are never removed. They are only overwritten if the same SKU is requested again. In a long-running service with many SKUs, the dict grows forever.\n*Fix:* Give the cache a size limit and evict the least recently used entries (an `OrderedDict` with `maxsize`). Drop expired entries when they are looked up.\n\n**2. Many threads load the same item at once (lines 14\u201318).** When a popular SKU expires, every thread that misses it calls `loader` at the same time. That can flood the price backend.\n*Fix:* Track loads in progress per SKU. The first thread to miss runs the loader. Other threads wait on that result instead of loading again.\n\n**3. `invalidate` can be undone (lines 17\u201322).** Thread A starts loading the old price. Thread B calls `invalidate` after a price change. Thread A then writes the stale value back, and it is served for the full TTL.\n*Fix:* Keep a version number per SKU and increase it in `invalidate`. A load only stores its result if the version hasn't changed since the load started. It also cancels any load in progress for that SKU.\n\n**4. Freshness is timed from the end of the load (line 18).** The timestamp is taken after `loader` returns. Data read at the start of a slow load counts as fresher than it is.\n*Fix:* Take the timestamp before calling the loader.\n\n**5. Loader errors.** A failure isn't cached, so every request retries a failing backend. With fix 2, waiting threads would also hang or miss the error.\n*Fix:* Pass the exception to every waiting thread and clear the in-progress record. Optionally, cache the failure briefly so callers back off.\n\n**Overall design:** One `threading.Lock` protects the data, the in-progress map and the versions. Hold it only to read and update those. Never hold it while `loader` runs.",
+  "ttft_ms": 1206,
+  "type": "result",
+  "duration_ms": 15500,
+  "uuid": "cae462e6-e05b-45df-9a8c-bc028b7434a0",
+  "ttft_stream_ms": 946,
+  "time_to_request_ms": 188,
+  "first_content_frame_ms": 946,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g3-cache.dynamic.1"
+}

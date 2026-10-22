@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 11429,
+  "stop_reason": "end_turn",
+  "session_id": "b90fc48a-a962-4907-9d84-2b5195807d0d",
+  "total_cost_usd": 0.08205699999999999,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6471,
+   "cache_read_input_tokens": 55425,
+   "output_tokens": 959,
+   "output_tokens_details": {
+    "thinking_tokens": 80
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6471,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 658,
+     "cache_read_input_tokens": 20828,
+     "cache_creation_input_tokens": 228,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 228
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 959,
+    "cacheReadInputTokens": 55425,
+    "cacheCreationInputTokens": 6471,
+    "webSearchRequests": 0,
+    "costUSD": 0.08205699999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 80,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: replace the JSON file with SQLite in WAL mode.**\n\n**Why the current design fails at your scale**\n\n- **Lost writes.** `save_order` (`shop/storage.py:16`) reads the whole file, changes it in memory, and writes the whole file back, with no lock. If two processes save at the same time, the second write silently erases the first one's order.\n- **Corrupt reads.** `write_text` overwrites the file in place, so a reader or a crash partway through can leave a half-written file that won't parse as JSON.\n- **Cost grows with every order.** Each save reads and rewrites every order, so at 100k orders (several MB) every single write moves the whole file.\n\n**Why SQLite**\n\n- It ships with Python, so there's no server to run and nothing new to deploy.\n- Its transactions and file locking handle two writers correctly. WAL mode also lets readers keep reading while a write is in progress.\n- Saving one order becomes a single `INSERT \u2026 ON CONFLICT(id) DO UPDATE`, which costs about the same at 100k orders as at 10.\n- Indexes on `customer` and `state` will make reports cheaper later.\n\nLocking the JSON file instead would fix the lost writes but still rewrite everything on every save. Postgres is more than two local processes need. Move to it only if writers end up on separate machines.\n\n**Migration path**\n\n1. Add an SQLite store with the same `load()` and `save_order()` methods, and set `journal_mode=WAL` and `busy_timeout` on each connection.\n2. Write a one-off import script that reads `orders.json` and inserts every row in one transaction, then compares row counts and totals.\n3. Briefly stop both writers, run the import, and point `Store` (only `cli.py:26` constructs it) at the new database.\n4. Keep the JSON file read-only as a backup for one release, then remove the JSON code.\n5. Add a test with two concurrent writers to confirm no orders are lost.",
+  "ttft_ms": 1456,
+  "type": "result",
+  "duration_ms": 12003,
+  "uuid": "a2d3373e-3919-4aef-85b7-377896e0ce28",
+  "ttft_stream_ms": 989,
+  "time_to_request_ms": 278,
+  "first_content_frame_ms": 990,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.2"
+}

@@ -1,0 +1,110 @@
+{
+ "task": "g2-store",
+ "class": "design",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 14202,
+  "stop_reason": "end_turn",
+  "session_id": "24e85b58-0217-49ab-9f3e-81ad98eae858",
+  "total_cost_usd": 0.0836472,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6495,
+   "cache_read_input_tokens": 55416,
+   "output_tokens": 1029,
+   "output_tokens_details": {
+    "thinking_tokens": 84
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6495,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 738,
+     "cache_read_input_tokens": 20818,
+     "cache_creation_input_tokens": 262,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 262
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 1029,
+    "cacheReadInputTokens": 55416,
+    "cacheCreationInputTokens": 6495,
+    "webSearchRequests": 0,
+    "costUSD": 0.0836472,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 84,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Recommendation: move to SQLite (stdlib `sqlite3`) in WAL mode, behind the same `Store` interface.**\n\n**Why the current design won't hold up** (`shop/storage.py`):\n- **It loses writes.** `save_order` reads the whole file, changes it in memory and writes it back, with no lock. If both processes save at the same time, the second write wipes out the first one's order.\n- **A crash can corrupt the file.** `write_text` truncates the file and then rewrites it. A crash partway through leaves broken JSON, and every order is unreadable.\n- **It gets slow.** Each save parses and rewrites all 100k rows, roughly 10 MB with `indent=1`. Saving N orders costs O(N\u00b2) in total.\n\n**Why SQLite:** it's in the standard library, so nothing new to install or run. Writes are atomic. WAL mode lets readers keep going while one process writes, and `busy_timeout` makes the two writers queue instead of failing. A primary key on `id` turns the upsert into a single `INSERT \u2026 ON CONFLICT(id) DO UPDATE`. 100k rows is small for SQLite. Postgres is only worth it if the writers end up on different machines. File locking on the JSON file fixes neither the crash risk nor the slowdown.\n\n**Migration path:**\n1. Write a `SqliteStore` with the same `load()` and `save_order()` methods. Use an `orders(id PRIMARY KEY, customer, total, tax, state)` table and integer cents, as now.\n2. Write a one-off import script: read the JSON file, insert every row in one transaction, then check that the row counts and the sum of totals match.\n3. Stop both writers, run the import, then point `cli.py` (currently `Store(args.db)`) at the new store and restart.\n4. Keep the JSON file read-only as a rollback for one release, then delete it.\n5. Add a test with two processes saving at once that checks no orders are lost.\n\nOne thing I noticed: nothing in the repo calls `save_order`. `cli.py` only calls `load()`. So the writer processes live outside this repo, and they need checking before step 3.",
+  "ttft_ms": 2201,
+  "type": "result",
+  "duration_ms": 14981,
+  "uuid": "5b79a7d2-f8c1-4269-852f-4f0487eae118",
+  "ttft_stream_ms": 1931,
+  "time_to_request_ms": 397,
+  "first_content_frame_ms": 1931,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "g2-store.dynamic.1"
+}

@@ -1,0 +1,112 @@
+{
+ "task": "f1-shipping",
+ "class": "multi_file",
+ "arm": "dynamic",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 72928,
+  "stop_reason": "end_turn",
+  "session_id": "905a6c2f-23cd-45a9-aa65-336f56b84280",
+  "total_cost_usd": 0.4619454,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 23030,
+   "cache_read_input_tokens": 158001,
+   "output_tokens": 4844,
+   "output_tokens_details": {
+    "thinking_tokens": 1589
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23030,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 756,
+     "cache_read_input_tokens": 36100,
+     "cache_creation_input_tokens": 1517,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1517
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 22,
+    "outputTokens": 7791,
+    "cacheReadInputTokens": 224012,
+    "cacheCreationInputTokens": 38429,
+    "webSearchRequests": 0,
+    "costUSD": 0.4619454,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1908,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 11,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Orders now carry shipping, and the full suite passes: `python3 -m unittest discover -s tests -t .` ran 15 tests, all OK. Nothing is committed.\n\n**What changed**\n- **`shop/orders.py`:** `Order(cart, carrier=None, weight=0, zone=\"local\")` looks up the carrier in the registry (`carriers.get(name).rate(weight, zone)`) to set `shipping_cents`. With no carrier it's 0. `total_cents` now includes shipping, and `tax_cents` doesn't change.\n- **`shop/storage.py`:** `save_order` also saves `\"shipping\"`.\n- **`shop/reports.py`:** no changes needed. It only adds up the stored `\"total\"`, so shipping isn't counted twice, and older saved orders without `\"shipping\"` still work. Note that the per-customer sales figures now include shipping.\n- **`tests/test_shipping.py` (new):** covers no carrier, a carrier's rate being added to the total, `\"shipping\"` being saved, the report with both new and old orders, and the error cases.\n\n**Bug I caught in review:** the `maple` carrier prices by the gram, while the other 19 price by the kg. The first version passed the weight straight through, so a 2 kg Maple order cost $5.00 in shipping instead of $64.94. I made `Order`'s `weight` always kg and added `weight_unit = \"g\"` to `MapleCarrier`, so the order converts kg to grams for it. There's a test for this. If you meant weight to be in each carrier's own unit, that one line should go.\n\n**Behaviour to know about:**\n- If you give a carrier but no weight, the default `weight=0` raises `ValueError`, because every carrier rejects weights \u2264 0. Unknown carriers and zones raise `KeyError`. Both errors are passed through, not hidden.\n- The carriers' `rate()` multiplies by decimal zone factors and then cuts off the fraction, so a quote can occasionally come out one cent low. That code was already there and I didn't change it.",
+  "ttft_ms": 3973,
+  "type": "result",
+  "duration_ms": 75897,
+  "uuid": "cc40b6c0-e72a-46a6-a9b1-3d816685b328",
+  "ttft_stream_ms": 833,
+  "time_to_request_ms": 154,
+  "first_content_frame_ms": 833,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/carriers/maple.py |  1 +\n shop/orders.py         | 19 +++++++++++++++++--\n shop/storage.py        |  2 +-\n 3 files changed, 19 insertions(+), 3 deletions(-)\n",
+ "workdir": "f1-shipping.dynamic.3"
+}

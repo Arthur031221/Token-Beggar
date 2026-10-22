@@ -1,0 +1,112 @@
+{
+ "task": "c1-coupon",
+ "class": "routine_code",
+ "arm": "dynamic",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 46074,
+  "stop_reason": "end_turn",
+  "session_id": "3fab00f2-69a1-43fb-8c61-899d19ad60a5",
+  "total_cost_usd": 0.222194,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 7029,
+   "cache_read_input_tokens": 34307,
+   "output_tokens": 1720,
+   "output_tokens_details": {
+    "thinking_tokens": 278
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7029,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 694,
+     "cache_read_input_tokens": 19720,
+     "cache_creation_input_tokens": 1896,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1896
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 5312,
+    "cacheReadInputTokens": 93115,
+    "cacheCreationInputTokens": 15236,
+    "webSearchRequests": 0,
+    "costUSD": 0.222194,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 452,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added `Cart.apply_coupon(code)` and coupon support in `calc_total`. All 11 tests pass. Nothing is committed. A subagent made the changes and ran the tests; I haven't re-read the code myself.\n\n- **`shop/coupons.py` (new):** defines SAVE10 (10 percent off) and FLAT500 (500 cents off). An unknown code raises `ValueError`.\n- **`shop/models.py`:** `Cart` now keeps a list of applied coupons. `apply_coupon(code)` checks the code before adding it, so a bad code leaves the cart unchanged.\n- **`shop/pricing.py`:** `calc_total` and `calc_tax` now take the discount off the pre-tax subtotal before tax is computed. Their signatures haven't changed, so existing callers still work.\n- **`tests/test_coupons.py` (new):** covers SAVE10 alone, FLAT500 alone, both together with tax after the discount, an unknown code, and the total never going below zero.\n\n**How coupons combine:**\n- Each discount is worked out from the original subtotal, so the order you apply coupons doesn't matter. SAVE10 then FLAT500 gives the same result as the reverse.\n- SAVE10 uses the rounding the code already had (half-cents round up).\n- The discounted subtotal can't go below 0.\n\n**Decision for you:** when a cart has both taxable and non-taxable items, the discount reduces the taxable part in proportion to its share of the subtotal (rounded down to the cent). Your request didn't cover this case. Another option is to apply the discount to non-taxable items first, or only to taxable ones. Tell me if you want a different rule.\n\npytest isn't installed and there's no `python` command, only `python3`. So the tests were run with `python3 -m unittest discover -s tests -t .`, which ended with \"Ran 11 tests \u2026 OK\".",
+  "ttft_ms": 3338,
+  "type": "result",
+  "duration_ms": 47562,
+  "uuid": "cc7a4a9d-2a1b-45a9-8428-0d7b1a838f4c",
+  "ttft_stream_ms": 1154,
+  "time_to_request_ms": 425,
+  "first_content_frame_ms": 1154,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": " shop/models.py  |  7 +++++++\n shop/pricing.py | 24 ++++++++++++++++++++----\n 2 files changed, 27 insertions(+), 4 deletions(-)\n",
+ "workdir": "c1-coupon.dynamic.2"
+}

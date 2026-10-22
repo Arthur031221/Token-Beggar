@@ -1,0 +1,110 @@
+{
+ "task": "v1-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 17320,
+  "stop_reason": "end_turn",
+  "session_id": "12e3b3d9-e580-445d-a4cd-8dd6ed0cea88",
+  "total_cost_usd": 0.115384,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 8422,
+   "cache_read_input_tokens": 77280,
+   "output_tokens": 1626,
+   "output_tokens_details": {
+    "thinking_tokens": 283
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 8422,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1061,
+     "cache_read_input_tokens": 22364,
+     "cache_creation_input_tokens": 644,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 644
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1626,
+    "cacheReadInputTokens": 77280,
+    "cacheCreationInputTokens": 8422,
+    "webSearchRequests": 0,
+    "costUSD": 0.115384,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 283,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found three bugs in `change.diff`, one in each changed hunk. I didn't edit anything, and I didn't run the test suite. The test results below are worked out by hand from the code.\n\n### 1. Bulk discount no longer applies at exactly the threshold (`shop/pricing.py`, `line_subtotal`)\n`line.qty >= BULK_THRESHOLD` became `line.qty > BULK_THRESHOLD`. A line with exactly 10 units used to get the 5% discount and now doesn't, so customers buying exactly 10 are overcharged.\n- Worked example: 10 \u00d7 100\u00a2 was 950 + 78 tax = **1028**. It is now 1000 + 83 = **1083**.\n- `tests/test_pricing.py::test_bulk_discount` expects 1028 for exactly this cart, so it will fail.\n\n### 2. `calc_tax` taxes the pre-discount amount (`shop/pricing.py`, `calc_tax`)\n`calc_tax` now sums the raw `price_cents * qty` instead of `line_subtotal(l)`. That skips the bulk discount, but `calc_total` still taxes the discounted subtotal, so the two functions now disagree.\n- `Order` stores both values (`shop/orders.py:15-16`), so any discounted taxable line gets a `tax_cents` that doesn't match the tax inside `total_cents`.\n- Example: 11 \u00d7 100\u00a2. The tax inside `total_cents` is `percent(1045, 8.25)` = 86, but `tax_cents` is `percent(1100, 8.25)` = 91.\n- No existing test catches this, because `test_untaxable_item` only checks a case where the tax is 0.\n\n### 3. Cache TTL is 1000\u00d7 too long (`shop/cache.py`, `get`)\nThe check changed from `< self.ttl` to `< self.ttl * 1000`. Both `ttl` (the docstring says \"ttl seconds\") and the default clock `time.monotonic` are in seconds, so this treats seconds as milliseconds.\n- The default 60 s TTL becomes about 16.7 hours, so the cache keeps serving old prices long after they change.\n- `tests/test_cache.py::test_hit_and_expiry` will fail. It uses `ttl=10` and moves the clock to 11; the entry should expire, but now it would last until 10,000, so the loader isn't called a second time.\n\nAll three changes should be reverted. None of them fixes anything: each one makes behaviour that was correct before wrong.",
+  "ttft_ms": 1687,
+  "type": "result",
+  "duration_ms": 18689,
+  "uuid": "aeb0b75b-e6ab-49a3-ae22-0bbb89072b2f",
+  "ttft_stream_ms": 1469,
+  "time_to_request_ms": 874,
+  "first_content_frame_ms": 1470,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v1-diff.dynamic.1"
+}

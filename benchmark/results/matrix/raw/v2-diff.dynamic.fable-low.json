@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": "fable-low",
+ "top": "claude-fable-5-1",
+ "effort": "low",
+ "result": {
+  "duration_api_ms": 15497,
+  "stop_reason": "end_turn",
+  "session_id": "7488e150-4f63-4aaf-abb5-89d8b160cb87",
+  "total_cost_usd": 0.2753375,
+  "usage": {
+   "input_tokens": 98,
+   "cache_creation_input_tokens": 10387,
+   "cache_read_input_tokens": 79470,
+   "output_tokens": 935,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10387,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 32,
+     "output_tokens": 549,
+     "cache_read_input_tokens": 22783,
+     "cache_creation_input_tokens": 394,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 394
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-fable-5-1": {
+    "inputTokens": 98,
+    "outputTokens": 935,
+    "cacheReadInputTokens": 79470,
+    "cacheCreationInputTokens": 10387,
+    "webSearchRequests": 0,
+    "costUSD": 0.2753375,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-fable-5-1",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The diff introduces these bugs in `shop/orders.py`:\n\n1. **`_ids_seen` is never defined.** The diff replaces `next(_ids)` with `len(_ids_seen)` and `_ids_seen.append(...)` but adds no module-level `_ids_seen = []`. The module still defines `_ids = itertools.count(1000)` at `shop/orders.py:5`. Every `Order(...)` call raises `NameError`.\n\n2. **ID numbering changes and collides with the old scheme.** Even if `_ids_seen` were defined, IDs would start at 0 instead of 1000. Orders persisted by `shop/storage.py:17-19` keyed on `order.id` would now collide with or be mis-matched against records saved under the old 1000-based IDs, so `save` would overwrite the wrong rows.\n\n3. **Unbounded list growth for a counter.** Keeping every ID in a list just to take its length is O(n) memory for what was an O(1) counter. Not a correctness bug on its own, but a regression.\n\n4. **`ALLOWED.get(self.state, STATES)` makes unknown states permissive.** Previously an order in a state missing from `ALLOWED` raised `KeyError`, surfacing corruption. Now any unknown or corrupted state value (for example a bad value loaded from storage, or a typo set directly on `state`) is allowed to transition to any of the four states, including `shipped` from a nonsense state. The fallback should be an empty set, or the lookup should stay strict.\n\nNote that `STATES` is a tuple, so the `in` check still works, but the semantics are wrong: the default should deny, not allow everything.",
+  "ttft_ms": 1782,
+  "type": "result",
+  "duration_ms": 16377,
+  "uuid": "9bed95cc-ad14-4895-b21f-4737a4efa27c",
+  "ttft_stream_ms": 1446,
+  "time_to_request_ms": 192,
+  "first_content_frame_ms": 1446,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.dynamic.fable-low"
+}

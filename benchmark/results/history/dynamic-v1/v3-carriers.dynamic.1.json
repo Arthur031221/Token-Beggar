@@ -1,0 +1,110 @@
+{
+ "task": "v3-carriers",
+ "class": "review",
+ "arm": "dynamic",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 26595,
+  "stop_reason": "end_turn",
+  "session_id": "4134eea6-852f-4740-8b73-c28557289a67",
+  "total_cost_usd": 0.18478640000000002,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 15264,
+   "cache_read_input_tokens": 106072,
+   "output_tokens": 2071,
+   "output_tokens_details": {
+    "thinking_tokens": 388
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 15264,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1002,
+     "cache_read_input_tokens": 27411,
+     "cache_creation_input_tokens": 643,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 643
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2071,
+    "cacheReadInputTokens": 106072,
+    "cacheCreationInputTokens": 15264,
+    "webSearchRequests": 0,
+    "costUSD": 0.18478640000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 388,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found two inconsistencies that would break code calling the registry. The other 16 carriers are identical apart from their rate values, names and owners.\n\n### 1. `maple.py` takes weight in grams; every other carrier takes kilograms\n`shop/carriers/maple.py`: the docstring says \"weight in grams\", the constants are `PER_GRAMS = 3` and `MAX_GRAMS = 30000`, and `rate()` checks `weight > MAX_GRAMS`. The other 19 carriers all take `weight` in kg (`PER_KG`, `MAX_KG` of 30 to 49).\n\nThe method name and signature are the same, `rate(weight, zone=\"local\")`, so nothing fails loudly. A caller that loops over `REGISTRY` with one weight just gets wrong numbers:\n- **Passing kg (what every other carrier expects):** `get(\"maple\").rate(2)` returns 500 cents, the price for 2 **grams**. A 2 kg parcel should be 6494 cents, so Maple looks about 13\u00d7 cheaper than it is and would win any \"cheapest carrier\" comparison. Its weight check also stops working: `rate(31)` is accepted, while Acme raises `ValueError` above 30 kg.\n- **Passing grams:** every other carrier raises \"weight out of range\".\n\n### 2. `tracking_url()` is missing from four modules\nThese classes have no `tracking_url` method, though the other 16 carriers do:\n- `shop/carriers/delta.py` (`DeltaCarrier`)\n- `shop/carriers/kestrel.py` (`KestrelCarrier`)\n- `shop/carriers/onyx.py` (`OnyxCarrier`)\n- `shop/carriers/tundra.py` (`TundraCarrier`)\n\nAny code doing `get(name).tracking_url(code)` crashes with `AttributeError` for these four.\n\n### Checked and consistent\nApart from those, every module has the same structure, and the zone keys are always `local`, `regional` and `national`. Label formats (`NAME-%08d`) match their `valid_label` patterns, and each registry key matches its class's `CARRIER` name. Nothing outside `shop/carriers/` calls the registry yet, so these would only show up once a caller is written. I made no edits.",
+  "ttft_ms": 2616,
+  "type": "result",
+  "duration_ms": 28076,
+  "uuid": "725d92fc-b2bf-43ad-8b50-9142921fe37f",
+  "ttft_stream_ms": 1945,
+  "time_to_request_ms": 299,
+  "first_content_frame_ms": 1946,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v3-carriers.dynamic.1"
+}

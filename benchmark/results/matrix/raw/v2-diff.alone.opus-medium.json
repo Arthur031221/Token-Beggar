@@ -1,0 +1,110 @@
+{
+ "task": "v2-diff",
+ "class": "review",
+ "arm": "alone",
+ "rep": "opus-medium",
+ "top": "claude-opus-5-5",
+ "effort": "medium",
+ "result": {
+  "duration_api_ms": 17539,
+  "stop_reason": "end_turn",
+  "session_id": "0325536f-5f00-4fcf-a023-5aff4695d3f8",
+  "total_cost_usd": 0.10713439999999999,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 7979,
+   "cache_read_input_tokens": 70852,
+   "output_tokens": 1455,
+   "output_tokens_details": {
+    "thinking_tokens": 271
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7979,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 874,
+     "cache_read_input_tokens": 20131,
+     "cache_creation_input_tokens": 638,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 638
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 1455,
+    "cacheReadInputTokens": 70852,
+    "cacheCreationInputTokens": 7979,
+    "webSearchRequests": 0,
+    "costUSD": 0.10713439999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 271,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I found three bugs in the diff and one note on the diff file itself. I only read the code; I didn't edit or run anything.\n\n### 1. `_ids_seen` is never defined, so no order can be created (critical)\nThe new constructor reads `len(_ids_seen)` and calls `_ids_seen.append(...)`. Neither the diff nor `shop/orders.py` defines `_ids_seen`; the module only has `_ids = itertools.count(1000)`. Every `Order(cart)` call will raise `NameError`. That breaks `shop/cli.py` and both tests in `tests/test_orders.py`, since `make()` builds an `Order`. The `_ids` counter and the `itertools` import become dead code.\n\n### 2. Order IDs now start at 0 instead of 1000, and can collide with saved orders\nEven if `_ids_seen = []` were added, IDs would run 0, 1, 2\u2026 rather than 1000, 1001\u2026. That changes the ID format other code or users may rely on. It also creates collisions in `shop/storage.py:17`. `Store.save_order` treats the ID as the key and drops any existing row with the same `id` before appending. With IDs starting at 0 again in each process, a new order 0 silently overwrites an older saved order 0, and the old one's data is lost. The old counter had the same restart weakness, but this change keeps it.\n\nUsing a list as a counter also has two smaller problems:\n- It grows forever, one entry per order ever created.\n- `len()` followed by `append()` is not atomic. Two threads can read the same length and get the same ID; `next(itertools.count())` doesn't have that race.\n\n### 3. `ALLOWED.get(self.state, STATES)` allows any transition from an unknown state\nBefore, an order in a state missing from `ALLOWED` raised `KeyError`, so the bad state was caught. Now an unknown state falls back to `STATES`, so the order can move to any state, including straight to `\"shipped\"`. That can happen if `order.state` was set directly, rebuilt from stored or hand-edited data, or misspelled. Since `shop/reports.py:9` counts `paid` and `shipped` orders, a corrupted order could jump into a state that gets reported without passing through `paid`. Unknown states should be rejected, for example with `ALLOWED.get(self.state, set())` or an explicit error.\n\n### Note on the diff file\nThe hunk headers (`@@ class Order:`) have no line ranges, so `git apply` or `patch` would probably reject `change.diff` as written.",
+  "ttft_ms": 1646,
+  "type": "result",
+  "duration_ms": 17745,
+  "uuid": "9a5016d0-0ffb-42a3-86bb-d32ad0d7e630",
+  "ttft_stream_ms": 854,
+  "time_to_request_ms": 83,
+  "first_content_frame_ms": 854,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "diff_stat": "",
+ "workdir": "v2-diff.alone.opus-medium"
+}
