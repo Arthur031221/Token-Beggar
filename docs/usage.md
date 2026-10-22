@@ -29,6 +29,8 @@ token-beggar inventory --refresh    rescan models and tools on this machine
 token-beggar update                 refresh the model list now
 token-beggar exhausted opus         mark a model out of quota for 5 hours
 token-beggar exhausted --clear
+token-beggar doctor                 check hooks, state directory, overrides and logged errors
+token-beggar stats                  workers run in the last 7 days and what they cost (--days N, --json)
 token-beggar window                 print the compaction point in use
 token-beggar env                    list the environment variables and the state directory
 ```

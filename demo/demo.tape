@@ -29,4 +29,9 @@ Type "clear"
 Enter
 Type "sh demo/demo.sh 4"
 Enter
+Sleep 5s
+Type "clear"
+Enter
+Type "sh demo/demo.sh 5"
+Enter
 Sleep 7s

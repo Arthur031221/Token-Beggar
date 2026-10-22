@@ -46,6 +46,12 @@ sed -n 1,9p "$work/state/handoff/demo.md"
 fi
 
 if want 4; then
+echo '$ token-beggar doctor'
+tb doctor | cut -c1-110
+echo
+fi
+
+if want 5; then
 echo '$ # measured: 63 runs per arm, Opus 5.5 high as the chat model'
 sed -n '5p;7,14p' benchmark/results/report.md | tr -d '*' | awk -F'|' '{printf "%-14s%-12s%-11s%-11s%-15s%s\n", $2,$3,$4,$5,$7,$8}'
 fi

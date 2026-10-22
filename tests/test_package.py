@@ -1,5 +1,8 @@
 import json
+import os
 import re
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -33,6 +36,21 @@ class PackageTests(unittest.TestCase):
                 for hook in group["hooks"]:
                     self.assertIn("${CLAUDE_PLUGIN_ROOT}", hook["command"])
                     self.assertIn("token_beggar hook", hook["command"])
+
+    def test_every_hook_command_runs_as_the_host_runs_it(self):
+        """sh -c with only CLAUDE_PLUGIN_ROOT set, sample stdin, exit 0, and valid JSON where the hook speaks."""
+        hooks = json.loads((ROOT / "hooks" / "hooks.json").read_text())["hooks"]
+        payload = {"prompt": "Rename calc_total to order_total across the repo", "session_id": "pkg", "source": "compact", "cwd": str(ROOT)}
+        with tempfile.TemporaryDirectory() as home:
+            env = {**os.environ, "CLAUDE_PLUGIN_ROOT": str(ROOT), "TOKEN_BEGGAR_HOME": home, "TOKEN_BEGGAR_OFFLINE": "1"}
+            env.pop("PYTHONPATH", None)
+            for event, groups in hooks.items():
+                for hook in (h for group in groups for h in group["hooks"]):
+                    done = subprocess.run(["sh", "-c", hook["command"]], input=json.dumps(payload), capture_output=True, text=True, env=env, cwd=home)
+                    self.assertEqual(done.returncode, 0, f"{event}: {done.stderr}")
+                    if done.stdout.strip():
+                        self.assertEqual(json.loads(done.stdout)["hookSpecificOutput"]["hookEventName"], event)
+            self.assertFalse((Path(home) / "errors.log").exists())
 
     def test_skill_and_agent_frontmatter(self):
         skill = frontmatter(ROOT / "skills" / "token-beggar" / "SKILL.md")

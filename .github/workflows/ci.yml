@@ -17,6 +17,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Unit tests
         run: python3 -m unittest discover -s tests -t . -v
+      - name: Demo script runs
+        run: sh demo/demo.sh > /dev/null
       - name: Benchmark fixtures
         run: cd benchmark && python3 selftest.py
   lint:

@@ -10,6 +10,13 @@
 
 我是給終端機程式代理用的技能，只有一個習慣：大模型動手之前，先問便宜的模型能不能做得一樣好。讀記錄檔、改名、跑測試迴圈交給小模型的 worker。設計與找根本原因，留給你選的那個模型。
 
+```
+/plugin marketplace add Arthur031221/Token-Beggar
+/plugin install token-beggar@token-beggar
+```
+
+重新啟動代理，或執行 `/reload-plugins`，再執行 `token-beggar doctor` 確認 hook 正常運作。需要 Python 3.10 以上，只用標準函式庫。
+
 ## 省多少
 
 在 7 類共 21 個任務上實測，每個任務各跑 3 次，分成有我與沒有我兩組。對話模型是 Opus 5.5，effort 為 high。費用是代理自己回報的用量，以公開牌價計算。
@@ -43,16 +50,7 @@
 
 ## 安裝
 
-<details>
-<summary>支援外掛市集的代理</summary>
-
-```
-/plugin marketplace add Arthur031221/Token-Beggar
-/plugin install token-beggar@token-beggar
-```
-
-重新啟動代理，或執行 `/reload-plugins`。只想試一個 session：複製此儲存庫，再用 `--plugin-dir ./Token-Beggar` 啟動代理。
-</details>
+只想試一個 session、不安裝：複製此儲存庫，再用 `--plugin-dir ./Token-Beggar` 啟動代理。
 
 <details>
 <summary>Codex CLI、Gemini CLI 與其他環境</summary>
@@ -66,7 +64,7 @@
 單次 shell：啟動代理時在環境變數設 `TOKEN_BEGGAR=off`。永久關閉：在狀態目錄（`token-beggar env` 會印出路徑）建立名為 `off` 的檔案。移除：`/plugin uninstall token-beggar`。
 </details>
 
-需要 Python 3.10 以上，只用標準函式庫。詳見 [docs/install.md](docs/install.md)。
+詳見 [docs/install.md](docs/install.md)。
 
 ## 運作方式
 
@@ -77,6 +75,12 @@
 5. **回報。** 委派後的回覆我會加一行，例如 `Token Beggar: about 1.56x less spend than the top model at high effort alone (measured, multi_file)`。倍數只取自上面的基準測試表，只限 1.15 倍以上的類別，而且只有你的模型與 effort 跟實測相同時才給數字，否則這一行不寫數字。
 
 某個提示沒有自動觸發我時，輸入 `/token-beggar` 或「token beggar」就能啟用。
+
+### 檢查與回顧
+
+`token-beggar doctor` 會列出可能默默讓路由失效的原因：Python 版本不支援、狀態目錄無法寫入、環境變數強制指定了 worker 模型、沒有設定壓縮視窗、hook 曾記錄錯誤，以及 hook 入口是否能執行。有東西壞掉時結束碼為 1。
+
+`token-beggar stats` 會讀你自己最近的 session（預設 7 天，可用 `--days N` 調整），依 worker 模型列出執行次數、用掉的 token、實際花費，以及同樣的 token 若由啟動它的模型來做要花多少。最後一欄只是委派轉移的金額上限，不是淨節省，因為對話模型不會用一模一樣的 token。實測的淨節省仍以上面的表格為準。
 
 ### 模型清單
 

@@ -20,11 +20,13 @@ git clone https://github.com/Arthur031221/Token-Beggar
 
 ## Check that it works
 
-Ask anything longer than a few words, then look at the first lines of context, or run:
+Run:
 
 ```
-token-beggar route
+token-beggar doctor
 ```
+
+It prints one line per check and exits 1 if something is broken. A warning is not a failure, but each one names something that would change routing: a forced worker model, an unset compaction window, a hook error in the log, or a catalog older than 30 days. After a few sessions, `token-beggar stats` shows the workers that ran. To see the routing table, run `token-beggar route`.
 
 The plugin puts `token-beggar` on the PATH of the agent's shell. Outside the agent, run `python3 -m token_beggar route` from the repository root.
 

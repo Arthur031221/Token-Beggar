@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 
-from . import __version__, catalog, ceiling, compact, hooks, inventory, paths, routes, update
+from . import __version__, catalog, ceiling, compact, doctor, hooks, inventory, paths, routes, stats, update
 
 
 def _cmd_route(args: argparse.Namespace) -> int:
@@ -48,6 +48,18 @@ def _cmd_exhausted(args: argparse.Namespace) -> int:
     else:
         inventory.mark_exhausted(args.alias, args.hours)
     print(json.dumps(inventory.load().get("exhausted", {})))
+    return 0
+
+
+def _cmd_doctor(args: argparse.Namespace) -> int:
+    results = doctor.run()
+    print(doctor.render(results))
+    return 1 if any(status == doctor.FAIL for _, status, _ in results) else 0
+
+
+def _cmd_stats(args: argparse.Namespace) -> int:
+    data = stats.summarize(stats.transcripts(args.days))
+    print(json.dumps(data, indent=2) if args.json else stats.render(data, args.days))
     return 0
 
 
@@ -99,6 +111,14 @@ def build_parser() -> argparse.ArgumentParser:
     gone.add_argument("--hours", type=float, default=5.0)
     gone.add_argument("--clear", action="store_true")
     gone.set_defaults(func=_cmd_exhausted)
+
+    check = sub.add_parser("doctor", help="check that the hooks run and nothing is silently switching routing off")
+    check.set_defaults(func=_cmd_doctor)
+
+    stat = sub.add_parser("stats", help="what the workers did in your recent sessions, from your own transcripts")
+    stat.add_argument("--days", type=float, default=7)
+    stat.add_argument("--json", action="store_true")
+    stat.set_defaults(func=_cmd_stats)
 
     env = sub.add_parser("env", help="list the environment variables and the state directory this tool uses")
     env.set_defaults(func=_cmd_env)
