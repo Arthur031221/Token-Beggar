@@ -1,8 +1,11 @@
 import json
 import os
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 
 from token_beggar import footer, transcript, usage
+from token_beggar.__main__ import main
 
 from .helpers import Isolated, assistant, edit, user, write_transcript
 
@@ -97,6 +100,26 @@ OVERALL = {
     "claude-sonnet-5-5": {"high": {"ratio": 1.0}},
 }
 POOL = {"claude-opus-5-5": {"feature": {"ratio": 1.7}}, "claude-sonnet-5-5": {"feature": {"ratio": 0.6}}}
+
+
+class ModeCommandTests(Isolated):
+    def run_mode(self, *args):
+        out = StringIO()
+        with redirect_stdout(out):
+            self.assertEqual(main(["mode", *args]), 0)
+        return out.getvalue()
+
+    def test_it_states_the_mode_and_the_ratio_behind_it(self):
+        os.environ.pop("TOKEN_BEGGAR_MODE")
+        text = self.run_mode("--model", "sonnet", "--effort", "high")
+        self.assertIn("off", text)
+        self.assertIn("0.85x", text)
+
+    def test_all_lists_every_measured_model(self):
+        os.environ.pop("TOKEN_BEGGAR_MODE")
+        text = self.run_mode("--all")
+        for name in ("fable", "opus", "sonnet", "haiku"):
+            self.assertIn(name, text)
 
 
 class ModeTests(Isolated):

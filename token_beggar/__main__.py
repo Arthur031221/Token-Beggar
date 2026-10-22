@@ -5,7 +5,24 @@ import json
 import os
 import sys
 
-from . import __version__, card, catalog, ceiling, compact, doctor, external, handoff, hooks, inventory, paths, stats, transcript, update, usage
+from . import (
+    __version__,
+    card,
+    catalog,
+    ceiling,
+    compact,
+    doctor,
+    external,
+    footer,
+    handoff,
+    hooks,
+    inventory,
+    paths,
+    stats,
+    transcript,
+    update,
+    usage,
+)
 
 
 def _session_id(args: argparse.Namespace) -> str | None:
@@ -29,6 +46,25 @@ def _cmd_menu(args: argparse.Namespace) -> int:
         print(f"{row['provider']:<7} {row['model']:<28} capability {row['capability']}  own quota, not Claude's")
     if options["unavailable"]:
         print("unavailable:", ", ".join(options["unavailable"]))
+    return 0
+
+
+def _cmd_mode(args: argparse.Namespace) -> int:
+    """How much the skill acts for a ceiling, and the measured ratio behind it."""
+    pool = footer.pooled()
+    if args.all:
+        print(f"{'model':<10}" + "".join(f"{e:<16}" for e in catalog.EFFORTS))
+        for model in sorted((m for m in catalog.models() if footer.overall(m.id, "high")), key=lambda m: -m.tier):
+            cells = [f"{footer.mode(model.id, e, pool=pool)} {footer.overall(model.id, e):.2f}x" for e in catalog.EFFORTS]
+            print(f"{model.alias:<10}" + "".join(f"{c:<16}" for c in cells))
+        return 0
+    top = ceiling.resolve(None, None)
+    model = catalog.find(args.model) if args.model else catalog.find(top["model"])
+    effort = args.effort or top["effort"]
+    ratio = footer.overall(model.id, effort) if model else None
+    shown = footer.mode(model.id if model else None, effort, pool=pool)
+    name = model.alias if model else "unknown model"
+    print(f"{name} {effort}: {shown}" + (f" (measured cost alone over with the skill: {ratio:.2f}x)" if ratio else " (not measured)"))
     return 0
 
 
@@ -173,6 +209,11 @@ def build_parser() -> argparse.ArgumentParser:
     menu.add_argument("--session")
     menu.add_argument("--json", action="store_true")
     menu.set_defaults(func=_cmd_menu)
+    mode = sub.add_parser("mode", help="show how much the skill acts for a ceiling, from the measured cost ratio")
+    mode.add_argument("--model")
+    mode.add_argument("--effort", choices=catalog.EFFORTS)
+    mode.add_argument("--all", action="store_true", help="every measured model at every effort")
+    mode.set_defaults(func=_cmd_mode)
 
     note = sub.add_parser("note", help="save the note for the next compaction (text as arguments or on stdin)")
     state = note.add_mutually_exclusive_group(required=True)

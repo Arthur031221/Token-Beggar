@@ -25,6 +25,7 @@ The model and effort of your chat cap what the same vendor's models get routed t
 
 ```
 token-beggar menu                   every provider, model and effort routing can pick for this chat (--model, --effort, --json)
+token-beggar mode                   how much the skill acts for this ceiling and the measured ratio behind it (--model, --effort, --all)
 token-beggar ask agy "<task>"       hand one task to an outside tool (--model, --file path-or-glob ...)
 token-beggar cap agy flash          cap an outside tool for this session; `cap agy` switches it off; `cap` shows the caps
 token-beggar note --mid-step        save the note the next compaction restores (--clean when between steps; text as arguments or on stdin)
