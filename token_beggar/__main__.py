@@ -188,8 +188,8 @@ def _window_text(point: dict) -> str:
     else:
         mine = (
             "the host default; Token Beggar defers a mid-step compaction (never past "
-            f"{point['defer_limit']:,}) and suggests /compact at a clean boundary. It writes no settings, "
-            "because the host reads the window only at startup"
+            f"{point['defer_limit']:,}). The early /compact suggestion is off unless TOKEN_BEGGAR_EARLY=1. "
+            "It writes no settings, because the host reads the window only at startup"
         )
     return (
         f"compaction point: {point['threshold']:,} tokens ({point['source']}), auto compaction {state}\n"

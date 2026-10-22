@@ -1,5 +1,5 @@
 """Dynamic compaction: find the real compaction point, warn before it, let the model say where it is in the work,
-defer the compaction for a mid-step by an amount that fits the moment, suggest an early /compact at a clean boundary,
+defer the compaction for a mid-step by an amount that fits the moment, optionally suggest an early /compact at a clean boundary (opt in),
 and never lose the thread. A point the user set is left alone."""
 
 import json
