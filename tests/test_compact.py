@@ -200,12 +200,21 @@ class DynamicPointTests(Isolated):
     def point(self):
         return compact.resolve(None, SMALL)
 
-    def test_a_point_the_user_set_is_left_alone(self):
+    def test_a_point_the_user_set_is_used_as_it_is_and_a_mid_step_is_still_deferred(self):
         self.settings(env={"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "400000"})
         point = compact.resolve(None, OPUS)
         self.assertTrue(point["user_set"])
-        self.assertEqual(compact.deferral_plan("s1", point)["mode"], "user")
-        self.assertEqual(compact.on_precompact(payload(self.tmp, at(370_000)), OPUS)[0], 0)
+        self.assertEqual(point["threshold"], 400_000 - 33_000)
+        self.assertEqual(compact.deferral_plan("s1", point)["mode"], "defer")
+        handoff.write_model("s1", "half done", mid_step=True, used=1)
+        self.assertEqual(compact.on_precompact(payload(self.tmp, at(370_000)), OPUS)[0], 2)
+
+    def test_a_user_set_point_never_gets_the_early_suggestion(self):
+        self.settings(env={"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "400000"})
+        handoff.write_model("s1", "phase over", mid_step=False, used=1, phase_done=True)
+        point = compact.resolve(None, OPUS)
+        self.assertEqual(compact.deferral_plan("s1", point)["mode"], "defer")
+        self.assertIsNone(compact.early_notice("s1", 150_000, point))
 
     def test_the_percent_override_counts_as_the_users_point(self):
         self.settings(env={"CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50"})

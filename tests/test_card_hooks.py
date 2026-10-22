@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from unittest import mock
@@ -73,20 +74,84 @@ class ModeHookTests(Isolated):
         self.assertEqual(self.prompt("off"), "")
         self.assertEqual(self.prompt("off"), "")
 
-    def test_lean_is_one_short_card_for_multi_file_work_and_no_reminders(self):
-        first = json.loads(self.prompt("lean"))["hookSpecificOutput"]["additionalContext"]
+    def test_sized_is_one_short_card_that_decides_by_size_and_has_no_reminders(self):
+        first = json.loads(self.prompt("sized"))["hookSpecificOutput"]["additionalContext"]
         self.assertIn(card.MARKER, first)
-        self.assertIn("three or more files", first)
+        for word in ("SMALL", "LARGE", "inline", "exploring", "mechanical edits", "report under 150 words"):
+            self.assertIn(word, first)
         self.assertNotIn("Menu:", first)
-        self.assertLess(len(first), 800)
-        self.assertEqual(self.prompt("lean"), "")
+        self.assertLess(len(first), 1700)
+        self.assertEqual(self.prompt("sized"), "")
 
-    def test_lean_names_a_worker_one_tier_below_the_ceiling(self):
-        text = card.lean(OPUS_HIGH, inventory.load())
-        self.assertIn("model sonnet, effort medium", text)
+    def test_sized_names_a_worker_one_tier_below_the_ceiling(self):
+        self.assertIn("model sonnet, effort medium", card.sized(OPUS_HIGH, inventory.load()))
+
+    def test_sized_mentions_an_outside_ai_only_when_one_is_installed(self):
+        self.assertNotIn("100k", card.sized(OPUS_HIGH, {"claude": ["sonnet"], "external": []}))
+        inv = {"claude": ["sonnet"], "external": [{"name": "agy", "kind": "cli", "models": []}]}
+        self.assertIn("names it or one job reads about 100k", card.sized(OPUS_HIGH, inv))
+
+    def test_at_max_effort_the_card_suggests_a_lower_effort(self):
+        max_top = {**OPUS_HIGH, "effort": "max"}
+        self.assertIn("lower effort", card.sized(max_top, inventory.load()))
+        self.assertIn("lower effort", card.build(max_top, inventory.load()))
+        self.assertNotIn("lower effort", card.sized(OPUS_HIGH, inventory.load()))
 
     def test_full_is_the_whole_menu(self):
         self.assertIn("Menu:", json.loads(self.prompt("full"))["hookSpecificOutput"]["additionalContext"])
+
+
+class GrowthTests(Isolated):
+    """A reply that starts small and keeps going is treated as large for the rest of it."""
+
+    def setUp(self):
+        super().setUp()
+        os.environ["TOKEN_BEGGAR_MODE"] = "sized"
+        self.path = write_transcript(self.tmp / "g.jsonl", [user("fix the failing import please")])
+
+    def step(self, **extra):
+        payload = {"session_id": "g1", "cwd": str(self.tmp), "transcript_path": self.path, "tool_name": "Read", **extra}
+        return run_hook("posttool", payload)[1]
+
+    def prompt(self):
+        run_hook("prompt", {"prompt": "fix the failing import please", "session_id": "g1", "cwd": str(self.tmp), "transcript_path": self.path})
+
+    def test_said_once_when_the_step_limit_is_reached(self):
+        self.prompt()
+        for _ in range(card.GROW_STEPS - 1):
+            self.assertEqual(self.step(), "")
+        said = json.loads(self.step())["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("no longer small", said)
+        self.assertEqual(self.step(), "")
+
+    def test_a_reply_that_already_used_a_worker_is_not_told(self):
+        self.prompt()
+        self.step(tool_name="Agent", tool_input={"subagent_type": "token-beggar:beggar-worker"})
+        for _ in range(card.GROW_STEPS + 2):
+            self.assertEqual(self.step(), "")
+
+    def test_a_worker_own_tool_calls_do_not_count(self):
+        self.prompt()
+        for _ in range(card.GROW_STEPS + 2):
+            self.assertEqual(self.step(agent_id="a1"), "")
+
+    def test_a_new_prompt_starts_the_count_again(self):
+        self.prompt()
+        for _ in range(card.GROW_STEPS):
+            self.step()
+        self.prompt()
+        self.assertEqual(self.step(), "")
+
+    def test_a_long_context_counts_as_large(self):
+        self.path = write_transcript(self.tmp / "g.jsonl", [user("x"), assistant("a", tokens=card.GROW_CONTEXT + 1000)])
+        self.prompt()
+        self.assertIn("no longer small", self.step())
+
+    def test_full_mode_says_nothing_about_growth(self):
+        os.environ["TOKEN_BEGGAR_MODE"] = "full"
+        self.prompt()
+        for _ in range(card.GROW_STEPS + 2):
+            self.assertEqual(self.step(), "")
 
 
 class HookTests(Isolated):

@@ -9,6 +9,16 @@ Most prompts do not need the biggest model at the highest effort for every step.
 
 A hook adds a menu to your context at the start of the session: every provider, model and effort you may use here, with what each is good and weak at. There is no fixed table. You choose per subtask, with the rules below. This file explains them.
 
+## 0. Size the task
+
+Before you read any code, estimate the task: the files you will probably touch, the steps, how much code or log you must read, and whether there will be an edit and test loop. A worker costs about $0.10 to start. That eats the saving on a small task and is noise on a large one, where keeping file contents out of your context also saves on every later turn.
+- Small (about 3 steps or fewer, 1 or 2 files, a one-shot answer): work inline. Dispatch nothing.
+- Large (several files, unfamiliar code to explore, a test loop, large reads): route it, whatever your model and effort, unless you are the cheapest model.
+- A small task that grows (more than about 8 steps, or a long context): treat the rest as large.
+- In a large task the workers take exploring unfamiliar code, mechanical edits across files, test and fix loops for simple failures, and digesting logs. You keep the plan, the root cause, design trade-offs, the review of the diff and the answer. Workers report under 150 words and you do not re-read what they read.
+
+The sections below say how.
+
 ## 1. Split the prompt
 
 Break the prompt into subtasks before you read a file or run a command. A prompt often holds several: find things, change things, check things, decide things. Each gets its own pick.
@@ -50,7 +60,7 @@ The skill picks the compaction moment unless the user has set one. When the cont
 
 - Mid-step: the compaction is deferred, longer when the step is far from done or needs early detail, shorter when it is nearly done, always below the host's blocking level.
 - Early compaction is off by default. With `TOKEN_BEGGAR_EARLY=1`, on a long context (about 150k, or 40 percent of a small point, never under 60k) a hook asks once whether a phase just finished. If it did and the rest does not need its raw details, save `--phase-done` and tell the user in one line that now is a good moment to type `/compact`. A hook cannot start a compaction, so you suggest it. If the next work needs the details, save `--needs-early-detail` and say nothing. The long-session benchmark found no saving from it, so it stays opt in.
-- If the user set `CLAUDE_CODE_AUTO_COMPACT_WINDOW`, `autoCompactWindow` or `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`, the point is theirs: no deferral and no suggestions.
+- If the user set `CLAUDE_CODE_AUTO_COMPACT_WINDOW`, `autoCompactWindow` or `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`, the point is theirs: it is used as set and no early suggestion is made, but the note and the mid-step deferral still work.
 
 The note is handed back after the compaction. `token-beggar window` shows the point in use and who chose it. Token Beggar writes no settings: the host reads its window only at startup, so a change made mid-session would not take effect.
 
@@ -58,9 +68,9 @@ The note is handed back after the compaction. `token-beggar window` shows the po
 
 A one-line footer with the quota multiple and the money saved is added at the end of the turn by a hook. Do not write one, and never state token counts.
 
-## When it stands down
+## Modes
 
-The skill acts only where the benchmark shows it saves. For the model and effort of the chat, `data/measured.json` holds the spend alone over the spend with the skill. Clearly above 1.15 it gives the full menu (`full`). About even, it gives a one-line card that sends only multi-file work to a worker (`lean`). Clearly below, as with Sonnet or Haiku as the chat model, it adds nothing and prints no footer (`off`). `TOKEN_BEGGAR_MODE=full|lean|off` forces one. If you only see a one-line card, that is why.
+For the model and effort of the chat, `data/measured.json` holds the spend alone over the spend with the skill on small tasks. Clearly above 1.15 the skill gives the full menu (`full`) and routes small tasks too. Everywhere else it gives the short size card (`sized`): small tasks stay inline with no footer, large tasks are routed. When the chat is the cheapest model there is nothing cheaper to send work to, so it adds nothing (`off`). `TOKEN_BEGGAR_MODE=full|sized|off` forces one. `token-beggar mode --all` prints the grid.
 
 ## What this cannot do
 

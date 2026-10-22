@@ -51,18 +51,17 @@ def _cmd_menu(args: argparse.Namespace) -> int:
 
 def _cmd_mode(args: argparse.Namespace) -> int:
     """How much the skill acts for a ceiling, and the measured ratio behind it."""
-    pool = footer.pooled()
     if args.all:
         print(f"{'model':<10}" + "".join(f"{e:<16}" for e in catalog.EFFORTS))
         for model in sorted((m for m in catalog.models() if footer.overall(m.id, "high")), key=lambda m: -m.tier):
-            cells = [f"{footer.mode(model.id, e, pool=pool)} {footer.overall(model.id, e):.2f}x" for e in catalog.EFFORTS]
+            cells = [f"{footer.mode(model.id, e)} {footer.overall(model.id, e):.2f}x" for e in catalog.EFFORTS]
             print(f"{model.alias:<10}" + "".join(f"{c:<16}" for c in cells))
         return 0
     top = ceiling.resolve(None, None)
     model = catalog.find(args.model) if args.model else catalog.find(top["model"])
     effort = args.effort or top["effort"]
     ratio = footer.overall(model.id, effort) if model else None
-    shown = footer.mode(model.id if model else None, effort, pool=pool)
+    shown = footer.mode(model.id if model else None, effort)
     name = model.alias if model else "unknown model"
     print(f"{name} {effort}: {shown}" + (f" (measured cost alone over with the skill: {ratio:.2f}x)" if ratio else " (not measured)"))
     return 0
@@ -158,7 +157,7 @@ ENVIRONMENT = [
     ("CLAUDE_CODE_SESSION_ID", "set by Claude Code; `token-beggar note`, `ask` and `cap` use it"),
     ("TOKEN_BEGGAR", "off disables the hooks for this process"),
     ("TOKEN_BEGGAR_HOME", "state directory"),
-    ("TOKEN_BEGGAR_MODE", "off, lean or full: force how much the skill acts, instead of reading the measured ratio for the ceiling"),
+    ("TOKEN_BEGGAR_MODE", "off, sized or full: force how much the skill acts, instead of reading the measured ratio for the ceiling"),
     ("TOKEN_BEGGAR_EARLY", "1 turns on the early /compact suggestion at a finished phase (off by default, not measured to save)"),
     ("TOKEN_BEGGAR_OFFLINE", "1 never fetches the models page and never lists external models"),
     ("TOKEN_BEGGAR_EXTERNAL", "comma list of the external AIs routing may use, for example agy; none turns them all off"),
@@ -184,7 +183,7 @@ def _cmd_window(args: argparse.Namespace) -> int:
 def _window_text(point: dict) -> str:
     state = "OFF (auto compaction is disabled)" if point["disabled"] else "on"
     if point["user_set"]:
-        mine = "set by you, so Token Beggar does not move it"
+        mine = f"set by you, so Token Beggar uses it and chooses no other point; a mid-step compaction is still deferred (never past {point['defer_limit']:,})"
     else:
         mine = (
             "the host default; Token Beggar defers a mid-step compaction (never past "

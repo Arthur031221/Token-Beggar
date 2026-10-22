@@ -1,6 +1,6 @@
 """The routing card injected into the model's context: a menu of every available combination and the rules for choosing."""
 
-from . import catalog, paths, profiles
+from . import catalog, footer, paths, profiles
 
 MARKER = "Token Beggar is on."
 
@@ -94,22 +94,65 @@ def build(ceiling: dict, inventory: dict, caps: dict | None = None) -> str:
     )
     if options["unavailable"]:
         lines.append(f"Out of quota or blocked right now: {', '.join(options['unavailable'])}. They are left off the menu.")
-    lines.append("A one-line footer with the quota and money saved is added for you at the end of the turn. Do not write one.")
+    lines.append("A one-line footer with the quota and money saved is added for you at the end of the turn. Do not write one." + effort_tip(ceiling))
     return "\n".join(lines)
 
 
-def lean(ceiling: dict, inventory: dict) -> str:
-    """The one line card for a ceiling where the measured saving is about even overall: only multi-file work leaves the chat."""
+GROW_STEPS = 8  # tool calls in one reply after which a task that started small is treated as large
+GROW_CONTEXT = 80_000  # or a main context this long: every later turn re-reads what the chat model has already read
+
+
+def effort_tip(ceiling: dict) -> str:
+    """At max effort a small task costs several times what it does at medium. The skill cannot change the chat's effort, so it can only say so."""
+    cost = footer.effort_cost()
+    if ceiling.get("effort") != "max" or not cost.get("max") or not cost.get("medium"):
+        return ""
+    return (
+        " The chat runs at max effort. If this task is small, tell the user in one line that a lower effort would do it for much less "
+        f"(small tasks cost about {cost['max'] / cost['medium']:.1f}x as much at max as at medium) and carry on."
+    )
+
+
+def _worker_pick(ceiling: dict, inventory: dict) -> str:
     top = catalog.find(ceiling.get("model"))
     gone = unavailable(inventory)
     lower = [m for m in catalog.models() if top and m.tier < top.tier and m.alias not in gone]
     pick = lower[-1] if lower else top
     effort = catalog.cap_effort("medium", ceiling["effort"])
-    where = f"model {pick.alias}, effort {effort}" if pick else "a model no higher than your own"
+    return f"model {pick.alias}, effort {effort}" if pick else "a model no higher than your own"
+
+
+def sized(ceiling: dict, inventory: dict) -> str:
+    """The short card for a ceiling where small tasks are not worth a worker: decide by the size of the task first."""
+    outside = " ".join(
+        [
+            f"Use {tool['name']} only if the user names it or one job reads about 100k tokens or more: "
+            f'{command()} ask <tool> [--file <path> ...] "<the whole task>". Never send secrets.'
+            for tool in inventory.get("external", [])[:1]
+        ]
+    )
     return (
-        f"{MARKER} Work inline. The one exception: a change that spans three or more files goes to ONE token-beggar:beggar-worker "
-        f"Agent call as your first action ({where}), with the goal, exact paths, the check to run and 'report under 150 words'. "
-        "Then answer from its report without re-reading what it changed. A one-line footer is added for you. Do not write one."
+        f"{MARKER} Before you read any code, size the task: files you will probably touch, steps, how much code or log you must read, "
+        "whether there will be an edit and test loop. "
+        "SMALL (about 3 steps or fewer, 1 or 2 files, or a one-shot answer): do it inline, dispatch nothing. "
+        f"LARGE (several files, unfamiliar code to explore, a test loop, big reads): send the exploring of unfamiliar code, mechanical edits across files, "
+        f"run-the-tests-and-fix-the-simple-failure loops and digesting of logs or errors to token-beggar:beggar-worker Agent calls ({_worker_pick(ceiling, inventory)}). "
+        "Related jobs go to ONE worker as a numbered list; independent workers go out in one message. "
+        "Tell each the goal, exact paths, the check to run and 'report under 150 words'. "
+        "You keep the plan, the root cause, design trade-offs, the review of the diff and the answer; do not re-read what a worker read. "
+        f"If a small task grows past about {GROW_STEPS} steps, switch to this for the rest. "
+        + (outside + " " if outside else "")
+        + "A one-line footer is added for you after a large task. Do not write one."
+        + effort_tip(ceiling)
+    )
+
+
+def grown() -> str:
+    """Said once in a reply that has passed the step or context limit without a worker."""
+    return (
+        f"Token Beggar: this task is no longer small (more than {GROW_STEPS} steps, or a long context). For the rest of it, send exploring, "
+        "mechanical edits, test and fix loops and log digestion to token-beggar:beggar-worker Agent calls with the goal, exact paths, "
+        "the check to run and 'report under 150 words'. Keep the plan, the root cause and the final review."
     )
 
 

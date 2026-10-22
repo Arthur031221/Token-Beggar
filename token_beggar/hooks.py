@@ -61,7 +61,7 @@ def _weekly_refresh() -> None:
 
 def _mode(top: dict) -> str:
     model = catalog.find(top["model"])
-    return footer.mode(model.id if model else None, top["effort"], pool=footer.pooled())
+    return footer.mode(model.id if model else None, top["effort"])
 
 
 def _card(top: dict, inventory_: dict, caps: dict) -> str | None:
@@ -69,7 +69,7 @@ def _card(top: dict, inventory_: dict, caps: dict) -> str | None:
     mode = _mode(top)
     if mode == "off":
         return None
-    return card.lean(top, inventory_) if mode == "lean" else card.build(top, inventory_, caps)
+    return card.sized(top, inventory_) if mode == "sized" else card.build(top, inventory_, caps)
 
 
 def _compaction_text(payload: dict, top: dict, items: list[dict] | None = None) -> list[str]:
@@ -98,6 +98,7 @@ def on_prompt(payload: dict) -> None:
     if disabled():
         return
     session_id = payload.get("session_id", "unknown")
+    _session_file(session_id, "steps").write_text("{}")  # a new reply starts counting steps again
     top = _top(payload)
     parts = []
     if len(prompt.strip()) >= MIN_PROMPT_CHARS and not prompt.lstrip().startswith("/"):
@@ -138,12 +139,38 @@ def _watch_quota(payload: dict) -> str | None:
     return f"Token Beggar marked {model.alias} out of quota for about {hours:.1f}h. Do this subtask inline or on a cheaper model."
 
 
+def _watch_growth(payload: dict, top: dict) -> str | None:
+    """A reply that started small and has run past the step limit, or sits on a long context, with no worker so far, is large now.
+    Said once per reply. Steps are the main chain's tool calls; a worker's own calls do not count."""
+    if _mode(top) != "sized" or payload.get("agent_id"):
+        return None
+    marker = _session_file(payload.get("session_id", "unknown"), "steps")
+    try:
+        state = json.loads(marker.read_text())
+    except (OSError, json.JSONDecodeError):
+        state = {}
+    if state.get("told"):
+        return None
+    tool_input = payload.get("tool_input") or {}
+    if payload.get("tool_name") in ("Agent", "Task") and tool_input.get("subagent_type") == SUBAGENT:
+        state["routed"] = True
+    state["steps"] = state.get("steps", 0) + 1
+    long = payload.get("transcript_path") and transcript.tail_context_tokens(payload["transcript_path"]) >= card.GROW_CONTEXT
+    if not state.get("routed") and (state["steps"] >= card.GROW_STEPS or long):
+        state["told"] = True
+        marker.write_text(json.dumps(state))
+        return card.grown()
+    marker.write_text(json.dumps(state))
+    return None
+
+
 def on_posttool(payload: dict) -> None:
     """During a long agentic turn no prompt arrives, so the compaction check runs after tool calls too."""
     if disabled():
         return
-    parts = [note for note in (_watch_quota(payload),) if note]
-    parts += _compaction_text(payload, _top(payload))
+    top = _top(payload)
+    parts = [note for note in (_watch_quota(payload), _watch_growth(payload, top)) if note]
+    parts += _compaction_text(payload, top)
     if parts:
         _emit(payload.get("hook_event_name") or "PostToolUse", "\n".join(parts))
 

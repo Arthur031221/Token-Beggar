@@ -1,5 +1,6 @@
 import json
 import os
+from unittest import mock
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -99,7 +100,6 @@ OVERALL = {
     "claude-opus-5-5": {"high": {"ratio": 1.05}, "max": {"ratio": 1.3}, "low": {"ratio": 0.8}},
     "claude-sonnet-5-5": {"high": {"ratio": 1.0}},
 }
-POOL = {"claude-opus-5-5": {"feature": {"ratio": 1.7}}, "claude-sonnet-5-5": {"feature": {"ratio": 0.6}}}
 
 
 class ModeCommandTests(Isolated):
@@ -112,7 +112,7 @@ class ModeCommandTests(Isolated):
     def test_it_states_the_mode_and_the_ratio_behind_it(self):
         os.environ.pop("TOKEN_BEGGAR_MODE")
         text = self.run_mode("--model", "sonnet", "--effort", "high")
-        self.assertIn("off", text)
+        self.assertIn("sized", text)
         self.assertIn("0.85x", text)
 
     def test_all_lists_every_measured_model(self):
@@ -125,43 +125,42 @@ class ModeCommandTests(Isolated):
 class ModeTests(Isolated):
     def setUp(self):
         super().setUp()
-        self.addCleanup(os.environ.pop, "TOKEN_BEGGAR_MODE", None)
         os.environ.pop("TOKEN_BEGGAR_MODE")
 
     def mode(self, model, effort):
-        return footer.mode(model, effort, OVERALL, POOL)
+        return footer.mode(model, effort, OVERALL)
 
-    def test_a_clear_saving_gets_the_full_menu(self):
+    def test_a_clear_saving_on_small_tasks_gets_the_full_menu(self):
         self.assertEqual(self.mode("claude-opus-5-5", "max"), "full")
 
-    def test_about_even_gets_the_one_line_card_when_multi_file_work_wins(self):
-        self.assertEqual(self.mode("claude-opus-5-5", "high"), "lean")
+    def test_anything_less_is_decided_by_the_size_of_the_task(self):
+        for effort in ("low", "high"):
+            self.assertEqual(self.mode("claude-opus-5-5", effort), "sized")
+        self.assertEqual(self.mode("claude-sonnet-5-5", "high"), "sized")
 
-    def test_a_clear_loss_stands_down(self):
-        self.assertEqual(self.mode("claude-opus-5-5", "low"), "off")
-
-    def test_even_overall_with_no_multi_file_win_stands_down(self):
-        self.assertEqual(self.mode("claude-sonnet-5-5", "high"), "off")
+    def test_the_cheapest_model_has_nothing_cheaper_to_send_work_to(self):
+        self.assertEqual(self.mode("claude-haiku-5-5", "max"), "off")
 
     def test_an_unmeasured_model_keeps_the_full_menu(self):
         self.assertEqual(self.mode("claude-unknown", "high"), "full")
-        self.assertEqual(footer.mode(None, "high", OVERALL, POOL), "full")
+        self.assertEqual(footer.mode(None, "high", OVERALL), "full")
 
     def test_an_unmeasured_effort_uses_the_nearest_one(self):
         data = {"claude-opus-5-5": {"low": {"ratio": 0.8}, "max": {"ratio": 1.3}}}
-        self.assertEqual(footer.mode("claude-opus-5-5", "xhigh", data, POOL), "full")  # the nearest measured effort is max
-        self.assertEqual(footer.mode("claude-opus-5-5", "medium", data, POOL), "off")  # the nearest is low
+        self.assertEqual(footer.mode("claude-opus-5-5", "xhigh", data), "full")  # the nearest measured effort is max
+        self.assertEqual(footer.mode("claude-opus-5-5", "medium", data), "sized")  # the nearest is low
 
     def test_the_environment_forces_a_mode(self):
         os.environ["TOKEN_BEGGAR_MODE"] = "off"
         self.assertEqual(self.mode("claude-opus-5-5", "max"), "off")
 
-    def test_the_shipped_data_stands_down_for_sonnet_and_haiku_and_acts_for_fable(self):
+    def test_the_shipped_data(self):
         for effort in ("low", "high", "max"):
-            self.assertEqual(footer.mode("claude-sonnet-5-5", effort), "off")
             self.assertEqual(footer.mode("claude-haiku-5-5", effort), "off")
             self.assertEqual(footer.mode("claude-fable-5-1", effort), "full")
-        self.assertEqual(footer.mode("claude-opus-5-5", "high"), "lean")
+            self.assertEqual(footer.mode("claude-sonnet-5-5", effort), "sized" if effort != "max" else "sized")
+        self.assertEqual(footer.mode("claude-opus-5-5", "high"), "sized")
+        self.assertEqual(footer.mode("claude-opus-5-5", "max"), "full")
 
 
 class UsageTests(Isolated):
@@ -232,10 +231,31 @@ class FooterTests(Isolated):
         os.environ["TOKEN_BEGGAR_MODE"] = "off"
         self.assertIsNone(self.build(self.reply("Summarise every module")))
 
-    def test_in_lean_mode_only_a_feature_gets_a_multiple(self):
-        os.environ["TOKEN_BEGGAR_MODE"] = "lean"
-        line = self.build(self.reply("Summarise every module"))
-        self.assertTrue(line.startswith("Token Beggar: no measurable saving over Opus 5.5 high alone"), line)
+    def test_a_sized_reply_uses_the_large_task_ratio_not_the_small_task_one(self):
+        os.environ["TOKEN_BEGGAR_MODE"] = "sized"
+        with mock.patch.object(footer, "_measured", return_value={"claude-opus-5-5": {"high": {"ratio": 1.6}}}):
+            line = self.build(self.reply("Summarise every module"))
+        self.assertTrue(line.startswith("Token Beggar: about 1.6x less quota than Opus 5.5 high alone"), line)
+        self.assertIn("large task | routed 1", line)
+
+    def test_a_sized_reply_without_a_large_task_ratio_gives_money_only(self):
+        os.environ["TOKEN_BEGGAR_MODE"] = "sized"
+        with mock.patch.object(footer, "_measured", return_value={}):
+            line = self.build(self.reply("Summarise every module"))
+        self.assertIn("no measured ratio for Opus 5.5 high on large tasks", line)
+        self.assertNotIn("less quota", line)
+
+    def test_a_large_task_ratio_under_the_claim_line_makes_no_claim(self):
+        os.environ["TOKEN_BEGGAR_MODE"] = "sized"
+        with mock.patch.object(footer, "_measured", return_value={"claude-opus-5-5": {"high": {"ratio": 1.05}}}):
+            line = self.build(self.reply("Summarise every module"))
+        self.assertIn("no measurable saving", line)
+
+    def test_large_ratio_takes_the_nearest_effort_and_says_so(self):
+        data = {"claude-opus-5-5": {"high": {"ratio": 1.4}}}
+        self.assertEqual(footer.large_ratio("claude-opus-5-5", "high", data), (1.4, "measured"))
+        self.assertEqual(footer.large_ratio("claude-opus-5-5", "xhigh", data), (1.4, "interpolated"))
+        self.assertIsNone(footer.large_ratio("claude-sonnet-5-5", "high", data))
 
     def test_the_dollars_price_each_model_at_its_own_rate(self):
         call, result = dispatch("c1", "ag1")

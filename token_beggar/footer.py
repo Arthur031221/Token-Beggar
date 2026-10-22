@@ -14,8 +14,7 @@ from . import catalog, external, paths, usage
 from . import ceiling as ceiling_mod
 
 MIN_CLAIM = 1.15  # below this the benchmark cannot tell a saving from run to run spread
-FLOOR = 0.95  # below this the skill costs more than working alone by more than the spread, so it stands down
-MODES = ("off", "lean", "full")
+MODES = ("off", "sized", "full")
 KINDS = {
     "edit": "exact edits",
     "read": "read and answer",
@@ -63,6 +62,11 @@ def matrix() -> dict:
     return _measured("matrix")
 
 
+def effort_cost() -> dict:
+    """What a small task costs at each effort relative to medium, alone, from the matrix (data/measured.json)."""
+    return _measured("effort_cost_x")
+
+
 def pooled() -> dict:
     return _measured("pooled")
 
@@ -108,23 +112,36 @@ def overall(model_id: str, effort: str, data: dict | None = None) -> float | Non
     return efforts[near]["ratio"]
 
 
-def mode(model_id: str | None, effort: str, data: dict | None = None, pool: dict | None = None) -> str:
-    """How much of the skill acts for this ceiling model and effort, from what was measured.
+def large_ratio(model_id: str, effort: str, data: dict | None = None) -> tuple[float, str] | None:
+    """(ratio, 'measured' | 'interpolated') from the hard task benchmark: spend alone over spend with the skill on large tasks."""
+    efforts = (_measured("large") if data is None else data).get(model_id) or {}
+    if not efforts:
+        return None
+    if effort in efforts:
+        return efforts[effort]["ratio"], "measured"
+    want = catalog.effort_rank(effort)
+    near = min(efforts, key=lambda e: abs(catalog.effort_rank(e) - want))
+    return efforts[near]["ratio"], "interpolated"
 
-    off   the measured spend is clearly higher with the skill than without: no card, no delegation, no footer
-    lean  about even overall: a one line card that only sends multi-file work to a worker, where the skill won
-    full  a saving clear of the run to run spread: the whole menu and rules
+
+def mode(model_id: str | None, effort: str, data: dict | None = None) -> str:
+    """How much of the skill acts for this ceiling model and effort. The task decides first, the model second.
+
+    full   the small tasks measured a saving clear of the run to run spread: the whole menu and rules, small tasks included
+    sized  everything else: small tasks stay inline with no card output, large tasks (several files, unfamiliar code, a test loop)
+           go to workers. A worker's start cost eats the saving on a small task and is noise on a large one
+    off    the chat is the cheapest model, so there is nothing cheaper to send work to
     TOKEN_BEGGAR_MODE overrides it, for benchmarks and for anyone who wants the full menu anyway. An unmeasured model gets full."""
     forced = os.environ.get("TOKEN_BEGGAR_MODE")
     if forced in MODES:
         return forced
+    model = catalog.find(model_id) if model_id else None
+    if model and model.tier == min(m.tier for m in catalog.models()):
+        return "off"
     ratio = overall(model_id, effort, data) if model_id else None
-    if ratio is None:
+    if ratio is None or ratio >= MIN_CLAIM:
         return "full"
-    if ratio >= MIN_CLAIM:
-        return "full"
-    feature = ((((pool if pool is not None else pooled()) or {}).get(model_id) or {}).get("feature") or {}).get("ratio") or 0
-    return "lean" if ratio >= FLOOR and feature >= 1.0 else "off"
+    return "sized"
 
 
 # ---- what was used --------------------------------------------------------------------------------------------------------
@@ -157,7 +174,7 @@ def build(payload: dict, items: list[dict], complete: bool = True) -> str | None
     top = ceiling_mod.resolve(payload.get("transcript_path"), payload.get("cwd"))
     effort = ((payload.get("effort") or {}).get("level")) or top["effort"]
     model = catalog.find(top["model"])
-    shown = mode(model.id if model else None, effort, pool=pooled())
+    shown = mode(model.id if model else None, effort)
     if shown == "off":
         return None
     name = usage.display_name(model)
@@ -169,14 +186,15 @@ def build(payload: dict, items: list[dict], complete: bool = True) -> str | None
     spent = tally["main_cost"] + tally["agents_cost"]  # outside AIs spend no Claude quota, so they are not in it
     lead = "about" if complete else "at least"  # an unfinished transcript gives a lower bound
     routed = _routed(tally["dispatches"], outside)
-    detail = f"{KINDS[kind]} | routed {sum(int(r.rsplit('x', 1)[1]) for r in routed)}: {', '.join(routed)}"
+    detail = f"{'large task' if shown == 'sized' else KINDS[kind]} | routed {sum(int(r.rsplit('x', 1)[1]) for r in routed)}: {', '.join(routed)}"
     if outside:
         detail += " | outside AI calls cost no Claude quota"
-    if shown == "lean" and kind != "feature":  # the lean card only sends multi-file work out, so no other kind has a measured saving
-        return f"Token Beggar: no measurable saving over {name} {effort} alone for this kind (est.) | {detail}"
-    found = ratio_for(model.id, effort, kind, pool=pooled()) if model else None
+    # a sized reply that routed anything was a large task, which the small task ratios do not describe
+    found = None
+    if model:
+        found = large_ratio(model.id, effort) if shown == "sized" else ratio_for(model.id, effort, kind, pool=pooled())
     if not found:
-        unmeasured = f"no measured ratio for {name} {effort} on this kind"
+        unmeasured = f"no measured ratio for {name} {effort} on {'large tasks' if shown == 'sized' else 'this kind'}"
         return f"Token Beggar: this reply cost {lead} {_money(spent)} (est.; {unmeasured}) | {detail}"
     ratio, status = found
     note = ", interpolated" if status == "interpolated" else ""

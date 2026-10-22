@@ -1,6 +1,6 @@
 """Dynamic compaction: find the real compaction point, warn before it, let the model say where it is in the work,
 defer the compaction for a mid-step by an amount that fits the moment, optionally suggest an early /compact at a clean boundary (opt in),
-and never lose the thread. A point the user set is left alone."""
+and never lose the thread. A point the user set is theirs: the skill does not choose another, but the note and the mid-step deferral still work."""
 
 import json
 import os
@@ -173,20 +173,14 @@ def early_point(point: dict) -> int:
 
 
 def deferral_plan(session_id: str, point: dict) -> dict:
-    """How the skill wants to treat this moment. A point the user set is never moved: the skill stops choosing it.
+    """How the skill wants to treat this moment. A point the user set is used as it is: the skill stops choosing it (no early
+    suggestion), but a mid-step compaction is still deferred from that point.
 
     A phase that just ended on a long context means compact soon (the host cannot be told to compact early, so the user is
     asked to type /compact). A step that is mid-way is deferred in steps of 5 percent of the window, as many as the work left needs:
     all of them when the later work depends on early detail, one when the step is nearly done. Always below the host's blocking level."""
     note = handoff.read_model(session_id) or {}
-    if point["user_set"]:
-        return {
-            "mode": "user",
-            "deferrals": 0,
-            "wanted": point["threshold"],
-            "why": "the compaction point is set by the user, so the skill leaves it",
-        }
-    if note.get("phase") == "done":
+    if note.get("phase") == "done" and not point["user_set"]:
         return {"mode": "early", "deferrals": 0, "wanted": early_point(point), "why": "the last phase is finished, so compact early"}
     progress = note.get("progress")
     if note.get("needs_detail") or progress is None:
