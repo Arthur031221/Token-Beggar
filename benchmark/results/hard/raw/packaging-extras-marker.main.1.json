@@ -1,0 +1,132 @@
+{
+ "task": "packaging-extras-marker",
+ "arm": "main",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 79412,
+  "stop_reason": "end_turn",
+  "session_id": "8442ff85-01cf-4a4a-9126-e82f8c5c8756",
+  "total_cost_usd": 0.3220617,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 15858,
+   "cache_read_input_tokens": 57055,
+   "output_tokens": 4187,
+   "output_tokens_details": {
+    "thinking_tokens": 1745
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 15858,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 908,
+     "cache_read_input_tokens": 25050,
+     "cache_creation_input_tokens": 3598,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 3598
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 4187,
+    "cacheReadInputTokens": 57055,
+    "cacheCreationInputTokens": 15858,
+    "webSearchRequests": 0,
+    "costUSD": 0.222039,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1745,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 5643,
+    "cacheReadInputTokens": 72262,
+    "cacheCreationInputTokens": 14537,
+    "webSearchRequests": 0,
+    "costUSD": 0.1000227,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 196,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've added support for the PEP 751 `extras` and `dependency_groups` markers. The marker and requirement tests pass (`tests/test_markers.py` and `tests/test_requirements.py`, 7,536 tests). mypy isn't installed in `.venv`, so I haven't type-checked it.\n\n**What changed**\n- **Parsing (`src/packaging/_tokenizer.py`):** `extras` and `dependency_groups` are now recognised marker names. Markers like `\"dev\" in dependency_groups` parse and print back unchanged, and `extras` is no longer misread as `extra`.\n- **Evaluation (`src/packaging/markers.py`):**\n  - These two markers take a set of names, so `in` and `not in` check membership. Names are normalised before comparing, so `\"foo-bar\" in extras` matches `Foo_Bar`.\n  - `Marker.evaluate()` has a new `context` argument that decides which marker names get defaults:\n    - `\"metadata\"` (the default): `extra` defaults to `\"\"`, the same as before.\n    - `\"lock_file\"`: `extras` and `dependency_groups` default to empty sets.\n    - `\"requirement\"`: neither gets a default.\n\n  Existing calls to `evaluate()` behave the same as before.\n- **Tests (`tests/test_markers.py`):** a new `TestSetMarkers` class covers parsing and printing, set membership, name normalisation, the empty defaults, and the error raised when a marker name has no value in the chosen context.\n- **Docs:** a short note in `docs/markers.rst` and a line in `CHANGELOG.rst`.\n\n**Decision for you:** using a marker name that has no value used to raise a plain `KeyError`. It now raises the library's `UndefinedEnvironmentName`, which already existed but was never used. That makes the new \"no default in this context\" cases fail with a clear error. However, `UndefinedEnvironmentName` is a `ValueError`, not a `KeyError`, so any code catching `KeyError` here would stop catching it. If you'd rather avoid that, I can make the error a subclass of both.\n\nThe changes are not committed.",
+  "ttft_ms": 3599,
+  "type": "result",
+  "duration_ms": 84828,
+  "uuid": "381456ff-d9ff-4911-b1e9-674092f6c874",
+  "ttft_stream_ms": 829,
+  "time_to_request_ms": 191,
+  "first_content_frame_ms": 829,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 18,
+  "f2p_total": 20,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

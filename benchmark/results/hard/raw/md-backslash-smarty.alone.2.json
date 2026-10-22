@@ -1,0 +1,116 @@
+{
+ "task": "md-backslash-smarty",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 108580,
+  "stop_reason": "end_turn",
+  "session_id": "b7d51feb-f035-466c-bf29-a24470cff2b1",
+  "total_cost_usd": 0.5119342,
+  "usage": {
+   "input_tokens": 40,
+   "cache_creation_input_tokens": 26675,
+   "cache_read_input_tokens": 589571,
+   "output_tokens": 9023,
+   "output_tokens_details": {
+    "thinking_tokens": 3390
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 26675,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 756,
+     "cache_read_input_tokens": 39146,
+     "cache_creation_input_tokens": 319,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 319
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 40,
+    "outputTokens": 9023,
+    "cacheReadInputTokens": 589571,
+    "cacheCreationInputTokens": 26675,
+    "webSearchRequests": 0,
+    "costUSD": 0.5119342,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3390,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 20,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Fixed: `![x\\\"x](x)` with `-x smarty` now gives `<p><img alt=\"x&quot;x\" src=\"x\" /></p>`, the same as the unescaped version. Nothing is committed.\n\n**Cause:** a backslash-escaped character is replaced by a placeholder (its character code between two control characters) while Markdown parses. Those placeholders were only turned back into characters by `UnescapePostprocessor`, which runs on the final HTML string. By then the serializer had already escaped the attribute values, so the `\"` went back in raw. Smarty adds `\"` and `'` to the escapable characters, which is why it only showed up with that extension.\n\n**Fix** (`markdown/treeprocessors.py`): I added an `UnescapeTreeprocessor`, registered as `'unescape'` at priority 0 so it runs last. It puts the escaped characters back in every element's text, tail and attribute values *before* serialization, so the serializer escapes them properly. I left the old postprocessor registered because it still handles escapes inside stashed raw HTML, which isn't part of the element tree.\n\n**One visible side effect:** an escaped `>` (`\\>`) now comes out as `&gt;` instead of a raw `>`. Both are valid HTML, but the legacy fixture `tests/basic/backlash-escapes.html` expected the raw form, so I updated it.\n\n**Tests:**\n- New `tests/test_syntax/extensions/test_smarty.py` covering escaped quotes in plain text, inline and reference image alt text, and link titles. Three of these fail without the fix and pass with it.\n- An escaped-character alt-text test added to `tests/test_syntax/inline/test_images.py`.\n- I also added a note to the 3.4 release notes and updated the description of `unescape` in `docs/extensions/api.md`.\n\n**Test results:** 677 passed, 4 failed. The 4 failures are in `test_html_blocks.py` and fail the same way without my change; they look like Python 3.12 `HTMLParser` differences. `test_md_in_html.py` can't be collected by pytest in this setup (a collection warning gets treated as an error). I ran it with unittest instead, and it has 4 failures both with and without the change.",
+  "ttft_ms": 3907,
+  "type": "result",
+  "duration_ms": 114262,
+  "uuid": "eb37c1d5-056a-4a77-bcbe-a49382b00fe4",
+  "ttft_stream_ms": 2005,
+  "time_to_request_ms": 47,
+  "first_content_frame_ms": 2005,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

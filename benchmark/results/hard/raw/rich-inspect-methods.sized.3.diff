@@ -1,0 +1,85 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index bc33fea..3235634 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
+ ### Fixed
+ 
+ - Allow exceptions that are raised while a Live is rendered to be displayed and/or processed https://github.com/Textualize/rich/pull/2305
++- Fix crash when text containing control codes (e.g. a docstring with `\b`) was rendered, such as in `inspect(pyparsing, all=True)`
+ 
+ ## [12.4.4] - 2022-05-24
+ 
+diff --git a/rich/text.py b/rich/text.py
+index f6b349d..e095fec 100644
+--- a/rich/text.py
++++ b/rich/text.py
+@@ -141,7 +141,8 @@ class Text(JupyterMixin):
+         tab_size: Optional[int] = 8,
+         spans: Optional[List[Span]] = None,
+     ) -> None:
+-        self._text = [strip_control_codes(text)]
++        sanitized_text = strip_control_codes(text)
++        self._text = [sanitized_text]
+         self.style = style
+         self.justify: Optional["JustifyMethod"] = justify
+         self.overflow: Optional["OverflowMethod"] = overflow
+@@ -149,7 +150,7 @@ class Text(JupyterMixin):
+         self.end = end
+         self.tab_size = tab_size
+         self._spans: List[Span] = spans or []
+-        self._length: int = len(text)
++        self._length: int = len(sanitized_text)
+ 
+     def __len__(self) -> int:
+         return self._length
+diff --git a/tests/test_inspect.py b/tests/test_inspect.py
+index b4c1d2a..e356dfd 100644
+--- a/tests/test_inspect.py
++++ b/tests/test_inspect.py
+@@ -299,3 +299,22 @@ def test_inspect_module_with_class():
+         "╰──────────────────────────────────────────╯\n"
+     )
+     assert render(module, methods=True) == expected
++
++
++def test_inspect_docstring_with_control_codes():
++    """Docstrings containing control codes (e.g. a literal backspace
++    from an unescaped ``\\b``) caused an IndexError when rendered."""
++
++    class Thing:
++        def method(self):
++            """Mimics pyparsing's WordEnd: To emulate the ``\b`` behavior of
++            regular expressions, use ``WordEnd(alphanums)``.
++
++            More text.
++            """
++
++    result = render(Thing, methods=True, width=45)
++    print(repr(result))
++    assert "│ method = def method(self):                │\n" in result
++    assert "│          emulate the ```` behavior of     │\n" in result
++    assert "│          ``WordEnd(alphanums)``.          │\n" in result
+diff --git a/tests/test_text.py b/tests/test_text.py
+index 4f02fd4..e002e63 100644
+--- a/tests/test_text.py
++++ b/tests/test_text.py
+@@ -590,6 +590,18 @@ def test_strip_control_codes():
+     assert str(text) == "foobar"
+ 
+ 
++def test_len_with_control_codes():
++    # Length should reflect the text after control codes are stripped
++    text = Text("foo\x08bar\r")
++    assert str(text) == "foobar"
++    assert len(text) == 6
++    text.append("\x0cbaz")
++    assert len(text) == 9
++    text.append(Text("\x0bqux"))
++    assert str(text) == "foobarbazqux"
++    assert len(text) == 12
++
++
+ def test_get_style_at_offset():
+     console = Console()
+     text = Text.from_markup("Hello [b]World[/b]")

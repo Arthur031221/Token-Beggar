@@ -1,0 +1,116 @@
+{
+ "task": "md-backslash-smarty",
+ "arm": "main",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 132207,
+  "stop_reason": "end_turn",
+  "session_id": "62eafb28-d082-4d5a-87d8-cf9d9baaa6cc",
+  "total_cost_usd": 0.734259,
+  "usage": {
+   "input_tokens": 60,
+   "cache_creation_input_tokens": 34600,
+   "cache_read_input_tokens": 1041395,
+   "output_tokens": 12447,
+   "output_tokens_details": {
+    "thinking_tokens": 3294
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 34600,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 963,
+     "cache_read_input_tokens": 47048,
+     "cache_creation_input_tokens": 342,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 342
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 60,
+    "outputTokens": 12447,
+    "cacheReadInputTokens": 1041395,
+    "cacheCreationInputTokens": 34600,
+    "webSearchRequests": 0,
+    "costUSD": 0.734259,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3294,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 33,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "With the fix, `![x\\\"x](x)` under `-x smarty` now gives `<p><img alt=\"x&quot;x\" src=\"x\" /></p>`, the same output as `![x\"x](x)`. Nothing is committed.\n\n**Cause:** when you backslash-escape a character, Markdown swaps it for a placeholder. A postprocessor turned the placeholders back into characters only *after* the HTML had been written out, so nothing escaped them. The smarty extension adds `\"` and `'` to the escapable characters, so `\\\"` came back as a bare `\"` inside the attribute.\n\n**Fix:**\n- **`markdown/treeprocessors.py`:** a new `UnescapeTreeprocessor` (registered as `unescape`, priority 0, so it runs after `inline` and `prettify`). It restores the characters in element text, tails and attribute values *before* the HTML is written out, so they get escaped properly. Text inside `code` elements is left alone.\n- **`markdown/postprocessors.py`:** `UnescapePostprocessor` is no longer registered by default. Using it now raises a `DeprecationWarning`.\n- **`markdown/extensions/toc.py`:** its `unescape()` helper now uses the new treeprocessor instead of the deprecated postprocessor.\n- **Docs:** I updated the processor tables in `docs/extensions/api.md` and added a section to `docs/change_log/release-3.4.md`.\n\n**One visible change in output:** `\\>` now renders as `&gt;` instead of a bare `>`. Both are valid HTML, and it's a direct result of the fix, so I updated the expected output in `tests/basic/backlash-escapes.html`.\n\n**Tests added:**\n- **`tests/test_extensions.py`, `TestSmartyEscapes`:** the case from the issue, escaped quotes in link titles, `\\'`, and `\\\"` in ordinary text.\n- **`tests/test_apis.py`:** escaped characters added through `ESCAPED_CHARS` (`\"`, `&`, `>`) come out escaped in both attributes and text, and the deprecated postprocessor warns but still works.\n\n**Test results:** `.venv/bin/python -m pytest tests` stops before running anything on a clean checkout too. pytest can't collect `TestSuite` in `tests/test_syntax/extensions/test_md_in_html.py` because it has an `__init__`. So I ran the suite two ways:\n- **pytest on the touched test files** (`test_apis`, `test_extensions`, `test_legacy`): 235 passed, 69 skipped.\n- **The full suite with `unittest discover`:** 8 failures, all in the raw-HTML tests (`test_html_blocks` and `test_md_in_html`). The same 8 fail without my changes, so they're unrelated.",
+  "ttft_ms": 1919,
+  "type": "result",
+  "duration_ms": 144999,
+  "uuid": "c0bf6e17-bace-464a-bd23-2a9926ea907d",
+  "ttft_stream_ms": 1371,
+  "time_to_request_ms": 161,
+  "first_content_frame_ms": 1371,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

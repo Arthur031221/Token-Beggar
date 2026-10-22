@@ -1,0 +1,116 @@
+{
+ "task": "md-backslash-smarty",
+ "arm": "main",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 101637,
+  "stop_reason": "end_turn",
+  "session_id": "f85bee96-7ac7-4970-a984-f1e92e8e0bbd",
+  "total_cost_usd": 0.6085278,
+  "usage": {
+   "input_tokens": 44,
+   "cache_creation_input_tokens": 31772,
+   "cache_read_input_tokens": 731979,
+   "output_tokens": 10389,
+   "output_tokens_details": {
+    "thinking_tokens": 3583
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 31772,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 946,
+     "cache_read_input_tokens": 44125,
+     "cache_creation_input_tokens": 437,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 437
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 44,
+    "outputTokens": 10389,
+    "cacheReadInputTokens": 731979,
+    "cacheCreationInputTokens": 31772,
+    "webSearchRequests": 0,
+    "costUSD": 0.6085278,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3583,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 22,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`![x\\\"x](x)` with smarty now gives `<p><img alt=\"x&quot;x\" src=\"x\" /></p>`, the same as the unescaped version.\n\n**Cause:** smarty adds `\"` and `'` to the backslash-escapable characters. Escaped characters are stored as placeholders and were only turned back into real characters by `UnescapePostprocessor`. That postprocessor ran *after* the document had been converted to an HTML string, so a raw `\"` went straight into the `alt=\"...\"` attribute without being escaped.\n\n**Fix:**\n- **`markdown/treeprocessors.py`:** new `UnescapeTreeprocessor`, registered at priority 0. It restores escaped characters in element text, tail text and attribute values *before* the HTML is written out, so the normal output escaping applies to them. It skips the text of `<code>` elements and runs after `toc` (5) and smarty (2), so escaped quotes still aren't turned into curly quotes.\n- **`markdown/postprocessors.py`:** `UnescapePostprocessor` is no longer registered and is marked deprecated. One side effect: it's now a function wrapper rather than a class, so third-party code that subclasses it or uses `isinstance` on it would break.\n- **`docs/change_log/release-3.4.md`:** added a bug-fix entry.\n\n**Visible behaviour change:** characters that were already valid but unescaped are now HTML-escaped, e.g. `\\>` now outputs `&gt;` instead of a raw `>`. I updated `tests/basic/backlash-escapes.html` to match.\n\n**Tests:**\n- New `tests/test_syntax/extensions/test_smarty.py`: escaped `\"`/`'` in plain text, the issue's image alt case, and escaped quotes in a link title. Without the fix, the alt and title tests fail.\n- Added a `\\>`-in-alt test to `tests/test_syntax/inline/test_images.py`.\n\n**Results:** the new and updated tests pass, and the issue example gives the right output.\n- The full suite (`python -m unittest discover tests`) shows 8 failures, the same 8 as before my change. They're in the raw-HTML-block tests and look like a mismatch with this Python version's HTML parser.\n- `pytest` can't run the whole `tests` directory because a collection error in `test_md_in_html.py` stops it, both before and after my change. Running individual files with pytest works.\n- I couldn't run the linter because flake8 isn't installed in `.venv`.\n\n**Not covered:** escapes in reference-style link definitions (`[ref]: x \"a \\\"b\\\"\"`) keep their backslashes, because those definitions are read before escapes are processed. That was already the behaviour before this change, and I didn't change it.\n\nNothing is committed.",
+  "ttft_ms": 1602,
+  "type": "result",
+  "duration_ms": 109980,
+  "uuid": "84d910ac-9e49-4c34-a604-2e0188e94605",
+  "ttft_stream_ms": 943,
+  "time_to_request_ms": 130,
+  "first_content_frame_ms": 943,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,158 @@
+diff --git a/src/jinja2/compiler.py b/src/jinja2/compiler.py
+index ca07907..e067bf0 100644
+--- a/src/jinja2/compiler.py
++++ b/src/jinja2/compiler.py
+@@ -1579,8 +1579,39 @@ class CodeGenerator(NodeVisitor):
+         if frame.require_output_check:
+             self.outdent()
+ 
++    def _check_nsref_targets(self, target: nodes.Expr, frame: Frame) -> None:
++        """``a.b`` is allowed as an assignment target and is parsed as an
++        :class:`~jinja2.nodes.NSRef`, but it's only valid if ``a`` is a
++        :class:`~jinja2.utils.Namespace`. Emit a check for each referenced
++        name before the assignment code. This can't be done in
++        :meth:`visit_NSRef` as the ref could be in the middle of a tuple.
++        """
++        seen_refs: t.Set[str] = set()
++        nsrefs: t.List[nodes.NSRef] = []
++
++        if isinstance(target, nodes.NSRef):
++            nsrefs.append(target)
++
++        nsrefs.extend(target.find_all(nodes.NSRef))
++
++        for nsref in nsrefs:
++            if nsref.name in seen_refs:
++                # Only emit the check once per name, for `ns.a, ns.b = c, d`.
++                continue
++
++            seen_refs.add(nsref.name)
++            ref = frame.symbols.ref(nsref.name)
++            self.writeline(f"if not isinstance({ref}, Namespace):")
++            self.indent()
++            self.writeline(
++                "raise TemplateRuntimeError"
++                '("cannot assign attribute on non-namespace object")'
++            )
++            self.outdent()
++
+     def visit_Assign(self, node: nodes.Assign, frame: Frame) -> None:
+         self.push_assign_tracking()
++        self._check_nsref_targets(node.target, frame)
+         self.newline(node)
+         self.visit(node.target, frame)
+         self.write(" = ")
+@@ -1598,6 +1629,7 @@ class CodeGenerator(NodeVisitor):
+         self.enter_frame(block_frame)
+         self.buffer(block_frame)
+         self.blockvisit(node.body, block_frame)
++        self._check_nsref_targets(node.target, frame)
+         self.newline(node)
+         self.visit(node.target, frame)
+         self.write(" = (Markup if context.eval_ctx.autoescape else identity)(")
+@@ -1639,16 +1671,10 @@ class CodeGenerator(NodeVisitor):
+     def visit_NSRef(self, node: nodes.NSRef, frame: Frame) -> None:
+         # NSRefs can only be used to store values; since they use the normal
+         # `foo.bar` notation they will be parsed as a normal attribute access
+-        # when used anywhere but in a `set` context
++        # when used anywhere but in a `set` context. The check that the ref is
++        # a Namespace is emitted by visit_Assign/visit_AssignBlock.
+         ref = frame.symbols.ref(node.name)
+-        self.writeline(f"if not isinstance({ref}, Namespace):")
+-        self.indent()
+-        self.writeline(
+-            "raise TemplateRuntimeError"
+-            '("cannot assign attribute on non-namespace object")'
+-        )
+-        self.outdent()
+-        self.writeline(f"{ref}[{node.attr!r}]")
++        self.write(f"{ref}[{node.attr!r}]")
+ 
+     def visit_Const(self, node: nodes.Const, frame: Frame) -> None:
+         val = node.as_const(frame.eval_ctx)
+diff --git a/src/jinja2/parser.py b/src/jinja2/parser.py
+index 22f3f81..923d51d 100644
+--- a/src/jinja2/parser.py
++++ b/src/jinja2/parser.py
+@@ -487,21 +487,18 @@ class Parser:
+         """
+         target: nodes.Expr
+ 
+-        if with_namespace and self.stream.look().type == "dot":
+-            token = self.stream.expect("name")
+-            next(self.stream)  # dot
+-            attr = self.stream.expect("name")
+-            target = nodes.NSRef(token.value, attr.value, lineno=token.lineno)
+-        elif name_only:
++        if name_only:
+             token = self.stream.expect("name")
+             target = nodes.Name(token.value, "store", lineno=token.lineno)
+         else:
+             if with_tuple:
+                 target = self.parse_tuple(
+-                    simplified=True, extra_end_rules=extra_end_rules
++                    simplified=True,
++                    extra_end_rules=extra_end_rules,
++                    with_namespace=with_namespace,
+                 )
+             else:
+-                target = self.parse_primary()
++                target = self.parse_primary(with_namespace=with_namespace)
+ 
+             target.set_ctx("store")
+ 
+@@ -643,17 +640,25 @@ class Parser:
+             node = self.parse_filter_expr(node)
+         return node
+ 
+-    def parse_primary(self) -> nodes.Expr:
++    def parse_primary(self, with_namespace: bool = False) -> nodes.Expr:
++        """Parse a name or literal value. If ``with_namespace`` is enabled, also
++        parse namespace attr refs, for use in assignments."""
+         token = self.stream.current
+         node: nodes.Expr
+         if token.type == "name":
++            next(self.stream)
+             if token.value in ("true", "false", "True", "False"):
+                 node = nodes.Const(token.value in ("true", "True"), lineno=token.lineno)
+             elif token.value in ("none", "None"):
+                 node = nodes.Const(None, lineno=token.lineno)
++            elif with_namespace and self.stream.current.type == "dot":
++                # If namespace attributes are allowed at this point, and the next
++                # token is a dot, produce a namespace reference.
++                next(self.stream)
++                attr = self.stream.expect("name")
++                node = nodes.NSRef(token.value, attr.value, lineno=token.lineno)
+             else:
+                 node = nodes.Name(token.value, "load", lineno=token.lineno)
+-            next(self.stream)
+         elif token.type == "string":
+             next(self.stream)
+             buf = [token.value]
+@@ -683,6 +688,7 @@ class Parser:
+         with_condexpr: bool = True,
+         extra_end_rules: t.Optional[t.Tuple[str, ...]] = None,
+         explicit_parentheses: bool = False,
++        with_namespace: bool = False,
+     ) -> t.Union[nodes.Tuple, nodes.Expr]:
+         """Works like `parse_expression` but if multiple expressions are
+         delimited by a comma a :class:`~jinja2.nodes.Tuple` node is created.
+@@ -701,10 +707,17 @@ class Parser:
+         `explicit_parentheses` is true if the parsing was triggered by an
+         expression in parentheses.  This is used to figure out if an empty
+         tuple is a valid expression or not.
++
++        If `with_namespace` is enabled, namespace attribute references
++        (``ns.attr``) are parsed as :class:`~jinja2.nodes.NSRef` when in
++        `simplified` mode.
+         """
+         lineno = self.stream.current.lineno
+         if simplified:
+-            parse = self.parse_primary
++
++            def parse() -> nodes.Expr:
++                return self.parse_primary(with_namespace=with_namespace)
++
+         elif with_condexpr:
+             parse = self.parse_expression
+         else:

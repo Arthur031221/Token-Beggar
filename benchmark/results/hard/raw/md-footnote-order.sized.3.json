@@ -1,0 +1,116 @@
+{
+ "task": "md-footnote-order",
+ "arm": "sized",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 138575,
+  "stop_reason": "end_turn",
+  "session_id": "6146f4a6-b8de-4b2f-b560-1e96e82b3f3a",
+  "total_cost_usd": 0.7412170000000001,
+  "usage": {
+   "input_tokens": 36,
+   "cache_creation_input_tokens": 36211,
+   "cache_read_input_tokens": 672125,
+   "output_tokens": 15848,
+   "output_tokens_details": {
+    "thinking_tokens": 5716
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 36211,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 858,
+     "cache_read_input_tokens": 48665,
+     "cache_creation_input_tokens": 336,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 336
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 36,
+    "outputTokens": 15848,
+    "cacheReadInputTokens": 672125,
+    "cacheCreationInputTokens": 36211,
+    "webSearchRequests": 0,
+    "costUSD": 0.7412170000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 5716,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 23,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Footnotes are now numbered and listed in the order they are first referenced, so the example from the issue now comes out 1 then 2. The full suite passes (1056 tests run, 110 skipped), and nothing is committed.\n\n**The fix** (`markdown/extensions/footnotes.py`): I added a step that runs after all the inline text has been processed. It walks the document from top to bottom and:\n- puts footnotes in the order their first reference appears in the document body;\n- places footnotes referenced only from inside another footnote right after the footnote that references them;\n- lists footnotes that are never referenced last, in the order they were defined;\n- updates every reference number, the order of the footnote list, and the \"Jump back to footnote N\" titles to match.\n\nNumbers can't be assigned when each reference is first processed, because that step doesn't run top to bottom. For example, with `> quote[^a]` followed by `paragraph[^b]`, it reaches `[^b]` first, which would give the wrong numbers.\n\n**Backward compatibility:** as the issue points out, this changes existing output. I added a `USE_DEFINITION_ORDER` option (default `False`); setting it to `True` restores the old define-order numbering. I made the new order the default because it's what readers expect. If you'd rather keep the old behaviour by default and only document it, flip the default.\n\n**Tests** (`tests/test_syntax/extensions/test_footnotes.py`): six new cases:\n- the scenario from the issue;\n- a reference inside a blockquote that comes before one in a paragraph;\n- a footnote referenced twice, plus one never referenced;\n- a footnote referenced only from inside another footnote;\n- reordering with `SUPERSCRIPT_TEXT` set;\n- the `USE_DEFINITION_ORDER` option.\n\nAgainst the original code, all six fail. The last one fails only because the option didn't exist yet.\n\n**Docs:** I described the ordering rules and the new option in `docs/extensions/footnotes.md`, and added a \"Changed\" entry under Unreleased in `docs/changelog.md`.\n\n**Running the tests:** `.venv/bin/python -m pytest tests` stops before running anything, on a pytest warning about the `TestSuite` class in `tests/test_syntax/extensions/test_md_in_html.py`. That happens without my changes too. Running pytest on the footnotes test file works, and so does `.venv/bin/python -m unittest discover tests` for the whole suite. flake8, pyflakes and mypy aren't installed in `.venv`, so I didn't run any lint or type checks.",
+  "ttft_ms": 3358,
+  "type": "result",
+  "duration_ms": 144177,
+  "uuid": "f00753ed-0043-4d39-9d5a-27c8804940ab",
+  "ttft_stream_ms": 776,
+  "time_to_request_ms": 112,
+  "first_content_frame_ms": 777,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,116 @@
+{
+ "task": "rich-inspect-methods",
+ "arm": "main",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 56555,
+  "stop_reason": "end_turn",
+  "session_id": "016c1d3d-2b58-4930-ba02-0b783c4da7e8",
+  "total_cost_usd": 0.38913179999999997,
+  "usage": {
+   "input_tokens": 28,
+   "cache_creation_input_tokens": 24042,
+   "cache_read_input_tokens": 408019,
+   "output_tokens": 5754,
+   "output_tokens_details": {
+    "thinking_tokens": 1132
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 24042,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 702,
+     "cache_read_input_tokens": 36135,
+     "cache_creation_input_tokens": 697,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 697
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 28,
+    "outputTokens": 5754,
+    "cacheReadInputTokens": 408019,
+    "cacheCreationInputTokens": 24042,
+    "webSearchRequests": 0,
+    "costUSD": 0.38913179999999997,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1132,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 20,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the crash in `rich/text.py`. All three new tests fail on the original code with the same `IndexError` from the issue, and pass with the fix. I couldn't run the exact command from the issue because pyparsing isn't installed in the venv, so the inspect test uses a class whose docstring contains the same kind of characters instead.\n\n**Cause:** when a `Text` is created from a string, it removes certain invisible control characters (backspace, vertical tab, form feed `\\f`, carriage return `\\r`). But it recorded its length from the original string, before those characters were removed. So the stored length came out longer than the actual text. pyparsing has docstrings containing these characters. When `inspect` added a docstring to a method signature, the styles applied to it ended past the real end of the text. When the text was later split into lines, the split went past the last line and crashed.\n\n**Fix:**\n- `Text.__init__` now takes its length from the cleaned string.\n- The `Text.plain` setter now also removes control characters before storing the text. Before, it didn't remove them at all, which was the same kind of mismatch.\n\n**Tests added:**\n- `tests/test_text.py`:\n  - `test_strip_control_codes_length` checks the length after creating, appending and setting text that contains control characters, and that styles land in the right place.\n  - `test_divide_with_control_codes` reproduces the crash at the `Text` level.\n- `tests/test_inspect.py`: `test_inspect_doc_with_control_codes` runs `inspect(..., all=True)` and `inspect(..., help=True, methods=True)` on that class, as in the issue.\n\n**Full suite:** 17 tests fail (in `test_syntax`, `test_markdown`, `test_pretty` and others), but the same 17 fail without my change, so they're unrelated. They're expected-output comparisons and may depend on the installed versions of other packages.\n\nA hook blocked `git stash push`, so I compared against the original code by saving the diff, reverting the file and re-applying the diff. The working tree is back to my changes, uncommitted.",
+  "ttft_ms": 1797,
+  "type": "result",
+  "duration_ms": 73596,
+  "uuid": "d1818039-09d3-4103-98fe-88b8398da53d",
+  "ttft_stream_ms": 882,
+  "time_to_request_ms": 115,
+  "first_content_frame_ms": 883,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 12,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

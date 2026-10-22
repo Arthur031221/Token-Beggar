@@ -1,0 +1,116 @@
+{
+ "task": "jinja-namespace-tuple",
+ "arm": "main",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 115622,
+  "stop_reason": "end_turn",
+  "session_id": "a3f99f90-4226-4f1b-a808-0e48e59c9b69",
+  "total_cost_usd": 0.6018637999999997,
+  "usage": {
+   "input_tokens": 40,
+   "cache_creation_input_tokens": 29403,
+   "cache_read_input_tokens": 642399,
+   "output_tokens": 11900,
+   "output_tokens_details": {
+    "thinking_tokens": 3446
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 29403,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 616,
+     "cache_read_input_tokens": 41890,
+     "cache_creation_input_tokens": 303,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 303
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 40,
+    "outputTokens": 11900,
+    "cacheReadInputTokens": 642399,
+    "cacheCreationInputTokens": 29403,
+    "webSearchRequests": 0,
+    "costUSD": 0.6018637999999997,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3446,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 30,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed it: `{% set ns.a, ns.b = ... %}` now works. All 912 tests pass, including the new ones, and the loop from the issue renders `/a`, `/a/b`, `/a/b/c` as expected. Nothing is committed.\n\n**What was wrong**\n- **The parser** only treated `ns.attr` as a namespace target when it was the only thing being assigned. With more than one target, it read `ns` as a plain name and then failed on the `.`.\n- **The compiler** wrote its \"is this really a namespace?\" check right where the target goes. That works for a single target but would produce broken Python inside a multi-target assignment.\n\n**Changes**\n- `src/jinja2/parser.py`: `parse_assign_target` now passes `with_namespace` through `parse_tuple` to `parse_primary`. `parse_primary` builds an `NSRef` when a name is followed by a dot. This only happens for `set` targets; `for` loop targets still reject `ns.a`.\n- `src/jinja2/compiler.py`: a new helper, `_check_nsref_targets`, runs the namespace check once per namespace variable, before the assignment line. Both `visit_Assign` and `visit_AssignBlock` use it. `visit_NSRef` now only writes `ref['attr']`, so it works inside a multi-target assignment. Assigning to an attribute of something that isn't a namespace still raises \"cannot assign attribute on non-namespace object\".\n- `tests/test_core_tags.py`: six new tests cover the basic case, swapping two attributes, mixing plain names with namespace attributes, two namespaces in one assignment, the error for a non-namespace object, and rejecting `ns.a` as a `for` loop target.\n- `CHANGES.rst`: I added an entry without an issue number, because the issue text didn't include one. Add it if you have it.",
+  "ttft_ms": 1713,
+  "type": "result",
+  "duration_ms": 120507,
+  "uuid": "0ff9cf4d-f7ea-43d2-9809-407bdd004c2e",
+  "ttft_stream_ms": 1357,
+  "time_to_request_ms": 114,
+  "first_content_frame_ms": 1357,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

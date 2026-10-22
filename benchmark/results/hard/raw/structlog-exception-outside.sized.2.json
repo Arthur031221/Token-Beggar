@@ -1,0 +1,116 @@
+{
+ "task": "structlog-exception-outside",
+ "arm": "sized",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 99325,
+  "stop_reason": "end_turn",
+  "session_id": "61298af2-b360-4419-be28-c3766a66c0e4",
+  "total_cost_usd": 0.603595,
+  "usage": {
+   "input_tokens": 36,
+   "cache_creation_input_tokens": 31954,
+   "cache_read_input_tokens": 585595,
+   "output_tokens": 11535,
+   "output_tokens_details": {
+    "thinking_tokens": 3158
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 31954,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 794,
+     "cache_read_input_tokens": 43697,
+     "cache_creation_input_tokens": 1047,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1047
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 36,
+    "outputTokens": 11535,
+    "cacheReadInputTokens": 585595,
+    "cacheCreationInputTokens": 31954,
+    "webSearchRequests": 0,
+    "costUSD": 0.603595,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3158,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 35,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Calling `logger.exception()` outside an exception handler no longer crashes, and it no longer adds a junk `exception` value. The `exc_info` key is just dropped. The full test suite passes (852 passed, 16 skipped), and nothing is committed.\n\n**What I found:** the crash in the issue no longer happened in this checkout. An earlier fix (#657) had already stopped it, but the reproduction still gave `{\"event\": \"oh no\", \"exception\": []}` with `dict_tracebacks`, and `format_exc_info` gave `\"exception\": \"MISSING\"`. So I fixed the output as well.\n\n**Changes:**\n- **`src/structlog/processors.py`**: `_figure_out_exc_info` now returns `None` when there's no exception. That covers an `exc_info` of `(None, None, None)`, which is what the standard library passes in the aio-pika case, and `exc_info=True` when nothing is being handled. `ExceptionRenderer` (behind `format_exc_info` and `dict_tracebacks`) then simply doesn't add an `exception` key. I updated the docstrings and added a `versionchanged:: 25.1.0` note, matching the version the repo already uses for unreleased changes.\n- **`src/structlog/dev.py`**: `ConsoleRenderer` uses the new `None` return instead of comparing against `(None, None, None)`.\n- **`CHANGELOG.md`**: added an entry under Fixed.\n\n**Behaviour change:** `format_exc_info` used to put `\"MISSING\"` in the `exception` key in this situation, and an existing test checked for that. Anyone who relied on that value will now find no key at all.\n\n**Tests** (`tests/processors/test_renderers.py`):\n- Updated `test_no_exception` to expect `{}`.\n- Added the same check for `dict_tracebacks`.\n- Added a regression test that calls `BoundLogger.exception()` outside a handler.\n\nI also ran the issue's two setups by hand: `ProcessorFormatter` on a standard-library logger, and `structlog.configure`. Both now print `{\"event\": \"oh no\"}`.\n\nmypy now reports 2 errors, down from 3; both are in `stdlib.py` and were there before. My change removed an unneeded `type: ignore` in `processors.py`.",
+  "ttft_ms": 1471,
+  "type": "result",
+  "duration_ms": 105952,
+  "uuid": "6e5a5e41-7573-4841-b554-30a048ebe076",
+  "ttft_stream_ms": 838,
+  "time_to_request_ms": 120,
+  "first_content_frame_ms": 839,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 4,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

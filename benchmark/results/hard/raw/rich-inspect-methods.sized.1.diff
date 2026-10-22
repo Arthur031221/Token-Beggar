@@ -1,0 +1,87 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index bc33fea..a633454 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
+ ### Fixed
+ 
+ - Allow exceptions that are raised while a Live is rendered to be displayed and/or processed https://github.com/Textualize/rich/pull/2305
++- Fix crash rendering styled `Text` containing control codes such as `\r`, e.g. `inspect` of objects with CRLF docstrings
+ 
+ ## [12.4.4] - 2022-05-24
+ 
+diff --git a/rich/text.py b/rich/text.py
+index f6b349d..e095fec 100644
+--- a/rich/text.py
++++ b/rich/text.py
+@@ -141,7 +141,8 @@ class Text(JupyterMixin):
+         tab_size: Optional[int] = 8,
+         spans: Optional[List[Span]] = None,
+     ) -> None:
+-        self._text = [strip_control_codes(text)]
++        sanitized_text = strip_control_codes(text)
++        self._text = [sanitized_text]
+         self.style = style
+         self.justify: Optional["JustifyMethod"] = justify
+         self.overflow: Optional["OverflowMethod"] = overflow
+@@ -149,7 +150,7 @@ class Text(JupyterMixin):
+         self.end = end
+         self.tab_size = tab_size
+         self._spans: List[Span] = spans or []
+-        self._length: int = len(text)
++        self._length: int = len(sanitized_text)
+ 
+     def __len__(self) -> int:
+         return self._length
+diff --git a/tests/test_inspect.py b/tests/test_inspect.py
+index b4c1d2a..a267bc1 100644
+--- a/tests/test_inspect.py
++++ b/tests/test_inspect.py
+@@ -299,3 +299,22 @@ def test_inspect_module_with_class():
+         "╰──────────────────────────────────────────╯\n"
+     )
+     assert render(module, methods=True) == expected
++
++
++def test_inspect_module_with_crlf_docstring():
++    def function():
++        pass
++
++    function.__doc__ = "Hello\r\nWorld"
++
++    module = ModuleType("my_module")
++    module.function = function
++
++    expected = (
++        "╭─── <module 'my_module'> ───╮\n"
++        "│ function = def function(): │\n"
++        "│            Hello           │\n"
++        "│            World           │\n"
++        "╰────────────────────────────╯\n"
++    )
++    assert render(module, methods=True) == expected
+diff --git a/tests/test_text.py b/tests/test_text.py
+index 4f02fd4..770640c 100644
+--- a/tests/test_text.py
++++ b/tests/test_text.py
+@@ -590,6 +590,20 @@ def test_strip_control_codes():
+     assert str(text) == "foobar"
+ 
+ 
++def test_strip_control_codes_length():
++    text = Text("foo\r\nbar")
++    assert text.plain == "foo\nbar"
++    assert len(text) == 7
++
++
++def test_render_styled_text_with_carriage_returns():
++    text = Text("foo\r\nbar\r\n\r\nbaz")
++    text.stylize("bold", 0, len(text))
++    console = Console(width=20, file=StringIO(), color_system=None, legacy_windows=False)
++    console.print(text)
++    assert console.file.getvalue() == "foo\nbar\n\nbaz\n"
++
++
+ def test_get_style_at_offset():
+     console = Console()
+     text = Text.from_markup("Hello [b]World[/b]")

@@ -1,0 +1,132 @@
+{
+ "task": "packaging-extras-marker",
+ "arm": "main",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 101543,
+  "stop_reason": "end_turn",
+  "session_id": "4827b2b2-c334-46ae-b6f0-ace16408e35d",
+  "total_cost_usd": 0.4078898999999999,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 17681,
+   "cache_read_input_tokens": 56937,
+   "output_tokens": 6513,
+   "output_tokens_details": {
+    "thinking_tokens": 3750
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 17681,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 748,
+     "cache_read_input_tokens": 24932,
+     "cache_creation_input_tokens": 5539,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 5539
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 6513,
+    "cacheReadInputTokens": 56937,
+    "cacheCreationInputTokens": 17681,
+    "webSearchRequests": 0,
+    "costUSD": 0.2831194,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3750,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 6902,
+    "cacheReadInputTokens": 104500,
+    "cacheCreationInputTokens": 18109,
+    "webSearchRequests": 0,
+    "costUSD": 0.1247705,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 148,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Markers now support the PEP 751 `extras` and `dependency_groups` variables, so `\"foo\" in extras` and `\"dev\" not in dependency_groups` parse and evaluate. The marker and requirement tests pass (7775), with new tests added. I haven't committed. mypy isn't installed in `.venv`, so the type hints haven't been checked.\n\n**`src/packaging/_tokenizer.py`:** the parser now accepts `extras` and `dependency_groups` as variable names. `extras` is matched before `extra`, because otherwise the shorter name would never match `extras`.\n\n**`src/packaging/markers.py`:**\n- **New `context` argument on `Marker.evaluate()`:** it takes `\"metadata\"` (the default), `\"lock_file\"` or `\"requirement\"`.\n  - `\"metadata\"` keeps today's behaviour: `extra` defaults to `\"\"`.\n  - `\"lock_file\"` defaults `extras` and `dependency_groups` to empty sets, so `\"foo\" in extras` is `False` unless you pass values in.\n  - `\"requirement\"` sets no defaults for any of the three.\n- **Missing values:** if a marker uses one of these variables and no value is given, evaluation raises `KeyError`, as it already did for other missing variables.\n- **Name normalization:** `extras` and `dependency_groups` names are normalized the same way `extra` already was. For example, `\"Foo_Bar\" in extras` matches `{\"foo-bar\"}`.\n- **Only `in` and `not in` are allowed with these two variables.** Any other operator, such as `==` or `<`, raises `UndefinedComparison`. So does putting the variable on the left side, as in `extras == \"foo\"`.\n\n**`tests/test_markers.py`** covers:\n- `in` / `not in` on both variables\n- name normalization\n- what each context does by default, including the `KeyError` cases\n- the `UndefinedComparison` errors\n- printing a marker back as the same text, plus both names added to the existing list of valid marker variables\n\n**`CHANGELOG.rst`** has a new entry under unreleased changes.",
+  "ttft_ms": 8178,
+  "type": "result",
+  "duration_ms": 108644,
+  "uuid": "4210fd49-cd39-4649-aa8c-d76c432dedb8",
+  "ttft_stream_ms": 944,
+  "time_to_request_ms": 111,
+  "first_content_frame_ms": 944,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 20,
+  "f2p_total": 20,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

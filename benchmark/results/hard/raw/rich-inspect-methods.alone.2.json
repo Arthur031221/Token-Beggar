@@ -1,0 +1,116 @@
+{
+ "task": "rich-inspect-methods",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 92105,
+  "stop_reason": "end_turn",
+  "session_id": "ff657571-7d8e-426a-b372-f207bce88e8b",
+  "total_cost_usd": 0.4905916,
+  "usage": {
+   "input_tokens": 40,
+   "cache_creation_input_tokens": 26113,
+   "cache_read_input_tokens": 615538,
+   "output_tokens": 7921,
+   "output_tokens_details": {
+    "thinking_tokens": 2211
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 26113,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 817,
+     "cache_read_input_tokens": 38569,
+     "cache_creation_input_tokens": 334,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 334
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 40,
+    "outputTokens": 7921,
+    "cacheReadInputTokens": 615538,
+    "cacheCreationInputTokens": 26113,
+    "webSearchRequests": 0,
+    "costUSD": 0.4905916,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2211,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 20,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The crash is fixed. The cause was a bug in `Text` itself, not in `inspect`, and new tests cover it.\n\n**Cause:** `Text.__init__` (`rich/text.py:144`) removes a few control characters from the string: backspace, vertical tab, form feed and carriage return (`\\r`). But it set `_length` from the original string, so the text's recorded length was longer than its actual content. Docstrings with Windows `\\r\\n` line endings, like some in pyparsing, hit this. `inspect` passes them through the highlighter, which builds `Text(str)`. The highlight positions are then measured against the cleaned string while `divide()` works from the wrong length, and it reads past the end of its list of lines, raising the `IndexError` in the traceback. Any `Text` built from a string containing those characters had the wrong length, so the fix applies beyond `inspect`.\n\n**Fix:** `_length` is now computed from the cleaned string (a two-line change in `rich/text.py`).\n\n**Tests:**\n- `tests/test_text.py::test_strip_control_codes` now also checks `len(text)` after the control codes are removed.\n- New `tests/test_inspect.py::test_inspect_method_with_control_codes_in_docstring` inspects a class whose method docstring contains `\\r\\n`, with `methods=True`.\n- Both tests fail on the original code and pass with the fix. pyparsing isn't installed in the venv, so I reproduced the issue with a synthetic `\\r\\n` docstring rather than the original command.\n\n**Test suite:** 17 tests fail across the whole suite, and the same 17 fail on the unmodified code. They are 3 in `test_inspect.py` and others in `test_syntax.py`. The ones I looked at come from Python 3.12 output differences, such as built-in `print`'s signature rendering differently. The fix adds no new failures.\n\nI also added a line to the Unreleased section of `CHANGELOG.md`. I didn't put an issue number in it because I don't know the right one, so you may want to add it.\n\nOne quirk remains: a `\\r\\n\\r\\n` paragraph break isn't recognised by `_first_paragraph`, so with `help=False` a CRLF docstring shows in full instead of only its first paragraph. It no longer crashes. Fixing that would mean normalising line endings in `rich/_inspect.py`, which I left out to keep this change small.\n\nNothing has been committed.",
+  "ttft_ms": 5053,
+  "type": "result",
+  "duration_ms": 107013,
+  "uuid": "976312b1-7f91-4156-9003-20f1e1a1bae5",
+  "ttft_stream_ms": 1386,
+  "time_to_request_ms": 53,
+  "first_content_frame_ms": 1387,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 12,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

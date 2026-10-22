@@ -1,0 +1,116 @@
+{
+ "task": "packaging-extras-marker",
+ "arm": "sized",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 100578,
+  "stop_reason": "end_turn",
+  "session_id": "050757a7-c9d6-4aa8-a61c-14ce50b1cb80",
+  "total_cost_usd": 0.6468247999999999,
+  "usage": {
+   "input_tokens": 28,
+   "cache_creation_input_tokens": 39195,
+   "cache_read_input_tokens": 483364,
+   "output_tokens": 11824,
+   "output_tokens_details": {
+    "thinking_tokens": 3554
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 39195,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1100,
+     "cache_read_input_tokens": 50873,
+     "cache_creation_input_tokens": 1112,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1112
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 28,
+    "outputTokens": 11824,
+    "cacheReadInputTokens": 483364,
+    "cacheCreationInputTokens": 39195,
+    "webSearchRequests": 0,
+    "costUSD": 0.6468247999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3554,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 14,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`Marker` now supports the PEP 751 `extras` and `dependency_groups` markers. Lock-file markers like `\"foo\" in extras and \"dev\" in dependency_groups` parse and evaluate correctly. The full test suite passes (27,197 tests), and the doctests in `docs/markers.rst` pass. Nothing is committed.\n\n**How to use it:** `Marker.evaluate()` takes a new `context` argument, which decides which extras-related names have a default value:\n- `\"metadata\"` (the default) sets `extra` to `\"\"`, the same as before, so existing callers see no change.\n- `\"lock_file\"` sets `extras` and `dependency_groups` to empty sets.\n- `\"requirement\"` sets none of them.\n\nFor example: `Marker('\"dev\" in dependency_groups').evaluate({\"dependency_groups\": {\"dev\"}}, context=\"lock_file\")` returns `True`.\n\n**Library changes:**\n- **`src/packaging/_tokenizer.py`**: the parser now recognises `extras` and `dependency_groups` as marker names.\n- **`src/packaging/markers.py`**:\n  - **Normalisation:** names on both sides of the test are normalised the same way `extra` already is, so `\"Foo_Bar\" in extras` matches `{\"foo-bar\"}`.\n  - **Allowed operators:** only `in` and `not in` work with set values. Anything else, like `extras == \"foo\"` or `extras in \"foo\"`, raises `UndefinedComparison` instead of crashing with a `TypeError`.\n  - **Signature:** `evaluate()` now accepts a `Mapping`, so you can pass sets as values. `EvaluateContext` is exported.\n- **Docs:** I added a usage example and described the `context` parameter in `docs/markers.rst`, and added an entry under unreleased in `CHANGELOG.rst`.\n\n**Tests** (`tests/test_markers.py`): the new names are added to the parsing tests. New tests cover evaluation in a lock file, normalisation, `and`/`or` combinations, the defaults for each `context`, and the `UndefinedComparison` errors.\n\n**Behaviour to know about:**\n- If a marker uses a name that its context doesn't define, evaluation raises `KeyError`. Examples are `extra` in a lock file, or `\"foo\" in extras` in the default `\"metadata\"` context. That is how an unknown name already behaved; the tests check for it.\n- `\"requirement\"` defines no extras-related names, so evaluating an `extra == ...` marker there fails unless you pass `extra` in the environment.\n\nOn linting: ruff passes on the lines I changed. The ruff in the environment is newer than the project's and reports some existing issues in other files, which I left alone. mypy `--strict` reports nothing in `markers.py`; its one error is an unused `type: ignore` in `specifiers.py`, which I didn't touch.",
+  "ttft_ms": 13849,
+  "type": "result",
+  "duration_ms": 130826,
+  "uuid": "50d8273d-d986-439d-a562-42ade47de1c0",
+  "ttft_stream_ms": 900,
+  "time_to_request_ms": 103,
+  "first_content_frame_ms": 900,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 20,
+  "f2p_total": 20,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

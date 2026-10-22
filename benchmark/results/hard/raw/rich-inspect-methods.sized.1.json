@@ -1,0 +1,116 @@
+{
+ "task": "rich-inspect-methods",
+ "arm": "sized",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 89742,
+  "stop_reason": "end_turn",
+  "session_id": "de7bdb40-5141-4c91-b707-5b7ed210d202",
+  "total_cost_usd": 0.5336398,
+  "usage": {
+   "input_tokens": 44,
+   "cache_creation_input_tokens": 29120,
+   "cache_read_input_tokens": 698319,
+   "output_tokens": 8042,
+   "output_tokens_details": {
+    "thinking_tokens": 1933
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 29120,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 770,
+     "cache_read_input_tokens": 41729,
+     "cache_creation_input_tokens": 181,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 181
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 44,
+    "outputTokens": 8042,
+    "cacheReadInputTokens": 698319,
+    "cacheCreationInputTokens": 29120,
+    "webSearchRequests": 0,
+    "costUSD": 0.5336398,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1933,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 25,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the crash, and the bug turned out to be in `Text` rather than in `inspect`. Nothing is committed.\n\n**Root cause:** `Text.__init__` removes control codes (`\\r`, form feed, etc.) from the string, but set its length from the original string (`rich/text.py:144-154`). For a string with `\\r\\n` line endings, `len(text)` came out longer than the text actually stored. So a style covering the whole text ran past its end, and `Text.divide()` read past the end of its list of lines, which is the `IndexError` in the issue. `inspect(..., methods=True)` hits this because it styles each method's whole docstring, and some docstrings have `\\r\\n` endings.\n\npyparsing isn't installed in the venv, so I couldn't run the exact command from the issue. I reproduced the same `IndexError` and traceback with a method whose docstring contains `\\r\\n`, and with plain styled `Text(\"a\\r\\nb\\r\\n\\r\\nc\")`. That makes me fairly confident this is what pyparsing triggers, but the exact pyparsing case is unconfirmed.\n\n**Fix:** the length is now taken from the cleaned-up string (a 2-line change in `rich/text.py`).\n\n**Tests added:**\n- `tests/test_text.py`: `test_strip_control_codes_length` checks the length after `\\r` is removed, and `test_render_styled_text_with_carriage_returns` renders styled text with `\\r\\n` endings.\n- `tests/test_inspect.py`: `test_inspect_module_with_crlf_docstring` inspects a module whose function has a `\\r\\n` docstring, using `methods=True`.\n\nAll three fail without the fix and pass with it. I also added a line to `CHANGELOG.md` under Unreleased.\n\n**Test results:** the full suite has 17 failures with or without my change; apart from my three new tests, the failing tests are identical. They're in tests like `test_syntax`, `test_markdown` and three in `test_inspect`. They look tied to this environment's Python and library versions (builtin docstrings and syntax highlighting render differently), not to this change.",
+  "ttft_ms": 2726,
+  "type": "result",
+  "duration_ms": 106063,
+  "uuid": "18391460-ac11-4d06-b470-afbd84304da1",
+  "ttft_stream_ms": 779,
+  "time_to_request_ms": 114,
+  "first_content_frame_ms": 779,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 12,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

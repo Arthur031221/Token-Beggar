@@ -1,0 +1,116 @@
+{
+ "task": "md-footnote-order",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 108355,
+  "stop_reason": "end_turn",
+  "session_id": "ab507be3-fe8d-4751-9c79-fb591273ccff",
+  "total_cost_usd": 0.601988,
+  "usage": {
+   "input_tokens": 28,
+   "cache_creation_input_tokens": 32906,
+   "cache_read_input_tokens": 498940,
+   "output_tokens": 11942,
+   "output_tokens_details": {
+    "thinking_tokens": 4253
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 32906,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 882,
+     "cache_read_input_tokens": 44812,
+     "cache_creation_input_tokens": 884,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 884
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 28,
+    "outputTokens": 11942,
+    "cacheReadInputTokens": 498940,
+    "cacheCreationInputTokens": 32906,
+    "webSearchRequests": 0,
+    "costUSD": 0.601988,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 4253,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 14,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Footnotes are now numbered and listed in the order they are first referenced in the text. In the issue's example, `[^definedsecond]` is now footnote 1 and `[^definedfirst]` is footnote 2. The full suite passes (1056 tests, 110 skipped). Nothing is committed.\n\n**How it works** (`markdown/extensions/footnotes.py`): a new step runs after links are processed and renumbers everything:\n- **Body references come first**, in the order they appear. Footnotes placed with `///Footnotes Go Here///` are handled correctly, including references that come after the marker.\n- **Footnotes referenced only from inside another footnote** come next.\n- **Footnotes that are never referenced** go last, in the order they were defined.\n- It updates the reference numbers (respecting `SUPERSCRIPT_TEXT`), the order of the footnote list, and the \"Jump back\" link titles. It also works with `UNIQUE_IDS`, `SEPARATOR` and footnotes that are referenced more than once.\n- The order is kept between `convert()` calls until `reset()` is called. So if you convert several documents with one instance, each footnote keeps the same number in every output.\n\n**Backward compatibility:** this changes the default output, so I added a `USE_DEFINITION_ORDER` option (default `False`). Setting it to `True` brings back the old numbering exactly. I believe upstream Python-Markdown made the same change with this option name in 3.9, but I haven't checked that.\n\n**Tests** (`tests/test_syntax/extensions/test_footnotes.py`): I added five tests:\n- the issue's case, including a footnote referenced twice\n- a footnote referenced only from another footnote, plus an unreferenced one\n- a page using the place marker\n- `UNIQUE_IDS` combined with `SUPERSCRIPT_TEXT`\n- `USE_DEFINITION_ORDER=True`\n\n**Docs:** I documented the new option in `docs/extensions/footnotes.md` and added a \"Changed\" entry to `docs/changelog.md`.\n\n**Running the tests:** `.venv/bin/python -m pytest tests` stops before running anything because of a `TestSuite` class in `test_md_in_html.py`. That happens on a clean checkout too, so it isn't caused by this change. Running the footnote and legacy test files with pytest works (120 passed), and the full suite passes with the project's own runner, `python -m unittest discover tests`. flake8 isn't installed in `.venv`, so I couldn't run the linter; I only checked that new lines are within the 119-character limit.",
+  "ttft_ms": 2984,
+  "type": "result",
+  "duration_ms": 112085,
+  "uuid": "4f92baed-4427-4904-ad90-44a3fe275e9d",
+  "ttft_stream_ms": 768,
+  "time_to_request_ms": 61,
+  "first_content_frame_ms": 769,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

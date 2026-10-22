@@ -1,0 +1,262 @@
+diff --git a/docs/changelog.md b/docs/changelog.md
+index 3d54e6e..17e9f9b 100644
+--- a/docs/changelog.md
++++ b/docs/changelog.md
+@@ -12,6 +12,12 @@ See the [Contributing Guide](contributing.md) for details.
+ 
+ ## [Unreleased]
+ 
++### Changed
++
++* Footnotes are now numbered and listed in the order of their first reference
++  rather than the order of their definitions. Set the new `USE_DEFINITION_ORDER`
++  option of the footnotes extension to `True` to restore the old behavior.
++
+ ### Fixed
+ 
+ * Fix handling of incomplete HTML tags in code spans in Python 3.14.
+diff --git a/docs/extensions/footnotes.md b/docs/extensions/footnotes.md
+index e841a32..1e3acb8 100644
+--- a/docs/extensions/footnotes.md
++++ b/docs/extensions/footnotes.md
+@@ -98,6 +98,11 @@ The following options are provided to configure the output:
+ * **`SEPARATOR`**:
+     The text string used to set the footnote separator. Defaults to `:`.
+ 
++* **`USE_DEFINITION_ORDER`**:
++    Whether to order footnotes by footnote definition order rather than by
++    reference order. By default, footnotes are numbered and listed in the order
++    their references first appear in the document. Defaults to `False`.
++
+ A trivial example:
+ 
+ ```python
+diff --git a/markdown/extensions/footnotes.py b/markdown/extensions/footnotes.py
+index 30c0811..a9f92e7 100644
+--- a/markdown/extensions/footnotes.py
++++ b/markdown/extensions/footnotes.py
+@@ -61,6 +61,9 @@ class FootnoteExtension(Extension):
+             ],
+             'SEPARATOR': [
+                 ':', 'Footnote separator.'
++            ],
++            'USE_DEFINITION_ORDER': [
++                False, 'Whether to order footnotes by footnote definition order rather than by reference order.'
+             ]
+         }
+         """ Default configuration options. """
+@@ -70,6 +73,7 @@ class FootnoteExtension(Extension):
+         self.unique_prefix = 0
+         self.found_refs: dict[str, int] = {}
+         self.used_refs: set[str] = set()
++        self.footnote_order: list[str] = []
+ 
+         self.reset()
+ 
+@@ -104,6 +108,7 @@ class FootnoteExtension(Extension):
+         self.unique_prefix += 1
+         self.found_refs = {}
+         self.used_refs = set()
++        self.footnote_order = []
+ 
+     def unique_ref(self, reference: str, found: bool = False) -> str:
+         """ Get a unique reference if there are duplicates. """
+@@ -366,9 +371,56 @@ class FootnotePostTreeprocessor(Treeprocessor):
+             if count > 1:
+                 self.add_duplicates(li, count)
+ 
++    def reorder(self, root: etree.Element, ol: etree.Element | None) -> None:
++        """ Renumber references and reorder footnotes by order of first reference. """
++        fn = self.footnotes
++        id_map = {fn.makeFootnoteId(id): id for id in fn.footnotes}
++        refs = [
++            a for sup in root.iter('sup') for a in sup.iter('a')
++            if a.attrib.get('class', '') == 'footnote-ref' and a.attrib.get('href', '')[1:] in id_map
++        ]
++        order = fn.footnote_order
++        order.clear()
++        for a in refs:
++            id = id_map[a.attrib['href'][1:]]
++            if id not in order:
++                order.append(id)
++        # Defined but unreferenced footnotes follow, in definition order.
++        order.extend(id for id in fn.footnotes if id not in order)
++        numbers = {id: index for index, id in enumerate(order, start=1)}
++        template = fn.getConfig("SUPERSCRIPT_TEXT")
++        for a in refs:
++            a.text = template.format(numbers[id_map[a.attrib['href'][1:]]])
++        if ol is None:
++            return
++        backlink_title = fn.getConfig("BACKLINK_TITLE").replace("%d", "{}")
++        items = {}
++        for li in list(ol):
++            items[li.attrib.get('id', '')] = li
++            ol.remove(li)
++        for id in order:
++            li = items.pop(fn.makeFootnoteId(id), None)
++            if li is None:
++                continue
++            ol.append(li)
++            for link in li.iter('a'):
++                if link.attrib.get('class', '') == 'footnote-backref':
++                    link.set('title', backlink_title.format(numbers[id]))
++                    break
++        # Preserve anything unexpected.
++        for li in items.values():
++            ol.append(li)
++
+     def run(self, root: etree.Element) -> None:
+         """ Crawl the footnote div and add missing duplicate footnotes. """
+         self.offset = 0
++        if not self.footnotes.getConfig("USE_DEFINITION_ORDER"):
++            ol = None
++            for div in root.iter('div'):
++                if div.attrib.get('class', '') == 'footnote':
++                    ol = next(div.iter('ol'), None)
++                    break
++            self.reorder(root, ol)
+         for div in root.iter('div'):
+             if div.attrib.get('class', '') == 'footnote':
+                 # Footnotes should be under the first ordered list under
+diff --git a/tests/test_syntax/extensions/test_footnotes.py b/tests/test_syntax/extensions/test_footnotes.py
+index 6f504e3..b9c770b 100644
+--- a/tests/test_syntax/extensions/test_footnotes.py
++++ b/tests/test_syntax/extensions/test_footnotes.py
+@@ -19,6 +19,8 @@ Copyright 2004 Manfred Stienstra (the original version)
+ License: BSD (see LICENSE.md for details).
+ """
+ 
++import re
++import markdown
+ from markdown.test_tools import TestCase
+ 
+ 
+@@ -336,3 +338,128 @@ class TestFootnotes(TestCase):
+             '</div>',
+             extension_configs={'footnotes': {'SUPERSCRIPT_TEXT': '[{}]'}}
+         )
++
++    def _ref_nums(self, html):
++        return re.findall(r'<sup id="[^"]*"><a class="footnote-ref" href="#fn:(\w+)">(\d+)</a></sup>', html)
++
++    def _li_ids(self, html):
++        return re.findall(r'<li id="fn:(\w+)">', html)
++
++    def test_reference_order(self):
++        text = self.dedent(
++            """
++            first[^b] second[^a]
++
++            [^a]: A
++            [^b]: B
++            """
++        )
++        html = markdown.markdown(text, extensions=['footnotes'])
++        self.assertEqual(self._ref_nums(html), [('b', '1'), ('a', '2')])
++        self.assertEqual(self._li_ids(html), ['b', 'a'])
++        self.assertIn('title="Jump back to footnote 1 in the text"', html.split('<li id="fn:b">')[1])
++
++    def test_reference_order_exact(self):
++        self.assertMarkdownRenders(
++            self.dedent(
++                """
++                foo[^definedsecond] bar[^definedfirst]
++
++                [^definedfirst]: First
++                [^definedsecond]: Second
++                """
++            ),
++            '<p>foo<sup id="fnref:definedsecond"><a class="footnote-ref" href="#fn:definedsecond">1</a></sup> '
++            'bar<sup id="fnref:definedfirst"><a class="footnote-ref" href="#fn:definedfirst">2</a></sup></p>\n'
++            '<div class="footnote">\n'
++            '<hr />\n'
++            '<ol>\n'
++            '<li id="fn:definedsecond">\n'
++            '<p>Second&#160;<a class="footnote-backref" href="#fnref:definedsecond"'
++            ' title="Jump back to footnote 1 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '<li id="fn:definedfirst">\n'
++            '<p>First&#160;<a class="footnote-backref" href="#fnref:definedfirst"'
++            ' title="Jump back to footnote 2 in the text">&#8617;</a></p>\n'
++            '</li>\n'
++            '</ol>\n'
++            '</div>'
++        )
++
++    def test_duplicate_references(self):
++        text = self.dedent(
++            """
++            a[^b] b[^a] c[^b]
++
++            [^a]: A
++            [^b]: B
++            """
++        )
++        html = markdown.markdown(text, extensions=['footnotes'])
++        self.assertEqual(
++            self._ref_nums(html), [('b', '1'), ('a', '2'), ('b', '1')]
++        )
++        self.assertEqual(self._li_ids(html), ['b', 'a'])
++        self.assertIn('href="#fnref2:b"', html)
++
++    def test_unreferenced_definitions_last(self):
++        text = self.dedent(
++            """
++            x[^c]
++
++            [^a]: A
++            [^b]: B
++            [^c]: C
++            [^d]: D
++            """
++        )
++        html = markdown.markdown(text, extensions=['footnotes'])
++        self.assertEqual(self._ref_nums(html), [('c', '1')])
++        self.assertEqual(self._li_ids(html), ['c', 'a', 'b', 'd'])
++
++    def test_undefined_reference_literal(self):
++        html = markdown.markdown('x[^nope] y[^a]\n\n[^a]: A', extensions=['footnotes'])
++        self.assertIn('[^nope]', html)
++        self.assertEqual(self._ref_nums(html), [('a', '1')])
++
++    def test_reference_inside_footnote_body(self):
++        text = self.dedent(
++            """
++            x[^a]
++
++            [^a]: A see[^b]
++            [^b]: B
++            [^c]: C
++            """
++        )
++        html = markdown.markdown(text, extensions=['footnotes'])
++        self.assertEqual(self._li_ids(html), ['a', 'b', 'c'])
++        self.assertEqual(self._ref_nums(html), [('a', '1'), ('b', '2')])
++
++    def test_use_definition_order(self):
++        text = self.dedent(
++            """
++            first[^b] second[^a]
++
++            [^a]: A
++            [^b]: B
++            """
++        )
++        html = markdown.markdown(
++            text, extensions=['footnotes'], extension_configs={'footnotes': {'USE_DEFINITION_ORDER': True}}
++        )
++        self.assertEqual(self._ref_nums(html), [('b', '2'), ('a', '1')])
++        self.assertEqual(self._li_ids(html), ['a', 'b'])
++
++    def test_reset_and_reuse(self):
++        md = markdown.Markdown(extensions=['footnotes'])
++        text1 = 'x[^b] y[^a]\n\n[^a]: A\n[^b]: B'
++        text2 = 'x[^a] y[^b]\n\n[^a]: A\n[^b]: B'
++        h1 = md.convert(text1)
++        md.reset()
++        h2 = md.convert(text2)
++        self.assertEqual(self._li_ids(h1), ['b', 'a'])
++        self.assertEqual(self._li_ids(h2), ['a', 'b'])
++        self.assertEqual(self._ref_nums(h2), [('a', '1'), ('b', '2')])
++        md.reset()
++        self.assertEqual(md.registeredExtensions[0].footnote_order, [])

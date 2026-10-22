@@ -1,0 +1,116 @@
+{
+ "task": "md-backslash-smarty",
+ "arm": "main",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 110987,
+  "stop_reason": "end_turn",
+  "session_id": "14df61e3-1a8a-404e-a309-162bc1f4493b",
+  "total_cost_usd": 0.6708932000000001,
+  "usage": {
+   "input_tokens": 44,
+   "cache_creation_input_tokens": 35237,
+   "cache_read_input_tokens": 768906,
+   "output_tokens": 11752,
+   "output_tokens_details": {
+    "thinking_tokens": 3150
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 35237,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 970,
+     "cache_read_input_tokens": 46952,
+     "cache_creation_input_tokens": 1075,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1075
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 44,
+    "outputTokens": 11752,
+    "cacheReadInputTokens": 768906,
+    "cacheCreationInputTokens": 35237,
+    "webSearchRequests": 0,
+    "costUSD": 0.6708932000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3150,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 22,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The bug is fixed: `![x\\\"x](x)` with `-x smarty` now gives `<p><img alt=\"x&quot;x\" src=\"x\" /></p>`, the same as the unescaped version. Nothing is committed.\n\n**Cause:** a backslash-escaped character is stored as a placeholder during parsing. The old `UnescapePostprocessor` turned it back into the real character only after the HTML had already been written out as text. So the serializer never saw the `\"` and never escaped it inside the attribute. Smarty makes `\"` and `'` escapable, which is how a raw `\"` got into `alt=\"\u2026\"`.\n\n**Fix** (this follows the approach upstream Python-Markdown took for this issue in 3.4):\n- `markdown/treeprocessors.py`: a new `UnescapeTreeprocessor`, registered as `unescape` at priority 0. It restores escaped characters in element text, tails and attribute values before the HTML is written out, so the serializer escapes them properly. It skips the text of `<code>` elements, as upstream does.\n- `markdown/postprocessors.py`: `UnescapePostprocessor` is no longer registered by default. It still works if called directly, but now raises a `DeprecationWarning`. I put the warning in `__init__` rather than wrapping the class, so code that subclasses it keeps working.\n- `markdown/extensions/toc.py`: its `unescape()` helper now uses the new tree processor, so it doesn't trigger the warning.\n\n**Visible side effect:** escaped characters in normal text now get the usual HTML escaping, so `\\>` renders as `&gt;` instead of `>`. That is valid HTML, and upstream changed the same expected output, so I updated `tests/basic/backlash-escapes.html` to match. Third-party extensions that removed the `unescape` postprocessor by name, or put escape placeholders into stored raw HTML, would be affected. I noted this in `docs/change_log/release-3.4.md`.\n\n**Tests:**\n- New `tests/test_syntax/extensions/test_smarty.py` covers escaped quotes in text, image alt text (inline and reference style), link titles and code spans. Three of these fail on the original code and pass now.\n- `tests/test_apis.py` checks the deprecation warning and confirms `unescape` is now a tree processor rather than a postprocessor.\n- I also updated the processor tables in `docs/extensions/api.md`.\n\n**Test results:** 981 tests run with `.venv/bin/python -m unittest discover tests`, with 8 failures. All 8 also fail on the untouched code; they're the HTML-block tests for unclosed tags and comments, in `test_html_blocks` and `test_md_in_html`. Running the full suite through `pytest` stops before any tests run, because `test_md_in_html.py` has a `TestSuite` class pytest can't collect. That also happens on the untouched code.",
+  "ttft_ms": 1768,
+  "type": "result",
+  "duration_ms": 118983,
+  "uuid": "837bdf8e-e3e3-4d75-af03-ac76a622cec5",
+  "ttft_stream_ms": 780,
+  "time_to_request_ms": 153,
+  "first_content_frame_ms": 781,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

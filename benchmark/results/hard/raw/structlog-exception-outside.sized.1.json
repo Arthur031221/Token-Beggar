@@ -1,0 +1,116 @@
+{
+ "task": "structlog-exception-outside",
+ "arm": "sized",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 114541,
+  "stop_reason": "end_turn",
+  "session_id": "068342d7-59bc-46b8-b4da-ecd256110076",
+  "total_cost_usd": 0.6100696,
+  "usage": {
+   "input_tokens": 36,
+   "cache_creation_input_tokens": 34202,
+   "cache_read_input_tokens": 601548,
+   "output_tokens": 10800,
+   "output_tokens_details": {
+    "thinking_tokens": 2314
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 34202,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1006,
+     "cache_read_input_tokens": 46420,
+     "cache_creation_input_tokens": 572,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 572
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 36,
+    "outputTokens": 10800,
+    "cacheReadInputTokens": 601548,
+    "cacheCreationInputTokens": 34202,
+    "webSearchRequests": 0,
+    "costUSD": 0.6100696,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2314,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 28,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed this by making `ExceptionRenderer` and `ExceptionPrettyPrinter` treat a missing exception as \"nothing to render.\" The full test suite passes (856 passed, 16 skipped), and nothing is committed.\n\n**What I found:** the exact reproduction from the issue no longer crashes on this checkout. An earlier fix (#657) already added a guard to `ExceptionDictTransformer`. But calling `exception()` outside an `except` block still went wrong in other places:\n- `ExceptionRenderer` passed `(None, None, None)` to its formatter anyway. A custom formatter that calls `tracebacks.extract` directly would still hit the `AttributeError` from the issue.\n- The built-in formatters wrote a dummy key instead: `exception=[]` from `dict_tracebacks` and `exception='MISSING'` from `format_exc_info`.\n- `ExceptionPrettyPrinter` printed the word `MISSING` to the output.\n\n**The fix, in `src/structlog/processors.py`:**\n- `ExceptionRenderer.__call__` first works out the exc_info, then skips it if it's `True` with no active exception or `(None, None, None)`. In that case it removes `exc_info`, adds no `exception` key, and never calls the formatter. Since `format_exc_info` and `dict_tracebacks` are both built on `ExceptionRenderer`, they're both covered, whether you use structlog directly or the stdlib `ProcessorFormatter` setup from the issue.\n- `ExceptionPrettyPrinter` uses the same check, so it prints nothing.\n- I updated the docstring with a `versionchanged:: 25.1.0` note and added a changelog entry under \"Fixed\".\n\n**Behavior change:** `format_exc_info` used to produce `{\"exception\": \"MISSING\"}` when there was no exception. It now leaves the key out entirely, which matches how a log call without `exc_info` behaves. I changed the existing test `test_no_exception` to expect this. If anything downstream relies on the `\"MISSING\"` string, it will need updating.\n\n**Tests added:**\n- In `tests/processors/test_renderers.py`: no `exception` key for either a missing exception or `(None, None, None)`, the formatter is never called, `dict_tracebacks` doesn't crash, and an end-to-end stdlib `logging.exception()` call through `ProcessorFormatter` with `dict_tracebacks` works.\n- In `tests/processors/test_processors.py`: `ExceptionPrettyPrinter` prints nothing in this case.\n\nI ran the new tests against the original code and they all fail there.\n\n**Unrelated:** 15 `TestCallsiteParameterAdder` tests fail when `tests/processors` is run on its own, with or without my change. They pass in the full-suite run. I didn't look into it.\n\n`ruff` isn't installed in `.venv`, so I didn't run the lint check.",
+  "ttft_ms": 2116,
+  "type": "result",
+  "duration_ms": 123100,
+  "uuid": "16926007-7d49-47d3-8574-df3ecc550b87",
+  "ttft_stream_ms": 1619,
+  "time_to_request_ms": 143,
+  "first_content_frame_ms": 1619,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 4,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

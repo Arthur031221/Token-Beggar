@@ -1,0 +1,132 @@
+{
+ "task": "md-footnote-order",
+ "arm": "main",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 93814,
+  "stop_reason": "end_turn",
+  "session_id": "81911826-d9f7-4649-8a38-9d6c4fb2c48b",
+  "total_cost_usd": 0.2964673,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 10170,
+   "cache_read_input_tokens": 54876,
+   "output_tokens": 3349,
+   "output_tokens_details": {
+    "thinking_tokens": 1525
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10170,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 697,
+     "cache_read_input_tokens": 22687,
+     "cache_creation_input_tokens": 273,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 273
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 3349,
+    "cacheReadInputTokens": 54876,
+    "cacheCreationInputTokens": 10170,
+    "webSearchRequests": 0,
+    "costUSD": 0.15933920000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1525,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 7654,
+    "cacheReadInputTokens": 126161,
+    "cacheCreationInputTokens": 19176,
+    "webSearchRequests": 0,
+    "costUSD": 0.1371281,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2226,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the footnote ordering: footnotes are now numbered and listed in the order they're first referenced in the text. A new `USE_DEFINITION_ORDER` option, off by default, brings back the old definition-order behaviour. With your example, `[^definedsecond]` now gets number 1 and comes first in the list.\n\n**Tests:** the footnote tests pass under pytest (20 tests, 8 of them new). The full suite passes under `unittest` (1064 tests, 110 skipped). Running the full suite with `pytest tests` stops on a collection error in `tests/test_syntax/extensions/test_md_in_html.py::TestSuite`. That error also happens without these changes, so it's an existing problem. flake8 isn't installed, so linting wasn't run.\n\n**How it works** (`markdown/extensions/footnotes.py`): the step that turns `[^x]` into a link doesn't see references in the order they appear in the document, so it can't assign numbers. Instead, a later pass walks the finished page in document order and:\n- renumbers the references and reorders the footnote list to match;\n- keeps a footnote's first number when it's referenced more than once, and updates the \"jump back\" link titles;\n- puts footnotes that are defined but never referenced at the end, in the order they were defined.\n\nThe new ordering state is cleared on `reset()`, so a reused `Markdown` instance starts fresh.\n\n**Compatibility:** this changes the default output for anyone whose references and definitions appear in different orders. Setting `USE_DEFINITION_ORDER=True` restores the old output. No existing test expectations had to change.\n\n**Other changes:**\n- **Tests:** 8 new tests in `tests/test_syntax/extensions/test_footnotes.py` cover reference order, repeated references, unreferenced definitions, the new option, and reuse after reset.\n- **Docs:** the option is described in `docs/extensions/footnotes.md`, and there's an entry under \"Unreleased\" in `docs/changelog.md`.\n\nNothing has been committed.",
+  "ttft_ms": 15724,
+  "type": "result",
+  "duration_ms": 100547,
+  "uuid": "40e2fa40-8b71-419f-bf4d-eaba8a0551a0",
+  "ttft_stream_ms": 908,
+  "time_to_request_ms": 118,
+  "first_content_frame_ms": 908,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

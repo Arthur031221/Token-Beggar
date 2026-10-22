@@ -1,0 +1,116 @@
+{
+ "task": "packaging-extras-marker",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 101729,
+  "stop_reason": "end_turn",
+  "session_id": "5538de0a-27ba-4f2e-8ee8-aa753eaaca76",
+  "total_cost_usd": 0.6156902,
+  "usage": {
+   "input_tokens": 30,
+   "cache_creation_input_tokens": 36898,
+   "cache_read_input_tokens": 494031,
+   "output_tokens": 11079,
+   "output_tokens_details": {
+    "thinking_tokens": 2581
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 36898,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1016,
+     "cache_read_input_tokens": 49207,
+     "cache_creation_input_tokens": 481,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 481
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 30,
+    "outputTokens": 11079,
+    "cacheReadInputTokens": 494031,
+    "cacheCreationInputTokens": 36898,
+    "webSearchRequests": 0,
+    "costUSD": 0.6156902,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2581,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 15,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Markers now support the PEP 751 `extras` and `dependency_groups` variables, e.g. `\"test\" in dependency_groups`. The full test suite passes (27,197 tests), and ruff 0.9.1 (the project's pinned version) and mypy 1.13.0 are clean. Nothing is committed.\n\n**What changed**\n\n- **Parsing** (`src/packaging/_tokenizer.py`): the marker parser now accepts `extras` and `dependency_groups` as variable names. Before, they were syntax errors.\n- **Evaluation** (`src/packaging/markers.py`):\n  - The environment values for these two variables are sets of names.\n  - Names are normalized like `extra` already is, so `\"Foo.Bar\" in extras` matches `foo-bar`. PEP 685 sets this rule for extras and PEP 735 for dependency groups.\n  - Sets only allow `in` and `not in`, with the set on the right. Anything else, such as `extras == \"foo\"` or `extras in \"foo\"`, raises `UndefinedComparison` rather than quietly returning a meaningless result.\n- **New `context` argument**: `Marker.evaluate(environment=None, context=\"metadata\")`.\n  - `\"metadata\"` (the default) keeps today's behaviour: `extra` defaults to `\"\"`, so existing callers are unaffected.\n  - `\"lock_file\"` defaults `extras` and `dependency_groups` to empty sets.\n  - `\"requirement\"` sets no default for any of the three.\n\n  Using a variable that its context doesn't define raises `KeyError`, which is what undefined variables already did. For example, `\"foo\" in extras` fails under the default `\"metadata\"` context unless you pass `extras` yourself.\n- **Typing**: `environment` is now typed as `Mapping[str, str | AbstractSet[str]]`, so sets type-check and existing callers that pass `dict[str, str]` still do.\n\n**Tests** (`tests/test_markers.py`): the two names are added to the parse tests. New tests cover:\n- `in` / `not in` with sets (and lists)\n- name normalization in both directions\n- `and` / `or` combinations\n- the defaults for each context\n- `UndefinedComparison` for comparisons sets don't support\n- round-tripping a marker through `str()`\n\nI also documented the `context` parameter in `docs/markers.rst`, added a doctest example (it passes), and added a changelog entry.\n\n**Decision for you:** names inside the marker string are only normalized at evaluation time, so `str(Marker(\"'Foo' in extras\"))` keeps `\"Foo\"`. That differs from `extra == ...`, which is normalized when the marker is parsed. Normalizing at parse time too would only take a small change to `_normalize_extra_values`, but it changes what `str()` returns for these markers, so I've left it as is.",
+  "ttft_ms": 7164,
+  "type": "result",
+  "duration_ms": 158007,
+  "uuid": "b5bf1bb6-6c58-433e-adc7-ff90c952db70",
+  "ttft_stream_ms": 1190,
+  "time_to_request_ms": 71,
+  "first_content_frame_ms": 1190,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 20,
+  "f2p_total": 20,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

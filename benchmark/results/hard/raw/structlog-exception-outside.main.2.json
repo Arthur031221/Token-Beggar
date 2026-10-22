@@ -1,0 +1,116 @@
+{
+ "task": "structlog-exception-outside",
+ "arm": "main",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 94509,
+  "stop_reason": "end_turn",
+  "session_id": "c05d326b-0b1b-4ea2-ae19-a7cede506c7f",
+  "total_cost_usd": 0.5805240000000002,
+  "usage": {
+   "input_tokens": 38,
+   "cache_creation_input_tokens": 31039,
+   "cache_read_input_tokens": 602000,
+   "output_tokens": 10583,
+   "output_tokens_details": {
+    "thinking_tokens": 2841
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 31039,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 838,
+     "cache_read_input_tokens": 43304,
+     "cache_creation_input_tokens": 525,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 525
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 38,
+    "outputTokens": 10583,
+    "cacheReadInputTokens": 602000,
+    "cacheCreationInputTokens": 31039,
+    "webSearchRequests": 0,
+    "costUSD": 0.5805240000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2841,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 32,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the crash where the issue says it starts: `structlog.tracebacks.extract()` now returns an empty trace when there's no exception, instead of raising `AttributeError`. The full test suite passes (853 passed, 16 skipped). Nothing is committed.\n\n**What was already fixed.** On this branch, the issue's reproduction no longer fails. An earlier fix (#657) added a check for `(None, None, None)` in `ExceptionDictTransformer.__call__`, so `dict_tracebacks` already gives `\"exception\": []`. I confirmed this for the structlog logger and for a stdlib logger behind `ProcessorFormatter`, which is the aio-pika setup from the issue. But calling `extract(None, None, None)` directly still crashed, so anything that skipped that check would still break.\n\n**Changes:**\n- **`src/structlog/tracebacks.py`:** `extract()` returns `Trace(stacks=[])` when the exception type or value is `None`. Its type hints now allow `None`, and the docstring has a `versionchanged:: 25.1.0` note. I left the existing check in `ExceptionDictTransformer.__call__` alone; it's now redundant but harmless.\n- **`tests/test_tracebacks.py`:** three new tests:\n  - `test_missing_exception`: `extract(None, None, None).stacks == []`.\n  - `test_dict_tracebacks_outside_exception_handler`: run with `exc_info=True` and with `(None, None, None)` while no exception is active; both give `{\"exception\": []}`.\n  - `test_stdlib_exception_outside_exception_handler`: the issue's real case, a stdlib `logger.exception()` call through `ProcessorFormatter` with `dict_tracebacks`. It needs a `# noqa: LOG004`, because that lint rule flags exactly this call.\n- **`CHANGELOG.md`:** added an entry under \"Fixed\".\n\nmypy is clean on the changed files. Ruff reports three errors in them, all present before this change: two missing-copyright-notice errors (CPY001) and one import-not-at-top-of-file error (PLC0415). They're probably due to a mismatch with the installed ruff version.\n\nThe stdlib test first passed alone but failed in the full suite, because logging settings left by other tests blocked the record. It now uses its own standalone logger and writes to a `StringIO`, so it doesn't depend on that shared state.",
+  "ttft_ms": 1690,
+  "type": "result",
+  "duration_ms": 104803,
+  "uuid": "7382f8db-a65b-4a72-8ce7-41484d685e8d",
+  "ttft_stream_ms": 808,
+  "time_to_request_ms": 121,
+  "first_content_frame_ms": 809,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 4,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

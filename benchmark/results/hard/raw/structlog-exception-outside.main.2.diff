@@ -1,0 +1,128 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index cc53c62..0b52c11 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -34,6 +34,8 @@ You can find our backwards-compatibility policy [here](https://github.com/hynek/
+ 
+   [#657](https://github.com/hynek/structlog/pull/657)
+ 
++- `structlog.tracebacks.extract()` now returns an empty trace instead of raising an `AttributeError` if there's no exception (e.g., when logging using `exception()` outside of an exception handler).
++
+ - Instantiating `structlog.dev.ConsoleRenderer` does not mutate the passed *styles* dict anymore.
+ 
+   [#669](https://github.com/hynek/structlog/pull/669)
+diff --git a/src/structlog/tracebacks.py b/src/structlog/tracebacks.py
+index b5c4b43..29bcde0 100644
+--- a/src/structlog/tracebacks.py
++++ b/src/structlog/tracebacks.py
+@@ -172,8 +172,8 @@ def to_repr(
+ 
+ 
+ def extract(
+-    exc_type: type[BaseException],
+-    exc_value: BaseException,
++    exc_type: type[BaseException] | None,
++    exc_value: BaseException | None,
+     traceback: TracebackType | None,
+     *,
+     show_locals: bool = False,
+@@ -218,12 +218,20 @@ def extract(
+ 
+     Returns:
+         A Trace instance with structured information about all exceptions.
++        If there's no exception (e.g., ``(None, None, None)`` as returned by
++        :func:`sys.exc_info` outside an exception handler), the trace has no
++        stacks.
+ 
+     .. versionadded:: 22.1.0
+     .. versionchanged:: 24.3.0
+        Added *locals_max_length*, *locals_hide_sunder*, *locals_hide_dunder*
+        and *use_rich* arguments.
++    .. versionchanged:: 25.1.0
++       Missing exception information (e.g. ``(None, None, None)``) results in
++       an empty trace instead of raising an :exc:`AttributeError`.
+     """
++    if exc_type is None or exc_value is None:
++        return Trace(stacks=[])
+ 
+     stacks: list[Stack] = []
+     is_cause = False
+diff --git a/tests/test_tracebacks.py b/tests/test_tracebacks.py
+index f8d0f1e..0a5d6f8 100644
+--- a/tests/test_tracebacks.py
++++ b/tests/test_tracebacks.py
+@@ -6,7 +6,9 @@
+ from __future__ import annotations
+ 
+ import inspect
++import io
+ import json
++import logging
+ import sys
+ 
+ from pathlib import Path
+@@ -16,6 +18,8 @@ from typing import Any
+ import pytest
+ 
+ from structlog import tracebacks
++from structlog.processors import JSONRenderer, dict_tracebacks
++from structlog.stdlib import ProcessorFormatter
+ 
+ 
+ class SecretStr(str):  # noqa: SLOT000
+@@ -158,6 +162,14 @@ def test_simple_exception():
+     ] == trace.stacks
+ 
+ 
++def test_missing_exception():
++    """
++    Missing exception information (e.g., sys.exc_info() outside of an
++    exception handler) results in an empty trace instead of an error.
++    """
++    assert [] == tracebacks.extract(None, None, None).stacks
++
++
+ def test_raise_hide_cause():
+     """
+     If "raise ... from None" is used, the trace looks like from a simple
+@@ -781,3 +793,40 @@ def test_exception_dict_transformer_missing_exc_info():
+     result = transformer(exc_info=(None, None, None))
+ 
+     assert [] == result
++
++
++@pytest.mark.parametrize("exc_info", [True, (None, None, None)])
++def test_dict_tracebacks_outside_exception_handler(exc_info: Any) -> None:
++    """
++    Using dict_tracebacks outside of an exception handler -- e.g., when
++    calling log.exception() without an active exception -- results in an
++    empty list of stacks instead of an error.
++    """
++    assert sys.exc_info() == (None, None, None)
++
++    ed = dict_tracebacks(None, "exception", {"exc_info": exc_info})
++
++    assert {"exception": []} == ed
++
++
++def test_stdlib_exception_outside_exception_handler() -> None:
++    """
++    A stdlib logger that uses ProcessorFormatter with dict_tracebacks can log
++    using exception() outside of an exception handler.
++    """
++    sio = io.StringIO()
++    handler = logging.StreamHandler(sio)
++    handler.setFormatter(
++        ProcessorFormatter(processors=[dict_tracebacks, JSONRenderer()])
++    )
++    logger = logging.Logger(
++        "test_stdlib_exception_outside_exception_handler", logging.DEBUG
++    )
++    logger.addHandler(handler)
++
++    logger.exception("oh no")  # noqa: LOG004
++
++    out = json.loads(sio.getvalue())
++
++    assert "oh no" == out["event"]
++    assert [] == out["exception"]

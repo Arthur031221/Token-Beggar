@@ -1,0 +1,116 @@
+{
+ "task": "md-backslash-smarty",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 158749,
+  "stop_reason": "end_turn",
+  "session_id": "d077a44e-a886-46a8-b7cc-40db5e06a605",
+  "total_cost_usd": 0.839584,
+  "usage": {
+   "input_tokens": 58,
+   "cache_creation_input_tokens": 39334,
+   "cache_read_input_tokens": 1079200,
+   "output_tokens": 15442,
+   "output_tokens_details": {
+    "thinking_tokens": 3859
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 39334,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1024,
+     "cache_read_input_tokens": 50443,
+     "cache_creation_input_tokens": 1681,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1681
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 58,
+    "outputTokens": 15442,
+    "cacheReadInputTokens": 1079200,
+    "cacheCreationInputTokens": 39334,
+    "webSearchRequests": 0,
+    "costUSD": 0.839584,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3859,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 30,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The bug is fixed: `![x\\\"x](x)` with `-x smarty` now gives `<p><img alt=\"x&quot;x\" src=\"x\" /></p>`, the same as the unescaped input. The new tests pass, and the full suite has the same 8 failures it had before my change.\n\n**Cause:** a backslash escape like `\\\"` is held as a placeholder while the document is processed. The step that turns the placeholder back into `\"` ran *after* the HTML was written out, so the character never got HTML-escaped. That made the quote end up raw inside `alt=\"\"`. Any escapable character in any attribute was affected, not just quotes with smarty. For example, `attr_list` with `title=\"a\\\"b\"` produced `title=\"a\"b\"`.\n\n**Fix:** I moved that step to just before the HTML is written, so the normal output escaping sees the real characters.\n- `markdown/treeprocessors.py`: new `UnescapeTreeprocessor`, which restores escaped characters in element text and attributes. It's registered as `'unescape'` and runs last.\n- `markdown/postprocessors.py`: the old `UnescapePostprocessor` no longer runs by default. The class is still there but warns that it's deprecated, so third-party code that uses it keeps working.\n- `markdown/inlinepatterns.py`: raw inline HTML is passed through untouched and never gets escaped, so it now restores the escaped characters itself as it's stored. Output is unchanged; for example, `<span title=\"\\*\">` still comes out as written.\n- `markdown/extensions/toc.py`: now uses the new class.\n\n**Visible output change:** a backslash-escaped `>` in text now renders as `&gt;` instead of a bare `>`. Browsers display both the same. I updated `tests/basic/backlash-escapes.html` to match, since that was the only existing test that changed.\n\n**Tests:**\n- New `tests/test_syntax/extensions/test_smarty.py` covers escaped quotes with smarty in text, image alt/title, link href/title, and `attr_list` values. The four attribute tests fail on the original code.\n- `tests/test_syntax/inline/test_images.py`: two tests for escaped characters in `alt` without smarty. Both fail on the original code.\n- `tests/test_apis.py`: checks that the old postprocessor warns but still works.\n\nI also updated `docs/extensions/api.md` and the 3.4 release notes.\n\n**About the test run:**\n- `pytest tests` stops before running anything because pytest can't collect the `TestSuite` class in `tests/test_syntax/extensions/test_md_in_html.py`. That happens on the original code too.\n- I ran the whole suite with `unittest discover` instead. The 8 failures are the same before and after my change: raw-HTML/comment tests in `test_html_blocks` and `test_md_in_html`, which I think come from differences in Python 3.12's HTML parser.\n- flake8 isn't installed in the venv, so I didn't lint.\n\nNothing is committed.",
+  "ttft_ms": 3653,
+  "type": "result",
+  "duration_ms": 165473,
+  "uuid": "8058c8e9-aa6f-49f9-adbd-45764de13332",
+  "ttft_stream_ms": 1344,
+  "time_to_request_ms": 58,
+  "first_content_frame_ms": 1344,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

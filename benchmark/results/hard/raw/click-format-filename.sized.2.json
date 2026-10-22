@@ -1,0 +1,116 @@
+{
+ "task": "click-format-filename",
+ "arm": "sized",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 123394,
+  "stop_reason": "end_turn",
+  "session_id": "4721469d-df0e-46a9-95a2-1fcf30d5af50",
+  "total_cost_usd": 0.6709862,
+  "usage": {
+   "input_tokens": 40,
+   "cache_creation_input_tokens": 35700,
+   "cache_read_input_tokens": 712831,
+   "output_tokens": 12133,
+   "output_tokens_details": {
+    "thinking_tokens": 2951
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 35700,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1047,
+     "cache_read_input_tokens": 45167,
+     "cache_creation_input_tokens": 3323,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 3323
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 40,
+    "outputTokens": 12133,
+    "cacheReadInputTokens": 712831,
+    "cacheCreationInputTokens": 35700,
+    "webSearchRequests": 0,
+    "costUSD": 0.6709862,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2951,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 27,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed `click.format_filename`. It now replaces undecodable bytes and surrogate escapes with `\ufffd`, so the result can always be printed. The full test suite passes (588 passed, 21 skipped, 1 xfailed), and the reproducer from the issue now prints `foo\ufffd` instead of crashing, even with stdout set to strict UTF-8.\n\n**The fix** (`src/click/utils.py:400`): in Click 8 the function just called `os.fsdecode`, which leaves a `str` untouched, so it did nothing. Now a `str` is turned back into its original bytes with `os.fsencode`, which undoes the surrogate escapes. Those bytes (or bytes passed in directly) are then decoded using the filesystem encoding, putting `\ufffd` in place of anything invalid. `shorten=True` and `pathlib.Path` inputs still work. One rare case, a stray surrogate that isn't an escape, falls back to a simpler replacement so the function still never raises; in that case undecodable bytes in the same name show as `?` rather than `\ufffd`.\n\n**The other points raised in the issue:**\n- **`click.Path` error messages** (does not exist / is a file / is a directory / not readable / not writable / not executable): these now use `format_filename` instead of `os.fsdecode`. The quoting is unchanged, so the translatable message strings stay the same.\n- **`click.File` errors and `FileError`**: the filename shown in the message now goes through `format_filename`, so catching one and echoing it to stdout no longer crashes.\n- **`os.fsdecode` replaced with `os.fspath`**: in `_compat.open_stream`, where it checks for `-`, and in the `resolve_path` branch of `Path.convert`. The one in `coerce_path_result` stays, because there it really does convert bytes to `str`.\n- **Docs and changelog**: I rewrote the outdated paragraph in `docs/arguments.rst` that claimed `Path` returns \"bytes or Unicode depending on what makes more sense\". It now says the value is a `str` that may contain surrogate escapes, and points to `path_type` and `format_filename`. I also added an entry to `CHANGES.rst` with no issue number, because I don't know the real one. Add it if you have it.\n\n**Tests:**\n- `tests/test_utils.py`: the old assertion that expected `\"foo\\udcff.txt\"` now expects `\"foo\\ufffd.txt\"`. I added cases for `pathlib.Path`, for surrogate-escaped strings, and for stray surrogates.\n- `tests/test_types.py`: new tests check that every `Path` error message, the `File` open error and `FileError` show `\ufffd`. The `Path` and `File` tests are skipped on Windows.\n\nThe installed pytest refuses to collect `tests/test_basic.py` because it uses a deprecated `parametrize` pattern. That fails without my changes too. I ran the suite with `-W \"default::pytest.PytestRemovedIn10Warning\"` to get past it.\n\nNothing is committed.",
+  "ttft_ms": 2435,
+  "type": "result",
+  "duration_ms": 130207,
+  "uuid": "32a6e631-b64c-4729-9de1-f7a50ed00f04",
+  "ttft_stream_ms": 1936,
+  "time_to_request_ms": 380,
+  "first_content_frame_ms": 1936,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 5,
+  "f2p_total": 5,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,116 @@
+{
+ "task": "structlog-exception-outside",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 92099,
+  "stop_reason": "end_turn",
+  "session_id": "589246d1-41c9-4e37-9bc3-3868da435fa5",
+  "total_cost_usd": 0.5345058,
+  "usage": {
+   "input_tokens": 32,
+   "cache_creation_input_tokens": 29738,
+   "cache_read_input_tokens": 526969,
+   "output_tokens": 9554,
+   "output_tokens_details": {
+    "thinking_tokens": 1956
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 29738,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 823,
+     "cache_read_input_tokens": 41745,
+     "cache_creation_input_tokens": 783,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 783
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 32,
+    "outputTokens": 9554,
+    "cacheReadInputTokens": 526969,
+    "cacheCreationInputTokens": 29738,
+    "webSearchRequests": 0,
+    "costUSD": 0.5345058,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1956,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 25,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Calling `exception()` outside an exception handler now logs a clean `{\"event\": \"oh no\"}`, with no extra key. The full test suite passes (861 passed, 16 skipped) and mypy is clean on the changed files. Nothing is committed.\n\n**What was going on:** the `AttributeError` from the issue was already fixed in this repo by #657, so the reproduction no longer crashed. But the output was still wrong. With no exception active, `dict_tracebacks` added `\"exception\": []` and `format_exc_info` added `\"exception\": \"MISSING\"`. The cause was `_figure_out_exc_info`, which handed `(None, None, None)` to the formatter when there was nothing to format.\n\n**Fix:**\n- **`src/structlog/processors.py`**: `_figure_out_exc_info` now returns `None` when there's no exception. That covers an `exc_info` of `(None, None, None)`, or a true value like `True` when nothing is currently being handled. `ExceptionRenderer` then adds no `exception` key at all, which also covers `format_exc_info` and `dict_tracebacks`.\n- **`src/structlog/dev.py`**: `ConsoleRenderer` checks for the new `None` return value. This also removed the one mypy error the original code already had.\n- **`CHANGELOG.md`**: added an entry under Unreleased \u2192 Fixed.\n\nI also checked the setup from the issue, where a stdlib `logging` logger's `.exception()` goes through `ProcessorFormatter`. It now produces a clean line with both `dict_tracebacks` and `ConsoleRenderer`.\n\n**Behaviour change:** `format_exc_info` used to emit `\"exception\": \"MISSING\"` in this case and now emits nothing. I updated the existing test that expected `\"MISSING\"`. Anyone filtering logs on that string would notice the difference.\n\n**New tests:**\n- **`tests/processors/test_processors.py`**: `_figure_out_exc_info` returns `None` for false values, for a true value with no current exception, and for `(None, None, None)`, and returns a real exception tuple unchanged.\n- **`tests/processors/test_renderers.py`**: `dict_tracebacks` with a missing exception adds nothing, plus an end-to-end regression test of `logger.exception(\"oh no\")` outside a handler with `dict_tracebacks` and `JSONRenderer`.",
+  "ttft_ms": 2839,
+  "type": "result",
+  "duration_ms": 99447,
+  "uuid": "0ff61e3a-ced3-4cf3-ba7a-d10c6ef255e2",
+  "ttft_stream_ms": 2014,
+  "time_to_request_ms": 71,
+  "first_content_frame_ms": 2015,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 4,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

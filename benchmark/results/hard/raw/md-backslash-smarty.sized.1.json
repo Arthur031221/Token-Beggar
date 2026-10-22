@@ -1,0 +1,116 @@
+{
+ "task": "md-backslash-smarty",
+ "arm": "sized",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 110122,
+  "stop_reason": "end_turn",
+  "session_id": "c62ab7af-8b0e-45eb-8481-21dcc236ed43",
+  "total_cost_usd": 0.6334827999999999,
+  "usage": {
+   "input_tokens": 44,
+   "cache_creation_input_tokens": 32756,
+   "cache_read_input_tokens": 724594,
+   "output_tokens": 11317,
+   "output_tokens_details": {
+    "thinking_tokens": 3434
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 32756,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 872,
+     "cache_read_input_tokens": 42782,
+     "cache_creation_input_tokens": 2764,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2764
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 44,
+    "outputTokens": 11317,
+    "cacheReadInputTokens": 724594,
+    "cacheCreationInputTokens": 32756,
+    "webSearchRequests": 0,
+    "costUSD": 0.6334827999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3434,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 24,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the bug: `![x\\\"x](x)` with smarty now gives `<p><img alt=\"x&quot;x\" src=\"x\" /></p>`, the same as the unescaped version. Nothing is committed.\n\n**Why it happened:** a backslash escape like `\\\"` is stored as a placeholder while the document is being processed. The step that turned placeholders back into characters ran *after* the HTML was written out, so a raw `\"` landed inside `alt=\"\u2026\"` without being escaped. You only saw it with smarty because smarty is what makes `\"` an escapable character.\n\n**The fix:**\n- **`markdown/treeprocessors.py`**: a new `UnescapeTreeprocessor` (registered as `unescape`, priority 0) restores escaped characters in text and attribute values *before* the HTML is written out. Normal HTML escaping then applies, giving `&quot;` in attributes. It runs after smarty, so escaped quotes still aren't turned into curly quotes.\n- **`markdown/postprocessors.py`**: the old `UnescapePostprocessor` is no longer registered by default. I kept the class so third-party code that uses or subclasses it still works, but it now raises a `DeprecationWarning` when created.\n\n**One visible output change:** `\\>` now renders as `&gt;` instead of a bare `>`. Browsers display it the same, but if anyone compares output byte-for-byte, it will differ. I updated `tests/basic/backlash-escapes.html` to match.\n\n**Tests added:**\n- `tests/test_syntax/extensions/test_smarty.py` (new file): escaped quotes in body text, image alt text, link titles and reference-style images. Three of these fail without the fix.\n- `tests/test_syntax/inline/test_images.py`: `![x\\>x](x)` \u2192 `alt=\"x&gt;x\"`, without smarty.\n- `tests/test_apis.py`: checks the deprecation warning and that `unescape` is now a treeprocessor, not a postprocessor.\n\n**Docs:** I added a note and a bug-fix entry to `docs/change_log/release-3.4.md`, and updated the processor tables in `docs/extensions/api.md`.\n\n**Test results:** 948 passed and 12 failed. The same 12 fail without my change: they're raw-HTML/`md_in_html` tests (unclosed tags, comments). The collection error in `test_md_in_html.py::TestSuite` was also already there. I couldn't run flake8 because it isn't installed in the venv.",
+  "ttft_ms": 2419,
+  "type": "result",
+  "duration_ms": 119666,
+  "uuid": "9a6bac7f-d293-4161-98c6-029f382e8ce4",
+  "ttft_stream_ms": 1614,
+  "time_to_request_ms": 598,
+  "first_content_frame_ms": 1614,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

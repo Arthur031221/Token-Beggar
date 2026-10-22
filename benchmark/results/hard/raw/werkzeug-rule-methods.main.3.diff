@@ -1,0 +1,169 @@
+diff --git a/CHANGES.rst b/CHANGES.rst
+index c88b161c..19ad2c0b 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -44,7 +44,8 @@ Unreleased
+ -   ``SpooledTemporaryFile`` is always used for multipart file parsing.
+     :pr:`3101`
+ -   Raise a ``DuplicateRuleError`` when attempting to add a rule to a map with
+-    an equal rule. :issue:`3037`
++    an equal rule. Rules with different methods are not duplicates.
++    :issue:`3037`
+ 
+ 
+ Version 3.1.5
+diff --git a/docs/routing.rst b/docs/routing.rst
+index 5df9e974..30a895d6 100644
+--- a/docs/routing.rst
++++ b/docs/routing.rst
+@@ -96,11 +96,17 @@ variables. Unlike the path, where multiple parts are separated by ``/``, the
+ domain is always matched as a single part.
+ 
+ If a duplicate rule is added to a map, a :exc:`.DuplicateRuleError` will be
+-raised. Rules are compared based on their path, subdomain or host, and websocket
+-mode. Variable parts are not equal if they use different converters, although
++raised. Rules are compared based on their path, subdomain or host, websocket
++mode, and methods. Rules whose methods do not overlap are not duplicates. A rule
++without ``methods`` matches all methods, so it duplicates any rule with the same
++path. Variable parts are not equal if they use different converters, although
+ this heuristic may not be perfect depending on what the different converters can
+ actually match.
+ 
++``merge_slashes`` is applied before comparing paths, so ``/a//b`` and ``/a/b``
++are duplicates. A trailing slash makes rules distinct (branch vs. leaf), so
++``/a`` and ``/a/`` are not duplicates regardless of ``strict_slashes``.
++
+ 
+ Rule Priority
+ =============
+diff --git a/src/werkzeug/routing/matcher.py b/src/werkzeug/routing/matcher.py
+index ee7651db..521aaaa2 100644
+--- a/src/werkzeug/routing/matcher.py
++++ b/src/werkzeug/routing/matcher.py
+@@ -53,7 +53,7 @@ class StateMachineMatcher:
+                     state = new_state
+ 
+         for existing in state.rules:
+-            if rule == existing:
++            if rule._is_duplicate(existing):
+                 raise DuplicateRuleError(existing, rule)
+ 
+         state.rules.append(rule)
+diff --git a/src/werkzeug/routing/rules.py b/src/werkzeug/routing/rules.py
+index 18cfba1b..5962bdd2 100644
+--- a/src/werkzeug/routing/rules.py
++++ b/src/werkzeug/routing/rules.py
+@@ -379,8 +379,9 @@ class Rule(RuleFactory):
+             ])
+ 
+     `methods`
+-        A sequence of http methods this rule applies to.  If not specified, all
+-        methods are allowed. For example this can be useful if you want different
++        A sequence of http methods this rule applies to.  If ``None`` (not
++        given), the rule matches any method; there is no implicit ``GET``
++        default. For example this can be useful if you want different
+         endpoints for `POST` and `GET`.  If methods are defined and the path
+         matches but the method matched against is not in this list or in the
+         list of another rule for that path the error raised is of the type
+@@ -912,6 +913,21 @@ class Rule(RuleFactory):
+ 
+         return self._parts == other._parts and self.websocket == other.websocket
+ 
++    def _is_duplicate(self, other: Rule) -> bool:
++        """Check if this rule would match the same requests as another rule,
++        making one of them unreachable. Equal rules are duplicates if either
++        allows any method, or if they share any method.
++
++        :internal:
++        """
++        if self != other:
++            return False
++
++        if self.methods is None or other.methods is None:
++            return True
++
++        return not self.methods.isdisjoint(other.methods)
++
+     __hash__ = None  # type: ignore
+ 
+     def __str__(self) -> str:
+diff --git a/tests/test_routing.py b/tests/test_routing.py
+index 4f31037c..2e98a415 100644
+--- a/tests/test_routing.py
++++ b/tests/test_routing.py
+@@ -299,6 +299,75 @@ def test_duplicate_rule() -> None:
+         )
+ 
+ 
++def test_no_duplicate_different_methods() -> None:
++    """Rules with disjoint methods are not duplicates."""
++    r.Map(
++        [
++            r.Rule("/", endpoint="a", methods=["GET"]),
++            r.Rule("/", endpoint="b", methods=["POST"]),
++        ]
++    )
++
++
++def test_duplicate_overlapping_methods() -> None:
++    """Rules sharing any method are duplicates."""
++    with pytest.raises(DuplicateRuleError):
++        r.Map(
++            [
++                r.Rule("/", endpoint="a", methods=["GET", "POST"]),
++                r.Rule("/", endpoint="b", methods=["POST", "PUT"]),
++            ]
++        )
++
++
++@pytest.mark.parametrize("first_none", [True, False])
++def test_duplicate_methods_none(first_none: bool) -> None:
++    """A rule without methods matches all methods, so it duplicates any rule."""
++    rules = [
++        r.Rule("/", endpoint="a"),
++        r.Rule("/", endpoint="b", methods=["POST"]),
++    ]
++
++    if not first_none:
++        rules.reverse()
++
++    with pytest.raises(DuplicateRuleError):
++        r.Map(rules)
++
++
++def test_duplicate_head_added_with_get() -> None:
++    """HEAD is added automatically with GET, so they overlap."""
++    with pytest.raises(DuplicateRuleError):
++        r.Map(
++            [
++                r.Rule("/", endpoint="a", methods=["GET"]),
++                r.Rule("/", endpoint="b", methods=["HEAD"]),
++            ]
++        )
++
++
++def test_duplicate_merge_slashes() -> None:
++    """Paths are compared after merging slashes."""
++    with pytest.raises(DuplicateRuleError):
++        r.Map([r.Rule("/a//b", endpoint="a"), r.Rule("/a/b", endpoint="b")])
++
++    r.Map(
++        [
++            r.Rule("/a//b", endpoint="a", merge_slashes=False),
++            r.Rule("/a/b", endpoint="b"),
++        ]
++    )
++
++
++@pytest.mark.parametrize("strict_slashes", [True, False])
++def test_no_duplicate_trailing_slash(strict_slashes: bool) -> None:
++    """A trailing slash makes rules distinct regardless of strict_slashes."""
++    r.Map(
++        [r.Rule("/a", endpoint="a"), r.Rule("/a/", endpoint="b")],
++        strict_slashes=strict_slashes,
++    )
++
++
+ def test_duplicate_converter() -> None:
+     """Equal converter parts are duplicates."""
+     with pytest.raises(DuplicateRuleError):

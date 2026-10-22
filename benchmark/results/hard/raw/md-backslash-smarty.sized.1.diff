@@ -1,0 +1,276 @@
+diff --git a/docs/change_log/release-3.4.md b/docs/change_log/release-3.4.md
+index 9d1cd17..c87f874 100644
+--- a/docs/change_log/release-3.4.md
++++ b/docs/change_log/release-3.4.md
+@@ -58,6 +58,20 @@ In addition, the `md_globals` parameter of
+ `Markdown.extensions.Extension.extendMarkdown()` is no longer recognized as a
+ valid parameter and will raise an error if provided.
+ 
++### `UnescapePostprocessor` replaced with `UnescapeTreeprocessor`
++
++Backslash escaped characters are now restored by the new
++`markdown.treeprocessors.UnescapeTreeprocessor` (registered as `unescape` with
++a priority of `0`) before the tree is serialized, rather than by
++`markdown.postprocessors.UnescapePostprocessor` after serialization. This
++ensures that escaped characters which are special to HTML (such as `\"` in an
++attribute value when the [smarty](../extensions/smarty.md) extension is
++enabled) are properly escaped in the output. As a side effect, `\>` is now
++output as `&gt;` rather than `>`.
++
++The `UnescapePostprocessor` is no longer registered by default. It is
++deprecated and raises a `DeprecationWarning` when instantiated.
++
+ ## New features
+ 
+ The following new features have been included in the 3.4 release:
+@@ -97,3 +111,5 @@ The following bug fixes are included in the 3.4 release:
+ 
+ * Extension entry-points are only loaded if needed (#1216).
+ * Added additional checks to the `<pre><code>` handling of `PrettifyTreeprocessor` (#1261, #1263).
++* Backslash escaped characters no longer result in invalid HTML in attribute
++  values (e.g. `![x\"x](x)` with the smarty extension).
+diff --git a/docs/extensions/api.md b/docs/extensions/api.md
+index d7eb689..e0b4d22 100644
+--- a/docs/extensions/api.md
++++ b/docs/extensions/api.md
+@@ -256,6 +256,7 @@ Additional tree processors in the Markdown source tree include:
+ | Class                             | Kind      | Description                                                   |
+ | ----------------------------------|-----------|---------------------------------------------------------------|
+ | [`PrettifyTreeprocessor`][e1]     | built-in  |  Add line breaks to the html document                         |
++| [`UnescapeTreeprocessor`][e1]     | built-in  |  Restore backslash escaped characters in text and attributes  |
+ | [`TocTreeprocessor`][e2]          | extension |  Builds a [table of contents][] from the finished tree        |
+ | [`FootnoteTreeprocessor`][e3]     | extension |  Create [footnote][] div at end of document                   |
+ | [`FootnotePostTreeprocessor`][e4] | extension |  Amend div created by `FootnoteTreeprocessor` with duplicates |
+@@ -497,12 +498,10 @@ Some postprocessors in the Markdown source tree include:
+ | ------------------------------|-----------|----------------------------------------------------|
+ | [`raw_html`][p1]              | built-in  | Restore raw html from `htmlStash`, stored by `HTMLBlockPreprocessor`, and code highlighters |
+ | [`amp_substitute`][p2]        | built-in  | Convert ampersand substitutes to `&`; used in links |
+-| [`unescape`][p3]              | built-in  | Convert some escaped characters back from integers; used in links |
+ | [`FootnotePostProcessor`][p4] | extension | Replace footnote placeholders with html entities; as set by other stages |
+ 
+  [p1]: https://github.com/Python-Markdown/markdown/blob/master/markdown/postprocessors.py
+  [p2]: https://github.com/Python-Markdown/markdown/blob/master/markdown/postprocessors.py
+- [p3]: https://github.com/Python-Markdown/markdown/blob/master/markdown/postprocessors.py
+  [p4]: https://github.com/Python-Markdown/markdown/blob/master/markdown/extensions/footnotes.py
+ 
+ 
+diff --git a/markdown/postprocessors.py b/markdown/postprocessors.py
+index f4fb924..772278a 100644
+--- a/markdown/postprocessors.py
++++ b/markdown/postprocessors.py
+@@ -30,6 +30,7 @@ processing.
+ from collections import OrderedDict
+ from . import util
+ import re
++import warnings
+ 
+ 
+ def build_postprocessors(md, **kwargs):
+@@ -37,7 +38,6 @@ def build_postprocessors(md, **kwargs):
+     postprocessors = util.Registry()
+     postprocessors.register(RawHtmlPostprocessor(md), 'raw_html', 30)
+     postprocessors.register(AndSubstitutePostprocessor(), 'amp_substitute', 20)
+-    postprocessors.register(UnescapePostprocessor(), 'unescape', 10)
+     return postprocessors
+ 
+ 
+@@ -123,7 +123,23 @@ class AndSubstitutePostprocessor(Postprocessor):
+ 
+ 
+ class UnescapePostprocessor(Postprocessor):
+-    """ Restore escaped chars """
++    """
++    Restore escaped chars.
++
++    Deprecated: This postprocessor is no longer registered by default as
++    it restores characters after serialization, which can result in
++    invalid HTML. Use `markdown.treeprocessors.UnescapeTreeprocessor`
++    instead.
++    """
++
++    def __init__(self, *args, **kwargs):
++        warnings.warn(
++            "'UnescapePostprocessor' is deprecated and will be removed in a future "
++            "version; use 'markdown.treeprocessors.UnescapeTreeprocessor' instead.",
++            category=DeprecationWarning,
++            stacklevel=2
++        )
++        super().__init__(*args, **kwargs)
+ 
+     RE = re.compile(r'{}(\d+){}'.format(util.STX, util.ETX))
+ 
+diff --git a/markdown/treeprocessors.py b/markdown/treeprocessors.py
+index e02a505..d531270 100644
+--- a/markdown/treeprocessors.py
++++ b/markdown/treeprocessors.py
+@@ -19,6 +19,7 @@ Copyright 2004 Manfred Stienstra (the original version)
+ License: BSD (see LICENSE.md for details).
+ """
+ 
++import re
+ import xml.etree.ElementTree as etree
+ from . import util
+ from . import inlinepatterns
+@@ -29,6 +30,7 @@ def build_treeprocessors(md, **kwargs):
+     treeprocessors = util.Registry()
+     treeprocessors.register(InlineProcessor(md), 'inline', 20)
+     treeprocessors.register(PrettifyTreeprocessor(md), 'prettify', 10)
++    treeprocessors.register(UnescapeTreeprocessor(md), 'unescape', 0)
+     return treeprocessors
+ 
+ 
+@@ -429,3 +431,35 @@ class PrettifyTreeprocessor(Treeprocessor):
+                 # Only prettify code containing text only
+                 if not len(code) and code.text is not None:
+                     code.text = util.AtomicString(code.text.rstrip() + '\n')
++
++
++class UnescapeTreeprocessor(Treeprocessor):
++    """
++    Restore escaped chars.
++
++    Backslash escaped characters are stored as placeholders by the
++    `EscapeInlineProcessor`. Restore them in the tree (both text and
++    attribute values) before serialization so that the serializer
++    properly escapes any characters which are special to HTML.
++    """
++
++    RE = re.compile(r'{}(\d+){}'.format(util.STX, util.ETX))
++
++    def _unescape(self, m):
++        return chr(int(m.group(1)))
++
++    def unescape(self, text):
++        result = self.RE.sub(self._unescape, text)
++        if isinstance(text, util.AtomicString):
++            result = util.AtomicString(result)
++        return result
++
++    def run(self, root):
++        """ Loop over all elements and unescape all text and attribute values. """
++        for elem in root.iter():
++            if elem.text:
++                elem.text = self.unescape(elem.text)
++            if elem.tail:
++                elem.tail = self.unescape(elem.tail)
++            for key, value in elem.items():
++                elem.set(key, self.unescape(value))
+diff --git a/tests/basic/backlash-escapes.html b/tests/basic/backlash-escapes.html
+index ef7c4b5..876775f 100644
+--- a/tests/basic/backlash-escapes.html
++++ b/tests/basic/backlash-escapes.html
+@@ -9,7 +9,7 @@
+ <p>Right bracket: ]</p>
+ <p>Left paren: (</p>
+ <p>Right paren: )</p>
+-<p>Greater-than: ></p>
++<p>Greater-than: &gt;</p>
+ <p>Hash: #</p>
+ <p>Period: .</p>
+ <p>Bang: !</p>
+diff --git a/tests/test_apis.py b/tests/test_apis.py
+index 1a38be6..9962207 100644
+--- a/tests/test_apis.py
++++ b/tests/test_apis.py
+@@ -893,6 +893,23 @@ class TestEscapeAppend(unittest.TestCase):
+         self.assertEqual('|' not in md2.ESCAPED_CHARS, True)
+ 
+ 
++class TestUnescapePostprocessor(unittest.TestCase):
++    """ Tests the deprecated `UnescapePostprocessor`. """
++
++    def testDeprecated(self):
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter('always')
++            pp = markdown.postprocessors.UnescapePostprocessor()
++            self.assertEqual(len(w), 1)
++            self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
++        self.assertEqual(pp.run('\u000234\u0003'), '"')
++
++    def testNotRegistered(self):
++        md = markdown.Markdown()
++        self.assertNotIn('unescape', md.postprocessors)
++        self.assertIn('unescape', md.treeprocessors)
++
++
+ class TestBlockAppend(unittest.TestCase):
+     """ Tests block kHTML append. """
+ 
+diff --git a/tests/test_syntax/extensions/test_smarty.py b/tests/test_syntax/extensions/test_smarty.py
+new file mode 100644
+index 0000000..406c748
+--- /dev/null
++++ b/tests/test_syntax/extensions/test_smarty.py
+@@ -0,0 +1,58 @@
++# -*- coding: utf-8 -*-
++"""
++Python Markdown
++
++A Python implementation of John Gruber's Markdown.
++
++Documentation: https://python-markdown.github.io/
++GitHub: https://github.com/Python-Markdown/markdown/
++PyPI: https://pypi.org/project/Markdown/
++
++Started by Manfred Stienstra (http://www.dwerg.net/).
++Maintained for a few years by Yuri Takhteyev (http://www.freewisdom.org).
++Currently maintained by Waylan Limberg (https://github.com/waylan),
++Dmitry Shachnev (https://github.com/mitya57) and Isaac Muse (https://github.com/facelessuser).
++
++Copyright 2007-2018 The Python Markdown Project (v. 1.7 and later)
++Copyright 2004, 2005, 2006 Yuri Takhteyev (v. 0.2-1.6b)
++Copyright 2004 Manfred Stienstra (the original version)
++
++License: BSD (see LICENSE.md for details).
++"""
++
++from markdown.test_tools import TestCase
++
++
++class TestSmarty(TestCase):
++
++    default_kwargs = {'extensions': ['smarty']}
++
++    def test_escaped_quotes(self):
++        self.assertMarkdownRenders(
++            r'\"Escaped\" \'quotes\'',
++            '<p>"Escaped" \'quotes\'</p>'
++        )
++
++    def test_escaped_double_quote_in_image_alt(self):
++        self.assertMarkdownRenders(
++            r'![x\"x](x)',
++            '<p><img alt="x&quot;x" src="x" /></p>'
++        )
++
++    def test_escaped_double_quote_in_link_title(self):
++        self.assertMarkdownRenders(
++            r'[x](x "x\"x")',
++            '<p><a href="x" title="x&quot;x">x</a></p>'
++        )
++
++    def test_escaped_double_quote_in_reference_image_alt(self):
++        self.assertMarkdownRenders(
++            self.dedent(
++                r"""
++                ![x\"x][x]
++
++                [x]: x
++                """
++            ),
++            '<p><img alt="x&quot;x" src="x" /></p>'
++        )
+diff --git a/tests/test_syntax/inline/test_images.py b/tests/test_syntax/inline/test_images.py
+index c9c7cb8..9462b5b 100644
+--- a/tests/test_syntax/inline/test_images.py
++++ b/tests/test_syntax/inline/test_images.py
+@@ -182,3 +182,9 @@ class TestAdvancedImages(TestCase):
+             ),
+             '<p><a href="http://example.com/"><img alt="img ref" src="./image.jpg" /></a></p>'
+         )
++
++    def test_escaped_char_in_alt(self):
++        self.assertMarkdownRenders(
++            r'![x\>x](x)',
++            '<p><img alt="x&gt;x" src="x" /></p>'
++        )

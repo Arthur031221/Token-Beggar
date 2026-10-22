@@ -1,0 +1,116 @@
+{
+ "task": "click-format-filename",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 133929,
+  "stop_reason": "end_turn",
+  "session_id": "53fbd189-7e5a-4a93-b1f5-99449954ef0e",
+  "total_cost_usd": 0.6980838,
+  "usage": {
+   "input_tokens": 42,
+   "cache_creation_input_tokens": 34267,
+   "cache_read_input_tokens": 749799,
+   "output_tokens": 13691,
+   "output_tokens_details": {
+    "thinking_tokens": 3566
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 34267,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1065,
+     "cache_read_input_tokens": 46370,
+     "cache_creation_input_tokens": 687,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 687
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 42,
+    "outputTokens": 13691,
+    "cacheReadInputTokens": 749799,
+    "cacheCreationInputTokens": 34267,
+    "webSearchRequests": 0,
+    "costUSD": 0.6980838,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3566,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 29,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed `click.format_filename`. Filenames that aren't valid Unicode now display with `\ufffd` in place of the bad bytes, so printing them to stdout no longer raises `UnicodeEncodeError`. The full test suite passes: 590 passed, 21 skipped, 1 xfailed. A quick script running the issue's example under `LANG=en_US.UTF-8` printed `foo\ufffd` instead of crashing.\n\n**What changed:**\n- **`format_filename`** (`src/click/utils.py`): it was effectively doing nothing for `str` input, so the bad characters passed straight through. It now converts those characters back to the original bytes and decodes them with `\ufffd` as the replacement. Byte filenames are decoded the same way. It also handles path objects. The docstring now explains the problem and says the result is for display only, not for opening the file.\n- **Error messages** (`src/click/types.py`, `src/click/exceptions.py`): the `File` and `Path` types and `FileError` now build their messages with `format_filename`. Those messages could previously hold the raw characters and crash if printed anywhere other than stderr.\n- **Small cleanups:** the resolved path in `Path` now uses `os.fspath` instead of `os.fsdecode`, as the issue suggested. I removed an unused `import os` from `exceptions.py`.\n- **Docs:** I rewrote the outdated \"File Path Arguments\" section in `docs/arguments.rst`, which claimed `Path` returns bytes or Unicode as needed. I also added an entry to `CHANGES.rst` without an issue number, because I don't know it; you may want to add one.\n\n**Tests:**\n- In `tests/test_utils.py`, I updated `test_filename_formatting`, which expected the old pass-through behaviour, and added cases for path objects and normal non-ASCII names. A new test confirms the issue's filename fails when echoed raw to a strict UTF-8 stream and works after formatting.\n- In `tests/test_types.py`, new tests cover the error messages from `File`, `Path` (does not exist, is a directory, not executable) and `FileError`.\n- I checked that the new tests fail against the original library code: 7 fail there and all pass with the fix.\n\n**Things to know:**\n- **Changed results:** `format_filename` used to return the raw characters, which callers could pass back to `open()`. Anyone relying on that will now get `\ufffd` instead.\n- **Small deviation from the issue:** I left the `os.fsdecode(filename) == \"-\"` check in `_compat.open_stream` as it is. Switching it to `os.fspath` as the issue suggests would stop `b\"-\"` from being recognised as stdin/stdout.\n- **Running the tests:** with the installed pytest version, `tests/test_basic.py` fails to load before any tests run. That file wasn't touched and the problem is unrelated to this fix. I ran the suite with `-W \"ignore::pytest.PytestRemovedIn10Warning\"` to get past it.\n- **Not run:** mypy isn't installed in the venv, and flake8 printed nothing, but it may not be installed either.\n\nNothing is committed.",
+  "ttft_ms": 1954,
+  "type": "result",
+  "duration_ms": 138803,
+  "uuid": "68bf88a4-c25c-4539-8ec0-946232622857",
+  "ttft_stream_ms": 1293,
+  "time_to_request_ms": 65,
+  "first_content_frame_ms": 1293,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 5,
+  "f2p_total": 5,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

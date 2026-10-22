@@ -1,0 +1,116 @@
+{
+ "task": "md-footnote-order",
+ "arm": "sized",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 163513,
+  "stop_reason": "end_turn",
+  "session_id": "1db77095-fb8e-4697-b1d2-1d96ffe64ae8",
+  "total_cost_usd": 0.7099148000000001,
+  "usage": {
+   "input_tokens": 28,
+   "cache_creation_input_tokens": 36826,
+   "cache_read_input_tokens": 507974,
+   "output_tokens": 15680,
+   "output_tokens_details": {
+    "thinking_tokens": 6160
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 36826,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1057,
+     "cache_read_input_tokens": 49380,
+     "cache_creation_input_tokens": 236,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 236
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 28,
+    "outputTokens": 15680,
+    "cacheReadInputTokens": 507974,
+    "cacheCreationInputTokens": 36826,
+    "webSearchRequests": 0,
+    "costUSD": 0.7099148000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 6160,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 15,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Footnotes are now numbered in the order they're first referenced, so the issue's example comes out 1 then 2. I added a `USE_DEFINITION_ORDER` option (default `False`) that brings back the old order by definition. This follows your suggestion: the default changes, and the option is there for anyone who depended on the old order. The full suite passes (1061 tests, 110 skipped), and the five new tests fail against the original code. flake8 isn't installed in `.venv`, so I only checked line lengths by hand against the 119 limit in `tox.ini`.\n\n**How it works** (`markdown/extensions/footnotes.py`)\n- A new step, `FootnoteReorderingProcessor`, runs after links and other inline markup are processed. It walks the document from top to bottom and records each footnote the first time it's referenced.\n- I didn't do the numbering at the point where references are first recognised, because that step doesn't visit the document in reading order. For example, a reference inside a list item that comes before a paragraph would get numbered after the paragraph's reference.\n- Footnotes referenced only from inside other footnotes come after those referenced in the main text. Footnotes that are never referenced go last, in the order they were defined.\n- It then renumbers the reference markers and reorders the footnote list. It also updates the backlink `title` numbers (\"Jump back to footnote N\"), including on the extra backlinks for footnotes referenced more than once.\n- If the new order matches the definition order, or the option is on, nothing in the output is touched.\n\n**Tests** (`tests/test_syntax/extensions/test_footnotes.py`): five new cases cover:\n- the issue's case;\n- the `USE_DEFINITION_ORDER=True` option;\n- a reference inside a list, a repeated reference, and a reference inside a footnote;\n- footnotes that are never referenced;\n- the `///Footnotes Go Here///` marker together with custom `SUPERSCRIPT_TEXT` and `BACKLINK_TITLE`.\n\n**Docs**: the new option is documented in `docs/extensions/footnotes.md`, and there's a \"Changed\" entry under Unreleased in `docs/changelog.md`. The docs say the old behaviour applies to \"versions prior to 3.9\", which assumes this ships in 3.9. Adjust that if the release number is different.\n\nTwo things you might run into:\n- **A separate bug I left alone:** when a footnote is referenced more than once, the ids `fnref:x` and `fnref2:x` can be handed out in the wrong reading order. That happens when one reference is inside a list and another is in a later paragraph. It already happens on `main` and the backlinks still work, so I kept it out of this change and wrote the repeated-reference test around it.\n- **Running the tests:** `.venv/bin/python -m pytest tests` errors out before running anything, with or without my change. Pytest refuses to collect a `TestSuite` class in `test_md_in_html.py`. Running a single file works, as does `.venv/bin/python -m unittest discover tests` for the whole suite.\n\nNothing is committed.",
+  "ttft_ms": 4077,
+  "type": "result",
+  "duration_ms": 168686,
+  "uuid": "b79a0964-1917-46e8-a374-1800f8099314",
+  "ttft_stream_ms": 2822,
+  "time_to_request_ms": 305,
+  "first_content_frame_ms": 2823,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

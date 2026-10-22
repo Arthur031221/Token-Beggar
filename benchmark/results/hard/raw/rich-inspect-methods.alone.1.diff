@@ -1,0 +1,91 @@
+diff --git a/rich/text.py b/rich/text.py
+index f6b349d..509686a 100644
+--- a/rich/text.py
++++ b/rich/text.py
+@@ -141,7 +141,8 @@ class Text(JupyterMixin):
+         tab_size: Optional[int] = 8,
+         spans: Optional[List[Span]] = None,
+     ) -> None:
+-        self._text = [strip_control_codes(text)]
++        sanitized_text = strip_control_codes(text)
++        self._text = [sanitized_text]
+         self.style = style
+         self.justify: Optional["JustifyMethod"] = justify
+         self.overflow: Optional["OverflowMethod"] = overflow
+@@ -149,7 +150,7 @@ class Text(JupyterMixin):
+         self.end = end
+         self.tab_size = tab_size
+         self._spans: List[Span] = spans or []
+-        self._length: int = len(text)
++        self._length: int = len(sanitized_text)
+ 
+     def __len__(self) -> int:
+         return self._length
+@@ -394,9 +395,10 @@ class Text(JupyterMixin):
+     def plain(self, new_text: str) -> None:
+         """Set the text to a new value."""
+         if new_text != self.plain:
+-            self._text[:] = [new_text]
++            sanitized_text = strip_control_codes(new_text)
++            self._text[:] = [sanitized_text]
+             old_length = self._length
+-            self._length = len(new_text)
++            self._length = len(sanitized_text)
+             if old_length > self._length:
+                 self._trim_spans()
+ 
+diff --git a/tests/test_inspect.py b/tests/test_inspect.py
+index b4c1d2a..f8b6aec 100644
+--- a/tests/test_inspect.py
++++ b/tests/test_inspect.py
+@@ -299,3 +299,23 @@ def test_inspect_module_with_class():
+         "╰──────────────────────────────────────────╯\n"
+     )
+     assert render(module, methods=True) == expected
++
++
++def test_inspect_callable_with_control_codes_in_docstring():
++    """Issue #2214 - docstrings containing control codes such as backspace."""
++
++    def function():
++        """Emulate the ``\b`` behavior of regular expressions."""
++
++    module = ModuleType("my_module")
++    module.function = function
++
++    expected = (
++        "╭───────────────── <module 'my_module'> ─────────────────╮\n"
++        "│ function = def function(): Emulate the ```` behavior   │\n"
++        "│            of regular expressions.                     │\n"
++        "╰────────────────────────────────────────────────────────╯\n"
++    )
++    result = render(module, methods=True, width=58)
++    print(repr(result))
++    assert result == expected
+diff --git a/tests/test_text.py b/tests/test_text.py
+index 4f02fd4..7a431d8 100644
+--- a/tests/test_text.py
++++ b/tests/test_text.py
+@@ -590,6 +590,22 @@ def test_strip_control_codes():
+     assert str(text) == "foobar"
+ 
+ 
++def test_strip_control_codes_length():
++    # https://github.com/Textualize/rich/issues/2214
++    text = Text("foo\x08bar\x0b\x0c\r")
++    assert text.plain == "foobar"
++    assert len(text) == 6
++    text.stylize("bold")
++    assert text._spans == [Span(0, 6, "bold")]
++
++
++def test_plain_property_setter_strips_control_codes():
++    text = Text("foo")
++    text.plain = "b\x08ar"
++    assert text.plain == "bar"
++    assert len(text) == 3
++
++
+ def test_get_style_at_offset():
+     console = Console()
+     text = Text.from_markup("Hello [b]World[/b]")

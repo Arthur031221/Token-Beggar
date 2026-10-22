@@ -1,0 +1,116 @@
+{
+ "task": "rich-inspect-methods",
+ "arm": "main",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 80475,
+  "stop_reason": "end_turn",
+  "session_id": "7439b792-54ae-410a-880c-6133a85d016e",
+  "total_cost_usd": 0.5318809999999999,
+  "usage": {
+   "input_tokens": 44,
+   "cache_creation_input_tokens": 28521,
+   "cache_read_input_tokens": 688885,
+   "output_tokens": 8288,
+   "output_tokens_details": {
+    "thinking_tokens": 1378
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 28521,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 744,
+     "cache_read_input_tokens": 40443,
+     "cache_creation_input_tokens": 868,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 868
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 44,
+    "outputTokens": 8288,
+    "cacheReadInputTokens": 688885,
+    "cacheCreationInputTokens": 28521,
+    "webSearchRequests": 0,
+    "costUSD": 0.5318809999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1378,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 27,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've fixed the crash: `inspect(pyparsing, all=True)` now runs without error in the venv (I installed pyparsing 3.0.8 there to reproduce it).\n\n**Cause:** pyparsing's `WordStart` and `WordEnd` docstrings contain a literal backspace character (`\\b`, written in the source as ``` ``\\b`` ```). `Text.__init__` in `rich/text.py` removes control codes from the string, but it recorded the length of the original string. So each such `Text` claimed to be one character longer than its content. Text appended after it got shifted style ranges, and `Text.divide()` read past the end of its list of lines, which is the `IndexError`.\n\n**Fix (`rich/text.py`):**\n- `Text.__init__` now sets the length from the cleaned-up string.\n- The `Text.plain` setter now removes control codes too, so its length always matches the content.\n\n**Tests:**\n- `tests/test_text.py`:\n  - `test_strip_control_codes_length` checks the length and text after control codes are removed, for both the constructor and the `plain` setter.\n  - `test_wrap_with_control_codes` wraps a `Text` that has a backspace followed by styled text. My first version of this test passed even without the fix, so I rewrote it to match the inspect case; it now raises the `IndexError` on the old code.\n- `tests/test_inspect.py`: `test_inspect_module_with_control_codes_in_docstring` inspects a module whose function docstring contains `\\b`.\n\nAll three new tests fail on the original `text.py` and pass with the fix.\n\n**Results:** comparing the full test suite before and after the change, the only difference is that the new tests now pass. 17 tests fail in both cases (including `test_inspect_text`, `test_inspect_builtin_function` and `test_inspect_integer_with_methods`, plus several in `test_syntax.py`). Those three inspect tests differ only in their expected docstring text, which likely depends on the Python version; I didn't look into the rest.\n\nI also added a line under Unreleased \u2192 Fixed in `CHANGELOG.md`. I left out a link because I don't know the issue's number. Nothing is committed.",
+  "ttft_ms": 1878,
+  "type": "result",
+  "duration_ms": 100044,
+  "uuid": "d4043ebf-7b7c-4c83-86f4-817b5ea5bfc1",
+  "ttft_stream_ms": 796,
+  "time_to_request_ms": 118,
+  "first_content_frame_ms": 796,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 12,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

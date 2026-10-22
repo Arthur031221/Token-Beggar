@@ -1,0 +1,74 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index bc33fea..b451314 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
+ ### Fixed
+ 
+ - Allow exceptions that are raised while a Live is rendered to be displayed and/or processed https://github.com/Textualize/rich/pull/2305
++- Fix crash in `inspect` (and any `Text`) when the text contains control codes such as `\r`
+ 
+ ## [12.4.4] - 2022-05-24
+ 
+diff --git a/rich/text.py b/rich/text.py
+index f6b349d..e095fec 100644
+--- a/rich/text.py
++++ b/rich/text.py
+@@ -141,7 +141,8 @@ class Text(JupyterMixin):
+         tab_size: Optional[int] = 8,
+         spans: Optional[List[Span]] = None,
+     ) -> None:
+-        self._text = [strip_control_codes(text)]
++        sanitized_text = strip_control_codes(text)
++        self._text = [sanitized_text]
+         self.style = style
+         self.justify: Optional["JustifyMethod"] = justify
+         self.overflow: Optional["OverflowMethod"] = overflow
+@@ -149,7 +150,7 @@ class Text(JupyterMixin):
+         self.end = end
+         self.tab_size = tab_size
+         self._spans: List[Span] = spans or []
+-        self._length: int = len(text)
++        self._length: int = len(sanitized_text)
+ 
+     def __len__(self) -> int:
+         return self._length
+diff --git a/tests/test_inspect.py b/tests/test_inspect.py
+index b4c1d2a..3104866 100644
+--- a/tests/test_inspect.py
++++ b/tests/test_inspect.py
+@@ -299,3 +299,19 @@ def test_inspect_module_with_class():
+         "╰──────────────────────────────────────────╯\n"
+     )
+     assert render(module, methods=True) == expected
++
++
++def test_inspect_method_with_control_codes_in_docstring():
++    # Control codes (e.g. \r from \r\n line endings) in docstrings used to
++    # raise an IndexError when rendering
++    class Thing:
++        def method(self):
++            """First line.\r\nSecond line with some (parenthesised) 'text' 123."""
++
++    expected = (
++        "│ method = def method(self):                      │\n"
++        "│          First line.                            │\n"
++        "│          Second line with some (parenthesised)  │\n"
++        "│          'text' 123.                            │\n"
++    )
++    assert expected in render(Thing, methods=True, width=51)
+diff --git a/tests/test_text.py b/tests/test_text.py
+index 4f02fd4..20c15de 100644
+--- a/tests/test_text.py
++++ b/tests/test_text.py
+@@ -586,8 +586,10 @@ def test_styled():
+ def test_strip_control_codes():
+     text = Text("foo\rbar")
+     assert str(text) == "foobar"
++    assert len(text) == 6
+     text.append("\x08")
+     assert str(text) == "foobar"
++    assert len(text) == 6
+ 
+ 
+ def test_get_style_at_offset():

@@ -1,0 +1,352 @@
+diff --git a/CHANGELOG.rst b/CHANGELOG.rst
+index a5948af..a82fed0 100644
+--- a/CHANGELOG.rst
++++ b/CHANGELOG.rst
+@@ -4,7 +4,8 @@ Changelog
+ *unreleased*
+ ~~~~~~~~~~~~
+ 
+-No unreleased changes.
++* PEP 751: Support the ``extras`` and ``dependency_groups`` markers, and add a
++  ``context`` parameter to ``Marker.evaluate()``
+ 
+ 24.2 - 2024-11-08
+ ~~~~~~~~~~~~~~~~~
+diff --git a/docs/markers.rst b/docs/markers.rst
+index e802dac..665327e 100644
+--- a/docs/markers.rst
++++ b/docs/markers.rst
+@@ -35,6 +35,13 @@ Usage
+     >>> # Markers can be also used with extras, to pull in dependencies if
+     >>> # a certain extra is being installed
+     >>> extra = Marker('extra == "bar"')
++    >>> # PEP 751 lock files use the set-valued "extras" and "dependency_groups"
++    >>> # markers, which default to empty sets in the "lock_file" context
++    >>> lock_marker = Marker('"test" in dependency_groups')
++    >>> lock_marker.evaluate(context="lock_file")
++    False
++    >>> lock_marker.evaluate({"dependency_groups": {"test"}}, context="lock_file")
++    True
+     >>> # You can do simple comparisons between marker objects:
+     >>> Marker("python_version > '3.6'") == Marker("python_version > '3.6'")
+     True
+@@ -58,12 +65,22 @@ Reference
+     :raises InvalidMarker: If the given ``markers`` are not parseable, then
+                            this exception will be raised.
+ 
+-    .. method:: evaluate(environment=None)
++    .. method:: evaluate(environment=None, context="metadata")
+ 
+     Evaluate the marker given the context of the current Python process.
+ 
+     :param dict environment: A dictionary containing keys and values to
+-                             override the detected environment.
++                             override the detected environment. The
++                             ``extras`` and ``dependency_groups`` keys take
++                             a set of names (see :pep:`751`).
++    :param str context: The context the marker is being evaluated in, which
++                        determines which markers have default values:
++                        ``"metadata"`` (the default; core metadata, where
++                        ``extra`` defaults to ``""``), ``"lock_file"``
++                        (:pep:`751` lock files, where ``extras`` and
++                        ``dependency_groups`` default to empty sets), or
++                        ``"requirement"`` (all other situations, with no
++                        additional defaults).
+     :raises: UndefinedComparison: If the marker uses a comparison on strings
+                                   which are not valid versions per the
+                                   :ref:`specification of version specifiers
+diff --git a/src/packaging/_tokenizer.py b/src/packaging/_tokenizer.py
+index 4cef3a2..d28a9b6 100644
+--- a/src/packaging/_tokenizer.py
++++ b/src/packaging/_tokenizer.py
+@@ -68,7 +68,8 @@ DEFAULT_RULES: dict[str, str | re.Pattern[str]] = {
+                 |platform[._](version|machine|python_implementation)
+                 |python_implementation
+                 |implementation_(name|version)
+-                |extra
++                |extras?
++                |dependency_groups
+             )\b
+         """,
+         re.VERBOSE,
+diff --git a/src/packaging/markers.py b/src/packaging/markers.py
+index fb7f49c..6c389b0 100644
+--- a/src/packaging/markers.py
++++ b/src/packaging/markers.py
+@@ -8,7 +8,16 @@ import operator
+ import os
+ import platform
+ import sys
+-from typing import Any, Callable, TypedDict, cast
++from typing import (
++    AbstractSet,
++    Any,
++    Callable,
++    Literal,
++    Mapping,
++    TypedDict,
++    Union,
++    cast,
++)
+ 
+ from ._parser import MarkerAtom, MarkerList, Op, Value, Variable
+ from ._parser import parse_marker as _parse_marker
+@@ -24,7 +33,10 @@ __all__ = [
+     "default_environment",
+ ]
+ 
+-Operator = Callable[[str, str], bool]
++Operator = Callable[[str, Union[str, AbstractSet[str]]], bool]
++EvaluateContext = Literal["metadata", "lock_file", "requirement"]
++# PEP 751: markers whose environment values are sets of (normalized) names.
++MARKERS_ALLOWING_SET = {"extras", "dependency_groups"}
+ 
+ 
+ class InvalidMarker(ValueError):
+@@ -174,13 +186,20 @@ _operators: dict[str, Operator] = {
+ }
+ 
+ 
+-def _eval_op(lhs: str, op: Op, rhs: str) -> bool:
+-    try:
+-        spec = Specifier("".join([op.serialize(), rhs]))
+-    except InvalidSpecifier:
+-        pass
+-    else:
+-        return spec.contains(lhs, prereleases=True)
++def _eval_op(lhs: str | AbstractSet[str], op: Op, rhs: str | AbstractSet[str]) -> bool:
++    if not isinstance(lhs, str) or (
++        not isinstance(rhs, str) and op.serialize() not in ("in", "not in")
++    ):
++        # Set-valued markers (PEP 751) only support membership tests.
++        raise UndefinedComparison(f"Undefined {op!r} on {lhs!r} and {rhs!r}.")
++
++    if isinstance(rhs, str):
++        try:
++            spec = Specifier("".join([op.serialize(), rhs]))
++        except InvalidSpecifier:
++            pass
++        else:
++            return spec.contains(lhs, prereleases=True)
+ 
+     oper: Operator | None = _operators.get(op.serialize())
+     if oper is None:
+@@ -189,19 +208,35 @@ def _eval_op(lhs: str, op: Op, rhs: str) -> bool:
+     return oper(lhs, rhs)
+ 
+ 
+-def _normalize(*values: str, key: str) -> tuple[str, ...]:
++def _normalize_value(value: str | AbstractSet[str]) -> str | AbstractSet[str]:
++    if isinstance(value, str):
++        return canonicalize_name(value)
++    return frozenset(canonicalize_name(v) for v in value)
++
++
++def _normalize(
++    *values: str | AbstractSet[str], key: str
++) -> tuple[str | AbstractSet[str], ...]:
+     # PEP 685 – Comparison of extra names for optional distribution dependencies
+     # https://peps.python.org/pep-0685/
+     # > When comparing extra names, tools MUST normalize the names being
+     # > compared using the semantics outlined in PEP 503 for names
+-    if key == "extra":
+-        return tuple(canonicalize_name(v) for v in values)
++    #
++    # PEP 751 – A file format to record Python dependencies for installation
++    # reproducibility
++    # https://peps.python.org/pep-0751/
++    # > The extras and dependency_groups markers are sets of names, which are
++    # > compared after normalization.
++    if key == "extra" or key in MARKERS_ALLOWING_SET:
++        return tuple(_normalize_value(v) for v in values)
+ 
+     # other environment markers don't have such standards
+     return values
+ 
+ 
+-def _evaluate_markers(markers: MarkerList, environment: dict[str, str]) -> bool:
++def _evaluate_markers(
++    markers: MarkerList, environment: dict[str, str | AbstractSet[str]]
++) -> bool:
+     groups: list[list[bool]] = [[]]
+ 
+     for marker in markers:
+@@ -298,22 +333,43 @@ class Marker:
+ 
+         return str(self) == str(other)
+ 
+-    def evaluate(self, environment: dict[str, str] | None = None) -> bool:
++    def evaluate(
++        self,
++        environment: Mapping[str, str | AbstractSet[str]] | None = None,
++        context: EvaluateContext = "metadata",
++    ) -> bool:
+         """Evaluate a marker.
+ 
+         Return the boolean from evaluating the given marker against the
+         environment. environment is an optional argument to override all or
+         part of the determined environment.
+ 
++        The *context* parameter specifies what context the marker is being
++        evaluated for, which determines the defaults for the markers that are
++        only meaningful in that context:
++
++        - ``"metadata"`` (core metadata; the default): ``extra`` defaults to
++          ``""``.
++        - ``"lock_file"`` (PEP 751 lock files): ``extras`` and
++          ``dependency_groups`` default to empty sets.
++        - ``"requirement"`` (all other situations): no additional defaults.
++
+         The environment is determined from the current Python process.
+         """
+-        current_environment = cast("dict[str, str]", default_environment())
+-        current_environment["extra"] = ""
++        current_environment = cast(
++            "dict[str, str | AbstractSet[str]]", default_environment()
++        )
++        if context == "lock_file":
++            current_environment.update(
++                extras=frozenset(), dependency_groups=frozenset()
++            )
++        elif context == "metadata":
++            current_environment["extra"] = ""
+         if environment is not None:
+             current_environment.update(environment)
+             # The API used to allow setting extra to None. We need to handle this
+             # case for backwards compatibility.
+-            if current_environment["extra"] is None:
++            if "extra" in current_environment and current_environment["extra"] is None:
+                 current_environment["extra"] = ""
+ 
+         return _evaluate_markers(
+@@ -321,11 +377,14 @@ class Marker:
+         )
+ 
+ 
+-def _repair_python_full_version(env: dict[str, str]) -> dict[str, str]:
++def _repair_python_full_version(
++    env: dict[str, str | AbstractSet[str]],
++) -> dict[str, str | AbstractSet[str]]:
+     """
+     Work around platform.python_version() returning something that is not PEP 440
+     compliant for non-tagged Python builds.
+     """
+-    if env["python_full_version"].endswith("+"):
+-        env["python_full_version"] += "local"
++    python_full_version = cast(str, env["python_full_version"])
++    if python_full_version.endswith("+"):
++        env["python_full_version"] = f"{python_full_version}local"
+     return env
+diff --git a/tests/test_markers.py b/tests/test_markers.py
+index faf0d13..d7a4497 100644
+--- a/tests/test_markers.py
++++ b/tests/test_markers.py
+@@ -22,7 +22,9 @@ from packaging.markers import (
+ )
+ 
+ VARIABLES = [
++    "dependency_groups",
+     "extra",
++    "extras",
+     "implementation_name",
+     "implementation_version",
+     "os_name",
+@@ -385,6 +387,98 @@ class TestMarker:
+         assert str(Marker(lhs)) == f'"{normalized_name}" == extra'
+         assert str(Marker(rhs)) == f'extra == "{normalized_name}"'
+ 
++    @pytest.mark.parametrize("variable", ["extras", "dependency_groups"])
++    @pytest.mark.parametrize(
++        ("marker_string", "environment", "expected"),
++        [
++            ("'foo' in {var}", {"foo"}, True),
++            ("'foo' in {var}", {"bar"}, False),
++            ("'foo' in {var}", set(), False),
++            ("'foo' in {var}", {"foo", "bar"}, True),
++            ("'foo' not in {var}", {"foo"}, False),
++            ("'foo' not in {var}", {"bar"}, True),
++            ("'Foo_Bar' in {var}", {"foo-bar"}, True),
++            ("'foo-bar' in {var}", {"FOO.BAR"}, True),
++            ("'foo' in {var}", frozenset({"foo"}), True),
++            ("'foo' in {var}", ["foo"], True),
++            ("'foo' in {var} and 'bar' in {var}", {"foo", "bar"}, True),
++            ("'foo' in {var} and 'bar' in {var}", {"foo"}, False),
++            ("'foo' in {var} or 'bar' in {var}", {"bar"}, True),
++            # Legacy: a plain string value is still compared after normalization.
++            ("'foo' in {var}", "foo", True),
++            ("'foo' == {var}", "FOO", True),
++        ],
++    )
++    def test_evaluates_set_markers(
++        self, variable, marker_string, environment, expected
++    ):
++        marker = Marker(marker_string.format(var=variable))
++        assert marker.evaluate({variable: environment}) is expected
++        assert marker.evaluate({variable: environment}, "lock_file") is expected
++
++    @pytest.mark.parametrize("variable", ["extras", "dependency_groups"])
++    def test_set_marker_str(self, variable):
++        assert str(Marker(f"'foo'in {variable}")) == f'"foo" in {variable}'
++        assert str(Marker(f"'foo' not in {variable}")) == f'"foo" not in {variable}'
++
++    @pytest.mark.parametrize("variable", ["extras", "dependency_groups"])
++    def test_lock_file_context_defaults_to_empty_sets(self, variable):
++        marker = Marker(f"'foo' in {variable}")
++        assert marker.evaluate(context="lock_file") is False
++        assert Marker(f"'foo' not in {variable}").evaluate(context="lock_file")
++
++    @pytest.mark.parametrize("variable", ["extras", "dependency_groups"])
++    @pytest.mark.parametrize("context", ["metadata", "requirement"])
++    def test_set_markers_undefined_outside_lock_file(self, variable, context):
++        with pytest.raises(KeyError):
++            Marker(f"'foo' in {variable}").evaluate(context=context)
++
++    def test_extra_undefined_in_lock_file_and_requirement_contexts(self):
++        marker = Marker("extra == 'foo'")
++        assert marker.evaluate() is False
++        for context in ("lock_file", "requirement"):
++            with pytest.raises(KeyError):
++                marker.evaluate(context=context)
++            assert marker.evaluate({"extra": "foo"}, context) is True
++
++    def test_extra_none_in_requirement_context(self):
++        environment = cast("dict[str, str]", {"extra": None})
++        marker = Marker("extra == 'foo'")
++        assert marker.evaluate(environment, context="requirement") is False
++
++    @pytest.mark.parametrize("variable", ["extras", "dependency_groups"])
++    @pytest.mark.parametrize(
++        "marker_string",
++        [
++            "'foo' == {var}",
++            "'foo' != {var}",
++            "'1.0' >= {var}",
++            "{var} == 'foo'",
++            "{var} in 'foo'",
++        ],
++    )
++    def test_set_markers_only_support_membership(self, variable, marker_string):
++        marker = Marker(marker_string.format(var=variable))
++        with pytest.raises(UndefinedComparison):
++            marker.evaluate({variable: {"foo"}}, context="lock_file")
++
++    def test_mixed_markers_lock_file(self):
++        marker = Marker(
++            "python_version >= '3' and ('dev' in dependency_groups or 'test' in extras)"
++        )
++        assert marker.evaluate(context="lock_file") is False
++        assert marker.evaluate({"extras": {"test"}}, context="lock_file") is True
++        assert (
++            marker.evaluate({"dependency_groups": {"dev"}}, context="lock_file") is True
++        )
++        assert (
++            marker.evaluate(
++                {"dependency_groups": {"dev"}, "python_version": "2.7"},
++                context="lock_file",
++            )
++            is False
++        )
++
+     def test_python_full_version_untagged_user_provided(self):
+         """A user-provided python_full_version ending with a + is also repaired."""
+         assert Marker("python_full_version < '3.12'").evaluate(

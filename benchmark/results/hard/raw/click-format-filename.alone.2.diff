@@ -1,0 +1,324 @@
+diff --git a/CHANGES.rst b/CHANGES.rst
+index 14cc09d..9b262bc 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -26,6 +26,9 @@ Unreleased
+     setting ``default=()``. :issue:`2246, 2292, 2295`
+ -   Make the decorators returned by ``@argument()`` and ``@option()`` reusable when the
+     ``cls`` parameter is used. :issue:`2294`
++-   ``format_filename`` replaces invalid bytes and surrogate escapes with the
++    replacement character, so the result can always be printed. ``Path``,
++    ``File``, and ``FileError`` use it to show filenames in error messages.
+ 
+ 
+ Version 8.1.3
+diff --git a/docs/arguments.rst b/docs/arguments.rst
+index e5765c9..8a13fe7 100644
+--- a/docs/arguments.rst
++++ b/docs/arguments.rst
+@@ -124,15 +124,14 @@ File Path Arguments
+ 
+ In the previous example, the files were opened immediately.  But what if
+ we just want the filename?  The naïve way is to use the default string
+-argument type.  However, remember that Click is Unicode-based, so the string
+-will always be a Unicode value.  Unfortunately, filenames can be Unicode or
+-bytes depending on which operating system is being used.  As such, the type
+-is insufficient.
+-
+-Instead, you should be using the :class:`Path` type, which automatically
+-handles this ambiguity.  Not only will it return either bytes or Unicode
+-depending on what makes more sense, but it will also be able to do some
+-basic checks for you such as existence checks.
++argument type.  The :class:`Path` type is better: it can do some basic
++checks for you, such as existence checks, and can convert the value to
++another type such as :class:`pathlib.Path` with ``path_type``.
++
++Filenames are not always valid Unicode.  On such systems, Python represents
++the invalid bytes as surrogate escapes, which can still be used to open the
++file but may fail when printed.  Use :func:`format_filename` to display a
++filename to the user.
+ 
+ Example:
+ 
+diff --git a/src/click/_compat.py b/src/click/_compat.py
+index 1273ddf..2bb03f5 100644
+--- a/src/click/_compat.py
++++ b/src/click/_compat.py
+@@ -380,17 +380,18 @@ def _wrap_io_open(
+ 
+ 
+ def open_stream(
+-    filename: str,
++    filename: "t.Union[str, os.PathLike[str]]",
+     mode: str = "r",
+     encoding: t.Optional[str] = None,
+     errors: t.Optional[str] = "strict",
+     atomic: bool = False,
+ ) -> t.Tuple[t.IO[t.Any], bool]:
+     binary = "b" in mode
++    filename = os.fspath(filename)
+ 
+     # Standard streams first. These are simple because they ignore the
+-    # atomic flag. Use fsdecode to handle Path("-").
+-    if os.fsdecode(filename) == "-":
++    # atomic flag. Use fspath to handle Path("-").
++    if filename == "-":
+         if any(m in mode for m in ["w", "a", "x"]):
+             if binary:
+                 return get_binary_stdout(), False
+diff --git a/src/click/exceptions.py b/src/click/exceptions.py
+index 76a06ff..fe68a36 100644
+--- a/src/click/exceptions.py
++++ b/src/click/exceptions.py
+@@ -1,10 +1,10 @@
+-import os
+ import typing as t
+ from gettext import gettext as _
+ from gettext import ngettext
+ 
+ from ._compat import get_text_stderr
+ from .utils import echo
++from .utils import format_filename
+ 
+ if t.TYPE_CHECKING:
+     from .core import Command
+@@ -262,7 +262,7 @@ class FileError(ClickException):
+             hint = _("unknown error")
+ 
+         super().__init__(hint)
+-        self.ui_filename: str = os.fsdecode(filename)
++        self.ui_filename: str = format_filename(filename)
+         self.filename = filename
+ 
+     def format_message(self) -> str:
+diff --git a/src/click/types.py b/src/click/types.py
+index c684861..d2340fa 100644
+--- a/src/click/types.py
++++ b/src/click/types.py
+@@ -9,6 +9,7 @@ from ._compat import _get_argv_encoding
+ from ._compat import get_filesystem_encoding
+ from ._compat import open_stream
+ from .exceptions import BadParameter
++from .utils import format_filename
+ from .utils import LazyFile
+ from .utils import safecall
+ 
+@@ -732,7 +733,7 @@ class File(ParamType):
+ 
+             return f
+         except OSError as e:  # noqa: B014
+-            self.fail(f"'{os.fsdecode(value)}': {e.strerror}", param, ctx)
++            self.fail(f"'{format_filename(value)}': {e.strerror}", param, ctx)
+ 
+     def shell_complete(
+         self, ctx: "Context", param: "Parameter", incomplete: str
+@@ -851,7 +852,7 @@ class Path(ParamType):
+                 # until Python 3.8. Use pathlib for now.
+                 import pathlib
+ 
+-                rv = os.fsdecode(pathlib.Path(rv).resolve())
++                rv = os.fspath(pathlib.Path(rv).resolve())
+ 
+             try:
+                 st = os.stat(rv)
+@@ -860,7 +861,7 @@ class Path(ParamType):
+                     return self.coerce_path_result(rv)
+                 self.fail(
+                     _("{name} {filename!r} does not exist.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -869,7 +870,7 @@ class Path(ParamType):
+             if not self.file_okay and stat.S_ISREG(st.st_mode):
+                 self.fail(
+                     _("{name} {filename!r} is a file.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -877,7 +878,7 @@ class Path(ParamType):
+             if not self.dir_okay and stat.S_ISDIR(st.st_mode):
+                 self.fail(
+                     _("{name} '{filename}' is a directory.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -886,7 +887,7 @@ class Path(ParamType):
+             if self.readable and not os.access(rv, os.R_OK):
+                 self.fail(
+                     _("{name} {filename!r} is not readable.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -895,7 +896,7 @@ class Path(ParamType):
+             if self.writable and not os.access(rv, os.W_OK):
+                 self.fail(
+                     _("{name} {filename!r} is not writable.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -904,7 +905,7 @@ class Path(ParamType):
+             if self.executable and not os.access(value, os.X_OK):
+                 self.fail(
+                     _("{name} {filename!r} is not executable.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+diff --git a/src/click/utils.py b/src/click/utils.py
+index 6e74ace..b828062 100644
+--- a/src/click/utils.py
++++ b/src/click/utils.py
+@@ -400,21 +400,49 @@ def open_file(
+ def format_filename(
+     filename: t.Union[str, bytes, "os.PathLike[t.AnyStr]"], shorten: bool = False
+ ) -> str:
+-    """Formats a filename for user display.  The main purpose of this
+-    function is to ensure that the filename can be displayed at all.  This
+-    will decode the filename to unicode if necessary in a way that it will
+-    not fail.  Optionally, it can shorten the filename to not include the
+-    full path to the filename.
++    """Format a filename as a string for display. Ensures the filename can be
++    displayed by replacing any invalid bytes or surrogate escapes in the name
++    with the replacement character ``�``.
++
++    Invalid bytes or surrogate escapes will raise an error when written to a
++    stream with ``errors="strict"``. This will typically happen with ``stdout``
++    when the locale is something like ``en_GB.UTF-8``.
++
++    Many scenarios *are* safe to write surrogates though, due to PEP 538 and
++    PEP 540, including:
++
++    -   Writing to ``stderr``, which uses ``errors="backslashreplace"``.
++    -   The system has ``LANG=C.UTF-8``, ``C``, or ``POSIX``. Python opens
++        stdout and stderr with ``errors="surrogateescape"``.
++    -   None of ``LANG/LC_*`` are set. Python assumes ``LANG=C.UTF-8``.
++    -   Python is started in UTF-8 mode  with  ``PYTHONUTF8=1`` or ``-X utf8``.
++        Python opens stdout and stderr with ``errors="surrogateescape"``.
+ 
+     :param filename: formats a filename for UI display.  This will also convert
+                      the filename into unicode without failing.
+     :param shorten: this optionally shortens the filename to strip of the
+                     path that leads up to it.
++
++    .. versionchanged:: 8.1.4
++        Replace invalid bytes and surrogate escapes with the replacement
++        character instead of returning them unchanged.
+     """
+     if shorten:
+         filename = os.path.basename(filename)
+-
+-    return os.fsdecode(filename)
++    else:
++        filename = os.fspath(filename)
++
++    if isinstance(filename, bytes):
++        return filename.decode(sys.getfilesystemencoding(), "replace")
++
++    try:
++        # Undo the "surrogateescape" decoding done by os.fsdecode, then
++        # decode again, replacing the invalid bytes.
++        return filename.encode("utf-8", "surrogateescape").decode("utf-8", "replace")
++    except UnicodeEncodeError:
++        # Lone surrogates that are not surrogate escapes, such as those
++        # produced by "surrogatepass" on Windows.
++        return re.sub("[\ud800-\udfff]", "�", filename)
+ 
+ 
+ def get_app_dir(app_name: str, roaming: bool = True, force_posix: bool = False) -> str:
+diff --git a/tests/test_types.py b/tests/test_types.py
+index df44d8a..aec26ca 100644
+--- a/tests/test_types.py
++++ b/tests/test_types.py
+@@ -104,6 +104,29 @@ def test_path_type(runner, cls, expect):
+     assert result.return_value == expect
+ 
+ 
++def test_path_surrogates(tmp_path, monkeypatch):
++    monkeypatch.chdir(tmp_path)
++    type = click.Path(exists=True)
++    path = "\udcff"
++
++    with pytest.raises(click.BadParameter, match="'�' does not exist"):
++        type.convert(path, None, None)
++
++
++def test_file_surrogates(tmp_path):
++    type = click.File()
++    path = tmp_path / "\udcff"
++
++    with pytest.raises(click.BadParameter, match="�': No such file or directory"):
++        type.convert(path, None, None)
++
++
++def test_file_error_surrogates():
++    message = click.FileError("\udcff").format_message()
++    assert message == "Could not open file '�': unknown error"
++    message.encode("utf-8")
++
++
+ @pytest.mark.skipif(
+     not symlinks_supported, reason="The current OS or FS doesn't support symlinks."
+ )
+diff --git a/tests/test_utils.py b/tests/test_utils.py
+index 02a6101..95c9f9e 100644
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+@@ -99,9 +99,44 @@ def test_filename_formatting():
+     assert click.format_filename("/x/foo.txt") == "/x/foo.txt"
+     assert click.format_filename("/x/foo.txt", shorten=True) == "foo.txt"
+ 
+-    # filesystem encoding on windows permits this.
+-    if not WIN:
+-        assert click.format_filename(b"/x/foo\xff.txt", shorten=True) == "foo\udcff.txt"
++    assert click.format_filename(pathlib.Path("/x/foo.txt")) == os.fspath(
++        pathlib.Path("/x/foo.txt")
++    )
++    assert (
++        click.format_filename(pathlib.Path("/x/foo.txt"), shorten=True) == "foo.txt"
++    )
++
++
++@pytest.mark.parametrize(
++    ("value", "expect"),
++    [
++        pytest.param(b"/x/foo\xff.txt", "foo�.txt", id="invalid bytes"),
++        pytest.param("/x/foo\udcff.txt", "foo�.txt", id="surrogate escape"),
++        pytest.param("/x/foo\udcc3\udca9.txt", "foo\xe9.txt", id="escaped utf-8"),
++        pytest.param("/x/foo\ud800.txt", "foo�.txt", id="lone surrogate"),
++    ],
++)
++def test_format_filename_invalid(value, expect):
++    if isinstance(value, bytes) and sys.getfilesystemencoding().lower() not in (
++        "utf-8",
++        "utf8",
++    ):
++        pytest.skip("Requires UTF-8 filesystem encoding.")
++
++    rv = click.format_filename(value, shorten=True)
++    assert rv == expect
++    # The result can always be encoded with strict errors.
++    rv.encode("utf-8")
++
++
++@pytest.mark.skipif(WIN, reason="Windows filesystems require valid Unicode names.")
++def test_format_filename_echo_surrogate_escape(runner):
++    filename = os.fsdecode(b"foo\xe9")
++
++    with runner.isolation() as outstreams:
++        click.echo(click.format_filename(filename))
++
++    assert outstreams[0].getvalue() == "foo�\n".encode()
+ 
+ 
+ def test_prompts(runner):

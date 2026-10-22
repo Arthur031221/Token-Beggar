@@ -1,0 +1,116 @@
+{
+ "task": "md-backslash-smarty",
+ "arm": "sized",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 156213,
+  "stop_reason": "end_turn",
+  "session_id": "361decd1-9f19-4c36-a8f2-7eee62472e44",
+  "total_cost_usd": 1.0051768,
+  "usage": {
+   "input_tokens": 68,
+   "cache_creation_input_tokens": 48137,
+   "cache_read_input_tokens": 1377144,
+   "output_tokens": 17219,
+   "output_tokens_details": {
+    "thinking_tokens": 4508
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 48137,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 985,
+     "cache_read_input_tokens": 60063,
+     "cache_creation_input_tokens": 864,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 864
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 68,
+    "outputTokens": 17219,
+    "cacheReadInputTokens": 1377144,
+    "cacheCreationInputTokens": 48137,
+    "webSearchRequests": 0,
+    "costUSD": 1.0051768,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 4508,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 42,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Fixed. `![x\\\"x](x)` with `-x smarty` now gives `<p><img alt=\"x&quot;x\" src=\"x\" /></p>`, the same as the unescaped input.\n\n**Cause:** a backslash escape like `\\\"` is replaced with a placeholder during inline parsing. The placeholder was turned back into the character by `UnescapePostprocessor`, which ran on the finished HTML string, after the serializer had already escaped attributes. So the bare `\"` went straight into `alt=\"\u2026\"`. Smarty adds `\"` and `'` to the escapable characters, which is why it only showed up with that extension.\n\n**Library changes:**\n- **`markdown/treeprocessors.py`:** new `UnescapeTreeprocessor`, registered last (priority 0). It restores escaped characters in element text, tails and attribute values before serialization, so the serializer escapes them like any other text. Code elements are skipped.\n- **`markdown/postprocessors.py`:** `UnescapePostprocessor` is no longer registered and now raises a deprecation warning. The class is kept so third-party code doesn't break.\n- **`markdown/inlinepatterns.py`:** raw inline HTML is stored outside the tree, so the new processor never sees it. `HtmlInlineProcessor` now restores escapes when it stores the HTML, so `<span title=\"a\\\"b\">` still comes out unchanged.\n- **`markdown/extensions/toc.py`:** switched to the new class so it doesn't raise the deprecation warning.\n\n**Behaviour change:** `\\>` in normal text now renders as `&gt;` instead of a bare `>`. It's the same fix and valid HTML either way, but the expected output in `tests/basic/backlash-escapes.html` had to be updated. I noted this in the 3.4 release notes and updated the processor tables in `docs/extensions/api.md`.\n\n**Tests added:**\n- `tests/test_syntax/extensions/test_smarty.py` (new): escaped quotes in image alt text, link titles, plain text and raw HTML. The alt-text and link-title tests fail without the fix.\n- `test_inline_html_backslash_escapes` in `test_raw_html.py` and `test_escaped_chars_in_alt` in `test_images.py`.\n- `TestUnescapePostprocessor` in `test_apis.py`: the old class still works but warns, and the new processor is the one registered.\n\n**Results:** all new and affected tests pass. The full suite (run with `unittest`) has 8 failures, the same 8 as before my changes, so nothing new broke. `pytest tests` on the whole directory doesn't get past collection because of a `TestSuite` class in `test_md_in_html.py`; that was already the case, and targeted pytest runs work fine. flake8 isn't installed in the venv, so the code wasn't linted.\n\nNothing is committed.",
+  "ttft_ms": 1709,
+  "type": "result",
+  "duration_ms": 171112,
+  "uuid": "9bf8e67a-90cc-45e1-854a-f0d6cc766734",
+  "ttft_stream_ms": 778,
+  "time_to_request_ms": 112,
+  "first_content_frame_ms": 778,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

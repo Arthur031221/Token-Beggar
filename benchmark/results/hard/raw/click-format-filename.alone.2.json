@@ -1,0 +1,116 @@
+{
+ "task": "click-format-filename",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 160339,
+  "stop_reason": "end_turn",
+  "session_id": "96351f3c-11e7-4075-8b1c-6fad50aaf869",
+  "total_cost_usd": 0.7207741999999999,
+  "usage": {
+   "input_tokens": 50,
+   "cache_creation_input_tokens": 34277,
+   "cache_read_input_tokens": 904891,
+   "output_tokens": 13269,
+   "output_tokens_details": {
+    "thinking_tokens": 3917
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 34277,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1001,
+     "cache_read_input_tokens": 46001,
+     "cache_creation_input_tokens": 1066,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1066
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 50,
+    "outputTokens": 13269,
+    "cacheReadInputTokens": 904891,
+    "cacheCreationInputTokens": 34277,
+    "webSearchRequests": 0,
+    "costUSD": 0.7207741999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3917,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 32,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`click.format_filename` now returns a string that can always be printed. Invalid bytes and surrogate escapes are replaced with `\ufffd`. The issue's reproducer now prints `printing 'foo\\udce9' as foo\ufffd` and `foo\ufffd` instead of raising `UnicodeEncodeError`. Nothing is committed.\n\n**What changed**\n- **`format_filename`** (`src/click/utils.py`):\n  - Bytes are decoded with the filesystem encoding, replacing anything invalid.\n  - Strings are encoded back to UTF-8 using `surrogateescape`, then decoded with `replace`. So `\"foo\\udce9\"` becomes `\"foo\ufffd\"`, and escaped bytes that form valid UTF-8 come back as the real character.\n  - Lone surrogates that aren't surrogate escapes (possible on Windows) would make that encoding step fail. For those it swaps each surrogate for `\ufffd` directly, so the function never raises.\n  - `pathlib.Path` input is supported too.\n  - I rewrote the docstring and added a `versionchanged:: 8.1.4` note.\n- **Error messages:** `Path`, `File` and `FileError` used `os.fsdecode` to show filenames, which did nothing to a `str`. They now use `format_filename`, so a message about a bad filename can be printed to stdout safely. I kept the existing quoting style of the messages.\n- **`os.fsdecode` \u2192 `os.fspath`**, as the issue suggests:\n  - in `open_stream` (its type hint now also accepts path-like objects);\n  - in `Path(resolve_path=True)`.\n- **Docs:** I added a `CHANGES.rst` entry under 8.1.4, without an issue number because I wasn't sure of it. I also rewrote the outdated \"File Path Arguments\" paragraph in `docs/arguments.rst`, which claimed `Path` returns bytes or Unicode, and pointed it at `format_filename`.\n\n**Tests**\n- **`tests/test_utils.py`:** cases for invalid bytes, surrogate escapes, escaped UTF-8, lone surrogates, and `pathlib.Path` input, plus an echo test matching the issue. The old check that `format_filename` returns `\"foo\\udcff.txt\"` was replaced, since that was the bug.\n- **`tests/test_types.py`:** surrogate filenames in `Path`, `File` and `FileError` error messages.\n\nAll 8 new tests fail against the original source and pass with the fix. The full suite gives 592 passed, 21 skipped, 1 xfailed.\n\n`tests/test_basic.py` won't even load under the installed pytest, with or without my changes. A deprecation warning about a generator passed to `parametrize` is treated as an error, so I ran the suite with `-W \"ignore::pytest.PytestRemovedIn10Warning\"`. I didn't run mypy because it isn't installed in `.venv`.",
+  "ttft_ms": 3897,
+  "type": "result",
+  "duration_ms": 166813,
+  "uuid": "79fc88b7-c666-41be-af1b-754c8be3072f",
+  "ttft_stream_ms": 2950,
+  "time_to_request_ms": 77,
+  "first_content_frame_ms": 2950,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 5,
+  "f2p_total": 5,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,130 @@
+{
+ "task": "md-footnote-order",
+ "arm": "main",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 115716,
+  "stop_reason": "stop_sequence",
+  "session_id": "f2531f69-ba29-4370-b725-9b734ce505c3",
+  "total_cost_usd": 0.4861603,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 23644,
+   "cache_read_input_tokens": 170481,
+   "output_tokens": 6343,
+   "output_tokens_details": {
+    "thinking_tokens": 2790
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23644,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 251,
+     "cache_read_input_tokens": 32289,
+     "cache_creation_input_tokens": 4145,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4145
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 6343,
+    "cacheReadInputTokens": 170481,
+    "cacheCreationInputTokens": 23644,
+    "webSearchRequests": 0,
+    "costUSD": 0.3501642,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2790,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 6577,
+    "cacheReadInputTokens": 84621,
+    "cacheCreationInputTokens": 24696,
+    "webSearchRequests": 0,
+    "costUSD": 0.1359961,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 956,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "api_error",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": true,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": 429,
+  "api_error_origin": "first_party",
+  "api_error": "usage_limit_reached",
+  "result": "You've hit your session limit \u00b7 resets 5:50am (Asia/Taipei)",
+  "type": "result",
+  "duration_ms": 120063,
+  "uuid": "cd427ea9-8db8-40d3-8707-b223f607a41d",
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,116 @@
+{
+ "task": "packaging-extras-marker",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 100895,
+  "stop_reason": "end_turn",
+  "session_id": "8d25af0d-4860-4c85-a819-ef87c4713adb",
+  "total_cost_usd": 0.5507770000000001,
+  "usage": {
+   "input_tokens": 28,
+   "cache_creation_input_tokens": 28932,
+   "cache_read_input_tokens": 449145,
+   "output_tokens": 11469,
+   "output_tokens_details": {
+    "thinking_tokens": 3253
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 28932,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 867,
+     "cache_read_input_tokens": 41521,
+     "cache_creation_input_tokens": 201,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 201
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 28,
+    "outputTokens": 11469,
+    "cacheReadInputTokens": 449145,
+    "cacheCreationInputTokens": 28932,
+    "webSearchRequests": 0,
+    "costUSD": 0.5507770000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3253,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 14,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added PEP 751 support for the `extras` and `dependency_groups` markers. The full test suite passes (27,219 tests), mypy and ruff are clean, and the new examples in `docs/markers.rst` pass as doctests. Nothing is committed.\n\n**What changed**\n- **Parsing** (`src/packaging/_tokenizer.py`): `extras` and `dependency_groups` are now accepted as marker names, so strings like `\"dev\" in dependency_groups` parse.\n- **Set values** (`src/packaging/markers.py`): in the environment you pass in, these two markers take a set of names. Names are normalized before comparing, the same way `extra` already is, so `\"Foo_Bar\" in extras` matches `{\"foo-bar\"}`.\n- **Only `in` and `not in` work on them.** Something like `\"foo\" == extras` raises `UndefinedComparison` instead of quietly returning False.\n- **New `context` argument on `Marker.evaluate()`**: `evaluate(environment=None, context=\"metadata\")`. It sets which markers get a default value:\n  - `\"metadata\"` (the default): `extra` defaults to `\"\"`, exactly as before, so existing callers see no change.\n  - `\"lock_file\"`: `extras` and `dependency_groups` default to empty sets.\n  - `\"requirement\"`: no extra defaults.\n- **Type hint**: the `environment` argument is now typed as `Mapping` instead of `dict`. Otherwise mypy would reject callers that pass a plain `dict[str, str]`.\n\n**Behaviour to be aware of**\n- If you use `extras` or `dependency_groups` outside the `\"lock_file\"` context without supplying a value, evaluation raises `KeyError`. Missing names already behave this way. Similarly, `extra` has no default in the `\"lock_file\"` and `\"requirement\"` contexts.\n- `str(Marker(...))` still only normalizes the name in `extra` comparisons; names in `extras`/`dependency_groups` are left as written and normalized only when evaluating. The existing string normalization only looks at the first clause of a marker, so extending it would have been inconsistent.\n\n**Tests and docs**\n- **Tests** (`tests/test_markers.py`): the new markers are added to the parse tests, plus new tests for:\n  - evaluation results and name normalization\n  - the default values in each context\n  - rejecting comparisons other than `in`/`not in`\n  - markers that mix these with `python_version`\n- **Docs**: `docs/markers.rst` has a usage example and documents the new argument, and `CHANGELOG.rst` has an entry.",
+  "ttft_ms": 14287,
+  "type": "result",
+  "duration_ms": 124699,
+  "uuid": "aa86abdd-ef39-4c39-b9fe-f8678df3160c",
+  "ttft_stream_ms": 1202,
+  "time_to_request_ms": 59,
+  "first_content_frame_ms": 1202,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 20,
+  "f2p_total": 20,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

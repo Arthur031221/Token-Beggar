@@ -1,0 +1,116 @@
+{
+ "task": "structlog-exception-outside",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 129716,
+  "stop_reason": "end_turn",
+  "session_id": "527f770c-3882-4a2d-ad65-6d99b8c5dcd7",
+  "total_cost_usd": 0.7465678,
+  "usage": {
+   "input_tokens": 46,
+   "cache_creation_input_tokens": 42191,
+   "cache_read_input_tokens": 792679,
+   "output_tokens": 12516,
+   "output_tokens_details": {
+    "thinking_tokens": 3337
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 42191,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1025,
+     "cache_read_input_tokens": 54719,
+     "cache_creation_input_tokens": 262,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 262
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 46,
+    "outputTokens": 12516,
+    "cacheReadInputTokens": 792679,
+    "cacheCreationInputTokens": 42191,
+    "webSearchRequests": 0,
+    "costUSD": 0.7465678,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3337,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 24,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed this: calling `exception()` outside an exception handler no longer raises. When there's no exception to render, the `exc_info` key is now just removed. The full test suite passes (857 passed, 16 skipped). My 10 new or updated tests all fail against the old code and pass with the fix.\n\n**What was already fixed:** an earlier PR (#657, still unreleased) made `ExceptionDictTransformer` return `[]` for `(None, None, None)` instead of crashing. So on this branch the issue's reproduction no longer crashes, but it still logs `\"exception\": []`. `format_exc_info` likewise adds `\"exception\": \"MISSING\"`. Neither is a useful thing to log.\n\n**The fix:** missing exceptions are now caught in one place, the shared helper all these renderers use.\n- **`src/structlog/processors.py`:** `_figure_out_exc_info` now returns `None` when `exc_info` is `(None, None, None)`, or when it's `True` and no exception is being handled. `ExceptionRenderer` (behind both `format_exc_info` and `dict_tracebacks`) checks that result before formatting. So the formatter is never called, and no `exception` key is added. `ExceptionPrettyPrinter` also prints nothing in this case now.\n- **`src/structlog/dev.py`:** `ConsoleRenderer` already handled this case; I only simplified its check to match.\n- I updated the docstrings, added a `versionchanged:: 25.1.0` note (the version the repo already uses for unreleased changes), and added a CHANGELOG entry.\n\n**Behaviour change:** `format_exc_info` used to produce `{\"exception\": \"MISSING\"}` for a missing exception and now produces nothing. I changed the existing `test_no_exception` test to expect `{}`. If you'd rather keep the old `\"MISSING\"` output for `format_exc_info`, the change can be limited to `dict_tracebacks`.\n\n**Tests added:**\n- `tests/processors/test_renderers.py`: missing-exception cases for `format_exc_info` and `dict_tracebacks`, and a check that a custom formatter isn't called. There's also an end-to-end version of the issue's reproduction (`structlog.get_logger().exception(...)` with `dict_tracebacks` and `JSONRenderer`).\n- `tests/processors/test_processors.py`: `ExceptionPrettyPrinter` prints nothing for a missing exception.\n- `tests/test_stdlib.py`: the issue's setup, with stdlib `logging.exception()` going through `ProcessorFormatter` and `dict_tracebacks`.\n\nmypy reports no errors in the files I changed; the remaining errors are in `stdlib.py` and were there before. The only ruff installed is a newer global one that flags many unrelated existing issues. The single warning my code triggered was LOG004 (`.exception()` outside a handler) in the new stdlib test. That's what the test is meant to do, so I silenced it with `# noqa: LOG004`. Nothing is committed.",
+  "ttft_ms": 5999,
+  "type": "result",
+  "duration_ms": 142130,
+  "uuid": "f53b3dbd-8e26-4e03-9ea9-8ffbc8f55a3f",
+  "ttft_stream_ms": 4622,
+  "time_to_request_ms": 75,
+  "first_content_frame_ms": 4623,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 4,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

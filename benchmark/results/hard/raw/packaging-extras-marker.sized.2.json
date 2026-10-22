@@ -1,0 +1,116 @@
+{
+ "task": "packaging-extras-marker",
+ "arm": "sized",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 97664,
+  "stop_reason": "end_turn",
+  "session_id": "d83330dd-01c0-4f56-901d-95e40f1bafca",
+  "total_cost_usd": 0.5893196,
+  "usage": {
+   "input_tokens": 24,
+   "cache_creation_input_tokens": 33870,
+   "cache_read_input_tokens": 407418,
+   "output_tokens": 11839,
+   "output_tokens_details": {
+    "thinking_tokens": 3816
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 33870,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 944,
+     "cache_read_input_tokens": 45703,
+     "cache_creation_input_tokens": 957,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 957
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 24,
+    "outputTokens": 11839,
+    "cacheReadInputTokens": 407418,
+    "cacheCreationInputTokens": 33870,
+    "webSearchRequests": 0,
+    "costUSD": 0.5893196,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3816,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 12,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Markers can now use the PEP 751 `extras` and `dependency_groups` variables, e.g. `\"test\" in dependency_groups`. The full test suite passes (27,210 tests). Nothing is committed.\n\n**What changed**\n- **Parsing** (`src/packaging/_tokenizer.py`): the marker parser now recognises `extras` and `dependency_groups` as marker names.\n- **Evaluation** (`src/packaging/markers.py`): `Marker.evaluate()` accepts sets of names as values for these two markers. It also has a new `context` argument that controls which markers get default values:\n  - `\"metadata\"` (the default) sets `extra` to `\"\"`, exactly as before, so existing callers behave the same.\n  - `\"lock_file\"` sets `extras` and `dependency_groups` to empty sets.\n  - `\"requirement\"` sets no defaults.\n- **Name matching:** names are normalised on both sides, as `extra` already is (PEP 685). So `\"Foo_Bar\" in extras` matches `{\"foo.bar\"}`, and a parsed marker prints as `\"foo-bar\" in extras`.\n- **Stricter operators:** PEP 751 only allows `in` and `not in` with these two markers. Anything else, such as `\"foo\" == extras` or `extras in \"foo\"`, raises `UndefinedComparison` instead of quietly returning `False`.\n\n**Tests** (`tests/test_markers.py`): the new markers are added to the shared parsing tests. New tests cover `in`/`not in` evaluation in the lock-file context, name normalisation, combining the markers with `and`/`or`, the rejected operators, and the defaults for each context.\n\nI also updated `docs/markers.rst` for the new `evaluate()` signature and added an entry to `CHANGELOG.rst`.\n\n**Behaviour to be aware of**\n- Using `extras` or `dependency_groups` outside the `\"lock_file\"` context without supplying a value raises `KeyError`. Likewise, `extra` raises `KeyError` in the `\"requirement\"` and `\"lock_file\"` contexts unless you pass it. This is how missing markers already behaved; the docs say `UndefinedEnvironmentName`, but the code has always raised `KeyError`, and I didn't change that.\n- Normalisation when a marker is parsed only applies to the first comparison in an expression. That limit was already there for `extra`, and the new markers have it too. It doesn't affect evaluation results, because values are normalised again when evaluated.\n\nI couldn't run mypy because it isn't installed in `.venv`, so the type annotations haven't been checked. The new code is formatted with ruff, and the ruff errors that remain are all in code I didn't change.",
+  "ttft_ms": 6494,
+  "type": "result",
+  "duration_ms": 113391,
+  "uuid": "763d7b5f-948d-46fa-9242-ab4a8ea23327",
+  "ttft_stream_ms": 773,
+  "time_to_request_ms": 105,
+  "first_content_frame_ms": 773,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 20,
+  "f2p_total": 20,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,116 @@
+{
+ "task": "jinja-namespace-tuple",
+ "arm": "sized",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 157750,
+  "stop_reason": "end_turn",
+  "session_id": "46a01686-a0e1-4778-a711-004640c760af",
+  "total_cost_usd": 0.5588257999999999,
+  "usage": {
+   "input_tokens": 38,
+   "cache_creation_input_tokens": 28313,
+   "cache_read_input_tokens": 581749,
+   "output_tokens": 10791,
+   "output_tokens_details": {
+    "thinking_tokens": 2561
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 28313,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 792,
+     "cache_read_input_tokens": 40610,
+     "cache_creation_input_tokens": 493,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 493
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 38,
+    "outputTokens": 10791,
+    "cacheReadInputTokens": 581749,
+    "cacheCreationInputTokens": 28313,
+    "webSearchRequests": 0,
+    "costUSD": 0.5588257999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2561,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 30,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Fixed: `{% set ns.a, ns.b = ... %}` now works, so the template from the issue renders. All 910 tests pass, including 4 new ones. Nothing is committed.\n\n**Cause:** the parser only recognized a namespace reference (`ns.attr`) when it was the whole target of a `set`. In a tuple of targets, `full.prev_id` was read as just the name `full`, so the parser stopped at the `.` and then raised the error at the `,`. The compiler had a second problem: the code that writes `ns.attr` also wrote its \"is this a namespace?\" check on separate lines. That works for a single target but would break if written in the middle of a tuple.\n\n**Changes:**\n- **`src/jinja2/parser.py`**\n  - `parse_primary` and `parse_tuple` take a new `with_namespace` option. When it's on, `name.attr` is read as a namespace reference.\n  - `parse_assign_target` passes the option through. This replaces the old special case that only handled a single target. Only `set` turns the option on, so `for` targets behave as before.\n- **`src/jinja2/compiler.py`**\n  - A new helper, `_write_nsref_checks`, writes the namespace check for every `ns.attr` in a target before the assignment line. Both `{% set ... = ... %}` and `{% set ... %}...{% endset %}` use it.\n  - `visit_NSRef` now only writes `ns['attr']`.\n  - The helper handles a bare `ns.attr` target separately because `find_all` only searches child nodes. Missing that broke two existing tests until I fixed it.\n- **`tests/test_core_tags.py`:** new tests for:\n  - assigning to several namespace attributes at once;\n  - the swap pattern from the issue inside a loop;\n  - plain names and namespace attributes mixed in one target;\n  - the error when one target isn't a namespace.\n- **`CHANGES.rst`:** a changelog entry under 3.1.5. I left out the issue number because I couldn't confirm it.\n\nThe generated code repeats the namespace check when the same namespace appears twice in one target, as in `ns.a, ns.b`. It's harmless; I can remove the duplicates if you'd like tidier output.",
+  "ttft_ms": 4906,
+  "type": "result",
+  "duration_ms": 163216,
+  "uuid": "5ca4f8b2-7a5d-43a5-9cdd-6e5c31268fa5",
+  "ttft_stream_ms": 4561,
+  "time_to_request_ms": 123,
+  "first_content_frame_ms": 4561,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

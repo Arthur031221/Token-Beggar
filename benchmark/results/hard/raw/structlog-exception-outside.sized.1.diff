@@ -1,0 +1,181 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index cc53c62..c59c9c3 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -34,6 +34,9 @@ You can find our backwards-compatibility policy [here](https://github.com/hynek/
+ 
+   [#657](https://github.com/hynek/structlog/pull/657)
+ 
++- `structlog.processors.ExceptionRenderer` (and therefore `structlog.processors.format_exc_info` and `structlog.processors.dict_tracebacks`) and `structlog.processors.ExceptionPrettyPrinter` now handle missing exceptions – for example, when `exception()` is called outside of an exception handler.
++  The exception formatter is not called anymore and no `exception` key is added to the event dict.
++
+ - Instantiating `structlog.dev.ConsoleRenderer` does not mutate the passed *styles* dict anymore.
+ 
+   [#669](https://github.com/hynek/structlog/pull/669)
+diff --git a/src/structlog/processors.py b/src/structlog/processors.py
+index c4803a3..cfca0ea 100644
+--- a/src/structlog/processors.py
++++ b/src/structlog/processors.py
+@@ -34,6 +34,7 @@ from ._frames import (
+     _find_first_app_frame_and_name,
+     _format_exception,
+     _format_stack,
++    is_missing_exc_info,
+ )
+ from ._log_levels import NAME_TO_LEVEL, add_log_level
+ from ._utils import get_processname
+@@ -386,6 +387,11 @@ class ExceptionRenderer:
+     If there is no ``exc_info`` key, the *event_dict* is not touched. This
+     behavior is analog to the one of the stdlib's logging.
+ 
++    If there is no exception to render (for example, because
++    `logging.Logger.exception` was called outside of an exception handler and
++    the value is ``(None, None, None)``), ``exc_info`` is removed and no
++    ``exception`` key is added.
++
+     Args:
+         exception_formatter:
+             A callable that is used to format the exception from the
+@@ -396,6 +402,9 @@ class ExceptionRenderer:
+         features.
+ 
+     .. versionadded:: 22.1.0
++    .. versionchanged:: 25.1.0
++       A missing exception (``(None, None, None)``) does not add an
++       ``exception`` key anymore and is not passed to *exception_formatter*.
+     """
+ 
+     def __init__(
+@@ -407,11 +416,9 @@ class ExceptionRenderer:
+     def __call__(
+         self, logger: WrappedLogger, name: str, event_dict: EventDict
+     ) -> EventDict:
+-        exc_info = event_dict.pop("exc_info", None)
+-        if exc_info:
+-            event_dict["exception"] = self.format_exception(
+-                _figure_out_exc_info(exc_info)
+-            )
++        exc_info = _figure_out_exc_info(event_dict.pop("exc_info", None))
++        if exc_info and not is_missing_exc_info(exc_info):
++            event_dict["exception"] = self.format_exception(exc_info)
+ 
+         return event_dict
+ 
+@@ -642,7 +649,7 @@ class ExceptionPrettyPrinter:
+         exc = event_dict.pop("exception", None)
+         if exc is None:
+             exc_info = _figure_out_exc_info(event_dict.pop("exc_info", None))
+-            if exc_info:
++            if exc_info and not is_missing_exc_info(exc_info):
+                 exc = _format_exception(exc_info)
+ 
+         if exc:
+diff --git a/tests/processors/test_processors.py b/tests/processors/test_processors.py
+index 09ea0e9..e4a3b84 100644
+--- a/tests/processors/test_processors.py
++++ b/tests/processors/test_processors.py
+@@ -177,6 +177,19 @@ class TestExceptionPrettyPrinter:
+ 
+         assert "" == sio.getvalue()
+ 
++    @pytest.mark.parametrize("ei", [True, (None, None, None)])
++    def test_nop_if_missing_exc_info(self, sio, ei):
++        """
++        If exc_info is set but there is no exception (e.g. `exception` was
++        called outside of an exception handler), don't print anything.
++        """
++        epp = ExceptionPrettyPrinter(sio)
++
++        ed = epp(None, None, {"exc_info": ei})
++
++        assert "" == sio.getvalue()
++        assert "exc_info" not in ed
++
+     def test_own_exc_info(self, sio):
+         """
+         If exc_info is a tuple, use it.
+diff --git a/tests/processors/test_renderers.py b/tests/processors/test_renderers.py
+index 8f225c8..cfdb21e 100644
+--- a/tests/processors/test_renderers.py
++++ b/tests/processors/test_renderers.py
+@@ -6,7 +6,9 @@
+ from __future__ import annotations
+ 
+ import datetime
++import io
+ import json
++import logging
+ import pickle
+ 
+ import pytest
+@@ -21,8 +23,10 @@ from structlog.processors import (
+     MaybeTimeStamper,
+     TimeStamper,
+     _json_fallback_handler,
++    dict_tracebacks,
+     format_exc_info,
+ )
++from structlog.stdlib import ProcessorFormatter
+ from structlog.threadlocal import wrap_dict
+ 
+ from ..utils import CustomError
+@@ -578,8 +582,56 @@ class TestFormatExcInfo:
+     @pytest.mark.parametrize("ei", [True, (None, None, None)])
+     def test_no_exception(self, ei):
+         """
+-        A missing exception does not blow up.
++        A missing exception does not blow up and doesn't add an exception key.
+         """
+-        assert {"exception": "MISSING"} == format_exc_info(
+-            None, None, {"exc_info": ei}
++        assert {} == format_exc_info(None, None, {"exc_info": ei})
++
++    @pytest.mark.parametrize("ei", [True, (None, None, None)])
++    def test_no_exception_formatter_not_called(self, ei):
++        """
++        If there is no exception, the exception formatter is not called.
++        """
++
++        def formatter(exc_info):
++            pytest.fail(f"formatter called with {exc_info!r}")
++
++        assert {"event": "hi"} == ExceptionRenderer(formatter)(
++            None, None, {"event": "hi", "exc_info": ei}
++        )
++
++    @pytest.mark.parametrize("ei", [True, (None, None, None)])
++    def test_no_exception_dict_tracebacks(self, ei):
++        """
++        Calling `exception` outside of an exception handler with
++        `dict_tracebacks` doesn't raise and doesn't add an exception key.
++        """
++        assert {"event": "oh no"} == dict_tracebacks(
++            None, None, {"event": "oh no", "exc_info": ei}
++        )
++
++    def test_no_exception_stdlib_processor_formatter(self):
++        """
++        Calling `logging.Logger.exception` outside of an exception handler
++        while rendering using `ProcessorFormatter` with `dict_tracebacks`
++        doesn't raise.
++        """
++        sio = io.StringIO()
++        handler = logging.StreamHandler(sio)
++        handler.setFormatter(
++            ProcessorFormatter(
++                processors=[
++                    ProcessorFormatter.remove_processors_meta,
++                    dict_tracebacks,
++                    JSONRenderer(),
++                ]
++            )
++        )
++        logger = logging.getLogger(
++            "test_no_exception_stdlib_processor_formatter"
+         )
++        logger.handlers = [handler]
++        logger.propagate = False
++
++        logger.exception("oh no")
++
++        assert {"event": "oh no"} == json.loads(sio.getvalue())

@@ -1,0 +1,116 @@
+{
+ "task": "rich-inspect-methods",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 71237,
+  "stop_reason": "end_turn",
+  "session_id": "cd00a15c-19e3-47c0-a47b-6ed50158c231",
+  "total_cost_usd": 0.40929200000000004,
+  "usage": {
+   "input_tokens": 32,
+   "cache_creation_input_tokens": 23945,
+   "cache_read_input_tokens": 457320,
+   "output_tokens": 6307,
+   "output_tokens_details": {
+    "thinking_tokens": 1352
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23945,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 730,
+     "cache_read_input_tokens": 35866,
+     "cache_creation_input_tokens": 869,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 869
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 32,
+    "outputTokens": 6307,
+    "cacheReadInputTokens": 457320,
+    "cacheCreationInputTokens": 23945,
+    "webSearchRequests": 0,
+    "costUSD": 0.40929200000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1352,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 17,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the crash in `rich/text.py`, and `inspect(pyparsing, all=True)` and `inspect(pyparsing, methods=True)` now render without error. I checked this against pyparsing 3.0.8, the version from the issue.\n\n**Cause:** pyparsing's `WordStart` and `WordEnd` docstrings contain a literal backspace character (from ``` ``\\b`` ``` in a non-raw docstring). `Text.__init__` strips control codes like this from the stored string, but it measured the length from the original string. So `len(text)` came out longer than `text.plain`. Anything that uses `len()` to place styles, such as `stylize` and `append`, then marked a range running past the end of the text. That made `Text.divide` look up a line that doesn't exist, causing the `IndexError`. The bug is in `Text` itself, so it could affect any string with these characters, not just `inspect`.\n\n**Fix** (`rich/text.py`):\n- `Text.__init__` now measures the length from the cleaned-up string.\n- The `Text.plain` setter had the same problem and didn't strip control codes at all. It now strips them and measures the cleaned string, so both ways of setting the text agree.\n\n**Tests:**\n- `tests/test_text.py`:\n  - `test_strip_control_codes_length` checks that `len()` and style ranges match the stripped text.\n  - `test_plain_property_setter_strips_control_codes` covers the setter.\n- `tests/test_inspect.py`: `test_inspect_callable_with_control_codes_in_docstring` inspects a module whose function's docstring contains `\\b`. Without the fix it reproduces the issue's `IndexError`; with the fix it passes.\n\n**Test results:** the three new tests pass. The full suite has 17 failures, and they are exactly the same 17 with and without my change, in `test_syntax.py`, `test_inspect.py` and other files. They look like differences in how things render on Python 3.12 (the virtualenv's version) and aren't related to this fix.\n\nNothing is committed. The pyparsing copy I used for checking was put in `/tmp/pp` and `/tmp/ppx`, not in the repo or the virtualenv.",
+  "ttft_ms": 3867,
+  "type": "result",
+  "duration_ms": 89520,
+  "uuid": "c1d14325-258b-4165-bd5f-8a0233b5d634",
+  "ttft_stream_ms": 1431,
+  "time_to_request_ms": 54,
+  "first_content_frame_ms": 1431,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 12,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

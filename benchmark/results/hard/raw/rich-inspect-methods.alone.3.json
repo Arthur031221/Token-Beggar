@@ -1,0 +1,116 @@
+{
+ "task": "rich-inspect-methods",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 81269,
+  "stop_reason": "end_turn",
+  "session_id": "a1b8e9a1-ad20-4c80-8b38-be083bafdb1d",
+  "total_cost_usd": 0.49827479999999996,
+  "usage": {
+   "input_tokens": 40,
+   "cache_creation_input_tokens": 28547,
+   "cache_read_input_tokens": 657994,
+   "output_tokens": 6907,
+   "output_tokens_details": {
+    "thinking_tokens": 1499
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 28547,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 659,
+     "cache_read_input_tokens": 41042,
+     "cache_creation_input_tokens": 295,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 295
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 40,
+    "outputTokens": 6907,
+    "cacheReadInputTokens": 657994,
+    "cacheCreationInputTokens": 28547,
+    "webSearchRequests": 0,
+    "costUSD": 0.49827479999999996,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1499,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 23,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the bug; it was in `Text`, not in `inspect`. Nothing is committed.\n\n**Cause:** `Text.__init__` (`rich/text.py:144`) removes control codes like backspace, carriage return, vertical tab and form feed from the string. But it worked out the text's length from the original string, before those were removed. So `len(text)` came out longer than the text actually stored. When `inspect` highlighted a docstring containing such characters, the style ranges it built ran past the end of the text. Splitting that text across lines then looked up a line that didn't exist, which is the `IndexError` in the report. pyparsing has docstrings with these characters, which is why `inspect(pyparsing, all=True)` (or `methods=True`) crashed.\n\n**Fix:** the length is now taken from the cleaned-up string.\n\n**Tests:**\n- `tests/test_text.py`: `test_strip_control_codes` now also checks that `len(text)` matches the stored text, and a new `test_control_codes_with_highlighted_spans` covers styling, appending and wrapping text that contains control codes.\n- `tests/test_inspect.py`: a new `test_inspect_method_docstring_with_control_codes` inspects a class whose method's docstring has control codes and a line break. It used to raise the same `IndexError` and now renders correctly.\n- I also added a line to `CHANGELOG.md` under Unreleased.\n\n**Results:** all three tests above fail without the fix and pass with it. The full suite shows 17 failures, and exactly the same 17 fail with and without my change. They're in syntax, markdown, inspect, pretty and a few others, and look like differences from running on Python 3.12 and the installed library versions rather than anything I touched. pyparsing isn't installed in the virtualenv, so I tested with my own docstrings containing the same kind of characters, not with pyparsing itself.",
+  "ttft_ms": 2025,
+  "type": "result",
+  "duration_ms": 93959,
+  "uuid": "688024a2-19bc-4b4c-93bb-0004e1be435c",
+  "ttft_stream_ms": 1689,
+  "time_to_request_ms": 68,
+  "first_content_frame_ms": 1689,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 12,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}
