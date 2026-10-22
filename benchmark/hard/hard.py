@@ -69,8 +69,12 @@ def checkout(task: dict, commit: str, dest: Path) -> Path:
     sh(["git", "fetch", "-q", "--no-tags", str(cached(task["repo"])), commit], cwd=dest, timeout=1200)
     sh(["git", "checkout", "-q", "FETCH_HEAD"], cwd=dest)
     (dest / ".git" / "info" / "exclude").write_text(".venv\n__pycache__\n*.egg-info\n.pytest_cache\n")
-    sh([sys.executable, "-m", "venv", ".venv"], cwd=dest)
-    sh([".venv/bin/pip", "install", "-q", "--disable-pip-version-check", *task["install"].split()], cwd=dest, timeout=1200)
+    if task.get("python"):  # an older interpreter for projects that predate Python 3.12
+        sh(["uv", "venv", "-q", "--seed", "--python", task["python"], ".venv"], cwd=dest)
+    else:
+        sh([sys.executable, "-m", "venv", ".venv"], cwd=dest)
+    sh([".venv/bin/pip", "install", "-q", "--disable-pip-version-check", *task["install"].split()], cwd=dest, timeout=1200,
+       env=dict(os.environ, SETUPTOOLS_SCM_PRETEND_VERSION="9.9.9"))  # projects that take their version from git tags have none here
     return dest
 
 
@@ -91,11 +95,23 @@ def run_tests(task: dict, work: Path) -> dict[str, str]:
     return {name: status for status, name in RESULT_LINE.findall(out)}
 
 
+def swe_issue(instance: str) -> dict:
+    """The problem statement of a SWE-bench Verified instance, read from the parquet file named by TB_SWE_PARQUET (needs pyarrow)."""
+    import pyarrow.parquet as pq
+
+    row = next(r for r in pq.read_table(os.environ["TB_SWE_PARQUET"]).to_pylist() if r["instance_id"] == instance)
+    title, _, body = row["problem_statement"].strip().partition("\n")
+    return {"title": title.strip(), "body": body.strip(), "url": f"https://github.com/{row['repo']}/pull/{instance.rsplit('-', 1)[1]}"}
+
+
 def prepare(task: dict) -> None:
     DATA.mkdir(exist_ok=True)
     repo = cached(task["repo"])
     pr = json.loads(sh(["gh", "pr", "view", str(task["pr"]), "-R", task["repo"], "--json", "mergeCommit,title,url,files"]).stdout)
-    issue = json.loads(sh(["gh", "issue", "view", str(task["issue"]), "-R", task["repo"], "--json", "title,body,url"]).stdout)
+    if task.get("swe"):  # the issue text of a SWE-bench Verified instance; only needed here, the text is stored in data/<id>.json
+        issue = swe_issue(task["swe"])
+    else:
+        issue = json.loads(sh(["gh", "issue", "view", str(task["issue"]), "-R", task["repo"], "--json", "title,body,url"]).stdout)
     fix = pr["mergeCommit"]["oid"]
     base = sh(["git", "rev-parse", f"{fix}^1"], cwd=repo).stdout.strip()
     files = [f["path"] for f in pr["files"]]
@@ -111,7 +127,7 @@ def prepare(task: dict) -> None:
     f2p = sorted(t for t, s in after.items() if s == "PASSED" and before.get(t, "FAILED") != "PASSED")
     p2p = sorted(t for t, s in after.items() if s == "PASSED" and before.get(t) == "PASSED")
     record = {
-        **{k: task[k] for k in ("id", "repo", "pr", "issue", "install", "tests", "run")},
+        **{k: task[k] for k in ("id", "repo", "pr", "issue", "install", "tests", "run") if k in task}, "python": task.get("python", ""),
         "pr_url": pr["url"], "pr_title": pr["title"], "issue_url": issue["url"], "issue_title": issue["title"], "issue_body": issue["body"],
         "exclude": skip, "base": base, "fix": fix, "files_changed": files, "fail_to_pass": f2p, "pass_to_pass": p2p,
         "reference_failing_after_fix": sorted(t for t, s in after.items() if s not in ok),

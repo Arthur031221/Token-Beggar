@@ -83,3 +83,26 @@ TASKS = [
     },
 ]
 
+
+# Larger tasks (SWE-bench Verified instances rated 15 minutes to 4 hours): the real pull request, the issue text of the instance.
+# `swe` is the instance id; `python` is the interpreter the project of that time needs.
+TASKS += [
+    {"id": "pytest-mark-mro", "repo": "pytest-dev/pytest", "pr": 10356, "swe": "pytest-dev__pytest-10356", "python": "3.10",
+     "install": "-e . hypothesis setuptools<70", "tests": ["testing"], "run": ["testing/test_mark.py"]},
+    {"id": "sphinx-property-type", "repo": "sphinx-doc/sphinx", "pr": 9461, "swe": "sphinx-doc__sphinx-9461", "python": "3.9",
+     "install": "-e .[test] docutils<0.18 jinja2<3.1 markupsafe<2.1 setuptools<70 sphinxcontrib-applehelp<=1.0.4 sphinxcontrib-devhelp<=1.0.2 sphinxcontrib-htmlhelp<=2.0.1 sphinxcontrib-qthelp<=1.0.3 sphinxcontrib-serializinghtml<=1.1.5 pygments<2.15 alabaster<0.7.14 babel<2.12",
+     "tests": ["tests"], "run": ["tests/test_domain_py.py", "tests/test_ext_autodoc_autoclass.py", "tests/test_ext_autodoc_autoproperty.py"]},
+    {"id": "sphinx-include-source-read", "repo": "sphinx-doc/sphinx", "pr": 11510, "swe": "sphinx-doc__sphinx-11510", "python": "3.10",
+     "install": "-e .[test]", "tests": ["tests"], "run": ["tests/test_directive_other.py"]},
+    {"id": "pylint-pyreverse-hints", "repo": "pylint-dev/pylint", "pr": 4551, "swe": "pylint-dev__pylint-4551", "python": "3.9",
+     "install": "-e . pytest", "tests": ["tests"], "run": ["tests/unittest_pyreverse_writer.py"]},
+    {"id": "pylint-regexp-csv", "repo": "pylint-dev/pylint", "pr": 8898, "swe": "pylint-dev__pylint-8898", "python": "3.10",
+     "install": "-e . pytest pytest-timeout", "tests": ["tests"], "run": ["tests/config/test_config.py"]},
+    {"id": "sympy-permutation-subclass", "repo": "sympy/sympy", "pr": 12489, "swe": "sympy__sympy-12489", "python": "3.9",
+     "install": "-e . pytest mpmath", "tests": ["sympy/combinatorics/tests/test_permutations.py"],
+     "run": ["sympy/combinatorics/tests/test_permutations.py"]},
+    {"id": "sympy-power-assumptions", "repo": "sympy/sympy", "pr": 16597, "swe": "sympy__sympy-16597", "python": "3.9",
+     "install": "-e . pytest mpmath",
+     "tests": ["sympy/core/tests/test_assumptions.py", "sympy/functions/elementary/tests/test_miscellaneous.py"],
+     "run": ["sympy/core/tests/test_assumptions.py", "sympy/functions/elementary/tests/test_miscellaneous.py"]},
+]
