@@ -42,10 +42,14 @@ FLAGS = [
 ]  # fmt: skip
 PYTEST = [".venv/bin/python", "-m", "pytest", "-q", "-rA", "--no-header", "-p", "no:cacheprovider", "--continue-on-collection-errors"]
 RESULT_LINE = re.compile(r"^(PASSED|FAILED|ERROR|XFAIL|XPASS|SKIPPED)\s+(\S+)", re.MULTILINE)
+# Django's own runner (unittest, verbose): "test_x (module.Class.test_x) ... ok", with the docstring on a second line when there is one
+DJANGO_LINE = re.compile(r"^(\w+) \(([\w.]+)\)(?:\n[^\n]*?)? \.\.\. (ok|FAIL|ERROR|skipped|expected failure|unexpected success)", re.MULTILINE)
+DJANGO_STATUS = {"ok": "PASSED", "FAIL": "FAILED", "ERROR": "ERROR", "skipped": "SKIPPED", "expected failure": "XFAIL", "unexpected success": "XPASS"}
 
 
 def sh(cmd, cwd=None, check=True, timeout=900, **kw):
-    return subprocess.run(cmd, cwd=cwd, check=check, capture_output=True, text=True, timeout=timeout, **kw)
+    pipes = {"stdout": subprocess.PIPE} if "stderr" in kw else {"capture_output": True}
+    return subprocess.run(cmd, cwd=cwd, check=check, text=True, timeout=timeout, **pipes, **kw)
 
 
 def info(task: dict) -> dict:
@@ -88,11 +92,15 @@ def restore_tests(task: dict, commit: str, work: Path) -> None:
 
 def run_tests(task: dict, work: Path) -> dict[str, str]:
     """{test id: PASSED | FAILED | ERROR ...} for the task's test paths."""
+    django = task.get("runner") == "django"
+    cmd = [".venv/bin/python", "tests/runtests.py", "--parallel", "1", "-v", "2", *task["run"]] if django else [*PYTEST, *task["run"]]
     try:
-        out = sh([*PYTEST, *task["run"]], cwd=work, check=False, timeout=900).stdout
+        proc = sh(cmd, cwd=work, check=False, timeout=1500, stderr=subprocess.STDOUT) if django else sh(cmd, cwd=work, check=False, timeout=900)
     except subprocess.TimeoutExpired:
         return {}
-    return {name: status for status, name in RESULT_LINE.findall(out)}
+    if django:
+        return {(m[1] if m[1].endswith("." + m[0]) else f"{m[1]}.{m[0]}"): DJANGO_STATUS[m[2]] for m in DJANGO_LINE.findall(proc.stdout)}
+    return {name: status for status, name in RESULT_LINE.findall(proc.stdout)}
 
 
 def swe_issue(instance: str) -> dict:
@@ -140,7 +148,9 @@ def prompt_for(task: dict) -> str:
     data = info(task)
     return (
         "Resolve the issue below in this repository (the current directory) by changing the library code, and add or update tests for it. "
-        "A Python virtualenv with the project installed in editable mode is at .venv; run tests with `.venv/bin/python -m pytest <path>`. "
+        "A Python virtualenv with the project installed in editable mode is at .venv; run tests with "
+        + (".venv/bin/python tests/runtests.py --parallel 1 <test module, for example queries.tests>" if task.get("runner") == "django" else ".venv/bin/python -m pytest <path>")
+        + ". "
         "Do not commit.\n\n"
         f"Issue: {data['issue_title']}\n\n{data['issue_body']}"
     )

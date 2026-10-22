@@ -1,0 +1,116 @@
+{
+ "task": "pytest-mark-mro",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 113937,
+  "stop_reason": "end_turn",
+  "session_id": "84aa26c7-1287-443b-8ab3-8ec3f4e63622",
+  "total_cost_usd": 0.3904052,
+  "usage": {
+   "input_tokens": 30,
+   "cache_creation_input_tokens": 20366,
+   "cache_read_input_tokens": 394586,
+   "output_tokens": 7422,
+   "output_tokens_details": {
+    "thinking_tokens": 1360
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 20366,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 875,
+     "cache_read_input_tokens": 32445,
+     "cache_creation_input_tokens": 711,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 711
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 30,
+    "outputTokens": 7422,
+    "cacheReadInputTokens": 394586,
+    "cacheCreationInputTokens": 20366,
+    "webSearchRequests": 0,
+    "costUSD": 0.3904052,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1360,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 19,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "A test class now gets the marks of every base class it inherits from, not just the first one. In the issue's example, `TestDings(Foo, Bar)` now gets both `foo` and `bar`. Nothing is committed.\n\n**The cause:** `get_unpacked_marks` read marks with `getattr(obj, \"pytestmark\")`. With multiple inheritance, that lookup stops at the first class in the MRO that has a `pytestmark`, so the other base classes' marks were lost.\n\n**The fix** (`src/_pytest/mark/structures.py`):\n- For classes, `get_unpacked_marks` now goes through the whole `__mro__`, from the most basic class to the most derived, and collects each class's *own* `pytestmark` from its `__dict__`. Base-class marks come first, which is the order pytest already used for single inheritance.\n- It takes a new keyword-only argument, `consider_mro=True`. `store_mark` passes `consider_mro=False`, so decorating a class stores only that class's own marks. Without this, inherited marks would be copied into the subclass and counted twice.\n- Functions and other non-class objects behave exactly as before.\n\nOne side effect: a metaclass that serves `pytestmark` through a property, as the workaround in the issue does, no longer has its marks picked up, because only each class's `__dict__` is read now. The fix makes that workaround unnecessary, but anyone still using it would lose those marks.\n\n**Tests** (`testing/test_mark.py`):\n- `test_mark_decorator_multiple_baseclasses_merged`: covers a class with two marked bases, a marked subclass of a class with multiple bases, and a diamond. It also checks that no mark shows up twice.\n- `test_mark_mro`: a unit test of `get_unpacked_marks`, checking the order of the collected marks and the `consider_mro=False` case.\n\nBoth new tests fail on the original code and pass with the fix. I also added `changelog/7792.bugfix.rst`.\n\n**Full test suite:** the 37 failures and 1 error it reports happen with and without the fix (terminal colour and highlighting tests, `test_legacypath`, and others), so this change introduces none. I skipped two modules that can't load in this virtualenv: `testing/test_junitxml.py` needs `xmlschema`, which isn't installed, and `testing/python/metafunc.py` fails because the installed `hypothesis` expects a newer pytest.",
+  "ttft_ms": 4178,
+  "type": "result",
+  "duration_ms": 391166,
+  "uuid": "0f95f12f-e23b-496a-82b9-e35dac64b10f",
+  "ttft_stream_ms": 3546,
+  "time_to_request_ms": 59,
+  "first_content_frame_ms": 3546,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

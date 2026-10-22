@@ -1,0 +1,116 @@
+{
+ "task": "sympy-permutation-subclass",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 106032,
+  "stop_reason": "end_turn",
+  "session_id": "5fc8b502-ae6a-4996-929d-a4ead61e4ede",
+  "total_cost_usd": 0.5259398000000002,
+  "usage": {
+   "input_tokens": 26,
+   "cache_creation_input_tokens": 34130,
+   "cache_read_input_tokens": 450379,
+   "output_tokens": 8136,
+   "output_tokens_details": {
+    "thinking_tokens": 2061
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 34130,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1111,
+     "cache_read_input_tokens": 45233,
+     "cache_creation_input_tokens": 1687,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1687
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 26,
+    "outputTokens": 8136,
+    "cacheReadInputTokens": 450379,
+    "cacheCreationInputTokens": 34130,
+    "webSearchRequests": 0,
+    "costUSD": 0.5259398000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2061,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 14,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`Permutation` can now be subclassed: building or operating on a subclass instance gives back that subclass, not a plain `Permutation`. To answer the question at the end of the issue: I found no reason for the old design. Every object was built with a hard-coded `Basic.__new__(Perm, perm)`, and making it class-aware broke nothing.\n\n**What I changed in `sympy/combinatorics/permutations.py`**\n- **`_af_new`** is now a classmethod and builds with `Basic.__new__(cls, perm)`.\n- **`__new__`** builds through `cls`. `SubPerm(p)` returns `p` itself only if it's already a `SubPerm` of the right size; otherwise it makes a new `SubPerm`.\n- **Methods on an instance** (`*`, `**`, `^`, `~`, `p(0, 1)`, `[..]*p`, `+`/`-`, `commutator`, `mul_inv`, `next_lex`, `next_nonlex`, `next_trotterjohnson`) now return the instance's own class instead of using `_af_new`, `Perm` or `Permutation` directly.\n- **Methods on the class** (`from_sequence`, `unrank_lex`, `unrank_nonlex`, `unrank_trotterjohnson`, `josephus`, `from_inversion_vector`, `random`) now take `cls` and build with it. `rmul_with_af` changed from a staticmethod to a classmethod.\n- **`p**p` check:** it now uses `isinstance(n, Permutation)`, so it also catches subclasses.\n\n**Unchanged:** the module-level `_af_new = Perm._af_new` in `permutations.py` and its copies in `perm_groups.py`, `util.py`, `named_groups.py` and others still produce plain `Permutation`. Mixed products take the left operand's class, so `q*p` with a plain `q` gives a `Permutation`, as normal Python operators do.\n\n**Test:** I added `test_permutation_subclassing` to `sympy/combinatorics/tests/test_permutations.py`. It uses a subclass that applies the permutation to lists. It checks that every constructor form and every method above returns the subclass, and that plain `Permutation` results are unchanged.\n\n**Test results**\n- `test_permutations.py`: all 10 pass.\n- `bin/doctest sympy/combinatorics/permutations.py`: all 72 doctests pass.\n- `pytest sympy/combinatorics sympy/tensor`: the only failures are 4 tests that SymPy's own runner skips or marks as expected to fail, but plain pytest reports as failed: `test_rubik`, `test_subgroup_search2`, `test_riemann_invariants1`, `test_Idx_inequalities_current_fails`. Three of them fail identically without my change; I didn't check that baseline for the tensor one.\n\nNothing is committed.",
+  "ttft_ms": 4072,
+  "type": "result",
+  "duration_ms": 195732,
+  "uuid": "1cef0653-a5f1-4d8a-879e-ad9a3600277b",
+  "ttft_stream_ms": 3278,
+  "time_to_request_ms": 63,
+  "first_content_frame_ms": 3278,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

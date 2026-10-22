@@ -1,0 +1,116 @@
+{
+ "task": "sphinx-property-type",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 171126,
+  "stop_reason": "end_turn",
+  "session_id": "34b53922-f7cc-4230-892b-8b74b6900502",
+  "total_cost_usd": 0.7973226000000002,
+  "usage": {
+   "input_tokens": 44,
+   "cache_creation_input_tokens": 37549,
+   "cache_read_input_tokens": 819673,
+   "output_tokens": 16641,
+   "output_tokens_details": {
+    "thinking_tokens": 6445
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 37549,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 942,
+     "cache_read_input_tokens": 50088,
+     "cache_creation_input_tokens": 251,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 251
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 44,
+    "outputTokens": 16641,
+    "cacheReadInputTokens": 819673,
+    "cacheCreationInputTokens": 37549,
+    "webSearchRequests": 0,
+    "costUSD": 0.7973226000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 6445,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 24,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Autodoc now documents properties wrapped in `@classmethod` (allowed since Python 3.9). They come out as `py:property` entries with a new `:classmethod:` flag and render as \"class property\" (or \"abstract class property\"). The tests pass and nothing is committed.\n\n**Cause:** Getting `A.f` on a classmethod-wrapped property runs the getter and returns its value. Autodoc only ever saw that value, so it didn't recognise the member as a property. It also read the value type's docstring, which made the member look undocumented, and if the getter raised, the member was dropped silently.\n\n**Fix:**\n- **`sphinx/util/inspect.py`**: a new helper, `getclassproperty(cls, name)`. It looks the name up in the raw `__dict__` of the class and its base classes, without triggering the getter, and returns the wrapped property if there is one.\n- **`sphinx/ext/autodoc/importer.py`**: when `get_class_members` gathers members, it now records the property itself instead of the getter's value. Getters are no longer run here, and inherited class properties are found too.\n- **`sphinx/ext/autodoc/__init__.py`**: `PropertyDocumenter` now accepts these members. When one is documented directly (e.g. `.. autoproperty:: Foo.classprop`), it swaps in the real property. Docstring, type hint and the abstract flag all work, and it adds `:classmethod:`.\n- **`sphinx/domains/python.py`**: `py:property` accepts the `:classmethod:` option. This is documented in `doc/usage/restructuredtext/domains.rst`, with entries in `CHANGES`. I cited issue #9445 there from memory, because the issue text you gave doesn't include its number, so please check it.\n\n**Tests:**\n- `target/properties.py` now has a class property `Foo.classprop` and a subclass `Bar`.\n- I updated or added tests for class members, inherited members, a direct `autoproperty`, the domain option, and the new helper.\n- I also checked by hand that metaclass and abstract class properties work, and that a getter which raises is never called when members are listed.\n\n**Test results:**\n- The autodoc, Python-domain and autosummary suites: 234 passed, 2 failed. The same 2 (`test_autodoc` and `test_autodoc_typed_instance_variables` in `tests/test_ext_autodoc.py`) also fail on the untouched code, so they aren't caused by this change.\n- `tests/test_util_inspect.py` can't run here at all: it imports `_testcapi`, which this Python build doesn't have. I ran the assertions from the new helper test directly and they pass.\n- flake8 and mypy aren't installed in the virtualenv, so I didn't lint or type-check.",
+  "ttft_ms": 8640,
+  "type": "result",
+  "duration_ms": 191477,
+  "uuid": "38e6f788-4e8b-4d80-992e-23c7f3b86d6e",
+  "ttft_stream_ms": 1521,
+  "time_to_request_ms": 52,
+  "first_content_frame_ms": 1522,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

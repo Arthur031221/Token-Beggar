@@ -1,0 +1,116 @@
+{
+ "task": "sphinx-include-source-read",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 141167,
+  "stop_reason": "end_turn",
+  "session_id": "e793deed-151f-4d9b-9d46-9160d4dcc7ac",
+  "total_cost_usd": 0.6721583999999999,
+  "usage": {
+   "input_tokens": 54,
+   "cache_creation_input_tokens": 29208,
+   "cache_read_input_tokens": 897692,
+   "output_tokens": 12937,
+   "output_tokens_details": {
+    "thinking_tokens": 2477
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 29208,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 937,
+     "cache_read_input_tokens": 41688,
+     "cache_creation_input_tokens": 310,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 310
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 54,
+    "outputTokens": 12937,
+    "cacheReadInputTokens": 897692,
+    "cacheCreationInputTokens": 29208,
+    "webSearchRequests": 0,
+    "costUSD": 0.6721583999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2477,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 28,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed it: text pulled in with `.. include::` now goes through `source-read` before it is parsed. In the issue's example, the included file's `&REPLACE_ME;` now comes out as `REPLACED` in `index.html`. The new test fails on the original code and passes with the fix. Nothing is committed.\n\n**Why it happened:** Sphinx only fired `source-read` when it read each file as a standalone document. That's why the issue's handler did get called for `something-to-include.rst`, but only for that file's own page. When `index.rst` included it, docutils read the file from disk again and parsed it straight away, so the handler's changes never reached `index.html`.\n\n**The fix** is in the `Include` directive in `sphinx/directives/other.py`:\n- While the directive runs, Sphinx briefly wraps the docutils method that queues the included lines for parsing (`StateMachine.insert_input`). The included text is sent through `source-read`, and whatever the handlers produce is what gets parsed. The original method is put back afterwards, even if an error occurs.\n- The `docname` passed to handlers is the included file's own name if it is a document (e.g. `foo`). Otherwise, such as for a `.txt` file, it is the name of the document doing the including.\n- Includes nested inside included files are handled too.\n- If nothing is listening to `source-read`, behaviour is exactly as before.\n\n**Tests:**\n- I added a test project, `tests/roots/test-directive-include/`, which includes a `.rst` document, `.txt` files, a nested include and an absolute `/text.txt` include from a subfolder.\n- Two tests in `tests/test_directive_other.py`:\n  - `test_include_source_read_event` checks which docname and text each handler call gets, and that the HTML output has the replaced text.\n  - `test_include_without_source_read_listeners` checks that included text is left alone when nobody is listening.\n\n**Docs:** I added a CHANGES entry under \"Bugs fixed\" and a note with `versionchanged:: 7.2` to the `source-read` event docs in `doc/extdev/appapi.rst`.\n\n**Other test results:** In the related suites (html build, intl, directive_code, environment, duration, intersphinx), 6 tests fail: 2 each in `test_intl.py`, `test_build_html.py` and `test_directive_code.py`. All 6 fail the same way on the original code, so they aren't caused by this change; they look like differences in the installed Pygments version. ruff and mypy aren't installed in the venv, so I didn't run them. I only checked line lengths by hand.\n\n**Side effect:** with `sphinx.ext.duration` on, the time recorded for a document that uses `include` will now be a bit too short. That extension restarts its timer on every `source-read` event, so each include resets it partway through the document.",
+  "ttft_ms": 2465,
+  "type": "result",
+  "duration_ms": 227170,
+  "uuid": "92d2880e-3dc6-4a2c-967f-66eb62836fef",
+  "ttft_stream_ms": 1561,
+  "time_to_request_ms": 57,
+  "first_content_frame_ms": 1561,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

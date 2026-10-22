@@ -1,0 +1,116 @@
+{
+ "task": "pylint-regexp-csv",
+ "arm": "alone",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 88924,
+  "stop_reason": "end_turn",
+  "session_id": "c981b390-6215-4729-a25d-25715f08bed8",
+  "total_cost_usd": 0.39095,
+  "usage": {
+   "input_tokens": 22,
+   "cache_creation_input_tokens": 21114,
+   "cache_read_input_tokens": 297050,
+   "output_tokens": 8127,
+   "output_tokens_details": {
+    "thinking_tokens": 2468
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 21114,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1002,
+     "cache_read_input_tokens": 33534,
+     "cache_creation_input_tokens": 370,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 370
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 22,
+    "outputTokens": 8127,
+    "cacheReadInputTokens": 297050,
+    "cacheCreationInputTokens": 21114,
+    "webSearchRequests": 0,
+    "costUSD": 0.39095,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2468,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 12,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed it: commas that belong to a regular expression no longer split the option value, so `bad-names-rgxs = \"(foo{1,3})\"` now works. With `--bad-names-rgxs=(foo{1,3})`, pylint reports `Disallowed name \"foo\"` on a file containing `foo = 1` instead of crashing. The config, utils, self, lint and `checkers/base` tests all pass; I didn't run the full suite.\n\n**The fix**\n- There's a new splitter, `_check_regexp_csv`, in `pylint/utils/utils.py`. A comma doesn't separate two patterns when it is:\n  - inside a quantifier: `\\d{1,3}`\n  - inside a character class: `[,;]` (this also handles `[]...]` and `[^]...]`)\n  - escaped with a backslash: `foo\\,bar`. This is the escape the issue asked for, and since `\\,` already means a literal comma in a regex, the pattern is passed through unchanged.\n- Escape sequences are kept as written, so `\\\\,` (an escaped backslash) still splits there.\n- In `pylint/config/argument.py`, both `regexp_csv` and `regexp_paths_csv` options now use it. That covers `bad-names-rgxs`, `good-names-rgxs`, `exclude-too-few-public-methods`, `ignore-patterns` and `ignore-paths`. The issue only names the first; I included the path option because it has the same problem.\n\n**Tests**\n- `tests/config/test_config.py`:\n  - I updated `test_csv_regex_error`, whose old expected message only made sense because of the bug. It now uses `(foo{1,}, foo{1,3}})`, which really is two patterns with an invalid first one.\n  - I added a parametrized command-line test and a `pyproject.toml` test using the setting from the issue.\n- `tests/utils/unittest_utils.py`: I added unit tests for the splitter, including empty entries, character-class edge cases, escapes and list input.\n- I added the changelog entry `doc/whatsnew/fragments/7229.bugfix`. The issue number is my guess at the upstream number, so please check it.\n\n**Things to know**\n- Any comma after an unclosed `{` is treated as part of a quantifier, so `a{,b` stays one pattern rather than splitting into `a{` and `b`.\n- A value that used to split only because of the bug will now be read as one pattern. Before this change such a value either crashed or produced broken patterns, so I don't expect working configs to break.\n- Running doctests on `utils.py` fails, but that's an existing problem in the `_splitstrip` docstring. The new function's doctest passes when run directly.\n\nNothing has been committed.",
+  "ttft_ms": 3064,
+  "type": "result",
+  "duration_ms": 109448,
+  "uuid": "5bb3b39a-995a-4956-ba00-2beb2d6edf6e",
+  "ttft_stream_ms": 1995,
+  "time_to_request_ms": 168,
+  "first_content_frame_ms": 1995,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

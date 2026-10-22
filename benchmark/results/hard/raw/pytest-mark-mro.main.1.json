@@ -1,0 +1,132 @@
+{
+ "task": "pytest-mark-mro",
+ "arm": "main",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 51413,
+  "stop_reason": "end_turn",
+  "session_id": "97c8874a-4853-42dc-84b9-fc47f8dae4d6",
+  "total_cost_usd": 0.21541500000000002,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 10869,
+   "cache_read_input_tokens": 33822,
+   "output_tokens": 2497,
+   "output_tokens_details": {
+    "thinking_tokens": 303
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10869,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 703,
+     "cache_read_input_tokens": 21032,
+     "cache_creation_input_tokens": 2627,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2627
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 2497,
+    "cacheReadInputTokens": 33822,
+    "cacheCreationInputTokens": 10869,
+    "webSearchRequests": 0,
+    "costUSD": 0.1436724,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 303,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 3340,
+    "cacheReadInputTokens": 60821,
+    "cacheCreationInputTokens": 12893,
+    "webSearchRequests": 0,
+    "costUSD": 0.07174259999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 137,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "A test class now gets the marks from every base class it inherits from. In the issue's example, `TestDings(Foo, Bar)` now has both `foo` and `bar`. A delegated worker made the change. The mark tests and the `testing/python` suite pass (465 passed, 21 skipped, 2 xfailed), except `testing/python/metafunc.py`, which wasn't run: it errors at collection because the installed `hypothesis` package expects something this checkout of pytest doesn't have. The worker reports that same error happens without this change, and I haven't confirmed that myself. Nothing is committed.\n\n**What changed**\n- **`src/_pytest/mark/structures.py`:** `get_unpacked_marks(obj, *, consider_mro=True)` now collects marks from each class's own `pytestmark` along the full inheritance order, instead of taking whichever single `pytestmark` attribute is found first. `store_mark` passes `consider_mro=False`, so a decorated subclass's `pytestmark` only holds the marks applied to it directly. Without that, base-class marks would be copied into it and counted twice. The two other callers in `src/_pytest/python.py` use the default and needed no change.\n- **`testing/test_mark.py`:** two new tests. `test_mark_mro` checks the merged mark list for `C(A, B)`, with and without `consider_mro`. `test_mark_multiple_bases` runs the issue's Foo/Bar/TestDings case and checks the test has both marks.\n- **`changelog/7792.bugfix.rst`:** new entry describing the fix.\n\n**Mark order:** base-class marks come first and the class's own marks come last. For `C(A, B)` the order is `b, a, c`, and `iter_markers()` returns them in that order. The existing `test_mark_decorator_baseclasses_merged` test still passes unchanged. My draft changelog text said the opposite (subclass marks first), so the worker left that sentence out and the entry matches what the code does.\n\nI haven't gone over the diff myself, so it's worth a look before you commit.",
+  "ttft_ms": 3608,
+  "type": "result",
+  "duration_ms": 79077,
+  "uuid": "11c9f382-c7be-4c5d-8be8-05e4b85fc7b9",
+  "ttft_stream_ms": 870,
+  "time_to_request_ms": 225,
+  "first_content_frame_ms": 871,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

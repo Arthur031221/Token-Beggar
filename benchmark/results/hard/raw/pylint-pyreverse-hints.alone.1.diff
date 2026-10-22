@@ -1,0 +1,577 @@
+diff --git a/ChangeLog b/ChangeLog
+index 2ee8bc0a..6cdac875 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -11,6 +11,12 @@ Release date: TBA
+ 
+ * astroid has been upgraded to 2.6.0
+ 
++* ``pyreverse`` now uses PEP 484 type annotations (of class attributes, and of
++  ``__init__`` arguments assigned to instance attributes) to display the type of
++  attributes in class diagrams. ``Optional`` is added when the default value is ``None``.
++
++  Closes #1548
++
+ * Fix false positive ``useless-type-doc`` on ignored argument using ``pylint.extensions.docparams``
+   when a function was typed using pep484 but not inside the docstring.
+ 
+diff --git a/doc/whatsnew/2.9.rst b/doc/whatsnew/2.9.rst
+index ec89eb51..e492fd94 100644
+--- a/doc/whatsnew/2.9.rst
++++ b/doc/whatsnew/2.9.rst
+@@ -49,6 +49,10 @@ New checkers
+ Other Changes
+ =============
+ 
++* ``pyreverse`` now uses PEP 484 type annotations (of class attributes, and of
++  ``__init__`` arguments assigned to instance attributes) to display the type of
++  attributes in class diagrams. ``Optional`` is added when the default value is ``None``.
++
+ * Pylint's tags are now the standard form ``vX.Y.Z`` and not ``pylint-X.Y.Z`` anymore.
+ 
+ * Fix false-positive ``too-many-ancestors`` when inheriting from builtin classes,
+diff --git a/pylint/pyreverse/diadefslib.py b/pylint/pyreverse/diadefslib.py
+index 5d803c92..171aa560 100644
+--- a/pylint/pyreverse/diadefslib.py
++++ b/pylint/pyreverse/diadefslib.py
+@@ -22,7 +22,7 @@
+ import astroid
+ 
+ from pylint.pyreverse.diagrams import ClassDiagram, PackageDiagram
+-from pylint.pyreverse.utils import LocalsVisitor
++from pylint.pyreverse.utils import LocalsVisitor, resolve_annotations
+ 
+ BUILTINS_NAME = "builtins"
+ 
+@@ -101,7 +101,7 @@ class DiaDefGenerator:
+         for association_nodes in list(klass_node.instance_attrs_type.values()) + list(
+             klass_node.locals_type.values()
+         ):
+-            for node in association_nodes:
++            for node in resolve_annotations(association_nodes):
+                 if isinstance(node, astroid.Instance):
+                     node = node._proxied
+                 if not (isinstance(node, astroid.ClassDef) and self.show_node(node)):
+diff --git a/pylint/pyreverse/diagrams.py b/pylint/pyreverse/diagrams.py
+index bf9f67af..907e3d3f 100644
+--- a/pylint/pyreverse/diagrams.py
++++ b/pylint/pyreverse/diagrams.py
+@@ -16,7 +16,14 @@
+ import astroid
+ 
+ from pylint.checkers.utils import decorated_with_property
+-from pylint.pyreverse.utils import FilterMixIn, is_interface
++from pylint.pyreverse.utils import (
++    FilterMixIn,
++    get_annotation_label,
++    infer_annotation_classes,
++    is_annotation,
++    is_interface,
++    resolve_annotations,
++)
+ 
+ 
+ class Figure:
+@@ -119,6 +126,22 @@ class ClassDiagram(Figure, FilterMixIn):
+         """return class names if needed in diagram"""
+         names = []
+         for node in nodes:
++            if is_annotation(node):
++                label = get_annotation_label(node)
++                # a plain annotation naming a class of the diagram is already
++                # represented by an association link
++                if (
++                    isinstance(node, (astroid.Name, astroid.Attribute))
++                    and label == node.as_string()
++                    and any(
++                        self.has_node(klass)
++                        for klass in infer_annotation_classes(node)
++                    )
++                ):
++                    continue
++                if label not in names:
++                    names.append(label)
++                continue
+             if isinstance(node, astroid.Instance):
+                 node = node._proxied
+             if (
+@@ -183,7 +206,7 @@ class ClassDiagram(Figure, FilterMixIn):
+             for name, values in list(node.instance_attrs_type.items()) + list(
+                 node.locals_type.items()
+             ):
+-                for value in values:
++                for value in resolve_annotations(values):
+                     if value is astroid.Uninferable:
+                         continue
+                     if isinstance(value, astroid.Instance):
+diff --git a/pylint/pyreverse/inspector.py b/pylint/pyreverse/inspector.py
+index 8fa12202..7d830a14 100644
+--- a/pylint/pyreverse/inspector.py
++++ b/pylint/pyreverse/inspector.py
+@@ -39,6 +39,16 @@ def _astroid_wrapper(func, modname):
+     return None
+ 
+ 
++def _assigned_types(node):
++    """return the set of types assigned to an AssignName / AssignAttr node:
++    its PEP 484 annotation if there is one, the inferred values otherwise
++    """
++    annotation = utils.get_annotation(node)
++    if annotation is not None:
++        return {annotation}
++    return set(node.infer())
++
++
+ def interfaces(node, herited=True, handler_func=_iface_hdlr):
+     """Return an iterator on interfaces implemented by the given class node."""
+     try:
+@@ -91,6 +101,8 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
+       a mapping from locals names to their bounded value, which may be a
+       constant like a string or an integer, or an astroid node
+       (on astroid.Module, astroid.Class and astroid.Function).
++      If the name has a PEP 484 type annotation, the annotation node is
++      used instead of the inferred values.
+ 
+     * instance_attrs_type
+       as locals_type but for klass member attributes (only on astroid.Class)
+@@ -218,7 +230,7 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
+                     self.visit_module(frame)
+ 
+             current = frame.locals_type[node.name]
+-            values = set(node.infer())
++            values = _assigned_types(node)
+             frame.locals_type[node.name] = list(set(current) | values)
+         except astroid.InferenceError:
+             pass
+@@ -230,7 +242,7 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
+         handle instance_attrs_type
+         """
+         try:
+-            values = set(node.infer())
++            values = _assigned_types(node)
+             current = set(parent.instance_attrs_type[node.attrname])
+             parent.instance_attrs_type[node.attrname] = list(current | values)
+         except astroid.InferenceError:
+diff --git a/pylint/pyreverse/utils.py b/pylint/pyreverse/utils.py
+index a24d227e..aeeb3fe9 100644
+--- a/pylint/pyreverse/utils.py
++++ b/pylint/pyreverse/utils.py
+@@ -20,6 +20,8 @@ import os
+ import re
+ import sys
+ 
++import astroid
++
+ RCFILE = ".pyreverserc"
+ 
+ 
+@@ -93,6 +95,132 @@ def is_exception(node):
+     return node.type == "exception"
+ 
+ 
++def _annotated_arguments(arguments):
++    """yield (argument, annotation) pairs for an Arguments node"""
++    for names, annotations in (
++        (arguments.posonlyargs, arguments.posonlyargs_annotations),
++        (arguments.args, arguments.annotations),
++        (arguments.kwonlyargs, arguments.kwonlyargs_annotations),
++    ):
++        yield from zip(names or (), annotations or ())
++
++
++def get_annotation(node):
++    """return the PEP 484 annotation for the assignment target `node`
++    (an AssignName or AssignAttr), or None if there is none.
++
++    The annotation is either given by an annotated assignment
++    (``x: int = 0`` / ``self.x: int = 0``) or, for a plain assignment
++    of a function argument (``self.x = x``), by the argument's annotation.
++    """
++    parent = node.parent
++    if isinstance(parent, astroid.AnnAssign) and parent.target is node:
++        return parent.annotation
++    if (
++        isinstance(parent, astroid.Assign)
++        and node in parent.targets
++        and isinstance(parent.value, astroid.Name)
++    ):
++        _, assignments = parent.value.lookup(parent.value.name)
++        if len(assignments) == 1 and isinstance(
++            assignments[0].parent, astroid.Arguments
++        ):
++            arg = assignments[0]
++            for name, annotation in _annotated_arguments(arg.parent):
++                if name is arg:
++                    return annotation
++    return None
++
++
++def is_annotation(node):
++    """return true if `node` is a type annotation (as returned by
++    `get_annotation`) rather than an inferred value
++    """
++    parent = node.parent
++    if isinstance(parent, astroid.AnnAssign):
++        return parent.annotation is node
++    if isinstance(parent, astroid.Arguments):
++        return any(
++            annotation is node for _, annotation in _annotated_arguments(parent)
++        )
++    return False
++
++
++def _annotation_default(annotation):
++    """return the default value associated with an annotation, or None if
++    there is no default value
++    """
++    parent = annotation.parent
++    if isinstance(parent, astroid.AnnAssign):
++        return parent.value
++    if isinstance(parent, astroid.Arguments):
++        for name, ann in _annotated_arguments(parent):
++            if ann is annotation:
++                try:
++                    return parent.default_value(name.name)
++                except astroid.NoDefault:
++                    return None
++    return None
++
++
++_NONE_IN_ANNOTATION = re.compile(r"\bNone\b|^Optional\[|\.Optional\[")
++
++
++def get_annotation_label(annotation):
++    """return the label to display for a type annotation
++
++    If the default value is None and the annotation does not already
++    accept None, the label is wrapped in ``Optional[...]``.
++    """
++    if isinstance(annotation, astroid.Const) and isinstance(annotation.value, str):
++        # string annotation (forward reference)
++        label = annotation.value
++    else:
++        label = annotation.as_string()
++    default = _annotation_default(annotation)
++    if (
++        isinstance(default, astroid.Const)
++        and default.value is None
++        and not _NONE_IN_ANNOTATION.search(label)
++    ):
++        label = f"Optional[{label}]"
++    return label
++
++
++def infer_annotation_classes(annotation):
++    """yield the classes referenced by a type annotation
++
++    For subscripted generics such as ``List[Foo]`` or ``Optional[Foo]``, only
++    the parameters (``Foo``) are considered, not the generic itself.
++    """
++    if isinstance(annotation, astroid.Subscript):
++        yield from infer_annotation_classes(annotation.slice)
++    elif isinstance(annotation, (astroid.Tuple, astroid.List)):
++        for elt in annotation.elts:
++            yield from infer_annotation_classes(elt)
++    elif isinstance(annotation, astroid.BinOp) and annotation.op == "|":
++        yield from infer_annotation_classes(annotation.left)
++        yield from infer_annotation_classes(annotation.right)
++    elif isinstance(annotation, (astroid.Name, astroid.Attribute)):
++        try:
++            for inferred in annotation.infer():
++                if isinstance(inferred, astroid.ClassDef):
++                    yield inferred
++        except astroid.InferenceError:
++            pass
++
++
++def resolve_annotations(values):
++    """yield the given types, replacing type annotations by the classes
++    they reference
++    """
++    for value in values:
++        if is_annotation(value):
++            yield from infer_annotation_classes(value)
++        else:
++            yield value
++
++
+ # Helpers #####################################################################
+ 
+ _CONSTRUCTOR = 1
+diff --git a/pylint/pyreverse/writer.py b/pylint/pyreverse/writer.py
+index 0d80bb9c..ea82cf7c 100644
+--- a/pylint/pyreverse/writer.py
++++ b/pylint/pyreverse/writer.py
+@@ -17,6 +17,7 @@
+ """Utilities for creating VCG and Dot diagrams"""
+ 
+ import os
++import re
+ 
+ from pylint.graph import DotBackend
+ from pylint.pyreverse.utils import is_exception
+@@ -99,6 +100,11 @@ class DiagramWriter:
+         raise NotImplementedError
+ 
+ 
++def _escape_dot_record(text):
++    """escape characters having a special meaning in dot record labels"""
++    return re.sub(r'([{}|<>"])', r"\\\1", text)
++
++
+ class DotWriter(DiagramWriter):
+     """write dot graphs from a diagram definition and a project"""
+ 
+@@ -132,7 +138,8 @@ class DotWriter(DiagramWriter):
+         if obj.shape == "interface":
+             label = "«interface»\\n%s" % label
+         if not self.config.only_classnames:
+-            label = r"{}|{}\l|".format(label, r"\l".join(obj.attrs))
++            attrs = [_escape_dot_record(attr) for attr in obj.attrs]
++            label = r"{}|{}\l|".format(label, r"\l".join(attrs))
+             for func in obj.methods:
+                 if func.args.args:
+                     args = [arg.name for arg in func.args.args if arg.name != "self"]
+diff --git a/tests/unittest_pyreverse_diadefs.py b/tests/unittest_pyreverse_diadefs.py
+index beb1f756..e67964f3 100644
+--- a/tests/unittest_pyreverse_diadefs.py
++++ b/tests/unittest_pyreverse_diadefs.py
+@@ -31,6 +31,7 @@ from pylint.pyreverse.diadefslib import (
+     DiaDefGenerator,
+     DiadefsHandler,
+ )
++from pylint.pyreverse.diagrams import ClassDiagram
+ from pylint.pyreverse.inspector import Linker
+ 
+ 
+@@ -197,3 +198,58 @@ def test_regression_dataclasses_inference(HANDLER):
+     special = "regrtest_data.dataclasses_pyreverse.InventoryItem"
+     cd = cdg.class_diagram(path, special)
+     assert cd.title == special
++
++
++def test_type_annotations_in_class_diagram():
++    """PEP 484 annotations are used for the attributes types"""
++    module = astroid.parse(
++        """
++        from typing import List, Optional
++
++        class Other:
++            pass
++
++        class C(object):
++            x: int = 0
++
++            def __init__(
++                self,
++                a: str = None,
++                b: Other = None,
++                c: List[Other] = (),
++                d: Optional[int] = None,
++                e=None,
++            ):
++                self.a = a
++                self.b = b
++                self.c = c
++                self.d = d
++                self.e = e
++                self.f: Other = Other()
++        """
++    )
++    linker = Linker(None)
++    linker.visit(module)
++    diagram = ClassDiagram("test", "ALL")
++    for klass in ("C", "Other"):
++        diagram.add_object(klass, module[klass])
++    diagram.extract_relationships()
++    assert diagram.object_from_node(module["C"]).attrs == [
++        "a : Optional[str]",
++        "b : Optional[Other]",
++        "c : List[Other]",
++        "d : Optional[int]",
++        "e : NoneType",
++        # plain annotation of a class of the diagram: shown as an association
++        "f",
++        "x : int",
++    ]
++    associations = sorted(
++        (rel.from_object.title, rel.to_object.title, rel.name)
++        for rel in diagram.relationships["association"]
++    )
++    assert associations == [
++        ("Other", "C", "b"),
++        ("Other", "C", "c"),
++        ("Other", "C", "f"),
++    ]
+diff --git a/tests/unittest_pyreverse_inspector.py b/tests/unittest_pyreverse_inspector.py
+index e1ff6378..2b68ae53 100644
+--- a/tests/unittest_pyreverse_inspector.py
++++ b/tests/unittest_pyreverse_inspector.py
+@@ -128,3 +128,34 @@ def test_from_directory(project):
+ def test_project_node(project):
+     expected = ["data", "data.clientmodule_test", "data.suppliermodule_test"]
+     assert sorted(project.keys()) == expected
++
++
++def test_annotations_resolution():
++    """PEP 484 annotations take precedence over inferred values"""
++    klass = astroid.extract_node(
++        """
++        class MyClass:
++            cls_attr: int = 0
++            other = 1
++
++            def __init__(self, a: str = None, b=None):
++                self.a = a
++                self.b = b
++                self.c: float = 1
++        """
++    )
++    linker = inspector.Linker(None)
++    linker.visit_classdef(klass)
++    for assignname in klass.nodes_of_class(astroid.AssignName):
++        linker.visit_assignname(assignname)
++
++    def as_strings(values):
++        return [value.as_string() for value in values]
++
++    assert as_strings(klass.locals_type["cls_attr"]) == ["int"]
++    assert [v.value for v in klass.locals_type["other"]] == [1]
++    attrs = klass.instance_attrs_type
++    assert as_strings(attrs["a"]) == ["str"]
++    assert as_strings(attrs["c"]) == ["float"]
++    # without annotation, inferred values are kept
++    assert None in [getattr(v, "value", v) for v in attrs["b"]]
+diff --git a/tests/unittest_pyreverse_writer.py b/tests/unittest_pyreverse_writer.py
+index 98bb0148..490218c9 100644
+--- a/tests/unittest_pyreverse_writer.py
++++ b/tests/unittest_pyreverse_writer.py
+@@ -23,12 +23,18 @@ import codecs
+ import os
+ from difflib import unified_diff
+ 
++import astroid
+ import pytest
+ 
+ from pylint.pyreverse.diadefslib import DefaultDiadefGenerator, DiadefsHandler
+ from pylint.pyreverse.inspector import Linker, project_from_files
+-from pylint.pyreverse.utils import get_visibility
+-from pylint.pyreverse.writer import DotWriter
++from pylint.pyreverse.utils import (
++    get_annotation,
++    get_annotation_label,
++    get_visibility,
++    infer_annotation_classes,
++)
++from pylint.pyreverse.writer import DotWriter, _escape_dot_record
+ 
+ _DEFAULTS = {
+     "all_ancestors": None,
+@@ -132,3 +138,107 @@ def test_get_visibility(names, expected):
+     for name in names:
+         got = get_visibility(name)
+         assert got == expected, f"got {got} instead of {expected} for value {name}"
++
++
++@pytest.mark.parametrize(
++    "assign, label",
++    [
++        ("a: str = None", "Optional[str]"),
++        ("a: str = 'value'", "str"),
++        ("a: str", "str"),
++        ("a: Optional[str] = None", "Optional[str]"),
++        ("a: typing.Optional[str] = None", "typing.Optional[str]"),
++        ("a: Union[str, None] = None", "Union[str, None]"),
++        ("a: List[Optional[str]] = None", "Optional[List[Optional[str]]]"),
++        ("a: 'MyClass' = None", "Optional[MyClass]"),
++        ("a: 'MyClass | None' = None", "MyClass | None"),
++    ],
++)
++def test_get_annotation_annassign(assign, label):
++    """an annotated assignment gives its annotation"""
++    node = astroid.extract_node(assign)
++    annotation = get_annotation(node.target)
++    assert annotation is node.annotation
++    assert get_annotation_label(annotation) == label
++
++
++@pytest.mark.parametrize(
++    "init_args, label",
++    [
++        ("a: str = None", "Optional[str]"),
++        ("a: str", "str"),
++        ("a: int = 1", "int"),
++        ("a: Optional[str] = None", "Optional[str]"),
++        ("*, a: str = None", "Optional[str]"),
++        ("a: str = None, /", "Optional[str]"),
++        ("b, a: List[int] = None", "Optional[List[int]]"),
++    ],
++)
++def test_get_annotation_argument(init_args, label):
++    """assigning an annotated argument to an attribute gives the
++    argument's annotation"""
++    node = astroid.extract_node(
++        f"""
++        class MyClass:
++            def __init__(self, {init_args}):
++                self.a = a #@
++        """
++    )
++    annotation = get_annotation(node.targets[0])
++    assert annotation is not None
++    assert get_annotation_label(annotation) == label
++
++
++@pytest.mark.parametrize(
++    "code",
++    [
++        # no annotation
++        """
++        def func(self, a=None):
++            self.a = a #@
++        """,
++        # not an argument
++        """
++        def func(self, a: str = None):
++            b = a
++            self.a = b #@
++        """,
++        # argument rebound before the assignment
++        """
++        def func(self, a: str = None):
++            a = 1
++            self.a = a #@
++        """,
++        # not a plain name
++        """
++        def func(self, a: str = None):
++            self.a = a or "default" #@
++        """,
++    ],
++)
++def test_get_annotation_none(code):
++    node = astroid.extract_node(code)
++    assert get_annotation(node.targets[0]) is None
++
++
++def test_infer_annotation_classes():
++    """only the parameters of generics are considered as referenced classes"""
++    nodes = astroid.extract_node(
++        """
++        from typing import Dict, Optional
++        class Foo: pass
++        class Bar: pass
++        a: Dict[str, Optional[Foo]] = {} #@
++        b: Bar #@
++        """
++    )
++    names = [
++        [klass.name for klass in infer_annotation_classes(n.annotation)]
++        for n in nodes
++    ]
++    assert names == [["str", "Foo"], ["Bar"]]
++
++
++def test_escape_dot_record():
++    assert _escape_dot_record("a : int | None") == r"a : int \| None"
++    assert _escape_dot_record("a : Literal['<{\"']") == r"a : Literal['\<\{\"']"

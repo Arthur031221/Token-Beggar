@@ -106,3 +106,15 @@ TASKS += [
      "tests": ["sympy/core/tests/test_assumptions.py", "sympy/functions/elementary/tests/test_miscellaneous.py"],
      "run": ["sympy/core/tests/test_assumptions.py", "sympy/functions/elementary/tests/test_miscellaneous.py"]},
 ]
+
+# Django tasks: its own test runner, labels are test modules.
+TASKS += [
+    {"id": "django-constraint-violation", "repo": "django/django", "pr": 16560, "swe": "django__django-16560", "python": "3.11", "runner": "django",
+     "install": "-e .", "tests": ["tests"], "run": ["constraints"]},
+    {"id": "django-aggregate-count", "repo": "django/django", "pr": 16263, "swe": "django__django-16263", "python": "3.11", "runner": "django",
+     "install": "-e .", "tests": ["tests"], "run": ["aggregation"]},
+    {"id": "django-remake-table-index", "repo": "django/django", "pr": 15629, "swe": "django__django-15629", "python": "3.10", "runner": "django",
+     "install": "-e .", "tests": ["tests"], "run": ["migrations.test_operations"]},
+    {"id": "django-prefetch-sliced", "repo": "django/django", "pr": 15957, "swe": "django__django-15957", "python": "3.11", "runner": "django",
+     "install": "-e .", "tests": ["tests"], "run": ["prefetch_related"]},
+]

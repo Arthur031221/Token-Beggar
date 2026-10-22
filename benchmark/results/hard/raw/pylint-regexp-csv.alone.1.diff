@@ -1,0 +1,232 @@
+diff --git a/doc/whatsnew/fragments/7229.bugfix b/doc/whatsnew/fragments/7229.bugfix
+new file mode 100644
+index 000000000..eca528e14
+--- /dev/null
++++ b/doc/whatsnew/fragments/7229.bugfix
+@@ -0,0 +1,6 @@
++Commas inside regular expressions are no longer treated as separators in options
++taking a comma-separated list of regular expressions (e.g. ``bad-names-rgxs``).
++Commas in quantifiers such as ``{1,3}`` and in character classes such as ``[,;]``
++are now preserved, and a comma can be escaped with a backslash (``\,``).
++
++Closes #7229
+diff --git a/pylint/config/argument.py b/pylint/config/argument.py
+index 30a5fd175..49ac7a91b 100644
+--- a/pylint/config/argument.py
++++ b/pylint/config/argument.py
+@@ -114,7 +114,7 @@ def _regex_transformer(value: str) -> Pattern[str]:
+ def _regexp_csv_transfomer(value: str) -> Sequence[Pattern[str]]:
+     """Transforms a comma separated list of regular expressions."""
+     patterns: list[Pattern[str]] = []
+-    for pattern in _csv_transformer(value):
++    for pattern in pylint_utils._check_regexp_csv(value):
+         patterns.append(_regex_transformer(pattern))
+     return patterns
+ 
+@@ -122,7 +122,7 @@ def _regexp_csv_transfomer(value: str) -> Sequence[Pattern[str]]:
+ def _regexp_paths_csv_transfomer(value: str) -> Sequence[Pattern[str]]:
+     """Transforms a comma separated list of regular expressions paths."""
+     patterns: list[Pattern[str]] = []
+-    for pattern in _csv_transformer(value):
++    for pattern in pylint_utils._check_regexp_csv(value):
+         patterns.append(
+             re.compile(
+                 str(pathlib.PureWindowsPath(pattern)).replace("\\", "\\\\")
+diff --git a/pylint/utils/__init__.py b/pylint/utils/__init__.py
+index 61833a598..eecb3cbe3 100644
+--- a/pylint/utils/__init__.py
++++ b/pylint/utils/__init__.py
+@@ -14,6 +14,7 @@ from pylint.utils.utils import (
+     HAS_ISORT_5,
+     IsortDriver,
+     _check_csv,
++    _check_regexp_csv,
+     _splitstrip,
+     _unquote,
+     decoding_stream,
+@@ -32,6 +33,7 @@ __all__ = [
+     "HAS_ISORT_5",
+     "IsortDriver",
+     "_check_csv",
++    "_check_regexp_csv",
+     "_splitstrip",
+     "_unquote",
+     "decoding_stream",
+diff --git a/pylint/utils/utils.py b/pylint/utils/utils.py
+index fa7f7b92f..72768a557 100644
+--- a/pylint/utils/utils.py
++++ b/pylint/utils/utils.py
+@@ -253,6 +253,59 @@ def _check_csv(value: list[str] | tuple[str] | str) -> Sequence[str]:
+     return _splitstrip(value)
+ 
+ 
++def _check_regexp_csv(value: list[str] | tuple[str] | str) -> Sequence[str]:
++    r"""Split a comma-separated list of regular expressions.
++
++    Unlike ``_check_csv``, commas that are part of a regular expression are not
++    treated as separators: commas inside a quantifier (``\d{1,3}``), inside a
++    character class (``[,;]``) or escaped with a backslash (``\,``) are kept.
++    Empty strings are discarded.
++
++    >>> _check_regexp_csv(r'foo{1,3}, [a,b], c\,d')
++    ['foo{1,3}', '[a,b]', 'c\\,d']
++    """
++    if isinstance(value, (list, tuple)):
++        return value
++    regexps: list[str] = []
++    current: list[str] = []
++    in_braces = False
++    in_class = False
++    index = 0
++    while index < len(value):
++        char = value[index]
++        if char == "\\" and index + 1 < len(value):
++            # Keep escape sequences as-is, an escaped comma is not a separator
++            current.append(value[index : index + 2])
++            index += 2
++            continue
++        if in_class:
++            if char == "]":
++                in_class = False
++        elif char == "[":
++            in_class = True
++            # A ']' right after '[' or '[^' is a literal and doesn't close the class
++            lookahead = index + 1
++            if value[lookahead : lookahead + 1] == "^":
++                lookahead += 1
++            if value[lookahead : lookahead + 1] == "]":
++                current.append(value[index : lookahead + 1])
++                index = lookahead + 1
++                continue
++        elif char == "{":
++            in_braces = True
++        elif char == "}":
++            in_braces = False
++        elif char == "," and not in_braces:
++            regexps.append("".join(current))
++            current = []
++            index += 1
++            continue
++        current.append(char)
++        index += 1
++    regexps.append("".join(current))
++    return [regexp.strip() for regexp in regexps if regexp.strip()]
++
++
+ def _comment(string: str) -> str:
+     """Return string as a comment."""
+     lines = [line.strip() for line in string.splitlines()]
+diff --git a/tests/config/test_config.py b/tests/config/test_config.py
+index 83c8b072e..4428ac352 100644
+--- a/tests/config/test_config.py
++++ b/tests/config/test_config.py
+@@ -5,6 +5,7 @@
+ from __future__ import annotations
+ 
+ import os
++import re
+ from pathlib import Path
+ from tempfile import TemporaryDirectory
+ 
+@@ -137,16 +138,57 @@ def test_csv_regex_error(capsys: CaptureFixture) -> None:
+     """
+     with pytest.raises(SystemExit):
+         Run(
+-            [str(EMPTY_MODULE), r"--bad-names-rgx=(foo{1,3})"],
++            [str(EMPTY_MODULE), r"--bad-names-rgx=(foo{1,}, foo{1,3}})"],
+             exit=False,
+         )
+     output = capsys.readouterr()
+     assert (
+-        r"Error in provided regular expression: (foo{1 beginning at index 0: missing ), unterminated subpattern"
++        r"Error in provided regular expression: (foo{1,} beginning at index 0: missing ), unterminated subpattern"
+         in output.err
+     )
+ 
+ 
++CSV_REGEX_COMMA_CASES = [
++    ("foo", ["foo"]),
++    ("foo,bar", ["foo", "bar"]),
++    ("foo, bar", ["foo", "bar"]),
++    ("foo, bar{1,3}", ["foo", "bar{1,3}"]),
++    ("(foo{1,3})", ["(foo{1,3})"]),
++    ("[a,b], c", ["[a,b]", "c"]),
++    (r"foo\,bar, baz", [r"foo\,bar", "baz"]),
++]
++
++
++@pytest.mark.parametrize("in_string,expected", CSV_REGEX_COMMA_CASES)
++def test_csv_regex_comma_in_quantifier(in_string: str, expected: list[str]) -> None:
++    """Check that we correctly parse a comma-separated regex when there are one
++    or more commas that are part of the regular expressions themselves.
++    """
++    run = Run([str(EMPTY_MODULE), f"--bad-names-rgx={in_string}"], exit=False)
++    assert run.linter.config.bad_names_rgxs == [
++        re.compile(regex) for regex in expected
++    ]
++
++
++def test_csv_regex_comma_in_configuration_file(tmp_path: Path) -> None:
++    """Check that a regex with a quantifier comma can be set in a config file."""
++    config_file = tmp_path / "pyproject.toml"
++    config_file.write_text(
++        '''
++[tool.pylint.basic]
++bad-names-rgxs = "(foo{1,3}), bar"
++'''
++    )
++    run = Run(
++        [str(EMPTY_MODULE), f"--rcfile={config_file}"],
++        exit=False,
++    )
++    assert run.linter.config.bad_names_rgxs == [
++        re.compile("(foo{1,3})"),
++        re.compile("bar"),
++    ]
++
++
+ def test_short_verbose(capsys: CaptureFixture) -> None:
+     """Check that we correctly handle the -v flag."""
+     Run([str(EMPTY_MODULE), "-v"], exit=False)
+diff --git a/tests/utils/unittest_utils.py b/tests/utils/unittest_utils.py
+index d2cfbd5b2..eff5025bb 100644
+--- a/tests/utils/unittest_utils.py
++++ b/tests/utils/unittest_utils.py
+@@ -2,8 +2,12 @@
+ # For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE
+ # Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt
+ 
++from __future__ import annotations
++
+ import io
+ 
++import pytest
++
+ from pylint.utils import utils
+ 
+ 
+@@ -22,3 +26,24 @@ def test_decoding_stream_known_encoding() -> None:
+     binary_io = io.BytesIO("€".encode("cp1252"))
+     stream = utils.decoding_stream(binary_io, "cp1252")
+     assert stream.read() == "€"
++
++
++@pytest.mark.parametrize(
++    "value,expected",
++    [
++        ("", []),
++        ("foo", ["foo"]),
++        ("foo, bar ,, baz,", ["foo", "bar", "baz"]),
++        (r"\d{1,3}, \w{2,}", [r"\d{1,3}", r"\w{2,}"]),
++        ("(foo{1,}, foo{1,3}})", ["(foo{1,}", "foo{1,3}})"]),
++        ("[,;], x", ["[,;]", "x"]),
++        ("[],], x", ["[],]", "x"]),
++        ("[^],], x", ["[^],]", "x"]),
++        ("[{],x", ["[{]", "x"]),
++        (r"a\,b,c", [r"a\,b", "c"]),
++        (r"a\\,b", [r"a\\", "b"]),
++        (["a,b", "c"], ["a,b", "c"]),
++    ],
++)
++def test_check_regexp_csv(value: str | list[str], expected: list[str]) -> None:
++    assert list(utils._check_regexp_csv(value)) == expected
