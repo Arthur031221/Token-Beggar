@@ -1,0 +1,123 @@
+diff --git a/CHANGES b/CHANGES
+index ce1185c76..dec27d8a6 100644
+--- a/CHANGES
++++ b/CHANGES
+@@ -54,6 +54,9 @@ Bugs fixed
+ 
+ * #11077: graphviz: Fix relative links from within the graph.
+   Patch by Ralf Grubenmann.
++* #10678: Emit :event:`source-read` events for files read via
++  the :dudir:`include` directive, so that modifications made by
++  handlers are reflected in the output.
+ * #11529: Line Block in LaTeX builder outputs spurious empty token.
+   Patch by Adrian Vollmer.
+ * #11196: autosummary: Summary line extraction failed with "e.g."
+diff --git a/sphinx/directives/other.py b/sphinx/directives/other.py
+index 19f7c0a8d..453c8a229 100644
+--- a/sphinx/directives/other.py
++++ b/sphinx/directives/other.py
+@@ -1,5 +1,6 @@
+ from __future__ import annotations
+ 
++import os
+ import re
+ from typing import TYPE_CHECKING, Any, cast
+ 
+@@ -376,7 +377,32 @@ class Include(BaseInclude, SphinxDirective):
+         rel_filename, filename = self.env.relfn2path(self.arguments[0])
+         self.arguments[0] = filename
+         self.env.note_included(filename)
+-        return super().run()
++
++        if not self.env.events.listeners.get('source-read'):
++            return super().run()
++
++        # Emit 'source-read' for included content, so that modifications made
++        # by handlers are reflected in the output.  docutils re-reads the
++        # included file itself and passes the lines to insert_input() (the
++        # literal/code options do not call insert_input at all).
++        sm = self.state_machine
++        orig_insert_input = sm.insert_input
++
++        def _insert_input(include_lines: list[str], source: str) -> None:
++            # docutils appends two marker lines ('' and '.. end of inclusion
++            # from ...'); keep them out of the text given to the handlers.
++            text = '\n'.join(include_lines[:-2])
++            # docname is None if the included file is not a document
++            docname = self.env.path2doc(os.path.normpath(source))
++            arg = [text]
++            self.env.events.emit('source-read', docname, arg)
++            orig_insert_input(arg[0].splitlines() + include_lines[-2:], source)
++
++        sm.insert_input = _insert_input  # type: ignore[method-assign]
++        try:
++            return super().run()
++        finally:
++            del sm.insert_input
+ 
+ 
+ def setup(app: Sphinx) -> dict[str, Any]:
+diff --git a/tests/roots/test-directive-include/baz/baz.rst b/tests/roots/test-directive-include/baz/baz.rst
+new file mode 100644
+index 000000000..d83cfeae8
+--- /dev/null
++++ b/tests/roots/test-directive-include/baz/baz.rst
+@@ -0,0 +1,6 @@
++Baz
++---
++
++&REPLACE_ME; baz
++
++.. include:: baz/inner.inc
+diff --git a/tests/roots/test-directive-include/baz/inner.inc b/tests/roots/test-directive-include/baz/inner.inc
+new file mode 100644
+index 000000000..07c7f0907
+--- /dev/null
++++ b/tests/roots/test-directive-include/baz/inner.inc
+@@ -0,0 +1 @@
++&REPLACE_ME; inner
+diff --git a/tests/roots/test-directive-include/conf.py b/tests/roots/test-directive-include/conf.py
+new file mode 100644
+index 000000000..64989f092
+--- /dev/null
++++ b/tests/roots/test-directive-include/conf.py
+@@ -0,0 +1 @@
++project = 'x'
+diff --git a/tests/roots/test-directive-include/index.rst b/tests/roots/test-directive-include/index.rst
+new file mode 100644
+index 000000000..2fc609b77
+--- /dev/null
++++ b/tests/roots/test-directive-include/index.rst
+@@ -0,0 +1,6 @@
++Top
++===
++
++.. include:: baz/baz.rst
++
++&REPLACE_ME; top
+diff --git a/tests/test_directive_other.py b/tests/test_directive_other.py
+index f221db075..b7692bda5 100644
+--- a/tests/test_directive_other.py
++++ b/tests/test_directive_other.py
+@@ -148,3 +148,21 @@ def test_toctree_twice(app):
+     assert_node(doctree[0][0],
+                 entries=[(None, 'foo'), (None, 'foo')],
+                 includefiles=['foo', 'foo'])
++
++
++@pytest.mark.sphinx('text', testroot='directive-include')
++def test_include_source_read_event(app):
++    seen = []
++
++    def handler(app_, docname, source):
++        seen.append(docname)
++        assert 'end of inclusion' not in source[0]
++        source[0] = source[0].replace('&REPLACE_ME;', 'REPLACED')
++
++    app.connect('source-read', handler)
++    app.builder.build_all()
++    result = (app.outdir / 'index.txt').read_text(encoding='utf8')
++    assert '&REPLACE_ME;' not in result
++    assert result.count('REPLACED') == 3
++    assert 'baz/baz' in seen
++    assert None in seen  # inner.inc is not a document

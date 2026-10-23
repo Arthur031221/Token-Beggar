@@ -1,0 +1,167 @@
+diff --git a/CHANGES.rst b/CHANGES.rst
+index 14cc09d..8b66565 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -18,6 +18,9 @@ Unreleased
+ -   Improve command name detection when using Shiv or PEX. :issue:`2332`
+ -   Avoid showing empty lines if command help text is empty. :issue:`2368`
+ -   ZSH completion script works when loaded from ``fpath``. :issue:`2344`.
++-   ``click.format_filename`` replaces invalid bytes and surrogate escapes
++    with the replacement character so the result is safe to print.
++    ``FileError`` uses it for display.
+ -   ``EOFError`` and ``KeyboardInterrupt`` tracebacks are not suppressed when
+     ``standalone_mode`` is disabled. :issue:`2380`
+ -   ``@group.command`` does not fail if the group was created with a custom
+diff --git a/src/click/_compat.py b/src/click/_compat.py
+index 1273ddf..24055c7 100644
+--- a/src/click/_compat.py
++++ b/src/click/_compat.py
+@@ -389,8 +389,8 @@ def open_stream(
+     binary = "b" in mode
+ 
+     # Standard streams first. These are simple because they ignore the
+-    # atomic flag. Use fsdecode to handle Path("-").
+-    if os.fsdecode(filename) == "-":
++    # atomic flag. Use fspath to handle Path("-").
++    if os.fspath(filename) == "-":
+         if any(m in mode for m in ["w", "a", "x"]):
+             if binary:
+                 return get_binary_stdout(), False
+diff --git a/src/click/exceptions.py b/src/click/exceptions.py
+index 76a06ff..01dbdd0 100644
+--- a/src/click/exceptions.py
++++ b/src/click/exceptions.py
+@@ -1,10 +1,10 @@
+-import os
+ import typing as t
+ from gettext import gettext as _
+ from gettext import ngettext
+ 
+ from ._compat import get_text_stderr
+ from .utils import echo
++from .utils import format_filename
+ 
+ if t.TYPE_CHECKING:
+     from .core import Command
+@@ -262,11 +262,11 @@ class FileError(ClickException):
+             hint = _("unknown error")
+ 
+         super().__init__(hint)
+-        self.ui_filename: str = os.fsdecode(filename)
++        self.ui_filename: str = format_filename(filename)
+         self.filename = filename
+ 
+     def format_message(self) -> str:
+-        return _("Could not open file {filename!r}: {message}").format(
++        return _("Could not open file '{filename}': {message}").format(
+             filename=self.ui_filename, message=self.message
+         )
+ 
+diff --git a/src/click/types.py b/src/click/types.py
+index c684861..2fb92a2 100644
+--- a/src/click/types.py
++++ b/src/click/types.py
+@@ -851,7 +851,7 @@ class Path(ParamType):
+                 # until Python 3.8. Use pathlib for now.
+                 import pathlib
+ 
+-                rv = os.fsdecode(pathlib.Path(rv).resolve())
++                rv = os.fspath(pathlib.Path(rv).resolve())
+ 
+             try:
+                 st = os.stat(rv)
+diff --git a/src/click/utils.py b/src/click/utils.py
+index 6e74ace..efca7af 100644
+--- a/src/click/utils.py
++++ b/src/click/utils.py
+@@ -400,21 +400,46 @@ def open_file(
+ def format_filename(
+     filename: t.Union[str, bytes, "os.PathLike[t.AnyStr]"], shorten: bool = False
+ ) -> str:
+-    """Formats a filename for user display.  The main purpose of this
+-    function is to ensure that the filename can be displayed at all.  This
+-    will decode the filename to unicode if necessary in a way that it will
+-    not fail.  Optionally, it can shorten the filename to not include the
+-    full path to the filename.
++    """Format a filename as a string for display. Ensures the filename can be
++    displayed by replacing any invalid bytes or surrogate escapes in the name
++    with the replacement character ``�`` (U+FFFD).
++
++    Invalid bytes or surrogate escapes will raise an error when written to a
++    stream with ``errors="strict"``. This will typically happen with ``stdout``
++    when the locale is something like ``en_GB.UTF-8``.
++
++    Many scenarios *are* safe to write surrogates though, due to PEP 538 and
++    PEP 540, including:
++
++    -   Writing to ``stderr``, which uses ``errors="backslashreplace"``.
++    -   The system has ``LANG=C.UTF-8``, ``C``, or ``POSIX``. Python opens
++        stdout and stderr with ``errors="surrogateescape"``.
++    -   None of ``LANG/LC_*`` are set. Python assumes ``LANG=C.UTF-8``.
++    -   Python is started in UTF-8 mode  with  ``PYTHONUTF8=1`` or ``-X utf8``.
++        Python opens stdout and stderr with ``errors="surrogateescape"``.
+ 
+     :param filename: formats a filename for UI display.  This will also convert
+                      the filename into unicode without failing.
+     :param shorten: this optionally shortens the filename to strip of the
+                     path that leads up to it.
++
++    .. versionchanged:: 8.1.4
++        Invalid bytes and surrogate escapes are replaced with the
++        replacement character (U+FFFD) so the result is safe to print.
+     """
+     if shorten:
+         filename = os.path.basename(filename)
++    else:
++        filename = os.fspath(filename)
++
++    if isinstance(filename, bytes):
++        filename = filename.decode(sys.getfilesystemencoding(), "replace")
++    else:
++        filename = filename.encode("utf-8", "surrogateescape").decode(
++            "utf-8", "replace"
++        )
+ 
+-    return os.fsdecode(filename)
++    return filename
+ 
+ 
+ def get_app_dir(app_name: str, roaming: bool = True, force_posix: bool = False) -> str:
+diff --git a/tests/test_utils.py b/tests/test_utils.py
+index 02a6101..f1493c5 100644
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+@@ -101,7 +101,7 @@ def test_filename_formatting():
+ 
+     # filesystem encoding on windows permits this.
+     if not WIN:
+-        assert click.format_filename(b"/x/foo\xff.txt", shorten=True) == "foo\udcff.txt"
++        assert click.format_filename(b"/x/foo\xff.txt", shorten=True) == "foo�.txt"
+ 
+ 
+ def test_prompts(runner):
+@@ -499,3 +499,24 @@ def test_make_default_short_help(value, max_length, alter, expect):
+ 
+     out = click.utils.make_default_short_help(value, max_length)
+     assert out == expect
++
++
++@pytest.mark.skipif(WIN, reason="surrogate escapes are not used on Windows.")
++@pytest.mark.parametrize(
++    ("value", "expect"),
++    [
++        ("foo\udce9", "foo�"),
++        (b"foo\xe9", "foo�"),
++        ("/dir/foo\udce9", "/dir/foo�"),
++        (pathlib.Path("foo"), "foo"),
++    ],
++)
++def test_format_filename(value, expect):
++    assert click.format_filename(value) == expect
++    click.echo(click.format_filename(value))
++
++
++def test_format_filename_shorten():
++    assert click.format_filename("/a/b/foo\udce9", shorten=True) == "foo�"
++    assert click.format_filename(pathlib.Path("/a/b/c"), shorten=True) == "c"
++    assert click.format_filename(b"/a/b/c", shorten=True) == "c"

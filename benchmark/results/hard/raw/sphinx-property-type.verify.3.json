@@ -1,0 +1,132 @@
+{
+ "task": "sphinx-property-type",
+ "arm": "verify",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 141215,
+  "stop_reason": "end_turn",
+  "session_id": "00d33cb6-2860-4c3d-91a6-8cb0dc3a9e7e",
+  "total_cost_usd": 0.45166690000000004,
+  "usage": {
+   "input_tokens": 16,
+   "cache_creation_input_tokens": 18257,
+   "cache_read_input_tokens": 202304,
+   "output_tokens": 5659,
+   "output_tokens_details": {
+    "thinking_tokens": 1590
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 18257,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 797,
+     "cache_read_input_tokens": 30283,
+     "cache_creation_input_tokens": 870,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 870
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 5659,
+    "cacheReadInputTokens": 202304,
+    "cacheCreationInputTokens": 18257,
+    "webSearchRequests": 0,
+    "costUSD": 0.29976080000000005,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1590,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 30,
+    "outputTokens": 7681,
+    "cacheReadInputTokens": 255436,
+    "cacheCreationInputTokens": 19797,
+    "webSearchRequests": 0,
+    "costUSD": 0.15190609999999996,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1096,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 11,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Autodoc now documents methods decorated with both `@classmethod` and `@property`. The 10 autodoc, autosummary and Python-domain test files pass (210 tests) on Python 3.9.25. flake8 isn't installed in the venv, so I didn't run the linter. Nothing is committed.\n\n**Cause:** For `@classmethod @property def f(cls)`, `A.f` runs the property and returns its result. Autodoc got that result instead of the property, so the property check failed and the docstring was lost. The class member collector had the same problem. Since it held the returned value (`None` in the test), `:members:` dropped the member as undocumented.\n\n**What changed:**\n- **`sphinx/ext/autodoc/__init__.py` (`PropertyDocumenter`):** If a member isn't a property when accessed, autodoc now checks the class's `__dict__` for a classmethod wrapping a property.\n  - `can_document_member` accepts it.\n  - `import_object` switches to the underlying property, so the docstring and `:type:` (from `fget`'s annotation) still come through.\n  - `add_directive_header` adds a `:classmethod:` option.\n- **`sphinx/ext/autodoc/importer.py` (`get_class_members`):** Stores the underlying property for these members. Without this, `autoclass`/`automodule` with `:members:` would skip them.\n- **`sphinx/domains/python.py`:** `py:property` takes a new `:classmethod:` flag, which renders the signature as \"class property\". The index entry is unchanged.\n- **Docs:** the new option is described in `doc/usage/restructuredtext/domains.rst`, with entries added to `CHANGES`.\n\n**Tests:**\n- Added a `classprop` class property to `tests/roots/test-ext-autodoc/target/properties.py`.\n- Added `test_class_properties` in `tests/test_ext_autodoc_autoproperty.py` and `test_pyproperty_classmethod` in `tests/test_domain_py.py`.\n- Updated the expected output in `test_properties` in `tests/test_ext_autodoc_autoclass.py`.\n- The two autodoc tests are skipped on Python below 3.9, where a classmethod can't wrap a property.",
+  "ttft_ms": 8543,
+  "type": "result",
+  "duration_ms": 227475,
+  "uuid": "0edc6eba-4eb1-4702-a099-6f4a3bc1ebec",
+  "ttft_stream_ms": 1801,
+  "time_to_request_ms": 592,
+  "first_content_frame_ms": 1846,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

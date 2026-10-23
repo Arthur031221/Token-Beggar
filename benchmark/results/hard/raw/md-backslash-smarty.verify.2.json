@@ -1,0 +1,132 @@
+{
+ "task": "md-backslash-smarty",
+ "arm": "verify",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 232887,
+  "stop_reason": "end_turn",
+  "session_id": "73af5c20-9833-41be-862c-affe91039736",
+  "total_cost_usd": 0.9322993000000002,
+  "usage": {
+   "input_tokens": 52,
+   "cache_creation_input_tokens": 40005,
+   "cache_read_input_tokens": 1003643,
+   "output_tokens": 16351,
+   "output_tokens_details": {
+    "thinking_tokens": 5508
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 40005,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1086,
+     "cache_read_input_tokens": 51858,
+     "cache_creation_input_tokens": 1043,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1043
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 52,
+    "outputTokens": 16351,
+    "cacheReadInputTokens": 1003643,
+    "cacheCreationInputTokens": 40005,
+    "webSearchRequests": 0,
+    "costUSD": 0.8479966000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 5508,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 24,
+    "outputTokens": 3700,
+    "cacheReadInputTokens": 119072,
+    "cacheCreationInputTokens": 14139,
+    "webSearchRequests": 0,
+    "costUSD": 0.0843027,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 493,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 29,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The bug is fixed: `![x\\\"x](x)` with `-x smarty` now gives `<p><img alt=\"x&quot;x\" src=\"x\" /></p>`, the same as `![x\"x](x)`. Nothing is committed.\n\n**Root cause:** a backslash escape like `\\\"` becomes a placeholder (`\\x0234\\x03`) while the text is parsed. The `UnescapePostprocessor` turned those back into real characters *after* the HTML was written out. So the serializer never got a chance to escape them, and a raw `\"` ended up inside the attribute. Smarty makes this show up because it adds `\"` and `'` to the characters that can be backslash-escaped.\n\nThe same bug hit `attr_list` (`# a {: title=\"x\\\"y\" }` \u2192 `<h1 title=\"x\"y\">`) and link hrefs (`[a](x\\\"y)` \u2192 `href=\"x\"y\"`). Email autolinks with an escape came out garbled too.\n\n**Fix:**\n- **`markdown/treeprocessors.py`:** a new `UnescapeTreeprocessor`, registered as `'unescape'` with priority 0. It restores escaped characters in element text, tail text and attribute values before the HTML is written, so the serializer escapes them.\n- **`markdown/postprocessors.py`:** `UnescapePostprocessor` is no longer registered by default. The class is still there but now raises a `DeprecationWarning` when created, so third-party code using it keeps working.\n- **`markdown/extensions/toc.py`:** its `unescape()` helper now uses the new treeprocessor.\n- **`markdown/inlinepatterns.py` and `markdown/util.py`:** `Pattern.unescape` also restores escape placeholders, using a new `ESCAPE_PLACEHOLDER_RE`. This fixes email autolinks such as `<bob\\_sue@example.com>`, which used to output the placeholder bytes as entities.\n- **`docs/change_log/release-3.4.md`:** notes on the deprecation and the bug fix.\n\n**One visible change:** an escaped `\\>` in body text now renders as `&gt;` instead of a raw `>`. Both are valid HTML; I updated the fixture in `tests/basic/backlash-escapes.html` to match.\n\n**Tests added:**\n- `tests/test_syntax/extensions/test_smarty.py` (new file): image alt, link title, link href and `attr_list` cases.\n- `tests/test_syntax/inline/test_autolinks.py`: an email autolink with an escaped character.\n- `tests/test_apis.py`: the new treeprocessor's behaviour, and the deprecation warning.\n\n**Test results** (`.venv/bin/python -m pytest tests --ignore=tests/test_syntax/extensions/test_md_in_html.py`): 677 passed, 4 failed, 129 skipped. The 4 failures are in `tests/test_syntax/blocks/test_html_blocks.py` and fail the same way without my changes. `test_md_in_html.py` has to be ignored because pytest can't collect it even on a clean checkout. Run with unittest, it shows the same 4 failures before and after the change. I couldn't run flake8 because it isn't installed in `.venv`.",
+  "ttft_ms": 7022,
+  "type": "result",
+  "duration_ms": 262408,
+  "uuid": "f38219d6-cd51-456a-a5d0-f31193860b99",
+  "ttft_stream_ms": 2391,
+  "time_to_request_ms": 663,
+  "first_content_frame_ms": 2392,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

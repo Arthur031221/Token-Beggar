@@ -1,0 +1,132 @@
+{
+ "task": "packaging-extras-marker",
+ "arm": "verify",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 102609,
+  "stop_reason": "end_turn",
+  "session_id": "74c2a288-b28e-4ba2-b463-a31c0518a0e1",
+  "total_cost_usd": 0.4663497,
+  "usage": {
+   "input_tokens": 18,
+   "cache_creation_input_tokens": 21446,
+   "cache_read_input_tokens": 241314,
+   "output_tokens": 8261,
+   "output_tokens_details": {
+    "thinking_tokens": 2345
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 21446,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 782,
+     "cache_read_input_tokens": 33732,
+     "cache_creation_input_tokens": 610,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 610
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 8261,
+    "cacheReadInputTokens": 241314,
+    "cacheCreationInputTokens": 21446,
+    "webSearchRequests": 0,
+    "costUSD": 0.38512279999999993,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2345,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 4424,
+    "cacheReadInputTokens": 41009,
+    "cacheCreationInputTokens": 13148,
+    "webSearchRequests": 0,
+    "costUSD": 0.0812269,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 232,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 12,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Marker strings can now use the PEP 751 `extras` and `dependency_groups` variables, for example `'dev' in dependency_groups`. The full test suite passes (26941 passed), as does the doctest in `docs/markers.rst`. Nothing is committed. I couldn't run ruff or mypy because neither is installed in `.venv`.\n\n**What changed**\n- **Parsing:** `src/packaging/_tokenizer.py` now recognises the two new variable names. Before this, any marker using them failed to parse.\n- **Evaluation:** in `src/packaging/markers.py`, these two variables hold sets of names. Only `'name' in extras` and `'name' not in extras` are allowed. Any other operator, or the set on the left (`extras in 'a'`), raises `UndefinedComparison`.\n- **Name normalization:** names are normalized the same way `extra` already is, so `'Foo_Bar' in extras` matches `foo-bar`.\n- **New `context` argument:** `Marker.evaluate(environment=None, context=\"metadata\")` takes `\"metadata\"`, `\"lock_file\"` or `\"requirement\"`.\n  - `\"metadata\"` is the default and keeps the current behaviour, with `extra` defaulting to `\"\"`.\n  - `\"lock_file\"` makes `extras` and `dependency_groups` default to empty sets.\n  - `\"requirement\"` adds no defaults.\n- **Missing variables:** if a marker uses a variable the environment doesn't define (say, `extras` under the default context), it now raises the documented `UndefinedEnvironmentName` instead of a bare `KeyError`.\n- **Tests and docs:** I added a `TestPEP751Markers` class to `tests/test_markers.py` and updated `CHANGELOG.rst` and `docs/markers.rst`.\n\n**Fixes to the subagent's draft:** I had a subagent write the first version and found two bugs when I reviewed it.\n- `extras in 'a'` crashed with a `TypeError` instead of raising `UndefinedComparison`.\n- The missing-variable case raised a bare `KeyError`.\n\nI fixed both and added tests for them. I also removed a made-up issue number from the CHANGELOG entry, so add the real issue number if you want one there.",
+  "ttft_ms": 11872,
+  "type": "result",
+  "duration_ms": 211250,
+  "uuid": "6f876503-2a87-4c76-853b-976c5549dbf7",
+  "ttft_stream_ms": 976,
+  "time_to_request_ms": 259,
+  "first_content_frame_ms": 976,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 18,
+  "f2p_total": 20,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

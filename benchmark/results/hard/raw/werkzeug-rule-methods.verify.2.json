@@ -1,0 +1,132 @@
+{
+ "task": "werkzeug-rule-methods",
+ "arm": "verify",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 94329,
+  "stop_reason": "end_turn",
+  "session_id": "ea7bf046-c311-46fd-ab95-cb89e293d0ee",
+  "total_cost_usd": 0.4762454,
+  "usage": {
+   "input_tokens": 18,
+   "cache_creation_input_tokens": 29759,
+   "cache_read_input_tokens": 280428,
+   "output_tokens": 6843,
+   "output_tokens_details": {
+    "thinking_tokens": 2117
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 29759,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1168,
+     "cache_read_input_tokens": 42165,
+     "cache_creation_input_tokens": 490,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 490
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 6843,
+    "cacheReadInputTokens": 280428,
+    "cacheCreationInputTokens": 29759,
+    "webSearchRequests": 0,
+    "costUSD": 0.43108959999999996,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2117,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 2732,
+    "cacheReadInputTokens": 30123,
+    "cacheCreationInputTokens": 5923,
+    "webSearchRequests": 0,
+    "costUSD": 0.0451558,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 13,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The duplicate check now takes methods into account. Before, `Map([Rule(\"/\", methods=[\"GET\"], ...), Rule(\"/\", methods=[\"POST\"], ...)])` raised `DuplicateRuleError`, which breaks the common pattern of one view per method. Now two rules count as duplicates only if they have the same parts (path plus subdomain/host), the same websocket mode, and share at least one method. The `tests/test_routing.py` module passes (153 tests), and so does the full suite (973). Nothing is committed. Ruff isn't installed in the venv, so formatting wasn't checked by a tool; I wrapped the long lines by hand.\n\n**Cause:** `StateMachineMatcher.add` (`src/werkzeug/routing/matcher.py:56`) checked `rule == existing`, and `Rule.__eq__` only compares `_parts` and `websocket`.\n\n**Changes:**\n- **`src/werkzeug/routing/rules.py`:** added an internal `Rule._is_duplicate(other)`. It requires equal parts, equal websocket mode, and overlapping methods, where `methods=None` overlaps with anything. As the issue suggests, I left `__eq__` alone, since overlap isn't equality.\n- **`src/werkzeug/routing/matcher.py`:** `add` now calls `rule._is_duplicate(existing)`.\n- **`docs/routing.rst` and `CHANGES.rst`:** both now say that methods are part of the comparison.\n- **New tests in `tests/test_routing.py`:**\n  - GET and POST on the same path are allowed and each routes to its own endpoint.\n  - Overlapping methods raise, including `[\"GET\"]` against `[\"HEAD\"]`, because GET adds HEAD automatically.\n  - `methods=None` against `[\"POST\"]` raises, in either order.\n  - Slash handling, below.\n\n**`strict_slashes` / `merge_slashes`:** both were already handled correctly, and the new tests lock that in.\n- **`strict_slashes`:** a trailing slash adds its own part, so `/a` and `/a/` are never duplicates. Two `/a/` rules with different `strict_slashes` are rightly duplicates: whichever was added first handles both `/a` and `/a/`, so the second could never match.\n- **`merge_slashes`:** parts are built from the merged path, so `/a//b` and `/a/b` are duplicates by default, which matches how requests are routed. With `merge_slashes=False` on the `/a//b` rule, its parts differ and both rules are allowed.\n\n**Why `Rule.methods` can be `None`:** `None` means \"any method\", not \"GET\". The matcher checks for this in `matcher.py:98`, `:111` and `:165`, and URL building does too at `rules.py:880`. Werkzeug itself never defaults to GET. Flask does that in its own `add_url_rule`, which defaults `methods` to `(\"GET\",)` and adds OPTIONS before creating the `Rule`. So plain Werkzeug rules without `methods` match every method. I kept that behaviour and only made the duplicate check treat `None` as overlapping with everything.",
+  "ttft_ms": 6394,
+  "type": "result",
+  "duration_ms": 139010,
+  "uuid": "b5e188ea-f2e5-4fd6-a088-4fa72994f86f",
+  "ttft_stream_ms": 2343,
+  "time_to_request_ms": 350,
+  "first_content_frame_ms": 2343,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

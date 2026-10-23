@@ -1,0 +1,132 @@
+{
+ "task": "jinja-namespace-tuple",
+ "arm": "verify",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 96852,
+  "stop_reason": "end_turn",
+  "session_id": "51e6aaf7-cc9b-45c5-b4db-cf0f4ef09e7b",
+  "total_cost_usd": 0.3799226,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 17030,
+   "cache_read_input_tokens": 142292,
+   "output_tokens": 4561,
+   "output_tokens_details": {
+    "thinking_tokens": 1513
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 17030,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 879,
+     "cache_read_input_tokens": 29540,
+     "cache_creation_input_tokens": 386,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 386
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 4561,
+    "cacheReadInputTokens": 142292,
+    "cacheCreationInputTokens": 17030,
+    "webSearchRequests": 0,
+    "costUSD": 0.25596640000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1513,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 24,
+    "outputTokens": 6725,
+    "cacheReadInputTokens": 166107,
+    "cacheCreationInputTokens": 16019,
+    "webSearchRequests": 0,
+    "costUSD": 0.12395620000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 791,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`{% set full.prev_id, full.id = full.id, full.id + \"/\" + id %}` now works: `set` accepts a tuple of namespace attributes, and you can mix them with plain names, e.g. `{% set ns.a, x = 1, 2 %}`. The four new tests and the full suite pass (910 tests). Nothing is committed.\n\n**Root cause:** The issue has two parts.\n- **Parser:** `parse_assign_target` in `src/jinja2/parser.py` only looked for one `name.attr` target. Anything after a comma was rejected, which gave the \"expected token 'end of statement block', got ','\" error.\n- **Compiler:** the check that the object really is a namespace was written out inside the code for the target itself. That only works for a single target, not for one item in a tuple.\n\n**Changes:**\n- **`src/jinja2/parser.py`:** a new `parse_nsref()` method reads one `name.attr` target. `parse_tuple()` has a new `with_namespace` option so each item can be either a namespace attribute or a plain name. `parse_assign_target(with_namespace=True)` uses both. Only `set` passes that option, so `for` loops still reject `ns.attr` targets.\n- **`src/jinja2/compiler.py`:** a new `check_namespace_targets()` writes out the \"cannot assign attribute on non-namespace object\" check for every namespace attribute in the target, before the assignment. Both inline `set` and block `set` use it. The code for the target itself now just writes `ref['attr']`.\n- **`tests/test_core_tags.py`:** four new tests: two namespace attributes, a namespace attribute mixed with a plain name, the issue's prev/current pattern inside a `for` loop, and a non-namespace target raising `TemplateRuntimeError`.\n- **`CHANGES.rst`:** an entry under Unreleased.\n\n**Checks:**\n- `.venv/bin/python -m pytest tests -q` gave 910 passed.\n- I also tried the edge cases by hand:\n  - `{% set ns.a = 5 %}` and block `{% set ns.a %}\u2026{% endset %}`, with or without a filter, still work.\n  - `{% set ns.a.b = 1 %}` and `{% for ns.a in \u2026 %}` are still syntax errors.\n  - The parenthesised form `{% set (ns.a, ns.b) = \u2026 %}` is still rejected.\n  - A trailing comma, `{% set ns.a, = \u2026 %}`, is rejected, but so is `{% set a, = \u2026 %}` for a plain name, so that's existing behaviour.",
+  "ttft_ms": 4218,
+  "type": "result",
+  "duration_ms": 113039,
+  "uuid": "f09a5809-9205-4889-862f-0460e02b1a51",
+  "ttft_stream_ms": 2015,
+  "time_to_request_ms": 428,
+  "first_content_frame_ms": 2015,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

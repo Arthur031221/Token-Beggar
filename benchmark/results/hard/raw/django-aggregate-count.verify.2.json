@@ -1,0 +1,132 @@
+{
+ "task": "django-aggregate-count",
+ "arm": "verify",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 332748,
+  "stop_reason": "end_turn",
+  "session_id": "ec2c3384-08e8-495c-ae37-4508bf8936b3",
+  "total_cost_usd": 1.1689838,
+  "usage": {
+   "input_tokens": 40,
+   "cache_creation_input_tokens": 44884,
+   "cache_read_input_tokens": 827066,
+   "output_tokens": 23063,
+   "output_tokens_details": {
+    "thinking_tokens": 12328
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 44884,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1036,
+     "cache_read_input_tokens": 57204,
+     "cache_creation_input_tokens": 576,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 576
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 40,
+    "outputTokens": 23063,
+    "cacheReadInputTokens": 827066,
+    "cacheCreationInputTokens": 44884,
+    "webSearchRequests": 0,
+    "costUSD": 0.9859052,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 12328,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 26,
+    "outputTokens": 10951,
+    "cacheReadInputTokens": 204941,
+    "cacheCreationInputTokens": 21209,
+    "webSearchRequests": 0,
+    "costUSD": 0.18307859999999998,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 4231,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 25,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`count()` and `aggregate()` now leave out annotations that nothing uses. `Book.objects.count()` with an unused `annotate(name_lower=Lower(\"name\"))` now runs a single `SELECT COUNT(*)`. For `Book.objects.annotate(Count(\"authors\")).count()`, the `COUNT(\"authors\")` is gone from the SQL. That query is still wrapped in a subquery, though, and keeps the join and the `GROUP BY` on the book's primary key. So the per-book counting is removed, but the join isn't. Nothing is committed.\n\n**What the change does** (all in `Query.get_aggregation()`, `django/db/models/sql/query.py`):\n- **Non-aggregate annotations** no longer force a subquery. They're dropped from the SELECT, or inlined if the requested aggregate uses them (e.g. `annotate(x=F(\"price\")*2).aggregate(Sum(\"x\"))`).\n- **Aggregate annotations** still use the subquery. Inside it, an annotation is only selected if the requested aggregate refers to it.\n- **Kept on purpose:** annotations used in filters, windows and set operations. When the inner query is grouped, selected non-aggregate annotations are kept too, because they're part of the `GROUP BY` and removing them would change the count.\n- **Supporting code:** `get_refs()` helpers in `expressions.py` and `sql/where.py` find which annotations an aggregate refers to.\n\n**Why I replaced the delegated first version:** it also tried to remove the joins by hand-adjusting join reference counts, and that gave wrong results. `annotate(n=Count(\"authors\")).annotate(m=F(\"n\")+1).count()` returned 10 instead of 6. `.aggregate(Sum(\"n\"))` on the same queryset crashed with `no such column`. The version above never removes joins, so the number of rows being counted can't change. This follows the approach Django took upstream for this ticket (#28477).\n\n**Tests:** I added 7 tests to `tests/aggregation/tests.py`. They check the generated SQL, cover both bugs above, and check that counts match `len(qs)` when the annotations involve many-to-many or reverse-foreign-key joins.\n- The ORM suites pass: `aggregation aggregation_regress annotations queries expressions expressions_window` \u2192 `OK (skipped=24, expected failures=3)`. A wider set of 2,464 related tests also passes.\n- The full suite has 5 failures and 2 errors, in `mail`, `admin_scripts`, `utils_tests.test_html` and `test_utils`. All of them fail the same way on the original code, so they come from this environment.\n- black and flake8 aren't installed in `.venv`, so I couldn't run the linters.\n\nRemoving the join as well, so this query needs no subquery at all, is possible but riskier. You'd need a way to prove the join only served the stripped annotation. I left it out.",
+  "ttft_ms": 6682,
+  "type": "result",
+  "duration_ms": 1516175,
+  "uuid": "ecb419f1-aa04-48aa-85f4-1abc71493954",
+  "ttft_stream_ms": 4173,
+  "time_to_request_ms": 479,
+  "first_content_frame_ms": 4174,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

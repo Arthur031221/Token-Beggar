@@ -1,0 +1,132 @@
+{
+ "task": "click-format-filename",
+ "arm": "verify",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 73191,
+  "stop_reason": "end_turn",
+  "session_id": "bf22cd99-b433-4db2-a34c-7dcd5c47cee9",
+  "total_cost_usd": 0.2806636,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 14694,
+   "cache_read_input_tokens": 59454,
+   "output_tokens": 2760,
+   "output_tokens_details": {
+    "thinking_tokens": 420
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14694,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1110,
+     "cache_read_input_tokens": 24470,
+     "cache_creation_input_tokens": 3120,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 3120
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 2760,
+    "cacheReadInputTokens": 59454,
+    "cacheCreationInputTokens": 14694,
+    "webSearchRequests": 0,
+    "costUSD": 0.18466680000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 420,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 5446,
+    "cacheReadInputTokens": 106458,
+    "cacheCreationInputTokens": 12342,
+    "webSearchRequests": 0,
+    "costUSD": 0.09599680000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 374,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`click.format_filename` now returns a string that is safe to print. Before, it ended with `os.fsdecode(filename)`, which does nothing to a `str`. So a name like `'foo\\udce9'` (what Python gives you for the raw bytes `b'foo\\xe9'`) came back unchanged, and `click.echo` raised `UnicodeEncodeError` on the leftover surrogate. Now every invalid byte or surrogate is replaced with `\ufffd` (U+FFFD). The issue's example, `click.echo(click.format_filename(os.fsdecode(b'foo\\xe9')))`, prints `foo\ufffd` instead of crashing.\n\nThe full test suite passes (589 passed, 21 skipped, 1 xfailed), but only with a warning filter: `-W \"ignore::pytest.PytestRemovedIn10Warning\"`. Without it, collection stops in `tests/test_basic.py` with a pytest deprecation error. That happens on the untouched code too, so this change didn't cause it.\n\n**Changes (not committed):**\n- **`src/click/utils.py`:** `format_filename` turns the input into a plain path with `os.fspath`, or `os.path.basename` when shortening. Bytes are decoded with `\"replace\"`. For strings, surrogates are turned back into bytes and decoded with `\"replace\"`. The docstring now explains this and has a `versionchanged:: 8.1.4` note.\n- **`src/click/exceptions.py`:** `FileError` builds its display name with `format_filename` instead of `os.fsdecode`. The message changes from `Could not open file {filename!r}` to `Could not open file '{filename}'`. That way a bad filename shows `\ufffd` instead of escape codes, and printing the error to stdout can't crash.\n- **`src/click/_compat.py` (`open_stream`) and `src/click/types.py` (`Path.convert`):** `os.fsdecode` became `os.fspath`, as the issue suggested. These inputs are already strings or paths, so nothing needed decoding.\n- **`tests/test_utils.py`:** new tests cover a surrogate-escaped string, bytes, `pathlib.Path` and `shorten=True`, and each result is passed through `click.echo` to confirm it prints. The existing assertion that expected `\"foo\\udcff.txt\"` now expects `\"foo\ufffd.txt\"`.\n- **`CHANGES.rst`:** added an entry under the unreleased version.\n\nTwo behaviour changes to be aware of:\n- **Surrogates in strings:** they are always turned back into bytes as UTF-8, not the system's filesystem encoding. That matches what the issue asks for on typical Linux setups.\n- **Error message format:** the `FileError` text changed. Anything that matches on the exact old message, which used Python's repr quoting, will see the new quotes.",
+  "ttft_ms": 3879,
+  "type": "result",
+  "duration_ms": 87009,
+  "uuid": "0760102e-c496-4ec5-9de7-dd00cb5ff351",
+  "ttft_stream_ms": 1721,
+  "time_to_request_ms": 379,
+  "first_content_frame_ms": 1721,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 5,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

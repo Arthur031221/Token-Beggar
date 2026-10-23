@@ -1,0 +1,132 @@
+{
+ "task": "sphinx-include-source-read",
+ "arm": "verify",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 73013,
+  "stop_reason": "end_turn",
+  "session_id": "7d70b640-63dd-436d-b814-c64e0d406ec2",
+  "total_cost_usd": 0.32369990000000004,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 16653,
+   "cache_read_input_tokens": 171746,
+   "output_tokens": 5139,
+   "output_tokens_details": {
+    "thinking_tokens": 1869
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 16653,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 750,
+     "cache_read_input_tokens": 28801,
+     "cache_creation_input_tokens": 748,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 748
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 5139,
+    "cacheReadInputTokens": 171746,
+    "cacheCreationInputTokens": 16653,
+    "webSearchRequests": 0,
+    "costUSD": 0.2704092,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1869,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 2768,
+    "cacheReadInputTokens": 55592,
+    "cacheCreationInputTokens": 8011,
+    "webSearchRequests": 0,
+    "costUSD": 0.0532907,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 120,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Changes made by a `source-read` handler now reach text pulled in with `.. include::`. The new test fails on the original code and passes with the fix, and `tests/test_directive_other.py` passes (8 tests). Nothing is committed.\n\n**Root cause:** The `include` directive comes from docutils, which reads the included file itself and passes the lines straight to the parser. Sphinx did fire `source-read` for `something-to-include.rst`, but only when building that file as a document of its own. The include never used that modified text, so the `&REPLACE_ME;` in the included part of `index.html` stayed unreplaced.\n\n**Fix** (`sphinx/directives/other.py`, `Include.run`): just before docutils hands the included lines to the parser, Sphinx now fires `source-read` on that text. It passes the included file's document name and parses whatever the handler leaves in `source[0]`. Two end-of-input marker lines that docutils adds are kept out of the event. This only switches on when an extension is listening for `source-read`.\n\n**Tests:**\n- New test project `tests/roots/test-directive-include/`: `index.rst` includes `baz/baz.rst`, which in turn includes `baz/inner.rst`.\n- New test `test_include_source_read_event` in `tests/test_directive_other.py`. It checks that the replaced text shows up in the HTML at both include levels, and that the event fires once when the file is read on its own plus once for each time it is included.\n- I added a `CHANGES` entry under \"Bugs fixed\" as #11510, which I assumed from the upstream Sphinx tracker rather than taking from the issue text, so check it.\n\n**Things to know:**\n- `tests/test_directive_code.py` has 2 failures (`test_literal_include_linenos`, `test_linenothreshold`). They fail the same way on the unmodified code, so this change didn't cause them.\n- If the included file isn't itself a Sphinx document (for example a `.txt` file), handlers get `None` as the document name.\n- `literalinclude` and `include` with `:literal:` or `:code:` don't go through this path, so they don't fire the event.\n- I didn't run ruff because it isn't installed in `.venv`.",
+  "ttft_ms": 13240,
+  "type": "result",
+  "duration_ms": 97740,
+  "uuid": "20d7f0c5-cf73-44ff-8652-ab60292f0817",
+  "ttft_stream_ms": 1236,
+  "time_to_request_ms": 513,
+  "first_content_frame_ms": 1237,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

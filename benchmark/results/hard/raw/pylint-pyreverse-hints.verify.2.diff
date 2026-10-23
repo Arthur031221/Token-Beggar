@@ -1,0 +1,281 @@
+diff --git a/ChangeLog b/ChangeLog
+index 2ee8bc0a..9fd19b38 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -11,6 +11,10 @@ Release date: TBA
+ 
+ * astroid has been upgraded to 2.6.0
+ 
++* Pyreverse now uses PEP 484 type annotations of class attributes in its output.
++
++  Closes #1548
++
+ * Fix false positive ``useless-type-doc`` on ignored argument using ``pylint.extensions.docparams``
+   when a function was typed using pep484 but not inside the docstring.
+ 
+diff --git a/doc/whatsnew/2.9.rst b/doc/whatsnew/2.9.rst
+index ec89eb51..97942305 100644
+--- a/doc/whatsnew/2.9.rst
++++ b/doc/whatsnew/2.9.rst
+@@ -49,6 +49,8 @@ New checkers
+ Other Changes
+ =============
+ 
++* Pyreverse now uses PEP 484 type annotations of class attributes in its output (closes #1548).
++
+ * Pylint's tags are now the standard form ``vX.Y.Z`` and not ``pylint-X.Y.Z`` anymore.
+ 
+ * Fix false-positive ``too-many-ancestors`` when inheriting from builtin classes,
+diff --git a/pylint/pyreverse/diagrams.py b/pylint/pyreverse/diagrams.py
+index bf9f67af..5756ed17 100644
+--- a/pylint/pyreverse/diagrams.py
++++ b/pylint/pyreverse/diagrams.py
+@@ -129,6 +129,12 @@ class ClassDiagram(Figure, FilterMixIn):
+                 if node.name not in names:
+                     node_name = node.name
+                     names.append(node_name)
++            elif isinstance(
++                node, (astroid.Subscript, astroid.Name, astroid.Attribute, astroid.Const)
++            ):
++                label = node.as_string()
++                if label not in names:
++                    names.append(label)
+         return names
+ 
+     def nodes(self):
+diff --git a/pylint/pyreverse/inspector.py b/pylint/pyreverse/inspector.py
+index 8fa12202..19c39d4f 100644
+--- a/pylint/pyreverse/inspector.py
++++ b/pylint/pyreverse/inspector.py
+@@ -218,7 +218,7 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
+                     self.visit_module(frame)
+ 
+             current = frame.locals_type[node.name]
+-            values = set(node.infer())
++            values = utils.infer_node(node)
+             frame.locals_type[node.name] = list(set(current) | values)
+         except astroid.InferenceError:
+             pass
+@@ -230,7 +230,7 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
+         handle instance_attrs_type
+         """
+         try:
+-            values = set(node.infer())
++            values = utils.infer_node(node)
+             current = set(parent.instance_attrs_type[node.attrname])
+             parent.instance_attrs_type[node.attrname] = list(current | values)
+         except astroid.InferenceError:
+diff --git a/pylint/pyreverse/utils.py b/pylint/pyreverse/utils.py
+index a24d227e..622134a9 100644
+--- a/pylint/pyreverse/utils.py
++++ b/pylint/pyreverse/utils.py
+@@ -20,6 +20,8 @@ import os
+ import re
+ import sys
+ 
++import astroid
++
+ RCFILE = ".pyreverserc"
+ 
+ 
+@@ -213,3 +215,80 @@ class LocalsVisitor(ASTWalker):
+         if methods[1] is not None:
+             return methods[1](node)
+         return None
++
++
++def _is_none_const(node):
++    return isinstance(node, astroid.Const) and node.value is None
++
++
++def _is_optional(ann):
++    text = ann.as_string()
++    return text.startswith(("Optional[", "typing.Optional[")) or text in (
++        "None",
++        "Any",
++    )
++
++
++def _get_argument_annotation(frame, name):
++    """Return the (annotation, default) of the argument ``name`` of ``frame``."""
++    args = frame.args
++    positional = (args.posonlyargs or []) + (args.args or [])
++    annotations = (args.posonlyargs_annotations or []) + (args.annotations or [])
++    names = [arg.name for arg in positional]
++    if name in names:
++        idx = names.index(name)
++        defaults = args.defaults or []
++        default_idx = idx - (len(names) - len(defaults))
++        default = defaults[default_idx] if default_idx >= 0 else None
++        return annotations[idx], default
++    kwonly_names = [arg.name for arg in args.kwonlyargs or []]
++    if name in kwonly_names:
++        idx = kwonly_names.index(name)
++        return args.kwonlyargs_annotations[idx], args.kw_defaults[idx]
++    return None, None
++
++
++def get_annotation(node):
++    """Return the annotation node of an AssignAttr/AssignName node, or None.
++
++    The annotation is wrapped in ``Optional[...]`` when the assigned
++    default value is ``None``.
++    """
++    ann = None
++    default = None
++    parent = node.parent
++    if isinstance(parent, astroid.AnnAssign) and parent.target is node:
++        ann = parent.annotation
++        default = parent.value
++    elif isinstance(node, astroid.AssignAttr) and isinstance(parent, astroid.Assign):
++        frame = node.frame()
++        if isinstance(parent.value, astroid.Name) and isinstance(
++            frame, astroid.FunctionDef
++        ):
++            ann, default = _get_argument_annotation(frame, parent.value.name)
++    if ann is None:
++        return None
++    if _is_none_const(default) and not _is_optional(ann):
++        try:
++            return astroid.extract_node(f"Optional[{ann.as_string()}]")
++        except astroid.AstroidSyntaxError:
++            return ann
++    return ann
++
++
++def infer_node(node):
++    """Return a set of inferred types for the given node.
++
++    Type annotations take precedence over inference. Simple annotations
++    (``str``, ``MyClass``) are inferred to their class so that associations
++    still work; subscripted ones (``Optional[str]``) are kept as is.
++    """
++    ann = get_annotation(node)
++    try:
++        if ann is not None:
++            if isinstance(ann, astroid.Subscript):
++                return {ann}
++            return set(ann.infer())
++        return set(node.infer())
++    except astroid.InferenceError:
++        return {ann} if ann is not None else set()
+diff --git a/tests/unittest_pyreverse_utils.py b/tests/unittest_pyreverse_utils.py
+new file mode 100644
+index 00000000..cf3a0c35
+--- /dev/null
++++ b/tests/unittest_pyreverse_utils.py
+@@ -0,0 +1,114 @@
++"""Tests for type annotation support in pyreverse utils."""
++import astroid
++
++from pylint.pyreverse.diagrams import ClassDiagram
++from pylint.pyreverse.inspector import Linker, Project
++from pylint.pyreverse.utils import get_annotation, infer_node
++
++
++def test_arg_annotation_default_none_is_optional():
++    node = astroid.extract_node(
++        """
++    class C:
++        def __init__(self, a: str = None):
++            self.a = a  #@
++    """
++    ).targets[0]
++    assert get_annotation(node).as_string() == "Optional[str]"
++    assert {n.as_string() for n in infer_node(node)} == {"Optional[str]"}
++
++
++def test_kwonly_and_posonly_annotations():
++    func = astroid.extract_node(
++        """
++    def __init__(self, p: int, /, a: str, b: bytes = None, *, k: float = None):
++        self.p = p
++        self.a = a
++        self.b = b
++        self.k = k
++    """
++    )
++    labels = [get_annotation(assign.targets[0]).as_string() for assign in func.body]
++    assert labels == ["int", "str", "Optional[bytes]", "Optional[float]"]
++
++
++def test_arg_annotation_no_default():
++    node = astroid.extract_node(
++        """
++    class C:
++        def __init__(self, a: str):
++            self.a = a  #@
++    """
++    ).targets[0]
++    assert get_annotation(node).as_string() == "str"
++
++
++def test_arg_annotation_already_optional():
++    node = astroid.extract_node(
++        """
++    class C:
++        def __init__(self, a: Optional[str] = None):
++            self.a = a  #@
++    """
++    ).targets[0]
++    assert get_annotation(node).as_string() == "Optional[str]"
++
++
++def test_class_level_annassign():
++    node = astroid.extract_node(
++        """
++    class C:
++        x: int = 1  #@
++    """
++    ).target
++    assert get_annotation(node).as_string() == "int"
++    inferred = infer_node(node)
++    assert len(inferred) == 1
++    assert isinstance(next(iter(inferred)), astroid.ClassDef)
++
++
++def test_no_annotation_falls_back_to_inference():
++    node = astroid.extract_node(
++        """
++    class C:
++        def __init__(self, a=1):
++            self.a = a  #@
++    """
++    ).targets[0]
++    assert get_annotation(node) is None
++    inferred = infer_node(node)
++    assert inferred
++
++
++def test_class_diagram_uses_annotations():
++    module = astroid.parse(
++        """
++    from typing import Optional
++
++    class B:
++        pass
++
++    class C:
++        x: int = 1
++
++        def __init__(self, a: str = None, b: B = None, c: B = B()):
++            self.a = a
++            self.b = b
++            self.c = c
++    """
++    )
++    project = Project("test")
++    project.add_module(module)
++    Linker(project).visit(project)
++    diagram = ClassDiagram("classes", "ALL")
++    for klass in (module["B"], module["C"]):
++        diagram.add_object(klass.name, klass)
++    diagram.extract_relationships()
++    assert diagram.get_attrs(module["C"]) == [
++        "a : Optional[str]",
++        "b : Optional[B]",
++        "c",
++        "x : int",
++    ]
++    associations = {rel.name for rel in diagram.relationships["association"]}
++    assert associations == {"c"}

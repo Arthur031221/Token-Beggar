@@ -1,0 +1,132 @@
+{
+ "task": "pytest-mark-mro",
+ "arm": "verify",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 53551,
+  "stop_reason": "end_turn",
+  "session_id": "3ed3d77c-9831-40f6-b8a7-36286054c7c3",
+  "total_cost_usd": 0.2611292,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 14667,
+   "cache_read_input_tokens": 112066,
+   "output_tokens": 3749,
+   "output_tokens_details": {
+    "thinking_tokens": 890
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14667,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 780,
+     "cache_read_input_tokens": 27000,
+     "cache_creation_input_tokens": 563,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 563
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 3749,
+    "cacheReadInputTokens": 112066,
+    "cacheCreationInputTokens": 14667,
+    "webSearchRequests": 0,
+    "costUSD": 0.21476920000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 890,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2652,
+    "cacheReadInputTokens": 40500,
+    "cacheCreationInputTokens": 6308,
+    "webSearchRequests": 0,
+    "costUSD": 0.046360000000000005,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 34,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed it: a test class that inherits from several marked base classes now gets all of their marks. In the issue's example, `test_dings` now has both `foo` and `bar`.\n\n**Root cause:** Marks are stored in one `pytestmark` attribute on the class. `get_unpacked_marks` read it with a normal attribute lookup, which stops at the first class in the MRO (the order Python searches base classes) that defines it. So `Foo`'s list hid `Bar`'s.\n\n**Fix** (`src/_pytest/mark/structures.py`):\n- `get_unpacked_marks(obj, *, consider_mro=True)`: for a class, it now reads `pytestmark` from each class in the MRO, in order, and combines them. The subclass's own marks come first, then the base classes' marks. Functions and other objects behave as before.\n- `store_mark` now calls it with `consider_mro=False`. Without this, decorating a subclass would copy its base classes' marks into its own `pytestmark`, and they would show up twice.\n- One visible change: a subclass's `pytestmark` now holds only the marks applied directly to it. The changelog says so.\n\n**Tests** (`testing/test_mark.py`):\n- `test_mark_mro` checks the order (`c`, `a`, `b`) and the `consider_mro=False` case.\n- `test_mark_multiple_bases` runs the issue's example and checks that the collected test has both marks.\n- Both fail without the fix and pass with it.\n\n**Changelog:** added `changelog/7792.bugfix.rst`. I don't know the actual issue number, so 7792 may need correcting.\n\n**Test results:** `testing/test_mark.py`, `testing/python/`, `testing/test_collection.py` and `testing/test_skipping.py` give 640 passed, 22 skipped, 3 xfailed. I left out `testing/python/metafunc.py` because it fails to load the installed `hypothesis` package. It fails the same way without my change, so that's an environment problem, not this fix.\n\nNothing is committed.",
+  "ttft_ms": 7105,
+  "type": "result",
+  "duration_ms": 114602,
+  "uuid": "d3dac598-8d33-43a8-bd47-6836c7cd09b2",
+  "ttft_stream_ms": 959,
+  "time_to_request_ms": 276,
+  "first_content_frame_ms": 959,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

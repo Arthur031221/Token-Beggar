@@ -1,0 +1,132 @@
+{
+ "task": "sphinx-property-type",
+ "arm": "verify",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 140908,
+  "stop_reason": "end_turn",
+  "session_id": "d0681d68-b900-403b-9d47-d5834bede34d",
+  "total_cost_usd": 0.5365635000000001,
+  "usage": {
+   "input_tokens": 20,
+   "cache_creation_input_tokens": 23679,
+   "cache_read_input_tokens": 279694,
+   "output_tokens": 9239,
+   "output_tokens_details": {
+    "thinking_tokens": 2783
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23679,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1328,
+     "cache_read_input_tokens": 35739,
+     "cache_creation_input_tokens": 836,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 836
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 20,
+    "outputTokens": 9239,
+    "cacheReadInputTokens": 279694,
+    "cacheCreationInputTokens": 23679,
+    "webSearchRequests": 0,
+    "costUSD": 0.43023079999999997,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2783,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 20,
+    "outputTokens": 5301,
+    "cacheReadInputTokens": 142702,
+    "cacheCreationInputTokens": 15605,
+    "webSearchRequests": 0,
+    "costUSD": 0.1063327,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 437,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 14,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Methods decorated with both `@classmethod` and `@property` are now documented by autodoc. The 212 tests across the autodoc, autosummary and Python domain modules all pass. I haven't committed anything. The tests ran on Python 3.9.25. I couldn't run `tests/test_util_inspect.py` because this Python build has no `_testcapi` module, and it fails the same way without the changes. flake8 and mypy aren't installed in the venv, so I didn't run them.\n\n**Root cause:** on Python 3.9+, `getattr(Foo, 'classprop')` runs the property and returns its result. Autodoc only ever saw that value (e.g. `None`, with no docstring). `PropertyDocumenter` didn't recognise it as a property, and `:members:` dropped it for having no documentation.\n\n**Fix:**\n- **`sphinx/util/inspect.py`:** a new `getclassproperty(cls, name)` looks the name up in the raw `__dict__` of the class and its base classes. If it's a `classmethod` wrapping a property, it returns the property; otherwise `None`. It always returns `None` before Python 3.9, where this combination doesn't act as a property.\n- **`sphinx/ext/autodoc/importer.py`:** `get_class_members` uses that helper, so `:members:` and `:inherited-members:` find class properties.\n- **`sphinx/ext/autodoc/__init__.py`:** `PropertyDocumenter` now:\n  - recognises class properties;\n  - documents the property itself, so the docstring and `:type:` come through;\n  - adds `:classmethod:` to the output.\n- **`sphinx/domains/python.py`:** `py:property` accepts a new `:classmethod:` option, which shows as \"class property\" in the signature. It's documented in `doc/usage/restructuredtext/domains.rst`, and `CHANGES` has an entry.\n\n**Changes to the worker's draft:** I gave the first pass to a cheaper helper model and then reviewed and fixed its work.\n- **Broken autosummary tests:** its version broke 14 autosummary tests (5 failed, 9 errors). Autosummary passes a parent whose object is `None`, and the code assumed it had a `__dict__`.\n- **Inherited members:** it only checked the class's own `__dict__`, so class properties inherited from a base class were missed. That's the `SubClass` case in the issue.\n- **Non-class parents:** it allowed plain properties to be documented under a parent that isn't a class, which changed existing behaviour.\n\nThe shared helper fixes all three.\n\n**Tests:**\n- **Test target:** `tests/roots/test-ext-autodoc/target/properties.py` now has a `classprop` on `Foo` and a subclass `Bar(Foo)`.\n- **`tests/test_ext_autodoc_autoproperty.py`:** `test_class_properties` covers a direct class property. `test_inherited_class_properties` covers one inherited through `Bar` with `:inherited-members:`.\n- **`tests/test_ext_autodoc_autoclass.py`:** `test_properties` now expects `classprop` in the class's members.\n- **`tests/test_domain_py.py`:** `test_pyproperty` checks the `:classmethod:` option and its \"class property\" prefix.\n\nThe class-property tests are skipped before Python 3.9.\n\nOne thing to know: Python 3.11 deprecated this way of combining the two decorators and 3.13 removed it, so this support only matters for 3.9\u20133.12.",
+  "ttft_ms": 6661,
+  "type": "result",
+  "duration_ms": 203784,
+  "uuid": "83ebf417-49f2-4f30-84c2-435dc06134d4",
+  "ttft_stream_ms": 2679,
+  "time_to_request_ms": 299,
+  "first_content_frame_ms": 2679,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

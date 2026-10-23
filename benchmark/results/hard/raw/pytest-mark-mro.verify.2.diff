@@ -1,0 +1,135 @@
+diff --git a/changelog/7792.bugfix.rst b/changelog/7792.bugfix.rst
+new file mode 100644
+index 000000000..b87359040
+--- /dev/null
++++ b/changelog/7792.bugfix.rst
+@@ -0,0 +1 @@
++Marks are now inherited according to the full MRO in test classes. Previously, if a test class inherited from two or more classes, only marks from the first super-class would apply.
+diff --git a/src/_pytest/mark/structures.py b/src/_pytest/mark/structures.py
+index 800a25c92..af2477aea 100644
+--- a/src/_pytest/mark/structures.py
++++ b/src/_pytest/mark/structures.py
+@@ -355,12 +355,36 @@ class MarkDecorator:
+         return self.with_args(*args, **kwargs)
+ 
+ 
+-def get_unpacked_marks(obj: object) -> Iterable[Mark]:
+-    """Obtain the unpacked marks that are stored on an object."""
+-    mark_list = getattr(obj, "pytestmark", [])
+-    if not isinstance(mark_list, list):
+-        mark_list = [mark_list]
+-    return normalize_mark_list(mark_list)
++def get_unpacked_marks(
++    obj: Union[object, type],
++    *,
++    consider_mro: bool = True,
++) -> List[Mark]:
++    """Obtain the unpacked marks that are stored on an object.
++
++    If obj is a class and consider_mro is true, return marks applied to
++    this class and all of its super-classes in MRO order (base classes
++    first). If consider_mro is false, only return marks applied directly
++    to this class (not inherited ones). For non-class objects, the
++    ``pytestmark`` attribute is used.
++    """
++    if isinstance(obj, type) and consider_mro:
++        mark_lists = []
++        for cls in reversed(obj.__mro__):
++            cls_marks = cls.__dict__.get("pytestmark", [])
++            if not isinstance(cls_marks, list):
++                cls_marks = [cls_marks]
++            mark_lists.append(cls_marks)
++        mark_list = [m for marks in mark_lists for m in marks]
++    else:
++        if isinstance(obj, type):
++            # Only the class' own marks, not those inherited by attribute lookup.
++            mark_list = obj.__dict__.get("pytestmark", [])
++        else:
++            mark_list = getattr(obj, "pytestmark", [])
++        if not isinstance(mark_list, list):
++            mark_list = [mark_list]
++    return list(normalize_mark_list(mark_list))
+ 
+ 
+ def normalize_mark_list(
+@@ -388,7 +412,7 @@ def store_mark(obj, mark: Mark) -> None:
+     assert isinstance(mark, Mark), mark
+     # Always reassign name to avoid updating pytestmark in a reference that
+     # was only borrowed.
+-    obj.pytestmark = [*get_unpacked_marks(obj), mark]
++    obj.pytestmark = [*get_unpacked_marks(obj, consider_mro=False), mark]
+ 
+ 
+ # Typing for builtin pytest marks. This is cheating; it gives builtin marks
+diff --git a/testing/test_mark.py b/testing/test_mark.py
+index 65f2581bd..957a2b96a 100644
+--- a/testing/test_mark.py
++++ b/testing/test_mark.py
+@@ -561,6 +561,67 @@ class TestFunctional:
+         items, rec = pytester.inline_genitems(p)
+         self.assert_markers(items, test_foo=("a", "b", "c"), test_bar=("a", "b", "d"))
+ 
++    def test_mark_mro(self) -> None:
++        from _pytest.mark.structures import get_unpacked_marks
++
++        @pytest.mark.foo
++        class Foo:
++            pass
++
++        @pytest.mark.bar
++        class Bar:
++            pass
++
++        class TestDings(Foo, Bar):
++            def test_dings(self):
++                pass
++
++        # Marks come from reversed MRO: Bar first, then Foo.
++        assert [m.name for m in get_unpacked_marks(TestDings)] == ["bar", "foo"]
++
++        # Diamond with a shared marked base: no duplicates.
++        @pytest.mark.baz
++        class Base:
++            pass
++
++        @pytest.mark.foo
++        class Left(Base):
++            pass
++
++        @pytest.mark.bar
++        class Right(Base):
++            pass
++
++        class Diamond(Left, Right):
++            pass
++
++        assert [m.name for m in get_unpacked_marks(Diamond)] == [
++            "baz",
++            "bar",
++            "foo",
++        ]
++
++    def test_mark_multiple_inheritance_collected(self, pytester: Pytester) -> None:
++        p = pytester.makepyfile(
++            """
++            import pytest
++
++            @pytest.mark.foo
++            class Foo:
++                pass
++
++            @pytest.mark.bar
++            class Bar:
++                pass
++
++            class TestDings(Foo, Bar):
++                def test_dings(self):
++                    pass
++        """
++        )
++        items, rec = pytester.inline_genitems(p)
++        self.assert_markers(items, test_dings=("foo", "bar"))
++
+     def test_mark_closest(self, pytester: Pytester) -> None:
+         p = pytester.makepyfile(
+             """

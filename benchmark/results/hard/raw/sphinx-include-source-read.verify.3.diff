@@ -1,0 +1,120 @@
+diff --git a/CHANGES b/CHANGES
+index ce1185c76..8b232f418 100644
+--- a/CHANGES
++++ b/CHANGES
+@@ -54,6 +54,8 @@ Bugs fixed
+ 
+ * #11077: graphviz: Fix relative links from within the graph.
+   Patch by Ralf Grubenmann.
++* #11510: Apply ``source-read`` event modifications to text included via the
++  reST ``include`` directive.
+ * #11529: Line Block in LaTeX builder outputs spurious empty token.
+   Patch by Adrian Vollmer.
+ * #11196: autosummary: Summary line extraction failed with "e.g."
+diff --git a/sphinx/directives/other.py b/sphinx/directives/other.py
+index 19f7c0a8d..a79defd27 100644
+--- a/sphinx/directives/other.py
++++ b/sphinx/directives/other.py
+@@ -1,6 +1,7 @@
+ from __future__ import annotations
+ 
+ import re
++from os.path import abspath, relpath
+ from typing import TYPE_CHECKING, Any, cast
+ 
+ from docutils import nodes
+@@ -8,6 +9,7 @@ from docutils.parsers.rst import directives
+ from docutils.parsers.rst.directives.admonitions import BaseAdmonition
+ from docutils.parsers.rst.directives.misc import Class
+ from docutils.parsers.rst.directives.misc import Include as BaseInclude
++from docutils.statemachine import StateMachine
+ 
+ from sphinx import addnodes
+ from sphinx.domains.changeset import VersionChange  # noqa: F401  # for compatibility
+@@ -369,6 +371,22 @@ class Include(BaseInclude, SphinxDirective):
+     """
+ 
+     def run(self) -> list[Node]:
++        # Docutils reads included files directly, bypassing Sphinx's reader.
++        # Patch this state machine instance's insert_input so that the
++        # 'source-read' event is also emitted for included content.
++        def _insert_input(include_lines: list[str], source: str) -> None:
++            # the last 2 lines are marker lines that must be preserved
++            text = "\n".join(include_lines[:-2])
++            docname = self.env.path2doc(abspath(relpath(source)))
++            arg = [text]
++            self.env.app.events.emit('source-read', docname, arg)
++            text = arg[0]
++            include_lines = text.splitlines() + include_lines[-2:]
++            return StateMachine.insert_input(self.state_machine, include_lines, source)
++
++        if self.env.app.events.listeners.get('source-read'):
++            self.state_machine.insert_input = _insert_input  # type: ignore[method-assign]
++
+         if self.arguments[0].startswith('<') and \
+            self.arguments[0].endswith('>'):
+             # docutils "standard" includes, do not do path processing
+diff --git a/tests/roots/test-directive-include/baz/baz.rst b/tests/roots/test-directive-include/baz/baz.rst
+new file mode 100644
+index 000000000..1dbfcd4c7
+--- /dev/null
++++ b/tests/roots/test-directive-include/baz/baz.rst
+@@ -0,0 +1,6 @@
++Baz
++===
++
++hello
++
++.. include:: /baz/inner.rst
+diff --git a/tests/roots/test-directive-include/baz/inner.rst b/tests/roots/test-directive-include/baz/inner.rst
+new file mode 100644
+index 000000000..bd2f9fc0d
+--- /dev/null
++++ b/tests/roots/test-directive-include/baz/inner.rst
+@@ -0,0 +1 @@
++inner hello
+diff --git a/tests/roots/test-directive-include/conf.py b/tests/roots/test-directive-include/conf.py
+new file mode 100644
+index 000000000..9b6a55417
+--- /dev/null
++++ b/tests/roots/test-directive-include/conf.py
+@@ -0,0 +1 @@
++project = 'test'
+diff --git a/tests/roots/test-directive-include/index.rst b/tests/roots/test-directive-include/index.rst
+new file mode 100644
+index 000000000..e749007e7
+--- /dev/null
++++ b/tests/roots/test-directive-include/index.rst
+@@ -0,0 +1,4 @@
++test-directive-include
++======================
++
++.. include:: baz/baz.rst
+diff --git a/tests/test_directive_other.py b/tests/test_directive_other.py
+index f221db075..20352d9c9 100644
+--- a/tests/test_directive_other.py
++++ b/tests/test_directive_other.py
+@@ -148,3 +148,23 @@ def test_toctree_twice(app):
+     assert_node(doctree[0][0],
+                 entries=[(None, 'foo'), (None, 'foo')],
+                 includefiles=['foo', 'foo'])
++
++
++@pytest.mark.sphinx('html', testroot='directive-include')
++def test_include_source_read_event(app):
++    docnames = []
++
++    def source_read_handler(app, docname, source):
++        docnames.append(docname)
++        source[0] = source[0].replace('hello', 'REPLACED')
++
++    app.connect('source-read', source_read_handler)
++    app.build(force_all=True)
++
++    # emitted once when read as a document, and once more per inclusion
++    assert docnames.count('baz/baz') == 2  # index
++    assert docnames.count('baz/inner') == 3  # baz/baz, index (via baz/baz)
++    html = (app.outdir / 'index.html').read_text(encoding='utf8')
++    assert 'REPLACED' in html
++    assert 'inner REPLACED' in html
++    assert 'hello' not in html

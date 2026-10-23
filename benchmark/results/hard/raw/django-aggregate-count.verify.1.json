@@ -1,0 +1,132 @@
+{
+ "task": "django-aggregate-count",
+ "arm": "verify",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 198538,
+  "stop_reason": "end_turn",
+  "session_id": "fdc306f8-f082-49bd-afe4-7acb05d7414b",
+  "total_cost_usd": 0.7397808000000001,
+  "usage": {
+   "input_tokens": 26,
+   "cache_creation_input_tokens": 30123,
+   "cache_read_input_tokens": 425140,
+   "output_tokens": 11090,
+   "output_tokens_details": {
+    "thinking_tokens": 4925
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 30123,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 986,
+     "cache_read_input_tokens": 42338,
+     "cache_creation_input_tokens": 680,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 680
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 26,
+    "outputTokens": 11090,
+    "cacheReadInputTokens": 425140,
+    "cacheCreationInputTokens": 30123,
+    "webSearchRequests": 0,
+    "costUSD": 0.547916,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 4925,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 36,
+    "outputTokens": 9223,
+    "cacheReadInputTokens": 328678,
+    "cacheCreationInputTokens": 26678,
+    "webSearchRequests": 0,
+    "costUSD": 0.1918648,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2635,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 15,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`count()` and `aggregate()` now leave out annotations that the requested aggregate doesn't use, including the issue's example. Nothing is committed.\n\n**Cause:** in `Query.get_aggregation()` (`django/db/models/sql/query.py`), any existing annotation forced the query into a subquery. That subquery then selected every annotation, used or not.\n\n**What changed:**\n- **New helper:** `get_refs()` on `BaseExpression`, `Ref` and `WhereNode` reports which annotations an aggregate refers to.\n- **When a subquery is still used:** only when actually needed \u2014 existing aggregate annotations, HAVING filters, filters on window functions, aggregating over a `Subquery` annotation, slicing, distinct, set operations (union etc.), or an explicit GROUP BY. Plain annotations alone no longer force one.\n  - Inside that subquery, only the annotations the aggregates refer to are kept. I skip this trimming when the query uses distinct, set operations, slicing or an explicit GROUP BY, because there the selected columns can change the result. Without that guard, `datetimes(...).count()` returned the wrong number.\n- **Without a subquery:** references to annotations are written directly into the aggregate, and only the aggregates are selected.\n\n**Resulting SQL:**\n- `Book.objects.annotate(Count('authors')).count()`\n  - Before: `SELECT COUNT(*) FROM (SELECT COUNT(author_id) ... GROUP BY book.id) subquery`\n  - After: `SELECT COUNT(*) FROM (SELECT book.id ... GROUP BY book.id) subquery`\n  \n  The subquery stays, because the join plus GROUP BY is still needed to count books, not book\u2013author rows; the count of authors is gone.\n- Plain annotations, such as `.annotate(x=Length(\"name\")).count()`, now produce a single `SELECT COUNT(*)` with no subquery.\n- `annotate(n=Count(...), m=Count(...)).aggregate(Avg(\"n\"))` keeps `n` and drops `m`. Filters on annotations still apply.\n\n**Tests:** I added six tests to `tests/aggregation/tests.py`. They cover plain and aggregate annotations being pruned, referenced annotations being kept, and aggregating over a `Subquery` annotation. I also added a line to the release notes in `docs/releases/4.2.txt`.\n- The related suites (aggregation, aggregation_regress, annotations, queries, expressions, expressions_window, lookup, db_functions, ordering) all pass.\n- The full suite ran 16,090 tests with 7 failures, in mail, admin_scripts, test_utils and utils_tests.test_html. The same 7 fail with my changes stashed, so they come from the environment, not this change.\n- flake8 and black aren't installed in the venv, so I couldn't run the linters.",
+  "ttft_ms": 12289,
+  "type": "result",
+  "duration_ms": 920465,
+  "uuid": "3ea16e68-f52a-4a80-bc0c-9eff87880d09",
+  "ttft_stream_ms": 876,
+  "time_to_request_ms": 230,
+  "first_content_frame_ms": 876,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

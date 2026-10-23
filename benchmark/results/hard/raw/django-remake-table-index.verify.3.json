@@ -1,0 +1,132 @@
+{
+ "task": "django-remake-table-index",
+ "arm": "verify",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 155743,
+  "stop_reason": "end_turn",
+  "session_id": "d7fe2f75-554a-4d34-8d1c-e41e794c5200",
+  "total_cost_usd": 0.5920159,
+  "usage": {
+   "input_tokens": 24,
+   "cache_creation_input_tokens": 24980,
+   "cache_read_input_tokens": 350010,
+   "output_tokens": 8919,
+   "output_tokens_details": {
+    "thinking_tokens": 3054
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 24980,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 886,
+     "cache_read_input_tokens": 37257,
+     "cache_creation_input_tokens": 619,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 619
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 24,
+    "outputTokens": 8919,
+    "cacheReadInputTokens": 350010,
+    "cacheCreationInputTokens": 24980,
+    "webSearchRequests": 0,
+    "costUSD": 0.448318,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3054,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 24,
+    "outputTokens": 7606,
+    "cacheReadInputTokens": 178474,
+    "cacheCreationInputTokens": 19897,
+    "webSearchRequests": 0,
+    "costUSD": 0.14369790000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1088,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 12,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Fixed: a primary key's `db_collation` now carries over to the foreign key columns that point at it. That holds both when tables are created and when a migration changes the key's collation. The tests pass on SQLite, which is the only backend I ran them on. I couldn't test the MySQL fix, and MySQL is the backend in the issue.\n\n**Root cause:** `ForeignKey.db_parameters()` didn't report any collation, so FK columns were always created without one. Separately, the migration code only rebuilt the FK columns pointing at a field when that field's type changed. A collation-only change produced the bare `MODIFY account_id varchar(22) NOT NULL` from the issue.\n\n**Changes:**\n- `django/db/models/fields/related.py`: `ForeignKey.db_parameters()` now returns the target field's collation, so new FK columns get it.\n- `django/db/backends/base/schema.py`, in `_alter_field`:\n  - A collation change on a primary key or unique field now drops the incoming FKs and puts them back afterwards, just as a type change does.\n  - Each referencing column is altered with the new collation.\n- `django/db/backends/sqlite3/schema.py`: SQLite rebuilds the referencing tables when the target's collation changes.\n- `django/db/backends/mysql/schema.py`: the collation change now keeps the column's `NULL`/`NOT NULL`. Without this, MySQL's `MODIFY` would silently turn `NOT NULL` FK columns nullable. The SQL now matches what the issue asks for: `MODIFY account_id varchar(22) NOT NULL COLLATE utf8_bin`.\n\n**Tests:**\n- `tests/schema/tests.py`:\n  - `test_db_collation_propagates_to_fk` checks that a new FK column gets the key's collation.\n  - `test_alter_pk_db_collation_propagates_to_fk` changes the key's collation and checks that both the key and the FK column change.\n- `tests/model_fields/test_foreignkey.py`: `test_db_parameters_collation` checks what `ForeignKey.db_parameters()` returns.\n\n**Results:**\n- The three new tests pass with the fix. With the library code temporarily reverted, they fail (2 failures, 1 error).\n- `.venv/bin/python tests/runtests.py --parallel 1 schema migrations model_fields backends` \u2192 `OK (skipped=181)`.\n\nNothing is committed. A copy of the library diff is in `/tmp/collation-fix-backup/lib.patch`, which you can delete.",
+  "ttft_ms": 10664,
+  "type": "result",
+  "duration_ms": 224578,
+  "uuid": "ba69b1a0-8171-46f7-ab01-387225f19ae4",
+  "ttft_stream_ms": 3489,
+  "time_to_request_ms": 328,
+  "first_content_frame_ms": 3489,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

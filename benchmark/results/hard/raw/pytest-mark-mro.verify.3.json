@@ -1,0 +1,132 @@
+{
+ "task": "pytest-mark-mro",
+ "arm": "verify",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 71526,
+  "stop_reason": "end_turn",
+  "session_id": "e94cced4-8542-42f6-8d61-ae3071ebaf1a",
+  "total_cost_usd": 0.2992595,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 15599,
+   "cache_read_input_tokens": 167876,
+   "output_tokens": 4153,
+   "output_tokens_details": {
+    "thinking_tokens": 1210
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 15599,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 734,
+     "cache_read_input_tokens": 27924,
+     "cache_creation_input_tokens": 571,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 571
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 4153,
+    "cacheReadInputTokens": 167876,
+    "cacheCreationInputTokens": 15599,
+    "webSearchRequests": 0,
+    "costUSD": 0.24148319999999995,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1210,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 3500,
+    "cacheReadInputTokens": 43188,
+    "cacheCreationInputTokens": 7375,
+    "webSearchRequests": 0,
+    "costUSD": 0.0577763,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 301,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "A test class that inherits from several marked base classes now gets the marks of all of them. In the issue's example, `test_dings` now has both `foo` and `bar`. The new tests pass, and both fail when run against the original code. Nothing is committed.\n\n**Root cause:** `get_unpacked_marks` in `src/_pytest/mark/structures.py` read `getattr(cls, \"pytestmark\")`. Normal attribute lookup stops at the first base class that defines `pytestmark`, so marks from the other bases were never seen.\n\n**Changes:**\n- **`src/_pytest/mark/structures.py`:**\n  - `get_unpacked_marks` takes a new keyword-only `consider_mro=True`. For classes, it collects each class's own `pytestmark` across the whole `__mro__`. Functions and other objects behave as before.\n  - The class walk goes in reverse MRO order, so base-class marks come first and the class's own marks last. That's the same order marks had before, so `get_closest_marker` still picks the subclass's mark and no existing test needed changing.\n  - `store_mark` now uses `consider_mro=False`. A decorated class stores only its own marks; otherwise the inherited ones would be copied in and then counted twice.\n- **`testing/test_mark.py`:** two new tests.\n  - `test_mark_mro` covers the issue's example, plus a subclass that also has its own mark.\n  - `test_get_unpacked_marks_mro_and_store_mark` checks the new parameter and that `store_mark` doesn't copy base-class marks into the subclass.\n- **`changelog/7792.bugfix.rst`:** new changelog entry.\n\n**Tests:** `.venv/bin/python -m pytest testing/test_mark.py testing/python testing/test_unittest.py -q --ignore=testing/python/metafunc.py` gives 529 passed, 30 skipped, 2 xfailed. I left out `testing/python/metafunc.py` because it can't be collected in this environment: the installed `hypothesis` package expects `_pytest.fixtures.FixtureFunctionDefinition`, which this version doesn't have. It fails the same way without these changes.",
+  "ttft_ms": 5696,
+  "type": "result",
+  "duration_ms": 121479,
+  "uuid": "699ae5c4-44a0-4a3f-affc-3ffd989662a4",
+  "ttft_stream_ms": 948,
+  "time_to_request_ms": 285,
+  "first_content_frame_ms": 949,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,73 @@
+diff --git a/markdown/inlinepatterns.py b/markdown/inlinepatterns.py
+index eb313bd..d854148 100644
+--- a/markdown/inlinepatterns.py
++++ b/markdown/inlinepatterns.py
+@@ -104,6 +104,7 @@ The actual regular expressions for patterns
+ """
+ 
+ NOIMG = r'(?<!\!)'
++ESCAPE_PLACEHOLDER_RE = re.compile(r'{}(\d+){}'.format(util.STX, util.ETX))
+ 
+ # `e=f()` or ``e=f("`")``
+ BACKTICK_RE = r'(?:(?<!\\)((?:\\{2})+)(?=`+)|(?<!\\)(`+)(.+?)(?<!`)\2(?!`))'
+@@ -247,7 +248,9 @@ class Pattern:  # pragma: no cover
+                 else:
+                     # An etree Element - return text content only
+                     return ''.join(value.itertext())
+-        return util.INLINE_PLACEHOLDER_RE.sub(get_stash, text)
++        text = util.INLINE_PLACEHOLDER_RE.sub(get_stash, text)
++        # Restore backslash escapes so the serializer escapes them in attributes.
++        return ESCAPE_PLACEHOLDER_RE.sub(lambda m: chr(int(m.group(1))), text)
+ 
+ 
+ class InlineProcessor(Pattern):
+diff --git a/tests/test_syntax/extensions/test_smarty.py b/tests/test_syntax/extensions/test_smarty.py
+new file mode 100644
+index 0000000..faf85ae
+--- /dev/null
++++ b/tests/test_syntax/extensions/test_smarty.py
+@@ -0,0 +1,27 @@
++from markdown.test_tools import TestCase
++
++
++class TestSmartyEscapes(TestCase):
++
++    default_kwargs = {'extensions': ['smarty']}
++
++    def test_escaped_double_quote_in_alt(self):
++        self.assertMarkdownRenders(
++            r'![x\"x](x)',
++            '<p><img alt="x&quot;x" src="x" /></p>'
++        )
++
++    def test_escaped_single_quote_in_alt(self):
++        self.assertMarkdownRenders(
++            r"![x\'x](x)",
++            '<p><img alt="x\'x" src="x" /></p>'
++        )
++
++    def test_escaped_double_quote_in_title(self):
++        self.assertMarkdownRenders(
++            r'[a](x "t\"t")',
++            '<p><a href="x" title="t&quot;t">a</a></p>'
++        )
++
++    def test_escaped_quote_in_text(self):
++        self.assertMarkdownRenders(r'a\"b', '<p>a"b</p>')
+diff --git a/tests/test_syntax/inline/test_images.py b/tests/test_syntax/inline/test_images.py
+index c9c7cb8..a0c0fca 100644
+--- a/tests/test_syntax/inline/test_images.py
++++ b/tests/test_syntax/inline/test_images.py
+@@ -182,3 +182,12 @@ class TestAdvancedImages(TestCase):
+             ),
+             '<p><a href="http://example.com/"><img alt="img ref" src="./image.jpg" /></a></p>'
+         )
++
++
++class TestEscapedImageAttributes(TestCase):
++
++    def test_escaped_gt_in_alt(self):
++        self.assertMarkdownRenders(
++            r'![x\>x](x)',
++            '<p><img alt="x&gt;x" src="x" /></p>'
++        )

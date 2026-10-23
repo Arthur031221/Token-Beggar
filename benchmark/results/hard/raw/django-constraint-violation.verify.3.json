@@ -1,0 +1,132 @@
+{
+ "task": "django-constraint-violation",
+ "arm": "verify",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 127125,
+  "stop_reason": "end_turn",
+  "session_id": "8d38a25f-2c47-4842-b44d-3399dca395dd",
+  "total_cost_usd": 0.5116799000000001,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 22718,
+   "cache_read_input_tokens": 120015,
+   "output_tokens": 3836,
+   "output_tokens_details": {
+    "thinking_tokens": 1092
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 22718,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 861,
+     "cache_read_input_tokens": 34990,
+     "cache_creation_input_tokens": 624,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 624
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 3836,
+    "cacheReadInputTokens": 120015,
+    "cacheCreationInputTokens": 22718,
+    "webSearchRequests": 0,
+    "costUSD": 0.28250700000000006,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1092,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 28,
+    "outputTokens": 11269,
+    "cacheReadInputTokens": 329694,
+    "cacheCreationInputTokens": 33383,
+    "webSearchRequests": 0,
+    "costUSD": 0.2291729,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 290,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Constraints now take a `violation_error_code` argument, and the `ValidationError` raised by `validate()` uses it as its `code`. The issue text says \"violation_error_message\", but it clearly means a new code parameter, so that's the name I used. The constraints and migrations tests pass. The new PostgreSQL `ExclusionConstraint` tests haven't actually run, because there's no PostgreSQL database here. Nothing is committed.\n\n**Library changes**\n- **`BaseConstraint`** (`django/db/models/constraints.py`): new keyword argument `violation_error_code`, default `None`. It's included in `deconstruct()` only when set, so migrations for existing constraints don't change.\n- **`CheckConstraint`, `UniqueConstraint`, and `ExclusionConstraint`** (the last in `django/contrib/postgres/constraints.py`): all accept the argument and pass it to `BaseConstraint`. It's part of `__eq__` and `__repr__`, and every `raise ValidationError(...)` in `validate()` now sets `code=self.violation_error_code`.\n- **Exception:** a `UniqueConstraint` with only `fields` and no `condition` keeps its old behaviour and uses `instance.unique_error_message(...)`, just as it already ignores a custom `violation_error_message`. The docs say so.\n\n**Tests**\n- `tests/constraints/tests.py` covers the default and custom code, clone, deconstruct, eq, repr, and the error code from `validate()` for `CheckConstraint` and for `UniqueConstraint` with an expression or a condition. Of those, the condition case needs a database that supports partial indexes; SQLite does.\n- `tests/postgres_tests/test_constraints.py` has the same kinds of tests for `ExclusionConstraint`.\n- I removed one test the worker added that didn't check anything about the new argument.\n\n**Docs**\n- `docs/ref/models/constraints.txt` and `docs/ref/contrib/postgres/constraints.txt` have the new signatures, a `violation_error_code` section, and `versionadded:: 5.0`.\n- `docs/releases/5.0.txt` has a release note under Models.\n\n**Test runs**\n- `constraints postgres_tests.test_constraints validation`: 201 tests, OK (skipped=57, almost all of them the PostgreSQL tests).\n- After removing the test: `constraints migrations.test_autodetector migrations.test_operations`: OK (skipped=6).",
+  "ttft_ms": 10221,
+  "type": "result",
+  "duration_ms": 138231,
+  "uuid": "90204211-99d9-4906-b829-80f3c01c64df",
+  "ttft_stream_ms": 2821,
+  "time_to_request_ms": 854,
+  "first_content_frame_ms": 2822,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 8,
+  "f2p_total": 8,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

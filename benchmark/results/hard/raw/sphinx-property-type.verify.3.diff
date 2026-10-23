@@ -1,0 +1,225 @@
+diff --git a/CHANGES b/CHANGES
+index 5658cc43f..2c300cd23 100644
+--- a/CHANGES
++++ b/CHANGES
+@@ -13,6 +13,10 @@ Deprecated
+ Features added
+ --------------
+ 
++* #9445: autodoc: Support class properties (``@classmethod`` and ``@property``)
++* #9445: py domain: ``:py:property:`` directive supports ``:classmethod:``
++  option to describe a class property
++
+ Bugs fixed
+ ----------
+ 
+diff --git a/doc/usage/restructuredtext/domains.rst b/doc/usage/restructuredtext/domains.rst
+index 23844886e..1c432d2e1 100644
+--- a/doc/usage/restructuredtext/domains.rst
++++ b/doc/usage/restructuredtext/domains.rst
+@@ -329,6 +329,13 @@ The following directives are provided for module and class contents:
+ 
+       Indicate the property is abstract.
+ 
++   .. rst:directive:option:: classmethod
++      :type: no value
++
++      Indicate the property is a classmethod.
++
++      .. versionadded:: 4.2
++
+    .. rst:directive:option:: type: type of the property
+       :type: text
+ 
+diff --git a/sphinx/domains/python.py b/sphinx/domains/python.py
+index d79de154e..758920a8e 100644
+--- a/sphinx/domains/python.py
++++ b/sphinx/domains/python.py
+@@ -852,6 +852,7 @@ class PyProperty(PyObject):
+     option_spec = PyObject.option_spec.copy()
+     option_spec.update({
+         'abstractmethod': directives.flag,
++        'classmethod': directives.flag,
+         'type': directives.unchanged,
+     })
+ 
+@@ -868,6 +869,8 @@ class PyProperty(PyObject):
+         prefix = ['property']
+         if 'abstractmethod' in self.options:
+             prefix.insert(0, 'abstract')
++        if 'classmethod' in self.options:
++            prefix.insert(0, 'class')
+ 
+         return ' '.join(prefix) + ' '
+ 
+diff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py
+index 1cecb1f79..c86bed6e8 100644
+--- a/sphinx/ext/autodoc/__init__.py
++++ b/sphinx/ext/autodoc/__init__.py
+@@ -2661,7 +2661,32 @@ class PropertyDocumenter(DocstringStripSignatureMixin, ClassLevelDocumenter):  #
+     @classmethod
+     def can_document_member(cls, member: Any, membername: str, isattr: bool, parent: Any
+                             ) -> bool:
+-        return inspect.isproperty(member) and isinstance(parent, ClassDocumenter)
++        if isinstance(parent, ClassDocumenter):
++            if inspect.isproperty(member):
++                return True
++            else:
++                __dict__ = safe_getattr(parent.object, '__dict__', {})
++                obj = __dict__.get(membername)
++                return isinstance(obj, classmethod) and inspect.isproperty(obj.__func__)
++        else:
++            return False
++
++    def import_object(self, raiseerror: bool = False) -> bool:
++        """Check the given object is a property or a class property
++        (``@classmethod`` + ``@property``)."""
++        ret = super().import_object(raiseerror)
++        if ret and not inspect.isproperty(self.object):
++            __dict__ = safe_getattr(self.parent, '__dict__', {})
++            obj = __dict__.get(self.objpath[-1])
++            if isinstance(obj, classmethod) and inspect.isproperty(obj.__func__):
++                self.object = obj.__func__
++                self.isclassmethod = True
++                return True
++            else:
++                return False
++
++        self.isclassmethod = False
++        return ret
+ 
+     def document_members(self, all_members: bool = False) -> None:
+         pass
+@@ -2675,6 +2700,8 @@ class PropertyDocumenter(DocstringStripSignatureMixin, ClassLevelDocumenter):  #
+         sourcename = self.get_sourcename()
+         if inspect.isabstractmethod(self.object):
+             self.add_line('   :abstractmethod:', sourcename)
++        if self.isclassmethod:
++            self.add_line('   :classmethod:', sourcename)
+ 
+         if safe_getattr(self.object, 'fget', None) and self.config.autodoc_typehints != 'none':
+             try:
+diff --git a/sphinx/ext/autodoc/importer.py b/sphinx/ext/autodoc/importer.py
+index 1a8ea0973..003d59046 100644
+--- a/sphinx/ext/autodoc/importer.py
++++ b/sphinx/ext/autodoc/importer.py
+@@ -18,7 +18,7 @@ from sphinx.ext.autodoc.mock import ismock, undecorate
+ from sphinx.pycode import ModuleAnalyzer, PycodeError
+ from sphinx.util import logging
+ from sphinx.util.inspect import (getannotations, getmro, getslots, isclass, isenumclass,
+-                                 safe_getattr)
++                                 isproperty, safe_getattr)
+ 
+ if False:
+     # For type annotation
+@@ -278,6 +278,12 @@ def get_class_members(subject: Any, objpath: List[str], attrgetter: Callable
+             if ismock(value):
+                 value = undecorate(value)
+ 
++            # classmethod-wrapped property: accessing it evaluates the property,
++            # so use the underlying property object to keep its docstring
++            raw = obj_dict.get(name)
++            if isinstance(raw, classmethod) and isproperty(raw.__func__):
++                value = raw.__func__
++
+             unmangled = unmangle(subject, name)
+             if unmangled and unmangled not in members:
+                 if name in obj_dict:
+diff --git a/tests/roots/test-ext-autodoc/target/properties.py b/tests/roots/test-ext-autodoc/target/properties.py
+index 409fc2b5d..16a5d608d 100644
+--- a/tests/roots/test-ext-autodoc/target/properties.py
++++ b/tests/roots/test-ext-autodoc/target/properties.py
+@@ -4,3 +4,8 @@ class Foo:
+     @property
+     def prop(self) -> int:
+         """docstring"""
++
++    @classmethod
++    @property
++    def classprop(cls) -> int:
++        """docstring"""
+diff --git a/tests/test_domain_py.py b/tests/test_domain_py.py
+index e4fb08155..7b0525d76 100644
+--- a/tests/test_domain_py.py
++++ b/tests/test_domain_py.py
+@@ -1180,3 +1180,20 @@ def test_warn_missing_reference(app, status, warning):
+     assert 'index.rst:6: WARNING: undefined label: no-label' in warning.getvalue()
+     assert ('index.rst:6: WARNING: Failed to create a cross reference. A title or caption not found: existing-label'
+             in warning.getvalue())
++
++
++def test_pyproperty_classmethod(app):
++    text = (".. py:class:: Class\n"
++            "\n"
++            "   .. py:property:: prop2\n"
++            "      :classmethod:\n"
++            "      :type: str\n")
++    domain = app.env.get_domain('py')
++    doctree = restructuredtext.parse(app, text)
++    assert_node(doctree[1][1][0], addnodes.index,
++                entries=[('single', 'prop2 (Class property)', 'Class.prop2', '', None)])
++    assert_node(doctree[1][1][1], ([desc_signature, ([desc_annotation, "class property "],
++                                                     [desc_name, "prop2"],
++                                                     [desc_annotation, ": str"])],
++                                   [desc_content, ()]))
++    assert domain.objects['Class.prop2'] == ('index', 'Class.prop2', 'property', False)
+diff --git a/tests/test_ext_autodoc_autoclass.py b/tests/test_ext_autodoc_autoclass.py
+index 59ee1a948..8e8ee23d3 100644
+--- a/tests/test_ext_autodoc_autoclass.py
++++ b/tests/test_ext_autodoc_autoclass.py
+@@ -200,6 +200,7 @@ def test_decorators(app):
+     ]
+ 
+ 
++@pytest.mark.skipif(sys.version_info < (3, 9), reason='python 3.9+ is required.')
+ @pytest.mark.sphinx('html', testroot='ext-autodoc')
+ def test_properties(app):
+     options = {"members": None}
+@@ -212,6 +213,14 @@ def test_properties(app):
+         '   docstring',
+         '',
+         '',
++        '   .. py:property:: Foo.classprop',
++        '      :module: target.properties',
++        '      :classmethod:',
++        '      :type: int',
++        '',
++        '      docstring',
++        '',
++        '',
+         '   .. py:property:: Foo.prop',
+         '      :module: target.properties',
+         '      :type: int',
+diff --git a/tests/test_ext_autodoc_autoproperty.py b/tests/test_ext_autodoc_autoproperty.py
+index ee25aa8b7..0c213b3fd 100644
+--- a/tests/test_ext_autodoc_autoproperty.py
++++ b/tests/test_ext_autodoc_autoproperty.py
+@@ -9,6 +9,8 @@
+     :license: BSD, see LICENSE for details.
+ """
+ 
++import sys
++
+ import pytest
+ 
+ from .test_ext_autodoc import do_autodoc
+@@ -26,3 +28,19 @@ def test_properties(app):
+         '   docstring',
+         '',
+     ]
++
++
++@pytest.mark.skipif(sys.version_info < (3, 9), reason='python 3.9+ is required.')
++@pytest.mark.sphinx('html', testroot='ext-autodoc')
++def test_class_properties(app):
++    actual = do_autodoc(app, 'property', 'target.properties.Foo.classprop')
++    assert list(actual) == [
++        '',
++        '.. py:property:: Foo.classprop',
++        '   :module: target.properties',
++        '   :classmethod:',
++        '   :type: int',
++        '',
++        '   docstring',
++        '',
++    ]

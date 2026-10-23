@@ -1,0 +1,132 @@
+{
+ "task": "django-prefetch-sliced",
+ "arm": "verify",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 151385,
+  "stop_reason": "end_turn",
+  "session_id": "63f10283-49a9-429d-92e8-70e2641095d6",
+  "total_cost_usd": 0.6279163000000001,
+  "usage": {
+   "input_tokens": 22,
+   "cache_creation_input_tokens": 25968,
+   "cache_read_input_tokens": 332626,
+   "output_tokens": 9963,
+   "output_tokens_details": {
+    "thinking_tokens": 3441
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 25968,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1030,
+     "cache_read_input_tokens": 38599,
+     "cache_creation_input_tokens": 265,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 265
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 22,
+    "outputTokens": 9963,
+    "cacheReadInputTokens": 332626,
+    "cacheCreationInputTokens": 25968,
+    "webSearchRequests": 0,
+    "costUSD": 0.4736172,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3441,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 26,
+    "outputTokens": 7873,
+    "cacheReadInputTokens": 226671,
+    "cacheCreationInputTokens": 21140,
+    "webSearchRequests": 0,
+    "costUSD": 0.1542991,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1670,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 12,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Sliced querysets now work in `Prefetch()`. The slice is applied to each parent's related objects. In the issue's example, every category gets up to 3 posts, not 3 posts in total. All tests pass and nothing is committed.\n\n**Root cause:** the prefetch code builds its query by calling `.filter(<relation>__in=instances)` on the queryset you pass in. Django refuses to filter a queryset after it has been sliced, which raised the error. The prefetch code also calls `.filter()` on that queryset a second time when it stores the results on each object.\n\n**The fix:**\n- **`django/db/models/fields/related_descriptors.py`:** new helpers `_apply_prefetch_predicate` and `_filter_prefetch_queryset`. When the queryset is sliced, they remove the limit and add a `ROW_NUMBER() OVER (PARTITION BY <relation> ORDER BY <the queryset's ordering>)` filter in its place, so offsets like `[1:3]` work too. This relies on the filtering-against-window-functions support added in the latest commit. Databases without window functions raise a clear `NotSupportedError`. The helper works on a copy, so the queryset you passed in stays sliced and unchanged. Both the reverse foreign-key and the many-to-many prefetch use it.\n- **`django/contrib/contenttypes/fields.py`:** `GenericRelation` prefetching uses the same helper, numbering rows separately for each (content type, object id) pair.\n- **`django/db/models/query.py`:** when there's no `to_attr`, `prefetch_one_level` drops the slice from a copy of the queryset before the second `.filter()`. Without this, `Prefetch(\"authors\", qs[:2])` would still fail. The per-parent slicing has already happened in the prefetch query at that point.\n- **Docs:** a `versionchanged:: 4.2` note in `docs/ref/models/querysets.txt` and a line in `docs/releases/4.2.txt`.\n\n**Tests:** a new `PrefetchLimitTests` class in `tests/prefetch_related/tests.py` covers:\n- many-to-many in both directions and reverse foreign key, with offset slices, custom ordering and `reverse()`\n- prefetching without `to_attr`\n- `GenericRelation`\n- the original queryset not being changed\n- the `NotSupportedError` on backends without window functions\n\nA subagent did the first pass; I reviewed its diff and rewrote the tests with explicit expected values.\n\n**Results:**\n- `PrefetchLimitTests`: 8 tests, OK.\n- `.venv/bin/python tests/runtests.py --parallel 1 prefetch_related generic_relations many_to_one many_to_many queries contenttypes_tests foreign_object m2m_through`: OK (skipped=12, expected failures=2).\n- All runs used SQLite, which supports window functions.\n- flake8 and black aren't installed in the venv, so neither was run. I checked by hand that no added line is over 88 characters.",
+  "ttft_ms": 14712,
+  "type": "result",
+  "duration_ms": 169476,
+  "uuid": "d1711d23-f77b-4bac-b634-cf9a9695d300",
+  "ttft_stream_ms": 927,
+  "time_to_request_ms": 231,
+  "first_content_frame_ms": 927,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 4,
+  "f2p_total": 4,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

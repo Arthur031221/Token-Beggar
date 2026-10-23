@@ -1,0 +1,132 @@
+{
+ "task": "sphinx-property-type",
+ "arm": "verify",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 199701,
+  "stop_reason": "end_turn",
+  "session_id": "aebf92b0-6acf-42e6-9607-00b28d3ab177",
+  "total_cost_usd": 0.9167238,
+  "usage": {
+   "input_tokens": 50,
+   "cache_creation_input_tokens": 38844,
+   "cache_read_input_tokens": 940850,
+   "output_tokens": 17605,
+   "output_tokens_details": {
+    "thinking_tokens": 4592
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 38844,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1010,
+     "cache_read_input_tokens": 51389,
+     "cache_creation_input_tokens": 351,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 351
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 50,
+    "outputTokens": 17605,
+    "cacheReadInputTokens": 940850,
+    "cacheCreationInputTokens": 38844,
+    "webSearchRequests": 0,
+    "costUSD": 0.851222,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 4592,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 8,
+    "outputTokens": 3779,
+    "cacheReadInputTokens": 36808,
+    "cacheCreationInputTokens": 9606,
+    "webSearchRequests": 0,
+    "costUSD": 0.0655018,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 193,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 31,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Methods decorated with `@classmethod` + `@property` are now documented by autodoc. They show up under `autoclass :members:` and are rendered as `class property name`. On Python 3.9.25 the autodoc, Python-domain and autosummary tests all pass (283). Nothing is committed.\n\n**Why they were missing:** accessing `Cls.prop` returns the property's value (often `None`), not a property object. So the property documenter never recognised it, and the member was dropped as having no docstring. Two existing bugs added to this:\n- `filter_members` passed the wrong arguments to `getdoc` (the documenter's parent and its own name instead of the class and the member name). No lookup by class and member name could ever succeed.\n- The lookup only checked the class's own `__dict__`, so inherited class properties appeared as plain attributes (`base_cp = 'x'`).\n\n**Changes:**\n- **`sphinx/ext/autodoc/__init__.py`:**\n  - The property documenter gets a new `get_class_property()` helper. It searches the class and its base classes for a classmethod wrapping a property.\n  - `can_document_member` and `import_object` use that helper, and the generated directive gets a `:classmethod:` option.\n  - `filter_members` now passes `self.object, membername` to `getdoc`.\n- **`sphinx/util/inspect.py`:**\n  - `isclassmethod()` takes optional `cls` and `name` arguments and searches the base classes.\n  - `getdoc()` reads the docstring from the wrapped function in that case. If that function has no docstring, it still falls back to the inherited-docstring lookup as before.\n- **`sphinx/domains/python.py`:** `py:property` accepts `:classmethod:`, which adds the \"class\" prefix.\n- **`CHANGES`:** two entries under \"Features added\".\n\n**Tests:**\n- A `prop_cls` class property was added to the test target `tests/roots/test-ext-autodoc/target/properties.py`.\n- A new test in `test_ext_autodoc_autoproperty.py` documents `prop_cls` directly.\n- `test_properties` in `test_ext_autodoc_autoclass.py` now expects `prop_cls` in the member list. Both tests are skipped below Python 3.9, so the original member-listing check no longer runs on older Pythons.\n- A new test in `test_domain_py.py` covers the `:classmethod:` option.\n\n**Checks:**\n- I rebuilt a small project modelled on the issue: a metaclass, a base class, an abstract class property and a subclass that inherits them. Every class property was documented, inherited ones included.\n- `tests/test_util_inspect.py` can't run in this venv because the `_testcapi` module is missing. I tested the two `inspect` changes with a short script instead and added no test there.\n- The full suite shows 11 failures and 1 error, in the HTML, LaTeX, linkcheck, config, imgconverter, viewcode and intl tests. The same modules fail the same way with my changes stashed, so the failures were there before.",
+  "ttft_ms": 7405,
+  "type": "result",
+  "duration_ms": 557140,
+  "uuid": "2e3ca8c0-7d23-4cfa-b080-5db1e0b102e9",
+  "ttft_stream_ms": 2315,
+  "time_to_request_ms": 419,
+  "first_content_frame_ms": 2315,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

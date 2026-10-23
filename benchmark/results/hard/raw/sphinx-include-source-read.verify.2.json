@@ -1,0 +1,132 @@
+{
+ "task": "sphinx-include-source-read",
+ "arm": "verify",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 88322,
+  "stop_reason": "end_turn",
+  "session_id": "339f7df7-7d09-44bd-b1bd-f59aa7cdc51a",
+  "total_cost_usd": 0.3308275,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 16409,
+   "cache_read_input_tokens": 170913,
+   "output_tokens": 4725,
+   "output_tokens_details": {
+    "thinking_tokens": 933
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 16409,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 846,
+     "cache_read_input_tokens": 28969,
+     "cache_creation_input_tokens": 336,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 336
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 4725,
+    "cacheReadInputTokens": 170913,
+    "cacheCreationInputTokens": 16409,
+    "webSearchRequests": 0,
+    "costUSD": 0.26001060000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 933,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 3693,
+    "cacheReadInputTokens": 86699,
+    "cacheCreationInputTokens": 10074,
+    "webSearchRequests": 0,
+    "costUSD": 0.0708169,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 162,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Text pulled in with `.. include::` now goes through the `source-read` event, so replacements like `&REPLACE_ME;` \u2192 `REPLACED` show up in the final HTML. The new test fails without the fix and passes with it. Nothing is committed.\n\n**Why it happened:** Sphinx emits `source-read` only when it reads a document. The include directive reads the included file itself and feeds the lines straight into the parser, so the event never reached that text. Your handler did run for `something-to-include.rst`, but only when Sphinx read that file as its own page. The copy inside `index.rst` was the raw text from disk.\n\n**The fix** (in `Include.run()`, `sphinx/directives/other.py`):\n- Before the directive runs, it swaps in a wrapper for the step that feeds included lines to the parser.\n- The wrapper joins the included lines into one string and emits `source-read` with that file's document name (or `None` if the file isn't a document). It then splits the result back into lines.\n- docutils adds two marker lines to the end of included content. The wrapper leaves them out of the event and puts them back afterwards. I confirmed docutils 0.20.1 adds exactly these two lines.\n- The wrapper is only installed when some extension has a `source-read` handler. Otherwise nothing changes.\n\nA file that is both its own page and included elsewhere gets the event once for each.\n\n**Tests:**\n- New test `test_include_source_read_event` in `tests/test_directive_other.py`, with a test project in `tests/roots/test-directive-include/`. It builds a page that includes another file and checks the handler's replacement appears in `index.html`.\n- I fixed one assertion in it. It checked that `&REPLACE_ME;` was absent, but HTML writes `&` as `&amp;`, so that check could never fail. It now checks for `REPLACE_ME`.\n- Running `test_directive_other`, `test_directive_code`, `test_util_rst` and `test_events`: 60 passed, 2 failed. The failures are `test_literal_include_linenos` and `test_linenothreshold`, and they fail the same way with my change removed.\n- The worker ran `tests/test_build_html.py`: 538 passed, 1 failed (`test_html_code_role`), which also fails without the change. I didn't rerun that file myself.\n- Ruff isn't installed in the venv, so the new code hasn't been linted.\n\nI also added a line to `CHANGES` under \"Bugs fixed\", referencing #10678.",
+  "ttft_ms": 4360,
+  "type": "result",
+  "duration_ms": 267102,
+  "uuid": "452f95f6-1874-45cc-aef5-366e156728cb",
+  "ttft_stream_ms": 2861,
+  "time_to_request_ms": 497,
+  "first_content_frame_ms": 2862,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

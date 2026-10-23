@@ -1,0 +1,136 @@
+diff --git a/CHANGES.rst b/CHANGES.rst
+index 14cc09d..f8bf058 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -5,6 +5,8 @@ Version 8.1.4
+ 
+ Unreleased
+ 
++-   ``format_filename`` replaces surrogate escapes and invalid bytes with the
++    replacement character so the result is always printable. :issue:`2547`
+ -   Replace all ``typing.Dict`` occurrences to ``typing.MutableMapping`` for
+     parameter hints. :issue:`2255`
+ -   Improve type hinting for decorators and give all generic types parameters.
+diff --git a/src/click/_compat.py b/src/click/_compat.py
+index 1273ddf..52a8652 100644
+--- a/src/click/_compat.py
++++ b/src/click/_compat.py
+@@ -389,8 +389,8 @@ def open_stream(
+     binary = "b" in mode
+ 
+     # Standard streams first. These are simple because they ignore the
+-    # atomic flag. Use fsdecode to handle Path("-").
+-    if os.fsdecode(filename) == "-":
++    # atomic flag. Use fspath to handle Path("-").
++    if os.fspath(filename) in ("-", b"-"):
+         if any(m in mode for m in ["w", "a", "x"]):
+             if binary:
+                 return get_binary_stdout(), False
+diff --git a/src/click/exceptions.py b/src/click/exceptions.py
+index 76a06ff..fe68a36 100644
+--- a/src/click/exceptions.py
++++ b/src/click/exceptions.py
+@@ -1,10 +1,10 @@
+-import os
+ import typing as t
+ from gettext import gettext as _
+ from gettext import ngettext
+ 
+ from ._compat import get_text_stderr
+ from .utils import echo
++from .utils import format_filename
+ 
+ if t.TYPE_CHECKING:
+     from .core import Command
+@@ -262,7 +262,7 @@ class FileError(ClickException):
+             hint = _("unknown error")
+ 
+         super().__init__(hint)
+-        self.ui_filename: str = os.fsdecode(filename)
++        self.ui_filename: str = format_filename(filename)
+         self.filename = filename
+ 
+     def format_message(self) -> str:
+diff --git a/src/click/types.py b/src/click/types.py
+index c684861..2fb92a2 100644
+--- a/src/click/types.py
++++ b/src/click/types.py
+@@ -851,7 +851,7 @@ class Path(ParamType):
+                 # until Python 3.8. Use pathlib for now.
+                 import pathlib
+ 
+-                rv = os.fsdecode(pathlib.Path(rv).resolve())
++                rv = os.fspath(pathlib.Path(rv).resolve())
+ 
+             try:
+                 st = os.stat(rv)
+diff --git a/src/click/utils.py b/src/click/utils.py
+index 6e74ace..73f7254 100644
+--- a/src/click/utils.py
++++ b/src/click/utils.py
+@@ -410,11 +410,24 @@ def format_filename(
+                      the filename into unicode without failing.
+     :param shorten: this optionally shortens the filename to strip of the
+                     path that leads up to it.
++
++    Surrogate escapes and bytes that are not valid in the filesystem
++    encoding are replaced with the replacement character (U+FFFD), so the
++    result can always be printed.
++
++    .. versionchanged:: 8.1.4
++        Invalid bytes and surrogate escapes are replaced with the
++        replacement character instead of being left in the string.
+     """
+     if shorten:
+         filename = os.path.basename(filename)
++    else:
++        filename = os.fspath(filename)
++
++    if isinstance(filename, bytes):
++        return filename.decode(sys.getfilesystemencoding(), "replace")
+ 
+-    return os.fsdecode(filename)
++    return filename.encode("utf-8", "surrogateescape").decode("utf-8", "replace")
+ 
+ 
+ def get_app_dir(app_name: str, roaming: bool = True, force_posix: bool = False) -> str:
+diff --git a/tests/test_utils.py b/tests/test_utils.py
+index 02a6101..b8d6242 100644
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+@@ -101,7 +101,7 @@ def test_filename_formatting():
+ 
+     # filesystem encoding on windows permits this.
+     if not WIN:
+-        assert click.format_filename(b"/x/foo\xff.txt", shorten=True) == "foo\udcff.txt"
++        assert click.format_filename(b"/x/foo\xff.txt", shorten=True) == "foo\ufffd.txt"
+ 
+ 
+ def test_prompts(runner):
+@@ -499,3 +499,26 @@ def test_make_default_short_help(value, max_length, alter, expect):
+ 
+     out = click.utils.make_default_short_help(value, max_length)
+     assert out == expect
++
++
++@pytest.mark.parametrize(
++    ("filename", "shorten", "expect"),
++    [
++        ("foo.txt", False, "foo.txt"),
++        (pathlib.Path("foo.txt"), False, "foo.txt"),
++        (b"foo\xe9", False, "foo\ufffd"),
++        ("/some/dir/foo.txt", True, "foo.txt"),
++        (b"/some/dir/foo\xe9", True, "foo\ufffd"),
++        pytest.param(
++            os.fsdecode(b"foo\xe9"),
++            False,
++            "foo\ufffd",
++            marks=pytest.mark.skipif(
++                sys.getfilesystemencoding().lower().replace("-", "") != "utf8",
++                reason="requires utf-8 filesystem encoding",
++            ),
++        ),
++    ],
++)
++def test_format_filename(filename, shorten, expect):
++    assert click.format_filename(filename, shorten=shorten) == expect

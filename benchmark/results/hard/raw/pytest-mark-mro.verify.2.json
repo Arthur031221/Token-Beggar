@@ -1,0 +1,132 @@
+{
+ "task": "pytest-mark-mro",
+ "arm": "verify",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 99011,
+  "stop_reason": "end_turn",
+  "session_id": "2e231d0e-1be1-4ee1-b62f-b92a31e5a46e",
+  "total_cost_usd": 0.3875159999999999,
+  "usage": {
+   "input_tokens": 20,
+   "cache_creation_input_tokens": 16571,
+   "cache_read_input_tokens": 251866,
+   "output_tokens": 4855,
+   "output_tokens_details": {
+    "thinking_tokens": 900
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 16571,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 881,
+     "cache_read_input_tokens": 29092,
+     "cache_creation_input_tokens": 375,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 375
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 20,
+    "outputTokens": 4855,
+    "cacheReadInputTokens": 251866,
+    "cacheCreationInputTokens": 16571,
+    "webSearchRequests": 0,
+    "costUSD": 0.28012119999999996,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 900,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 28,
+    "outputTokens": 5913,
+    "cacheReadInputTokens": 170988,
+    "cacheCreationInputTokens": 12444,
+    "webSearchRequests": 0,
+    "costUSD": 0.10739479999999998,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 672,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 11,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "A test class that inherits from several marked base classes now gets the marks of all of them. In the issue's example, `test_dings` now has both `foo` and `bar`. Nothing is committed.\n\n**Root cause:** pytest looked up `pytestmark` on a class with plain attribute lookup, which stops at the first class in the inheritance order that has one. Each decorated class also stored a copy of its base's marks plus its own. So with `class TestDings(Foo, Bar)`, `Foo.pytestmark` won and `Bar`'s marks were lost.\n\n**Fix (`src/_pytest/mark/structures.py`):**\n- `get_unpacked_marks(obj, *, consider_mro=True)`: for a class, it now walks the full inheritance order from the most basic class down and collects the marks each class defines itself. Marks on functions and modules are read as before.\n- `store_mark` calls it with `consider_mro=False`, so each class stores only its own marks. Without this, a base's marks would be copied into the subclass and counted twice in a diamond.\n\n**Behaviour change:** marks from base classes now combine with the subclass's marks instead of being shadowed. This includes the case where a subclass sets `pytestmark = [...]` directly: before, that replaced the base's marks; now they merge. That is what the issue asks for. Separately, the metaclass workaround from the issue would stop adding marks if someone used it, because pytest now reads `pytestmark` from each class's own attributes rather than through the metaclass property.\n\n**Tests (`testing/test_mark.py`):**\n- `test_mark_mro` checks the order of marks for `TestDings(Foo, Bar)` (`bar`, then `foo`). It also covers a diamond whose shared base is marked, and checks that base's mark appears only once.\n- `test_mark_multiple_inheritance_collected` runs the issue's example through real collection and checks the collected test has both marks.\n\nBoth new tests fail on the original code and pass with the fix. `testing/test_mark.py` and `testing/python/` give 465 passed, 21 skipped, 2 xfailed. I left out `testing/python/metafunc.py`: it fails to load because of a mismatch between the installed `hypothesis` and this pytest checkout, which happens whether or not the fix is applied.\n\nI also added `changelog/7792.bugfix.rst`; the issue number 7792 is my assumption, so rename the file if the issue has a different number. I didn't edit `AUTHORS`.",
+  "ttft_ms": 2868,
+  "type": "result",
+  "duration_ms": 269089,
+  "uuid": "8634fdd4-37d2-46df-8211-4b40e4bc9fe3",
+  "ttft_stream_ms": 841,
+  "time_to_request_ms": 179,
+  "first_content_frame_ms": 841,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}
