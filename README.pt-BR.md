@@ -92,9 +92,9 @@ Uma versão aqui significa um lançamento com tag deste repositório. **Sem Toke
 
 <p align="center"><em>A proporção de problemas corrigidos permanece próxima de trabalhar sozinho, o que confirma que a economia não é paga com qualidade.</em></p>
 
-O custo caiu cerca de um terço e a proporção de problemas corrigidos permaneceu no mesmo nível. Main antes de v0.3.0 foi ainda mais barato, mas resolveu menos, e em click-format-filename parou após 2 turnos com uma correção incorreta (0 de 3, contra 3 de 3 sozinho). A v0.3.0 gasta parte dessa economia lendo todo o diff antes de responder. É por isso que ela é a versão distribuída.
+O custo caiu 29 por cento ($0.49 contra $0.69) e a proporção de problemas corrigidos permaneceu no mesmo nível. Main antes de v0.3.0 foi ainda mais barato (1.54x) e resolveu 65%, o que representa 2 execuções a menos de 54 e, portanto, dentro da dispersão. Não é a versão distribuída porque em várias tarefas parou após 2 ou 3 turnos, e em click-format-filename fez isso com uma correção incorreta (0 de 3, contra 3 de 3 sozinho). A v0.3.0 custa mais do que ela, porque lê todo o diff antes de responder.
 
-O que isso não mostra: igual qualidade de código. Uma avaliação cega por um modelo pequeno avaliou os diffs da v0.3.0 como inferiores (0.94 em uma escala de 0 a 2, contra 1.33 sozinho), e concorda apenas fracamente com os testes ocultos. O tempo fica no mesmo nível de trabalhar sozinho (168 segundos contra 187), não mais rápido.
+O que isso não mostra: igual qualidade de código. Uma avaliação cega por um modelo pequeno avaliou os diffs da v0.3.0 como inferiores (0.94 em uma escala de 0 a 2, contra 1.33 sozinho e 1.15 para Main antes de v0.3.0), e concorda apenas fracamente com os testes ocultos. O tempo fica no mesmo nível de trabalhar sozinho (168 segundos contra 187), não mais rápido.
 
 ### Tarefas pequenas
 
@@ -183,7 +183,7 @@ Tudo isso, incluindo prompts como "no gemini": [docs/config.md](docs/config.md).
 
 **Por que às vezes não há rodapé?** Ele só exibe um quando roteou algo e uma economia de 1.15x ou mais foi medida para o seu modelo, effort e tipo de tarefa.
 
-**Por que não faz nada no Sonnet ou Haiku?** Haiku é o modelo mais barato, portanto não há nada mais econômico para onde enviar o trabalho. No Sonnet, tarefas pequenas mediram perda (cerca de 0.85x), então elas permanecem no chat, e a economia em tarefas grandes não foi medida.
+**Ele faz alguma coisa no Sonnet ou Haiku?** No Haiku nada, porque é o modelo mais barato e não há nada mais econômico para onde enviar o trabalho. No Sonnet, tarefas pequenas mediram perda (cerca de 0.85x), então elas permanecem no chat, e tarefas grandes vão para um worker, mas a economia em tarefas grandes não foi medida.
 
 **Isso consome minha cota?** O worker gasta a sua cota normal do Claude em um modelo mais econômico. Ferramentas externas de IA gastam a cota própria delas e nada da sua.
 

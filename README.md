@@ -92,9 +92,9 @@ A version here means a tagged release of this repository. **Without Token Beggar
 
 <p align="center"><em>The share of issues fixed stays close to working alone, which is the check that the saving is not paid for in quality.</em></p>
 
-Cost is down by about a third and the share of issues fixed is level. Main before v0.3.0 was cheaper still but resolved fewer, and on click-format-filename it stopped after 2 turns with a wrong fix (0 of 3, against 3 of 3 alone). v0.3.0 spends some of that saving on reading the whole diff before it answers. That is why it is the one shipped.
+Cost is down by 29 percent ($0.49 against $0.69) and the share of issues fixed is level. Main before v0.3.0 was cheaper still (1.54x) and resolved 65%, which is 2 runs fewer out of 54 and so inside the spread. It is not the one shipped because on several tasks it stopped after 2 or 3 turns, and on click-format-filename it did so with a wrong fix (0 of 3, against 3 of 3 alone). v0.3.0 costs more than it, because it reads the whole diff before it answers.
 
-What this does not show: equal code quality. A blind review by a small model rated v0.3.0 diffs lower (0.94 on a 0 to 2 scale, against 1.33 alone), and it agrees only weakly with the hidden tests. Time is level with working alone (168 seconds against 187), not faster.
+What this does not show: equal code quality. A blind review by a small model rated v0.3.0 diffs lower (0.94 on a 0 to 2 scale, against 1.33 alone and 1.15 for Main before v0.3.0), and it agrees only weakly with the hidden tests. Time is level with working alone (168 seconds against 187), not faster.
 
 ### Small tasks
 
@@ -183,7 +183,7 @@ All of it, including prompts such as "no gemini": [docs/config.md](docs/config.m
 
 **Why no footer sometimes?** It prints one only when it routed something and a saving of 1.15x or more was measured for your model, effort and kind of task.
 
-**Why does it do nothing on Sonnet or Haiku?** Haiku is the cheapest model, so there is nothing cheaper to send work to. On Sonnet small tasks measured a loss (about 0.85x), so they stay in the chat, and the saving on large tasks was not measured.
+**Does it do anything on Sonnet or Haiku?** On Haiku nothing, because it is the cheapest model and there is nothing cheaper to send work to. On Sonnet small tasks measured a loss (about 0.85x), so they stay in the chat, and large tasks go to a worker, but the saving on large tasks was not measured.
 
 **Does it use my quota?** The worker spends your normal Claude quota at a cheaper model. Outside AI tools spend their own quota and none of yours.
 

@@ -92,9 +92,9 @@ Una versión aquí significa un lanzamiento etiquetado de este repositorio. **Si
 
 <p align="center"><em>La proporción de problemas solucionados se mantiene cercana a trabajar solo, lo que comprueba que el ahorro no se paga con calidad.</em></p>
 
-El costo se reduce en aproximadamente un tercio y la proporción de problemas solucionados se mantiene al mismo nivel. Main antes de v0.3.0 era aún más económico pero resolvió menos, y en click-format-filename se detuvo tras 2 turnos con una corrección errónea (0 de 3, frente a 3 de 3 en solitario). v0.3.0 invierte parte de ese ahorro en leer todo el diff antes de responder. Por eso es la que se distribuye.
+El costo se reduce en un 29 por ciento ($0.49 frente a $0.69) y la proporción de problemas solucionados se mantiene al mismo nivel. Main antes de v0.3.0 era aún más económico (1.54x) y resolvió el 65%, lo que supone 2 ejecuciones menos de 54 y, por tanto, dentro de la dispersión. No es la que se distribuye porque en varias tareas se detuvo tras 2 o 3 turnos, y en click-format-filename lo hizo con una corrección errónea (0 de 3, frente a 3 de 3 en solitario). v0.3.0 cuesta más que ella, porque lee todo el diff antes de responder.
 
-Lo que esto no demuestra: igual calidad de código. Una revisión a ciegas realizada por un modelo pequeño calificó los diffs de v0.3.0 más bajo (0.94 en una escala de 0 a 2, frente a 1.33 en solitario), y solo coincide débilmente con las pruebas ocultas. El tiempo está al mismo nivel que trabajando solo (168 segundos frente a 187), no más rápido.
+Lo que esto no demuestra: igual calidad de código. Una revisión a ciegas realizada por un modelo pequeño calificó los diffs de v0.3.0 más bajo (0.94 en una escala de 0 a 2, frente a 1.33 en solitario y 1.15 para Main antes de v0.3.0), y solo coincide débilmente con las pruebas ocultas. El tiempo está al mismo nivel que trabajando solo (168 segundos frente a 187), no más rápido.
 
 ### Tareas pequeñas
 
@@ -183,7 +183,7 @@ Todo ello, incluidos prompts como "no gemini": [docs/config.md](docs/config.md).
 
 **¿Por qué a veces no hay pie de página?** Solo imprime uno cuando enrutó algo y se midió un ahorro de 1.15x o más para tu modelo, effort y tipo de tarea.
 
-**¿Por qué no hace nada en Sonnet o Haiku?** Haiku es el modelo más económico, por lo que no hay nada más barato a lo que enviar trabajo. En Sonnet las tareas pequeñas midieron una pérdida (aproximadamente 0.85x), por lo que se quedan en el chat, y el ahorro en tareas grandes no se midió.
+**¿Hace algo en Sonnet o Haiku?** En Haiku nada, porque es el modelo más económico y no hay nada más barato a lo que enviar trabajo. En Sonnet las tareas pequeñas midieron una pérdida (aproximadamente 0.85x), por lo que se quedan en el chat, y las tareas grandes van a un worker, pero el ahorro en tareas grandes no se midió.
 
 **¿Consume mi cuota?** El worker gasta tu cuota habitual de Claude en un modelo más económico. Las herramientas de IA externas gastan su propia cuota y nada de la tuya.
 

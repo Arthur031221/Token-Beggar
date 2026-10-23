@@ -92,9 +92,9 @@ Une version désigne ici une publication étiquetée de ce dépôt. **Sans Token
 
 <p align="center"><em>La part de problèmes corrigés reste proche du travail en solitaire, confirmant que l'économie ne se paie pas sur la qualité.</em></p>
 
-Le coût diminue d'environ un tiers et la proportion de problèmes corrigés reste équivalente. Main avant v0.3.0 était encore plus économique mais en résolvait moins, et sur click-format-filename il s'est arrêté après 2 tours avec une mauvaise correction (0 sur 3, contre 3 sur 3 seul). v0.3.0 réinvestit une partie de cette économie dans la lecture du diff complet avant de répondre. C'est pour cette raison qu'elle est livrée.
+Le coût diminue de 29 pour cent ($0.49 contre $0.69) et la proportion de problèmes corrigés reste équivalente. Main avant v0.3.0 était encore plus économique (1.54x) et en résolvait 65%, ce qui représente 2 exécutions de moins sur 54 et reste donc dans la marge de variation. Ce n'est pas celle qui est livrée car sur plusieurs tâches il s'est arrêté après 2 ou 3 tours, et sur click-format-filename il l'a fait avec une mauvaise correction (0 sur 3, contre 3 sur 3 seul). v0.3.0 coûte plus cher que lui, car elle lit le diff complet avant de répondre.
 
-Ce que cela ne montre pas : une qualité de code égale. Une évaluation à l'aveugle par un petit modèle a moins bien noté les diffs de v0.3.0 (0.94 sur une échelle de 0 à 2, contre 1.33 seul), et elle ne concorde que faiblement avec les tests cachés. Le temps passé est équivalent au travail en solitaire (168 secondes contre 187), pas plus rapide.
+Ce que cela ne montre pas : une qualité de code égale. Une évaluation à l'aveugle par un petit modèle a moins bien noté les diffs de v0.3.0 (0.94 sur une échelle de 0 à 2, contre 1.33 seul et 1.15 pour Main avant v0.3.0), et elle ne concorde que faiblement avec les tests cachés. Le temps passé est équivalent au travail en solitaire (168 secondes contre 187), pas plus rapide.
 
 ### Tâches simples
 
@@ -183,7 +183,7 @@ L'ensemble des réglages, y compris des consignes comme « no gemini » : [docs/
 
 **Pourquoi n'y a-t-il parfois aucun pied de page ?** Il n'en affiche un que lorsqu'un élément a été routé et qu'une économie de 1.15x ou plus a été mesurée pour votre modèle, votre effort et le type de tâche.
 
-**Pourquoi ne fait-il rien sur Sonnet ou Haiku ?** Haiku est le modèle le moins cher, il n'y a donc rien de moins cher à qui confier du travail. Sur Sonnet, les tâches simples ont mesuré une perte (environ 0.85x), elles restent donc dans la discussion, et l'économie sur les tâches volumineuses n'a pas été mesurée.
+**Fait-il quelque chose sur Sonnet ou Haiku ?** Sur Haiku rien, car c'est le modèle le moins cher et il n'y a rien de moins cher à qui confier du travail. Sur Sonnet, les tâches simples ont mesuré une perte (environ 0.85x), elles restent donc dans la discussion, et les tâches volumineuses sont confiées à un worker, mais l'économie sur les tâches volumineuses n'a pas été mesurée.
 
 **Consomme-t-il mon quota ?** Le worker utilise votre quota Claude habituel sur un modèle moins cher. Les outils d'IA externes consomment leur propre quota et rien du vôtre.
 

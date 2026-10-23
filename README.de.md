@@ -92,9 +92,9 @@ Eine Version bezeichnet hier ein getaggtes Release dieses Repositorys. **Ohne To
 
 <p align="center"><em>Der Anteil behobener Probleme bleibt nahe an der Arbeit allein, was bestätigt, dass die Ersparnis nicht mit Qualitätseinbußen erkauft wird.</em></p>
 
-Die Kosten sinken um etwa ein Drittel, und der Anteil behobener Probleme bleibt gleichauf. Main vor v0.3.0 war noch günstiger, löste aber weniger, und bei click-format-filename stoppte es nach 2 Turns mit einem falschen Fix (0 von 3, gegenüber 3 von 3 allein). v0.3.0 verwendet einen Teil dieser Ersparnis darauf, das gesamte Diff zu lesen, bevor geantwortet wird. Aus diesem Grund wurde diese Version ausgeliefert.
+Die Kosten sinken um 29 Prozent ($0.49 gegenüber $0.69), und der Anteil behobener Probleme bleibt gleichauf. Main vor v0.3.0 war noch günstiger (1.54x) und löste 65%, was 2 Durchläufe weniger von 54 bedeutet und somit innerhalb der Streuung liegt. Es wurde nicht ausgeliefert, weil es bei mehreren Aufgaben nach 2 oder 3 Turns stoppte und dies bei click-format-filename mit einem falschen Fix tat (0 von 3, gegenüber 3 von 3 allein). v0.3.0 kostet mehr als dieses, weil es das gesamte Diff liest, bevor geantwortet wird.
 
-Was dies nicht zeigt: gleiche Codequalität. Ein Blind-Review durch ein kleines Modell bewertete die Diffs von v0.3.0 schlechter (0.94 auf einer Skala von 0 bis 2 gegenüber 1.33 allein), und es stimmt nur schwach mit den verdeckten Tests überein. Die Zeit liegt gleichauf mit der Arbeit allein (168 Sekunden gegenüber 187), nicht schneller.
+Was dies nicht zeigt: gleiche Codequalität. Ein Blind-Review durch ein kleines Modell bewertete die Diffs von v0.3.0 schlechter (0.94 auf einer Skala von 0 bis 2 gegenüber 1.33 allein und 1.15 für Main vor v0.3.0), und es stimmt nur schwach mit den verdeckten Tests überein. Die Zeit liegt gleichauf mit der Arbeit allein (168 Sekunden gegenüber 187), nicht schneller.
 
 ### Kleine Aufgaben
 
@@ -183,7 +183,7 @@ Alles Weitere, einschließlich Prompts wie "no gemini": [docs/config.md](docs/co
 
 **Warum gibt es manchmal keine Fußzeile?** Eine Fußzeile wird nur ausgegeben, wenn etwas weitergeleitet wurde und eine Ersparnis von 1.15x oder mehr für dein Modell, deinen Effort und die Art der Aufgabe gemessen wurde.
 
-**Warum tut es bei Sonnet oder Haiku nichts?** Haiku ist das günstigste Modell, daher gibt es nichts Günstigeres, an das Arbeit delegiert werden könnte. Bei Sonnet ergaben kleine Aufgaben einen Verlust (etwa 0.85x), weshalb sie im Chat verbleiben, und die Ersparnis bei großen Aufgaben wurde nicht gemessen.
+**Tut es bei Sonnet oder Haiku etwas?** Bei Haiku nichts, weil es das günstigste Modell ist und es nichts Günstigeres gibt, an das Arbeit delegiert werden könnte. Bei Sonnet ergaben kleine Aufgaben einen Verlust (etwa 0.85x), weshalb sie im Chat verbleiben, und große Aufgaben gehen an einen Worker, aber die Ersparnis bei großen Aufgaben wurde nicht gemessen.
 
 **Verbraucht es mein Kontingent?** Der Worker verbraucht dein normales Claude-Kontingent bei einem günstigeren Modell. Externe KI-Tools verbrauchen ihr eigenes Kontingent und nichts von deinem.
 
