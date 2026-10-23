@@ -70,57 +70,27 @@ token-beggar doctor
 
 ## Résultats
 
-Opus 5.5 au niveau d'effort high comme modèle de discussion. Le coût correspond au tarif catalogue pour la discussion et chaque worker, cache inclus. Les intervalles sont à 95 pour cent. Une économie n'est revendiquée qu'à partir de 1.15x avec l'intervalle entier au-dessus de 1.0x.
+Deux configurations, et deux seulement. **Sans Token Beggar** correspond au modèle de discussion travaillant seul, de la façon dont vous l'utilisez normalement. **Avec Token Beggar** est la fiche livrée dans cette version, version 0.3.0. Opus 5.5 au niveau d'effort high est le modèle de discussion. Le coût correspond au tarif catalogue pour la discussion et chaque worker, cache inclus. Les intervalles sont à 95 pour cent.
 
-Une version désigne ici une publication étiquetée de ce dépôt. **Sans Token Beggar (Without Token Beggar)** correspond au modèle de discussion travaillant seul. **v0.3.0 (cette version) (v0.3.0 (this release))** est cette version. **v0.2.0 (version précédente) (v0.2.0 (previous release))** est celle d'avant. Le benchmark difficile compare par rapport à **Main avant v0.3.0 (Main before v0.3.0)**, la fiche sur la branche main juste avant cette version, car v0.2.0 elle-même n'a pas été exécutée dessus.
+Les tâches difficiles sont 18 pull requests fusionnées issues de 12 projets Python open source (Django, Sphinx, pylint, sympy, click et d'autres). La discussion part du commit antérieur au correctif avec le texte du ticket, et est notée par les tests ajoutés par les mainteneurs, qu'elle ne voit jamais. 3 exécutions par tâche, 54 par configuration.
 
-### Tâches difficiles : corrections de bugs réels
-
-18 pull requests fusionnées issues de 12 projets Python open source (Django, Sphinx, pylint, sympy, click et d'autres). La discussion part du commit antérieur au correctif avec le texte du ticket, et est notée par les tests ajoutés par les mainteneurs, qu'elle ne voit jamais. 3 exécutions par tâche, 54 par configuration.
-
-| Configuration | Coût par exécution | Multiple vs Sans Token Beggar | Résolus |
+| Configuration | Coût par tâche | Multiple | Issues résolues |
 | --- | --- | --- | --- |
 | Sans Token Beggar | $0.69 | 1.00x | 70% |
-| Main avant v0.3.0 | $0.45 | 1.54x (1.46 to 1.64) | 65% |
-| v0.3.0 (cette version) | $0.49 | 1.42x (1.33 to 1.51) | 69% |
+| Avec Token Beggar | $0.49 | 1.42x moins (1.33 to 1.51) | 69% |
 
-<p align="center"><img src="assets/chart-hard-cost.svg" alt="Graphique à barres : facteur de réduction de quota et d'argent par rapport à Sans Token Beggar sur les tâches difficiles, par tâche. Toutes les tâches : 1.54x pour Main avant v0.3.0 et 1.42x pour v0.3.0. Une ligne en pointillés marque 1.0x, aucune économie."></p>
+<p align="center"><img src="assets/chart-hard-cost.svg" alt="Graphique à barres : facteur de réduction de quota et d'argent avec Token Beggar par rapport à sans lui, par tâche difficile. Toutes les tâches : 1.42x. Une ligne en pointillés marque 1.0x, le coût sans Token Beggar."></p>
 
-<p align="center"><em>17 des 18 tâches difficiles coûtent moins cher avec Token Beggar, et la seule ayant coûté plus cher (structlog-exception-outside) a coûté environ 10% de plus.</em></p>
+<p align="center"><em>17 des 18 tâches coûtent moins cher avec Token Beggar. La seule ayant coûté plus cher (structlog-exception-outside) a coûté environ 10% de plus.</em></p>
 
-<p align="center"><img src="assets/chart-hard-quality.svg" alt="Graphique à barres : part des tâches difficiles où le problème a été corrigé, par tâche. Toutes les tâches : 70% Sans Token Beggar, 65% Main avant v0.3.0, 69% v0.3.0."></p>
+Le coût diminue de 29 pour cent et la proportion d'issues résolues est équivalente (69% contre 70% correspond à une égalité dans la marge de variation). Le temps passé est équivalent lui aussi (168 secondes contre 187), pas plus rapide.
 
-<p align="center"><em>La part de problèmes corrigés reste proche du travail en solitaire, confirmant que l'économie ne se paie pas sur la qualité.</em></p>
+Les tâches simples n'ont été mesurées qu'avec une fiche antérieure, pas avec 0.3.0. Elles y ont permis peu d'économies (1.11x, sous la barre des 1.15x à partir de laquelle une économie est revendiquée), et elles restent dans la discussion, attendez-vous donc à un résultat quasiment inchangé sur de petites modifications d'un seul fichier.
 
-Le coût diminue de 29 pour cent ($0.49 contre $0.69) et la proportion de problèmes corrigés reste équivalente. Main avant v0.3.0 était encore plus économique (1.54x) et en résolvait 65%, ce qui représente 2 exécutions de moins sur 54 et reste donc dans la marge de variation. Ce n'est pas celle qui est livrée car sur plusieurs tâches il s'est arrêté après 2 ou 3 tours, et sur click-format-filename il l'a fait avec une mauvaise correction (0 sur 3, contre 3 sur 3 seul). v0.3.0 coûte plus cher que lui, car elle lit le diff complet avant de répondre.
-
-Ce que cela ne montre pas : une qualité de code égale. Une évaluation à l'aveugle par un petit modèle a moins bien noté les diffs de v0.3.0 (0.94 sur une échelle de 0 à 2, contre 1.33 seul et 1.15 pour Main avant v0.3.0), et elle ne concorde que faiblement avec les tests cachés. Le temps passé est équivalent au travail en solitaire (168 secondes contre 187), pas plus rapide.
-
-### Tâches simples
-
-28 tâches simples réparties en 7 classes, 3 exécutions chacune, 84 exécutions par configuration. 21 ont servi à l'ajustement et 7 ont été réservées. Ce benchmark a été exécuté avant que v0.3.0 n'existe, sa dernière colonne est donc Main avant v0.3.0. Les tâches simples restent dans la discussion dans les deux fiches, v0.3.0 devrait donc donner des résultats similaires, mais elle n'a pas été réexécutée.
-
-| Groupe | Sans Token Beggar | v0.2.0 (version précédente) | Main avant v0.3.0 | Main avant v0.3.0 vs sans |
-| --- | --- | --- | --- | --- |
-| Ensemble des 28 tâches | $0.148 | $0.139 | $0.134 | 1.11x (1.08 to 1.14) |
-| Les 7 tâches réservées | $0.134 | $0.136 | $0.129 | 1.04x (0.99 to 1.11) |
-| Plusieurs fichiers | $0.260 | $0.194 | $0.185 | 1.40x (1.27 to 1.55) |
-| Code de routine | $0.152 | $0.149 | $0.132 | 1.15x (1.09 to 1.22) |
-
-<p align="center"><img src="assets/chart-small-cost.svg" alt="Graphique à barres : facteur de réduction de quota et d'argent par rapport à Sans Token Beggar sur les tâches simples, par classe, pour v0.2.0 et Main avant v0.3.0. Une ligne en pointillés marque 1.0x, aucune économie."></p>
-
-<p align="center"><em>Sur les tâches simples, seule la catégorie multifichier permet une économie nette ; le reste se tient près de la ligne en pointillés.</em></p>
-
-<p align="center"><img src="assets/chart-small-quality.svg" alt="Graphique à barres : qualité moyenne sur les tâches simples par classe. Toutes les tâches simples : 0.96 Sans Token Beggar, 0.96 v0.2.0, 0.99 Main avant v0.3.0."></p>
-
-<p align="center"><em>La qualité des réponses sur les tâches simples n'a diminué dans aucune configuration.</em></p>
-
-Les tâches simples permettent peu d'économies. Les cinq autres classes (modifications mécaniques, lecture, débogage, conception, revue) se situent entre 0.97x et 1.09x, dans la marge de bruit. Le résultat mixte (1.11x) reste sous la barre des 1.15x, il n'est donc pas considéré comme une économie, et sur les tâches réservées il s'inscrit dans la dispersion du travail en solitaire. Un coût initial d'environ $0.10 par worker représente la majeure partie d'une tâche à $0.15, ce qui explique pourquoi les tâches simples restent dans la discussion. La qualité des réponses n'a baissé dans aucune configuration.
+Détails complets du benchmark, liste des tâches et procédure pour tout reproduire : [docs/benchmark.md](docs/benchmark.md). Chaque exécution brute est archivée dans [`benchmark/results`](benchmark/results).
 
 > [!IMPORTANT]
 > **Où cela aide et où cela n'aide pas.** Cela aide sur les tâches volumineuses avec Opus 5.5 à effort high (1.42x, mesuré), ainsi qu'à tous les efforts de Fable 5.1 et Opus au maximum, où les tâches simples enregistrent aussi une économie. Sur Opus à d'autres niveaux d'effort et sur Sonnet 5.5, il conserve les tâches simples dans la discussion et confie les tâches volumineuses à un worker. L'économie sur les tâches volumineuses n'est mesurée que pour Opus high, donc sur Sonnet elle n'est pas mesurée et le pied de page indique le coût sans multiplicateur. Sur Haiku 5.5, le modèle le moins cher, il n'intervient pas. Si vous réalisez principalement de petites modifications sur un seul fichier, attendez-vous à un résultat quasiment inchangé.
-
-Les tableaux, la liste des tâches, les leviers essayés puis abandonnés (lecture groupée avec un outil externe, compactage précoce) et la procédure pour tout reproduire se trouvent dans [docs/benchmark.md](docs/benchmark.md). Chaque exécution brute est archivée dans [`benchmark/results`](benchmark/results).
 
 ## Fonctionnement
 
@@ -168,10 +138,10 @@ L'ensemble des réglages, y compris des consignes comme « no gemini » : [docs/
 
 ## Limites
 
-- Les tâches simples permettent peu d'économies. En dessous d'environ 1.15x, il est impossible de faire la différence avec l'absence de gain, et le résultat mixte des tâches simples (1.11x) se situe en dessous.
+- Les tâches simples permettent peu d'économies. En dessous d'environ 1.15x, il est impossible de faire la différence avec l'absence de gain, et le résultat des tâches simples de la fiche antérieure (1.11x) se situe en dessous.
 - Le benchmark difficile ne couvre qu'un modèle de discussion et effort (Opus 5.5, high) et des projets Python. Sonnet, Haiku et Fable sur des tâches volumineuses ne sont pas mesurés.
-- Une résolution de 69% contre 70% correspond à une égalité dans la marge de variation, et l'évaluation à l'aveugle a moins bien noté les diffs de v0.3.0. Il n'est pas démontré que le code soit aussi bon.
-- La version v0.2.0 publiée n'a pas été exécutée sur les tâches difficiles, et v0.3.0 n'a pas été réexécutée sur les tâches simples.
+- Une résolution de 69% contre 70% correspond à une égalité dans la marge de variation, et une évaluation à l'aveugle par un petit modèle a moins bien noté les diffs de v0.3.0 que le travail en solitaire (0.94 contre 1.33 sur une échelle de 0 à 2), bien qu'elle ne concorde que faiblement avec les tests, il n'est donc pas démontré que le code soit aussi bon.
+- v0.3.0 n'a pas été réexécutée sur les tâches simples.
 - Aucune économie provenant d'outils d'IA externes n'a été constatée sur les petits fichiers, et Gemini n'a pas été mesuré. Les lectures volumineuses ne sont pas mesurées.
 - Le compactage précoce a coûté plus cher dans l'unique longue session testée, il est donc facultatif.
 - Le pied de page est estimé à partir d'un ratio mesuré, et non de votre tâche. Les hooks ne pouvant pas voir le modèle de discussion, celui-ci est déduit de la transcription, puis des drapeaux du processus, de l'environnement et des paramètres. Si aucun ne l'indique, la fiche mentionne que le plafond est inconnu.

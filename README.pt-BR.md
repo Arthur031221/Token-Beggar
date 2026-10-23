@@ -70,57 +70,27 @@ token-beggar doctor
 
 ## Resultados
 
-Opus 5.5 em effort high como modelo de chat. O custo é o preço de tabela para o chat e cada worker, cache incluído. Os intervalos são de 95 por cento. Uma economia só é alegada a 1.15x ou mais com todo o intervalo acima de 1.0x.
+Duas configurações, e apenas duas. **Sem Token Beggar** é o modelo de chat trabalhando sozinho, da forma como você usa normalmente. **Com Token Beggar** é o cartão distribuído neste lançamento, versão 0.3.0. Opus 5.5 em effort high é o modelo de chat. O custo é o preço de tabela para o chat e cada worker, cache incluído. Os intervalos são de 95 por cento.
 
-Uma versão aqui significa um lançamento com tag deste repositório. **Sem Token Beggar (Without Token Beggar)** é o modelo de chat trabalhando sozinho. **v0.3.0 (esta versão) (v0.3.0 (this release))** é esta versão. **v0.2.0 (versão anterior) (v0.2.0 (previous release))** é a anterior a ela. O benchmark difícil compara com **Main antes de v0.3.0 (Main before v0.3.0)**, o cartão na branch main logo antes deste lançamento, porque a v0.2.0 em si não foi executada nele.
+Tarefas difíceis são 18 pull requests mesclados de 12 projetos Python de código aberto (Django, Sphinx, pylint, sympy, click e outros). O chat começa a partir do commit anterior à correção com o texto da issue, e é avaliado pelos testes que os mantenedores adicionaram, os quais ele nunca vê. 3 execuções por tarefa, 54 por configuração.
 
-### Tarefas difíceis: correções de bugs reais
-
-18 pull requests mesclados de 12 projetos Python de código aberto (Django, Sphinx, pylint, sympy, click e outros). O chat começa a partir do commit anterior à correção com o texto da issue, e é avaliado pelos testes que os mantenedores adicionaram, os quais ele nunca vê. 3 execuções por tarefa, 54 por configuração.
-
-| Configuração | Custo por execução | Múltiplo vs Sem Token Beggar | Resolvidos |
+| Configuração | Custo por tarefa | Múltiplo | Issues resolvidas |
 | --- | --- | --- | --- |
 | Sem Token Beggar | $0.69 | 1.00x | 70% |
-| Main antes de v0.3.0 | $0.45 | 1.54x (1.46 to 1.64) | 65% |
-| v0.3.0 (esta versão) | $0.49 | 1.42x (1.33 to 1.51) | 69% |
+| Com Token Beggar | $0.49 | 1.42x menos (1.33 to 1.51) | 69% |
 
-<p align="center"><img src="assets/chart-hard-cost.svg" alt="Gráfico de barras: vezes menos cota e dinheiro que Sem Token Beggar em tarefas difíceis, por tarefa. Todas as tarefas: 1.54x para Main antes de v0.3.0 e 1.42x para v0.3.0. Uma linha tracejada marca 1.0x, sem economia."></p>
+<p align="center"><img src="assets/chart-hard-cost.svg" alt="Gráfico de barras: vezes menos cota e dinheiro com Token Beggar do que sem ele, por tarefa difícil. Todas as tarefas: 1.42x. Uma linha tracejada marca 1.0x, o custo sem Token Beggar."></p>
 
-<p align="center"><em>17 das 18 tarefas difíceis custaram menos com o Token Beggar, e a única que custou mais (structlog-exception-outside) custou cerca de 10% a mais.</em></p>
+<p align="center"><em>17 das 18 tarefas custaram menos com o Token Beggar. A única que custou mais (structlog-exception-outside) custou cerca de 10% a mais.</em></p>
 
-<p align="center"><img src="assets/chart-hard-quality.svg" alt="Gráfico de barras: proporção de tarefas difíceis em que o problema foi corrigido, por tarefa. Todas as tarefas: 70% Sem Token Beggar, 65% Main antes de v0.3.0, 69% v0.3.0."></p>
+O custo caiu 29 por cento e a proporção de issues resolvidas fica no mesmo nível (69% contra 70% é um empate dentro da dispersão). O tempo também fica no mesmo nível (168 segundos contra 187), não mais rápido.
 
-<p align="center"><em>A proporção de problemas corrigidos permanece próxima de trabalhar sozinho, o que confirma que a economia não é paga com qualidade.</em></p>
+Tarefas pequenas foram medidas apenas com um cartão anterior, não com a 0.3.0. Elas economizaram pouco lá (1.11x, abaixo da linha de 1.15x em que uma economia é alegada), e elas permanecem no chat, portanto espere quase nenhuma mudança em pequenas edições em um único arquivo.
 
-O custo caiu 29 por cento ($0.49 contra $0.69) e a proporção de problemas corrigidos permaneceu no mesmo nível. Main antes de v0.3.0 foi ainda mais barato (1.54x) e resolveu 65%, o que representa 2 execuções a menos de 54 e, portanto, dentro da dispersão. Não é a versão distribuída porque em várias tarefas parou após 2 ou 3 turnos, e em click-format-filename fez isso com uma correção incorreta (0 de 3, contra 3 de 3 sozinho). A v0.3.0 custa mais do que ela, porque lê todo o diff antes de responder.
-
-O que isso não mostra: igual qualidade de código. Uma avaliação cega por um modelo pequeno avaliou os diffs da v0.3.0 como inferiores (0.94 em uma escala de 0 a 2, contra 1.33 sozinho e 1.15 para Main antes de v0.3.0), e concorda apenas fracamente com os testes ocultos. O tempo fica no mesmo nível de trabalhar sozinho (168 segundos contra 187), não mais rápido.
-
-### Tarefas pequenas
-
-28 tarefas pequenas em 7 classes, 3 execuções cada, 84 execuções por configuração. 21 foram usadas para ajuste e 7 foram reservadas. Esse benchmark foi executado antes de a v0.3.0 existir, portanto sua última coluna é Main antes de v0.3.0. Tarefas pequenas permanecem no chat em ambos os cartões, então espera-se que a v0.3.0 seja equivalente, mas ela não foi executada novamente.
-
-| Grupo | Sem Token Beggar | v0.2.0 (versão anterior) | Main antes de v0.3.0 | Main antes de v0.3.0 vs sem |
-| --- | --- | --- | --- | --- |
-| Todas as 28 tarefas | $0.148 | $0.139 | $0.134 | 1.11x (1.08 to 1.14) |
-| As 7 tarefas reservadas | $0.134 | $0.136 | $0.129 | 1.04x (0.99 to 1.11) |
-| Vários arquivos | $0.260 | $0.194 | $0.185 | 1.40x (1.27 to 1.55) |
-| Código rotineiro | $0.152 | $0.149 | $0.132 | 1.15x (1.09 to 1.22) |
-
-<p align="center"><img src="assets/chart-small-cost.svg" alt="Gráfico de barras: vezes menos cota e dinheiro que Sem Token Beggar em tarefas pequenas, por classe, para v0.2.0 e Main antes de v0.3.0. Uma linha tracejada marca 1.0x, sem economia."></p>
-
-<p align="center"><em>Em tarefas pequenas, apenas a classe de múltiplos arquivos economiza claramente; o restante fica próximo da linha tracejada.</em></p>
-
-<p align="center"><img src="assets/chart-small-quality.svg" alt="Gráfico de barras: qualidade média em tarefas pequenas por classe. Todas as tarefas pequenas: 0.96 Sem Token Beggar, 0.96 v0.2.0, 0.99 Main antes de v0.3.0."></p>
-
-<p align="center"><em>A qualidade das respostas em tarefas pequenas não caiu em nenhuma configuração.</em></p>
-
-Tarefas pequenas economizam pouco. As outras cinco classes (edições mecânicas, leitura, depuração, design, revisão) ficaram entre 0.97x e 1.09x, dentro do ruído. O resultado misto (1.11x) está abaixo da linha de 1.15x, portanto não é considerado uma economia, e nas tarefas reservadas fica dentro da dispersão de trabalhar sozinho. Um custo inicial de cerca de $0.10 por worker representa a maior parte de uma tarefa de $0.15, e é por isso que tarefas pequenas permanecem no chat. A qualidade das respostas não caiu em nenhuma configuração.
+Detalhes completos do benchmark, a lista de tarefas e como reproduzir tudo: [docs/benchmark.md](docs/benchmark.md). Cada execução bruta está em [`benchmark/results`](benchmark/results).
 
 > [!IMPORTANT]
 > **Onde ajuda e onde não ajuda.** Ajuda em tarefas grandes com o Opus 5.5 em effort high (1.42x, medido), e em todos os níveis de effort do Fable 5.1 e Opus em max, onde tarefas pequenas também medem economia. No Opus em outros níveis de effort e no Sonnet 5.5, ele mantém tarefas pequenas no chat e envia as grandes para um worker. A economia em tarefas grandes é medida apenas para o Opus high, portanto no Sonnet ela não é medida e o rodapé então informa o custo sem um múltiplo. No Haiku 5.5, o modelo mais barato, ele não faz nada. Se você realiza principalmente pequenas edições em um único arquivo, espere quase nenhuma mudança.
-
-As tabelas, a lista de tarefas, as abordagens testadas e revertidas (leitura em lote com uma ferramenta externa, compactação antecipada) e como reproduzir tudo estão em [docs/benchmark.md](docs/benchmark.md). Cada execução bruta está em [`benchmark/results`](benchmark/results).
 
 ## Como funciona
 
@@ -168,10 +138,10 @@ Tudo isso, incluindo prompts como "no gemini": [docs/config.md](docs/config.md).
 
 ## Limites
 
-- Tarefas pequenas economizam pouco. Abaixo de cerca de 1.15x, não se distingue de nenhuma economia, e o resultado misto de tarefas pequenas (1.11x) está abaixo disso.
+- Tarefas pequenas economizam pouco. Abaixo de cerca de 1.15x, não se distingue de nenhuma economia, e o resultado de tarefas pequenas do cartão anterior (1.11x) está abaixo disso.
 - O benchmark difícil cobre um único modelo de chat e effort (Opus 5.5, high) e projetos em Python. Sonnet, Haiku e Fable em tarefas grandes não foram medidos.
-- 69% contra 70% de resolução é um empate dentro da dispersão, e a avaliação cega avaliou os diffs da v0.3.0 como inferiores. Não está demonstrado que o código seja tão bom quanto.
-- A v0.2.0 lançada não foi executada nas tarefas difíceis, e a v0.3.0 não foi executada novamente nas tarefas pequenas.
+- 69% contra 70% de resolução é um empate dentro da dispersão, e uma avaliação cega por um modelo pequeno avaliou os diffs da v0.3.0 como inferiores a trabalhar sozinho (0.94 contra 1.33 em uma escala de 0 a 2), embora concorde apenas fracamente com os testes, portanto não está demonstrado que o código seja tão bom quanto.
+- A v0.3.0 não foi executada novamente nas tarefas pequenas.
 - Nenhuma economia com ferramentas externas de IA foi encontrada em arquivos pequenos, e o Gemini não foi medido. Leituras grandes não foram medidas.
 - A compactação antecipada custou mais na única sessão longa testada, portanto é opcional.
 - O rodapé é estimado a partir de uma razão medida, não da sua tarefa. Hooks não conseguem ver o modelo de chat, portanto ele é lido da transcrição, depois das flags do processo, do ambiente e das configurações. Se nenhum informar, o cartão diz que o teto é desconhecido.

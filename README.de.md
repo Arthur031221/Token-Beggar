@@ -70,57 +70,27 @@ token-beggar doctor
 
 ## Ergebnisse
 
-Opus 5.5 bei hohem Effort als Chat-Modell. Die Kosten entsprechen dem Listenpreis für den Chat und jeden Worker, einschließlich Cache. Intervalle betragen 95 Prozent. Eine Ersparnis wird erst ab 1.15x geltend gemacht, wenn das gesamte Intervall über 1.0x liegt.
+Zwei Setups, und nur zwei. **Ohne Token Beggar** ist das Chat-Modell, das allein arbeitet, so wie du es normalerweise nutzt. **Mit Token Beggar** ist die mit diesem Release ausgelieferte Karte, Version 0.3.0. Opus 5.5 bei hohem Effort ist das Chat-Modell. Die Kosten entsprechen dem Listenpreis für den Chat und jeden Worker, einschließlich Cache. Intervalle betragen 95 Prozent.
 
-Eine Version bezeichnet hier ein getaggtes Release dieses Repositorys. **Ohne Token Beggar (Without Token Beggar)** ist das Chat-Modell, das allein arbeitet. **v0.3.0 (dieses Release) (v0.3.0 (this release))** ist diese Version. **v0.2.0 (vorheriges Release) (v0.2.0 (previous release))** ist die davor. Der schwere Benchmark vergleicht mit **Main vor v0.3.0 (Main before v0.3.0)**, der Karte auf dem main-Branch direkt vor diesem Release, da v0.2.0 selbst nicht darauf ausgeführt wurde.
+Schwere Aufgaben sind 18 gemergte Pull Requests aus 12 Open-Source-Python-Projekten (Django, Sphinx, pylint, sympy, click und andere). Der Chat startet beim Commit vor dem Fix mit dem Issue-Text und wird anhand der von den Maintainern hinzugefügten Tests bewertet, die er nie zu sehen bekommt. 3 Durchläufe pro Aufgabe, 54 pro Setup.
 
-### Schwere Aufgaben: Echte Fehlerbehebungen
-
-18 gemergte Pull Requests aus 12 Open-Source-Python-Projekten (Django, Sphinx, pylint, sympy, click und andere). Der Chat startet beim Commit vor dem Fix mit dem Issue-Text und wird anhand der von den Maintainern hinzugefügten Tests bewertet, die er nie zu sehen bekommt. 3 Durchläufe pro Aufgabe, 54 pro Setup.
-
-| Setup | Kosten pro Durchlauf | Faktor gegenüber Ohne Token Beggar | Gelöst |
+| Setup | Kosten pro Aufgabe | Faktor | Gelöste Issues |
 | --- | --- | --- | --- |
 | Ohne Token Beggar | $0.69 | 1.00x | 70% |
-| Main vor v0.3.0 | $0.45 | 1.54x (1.46 to 1.64) | 65% |
-| v0.3.0 (dieses Release) | $0.49 | 1.42x (1.33 to 1.51) | 69% |
+| Mit Token Beggar | $0.49 | 1.42x weniger (1.33 to 1.51) | 69% |
 
-<p align="center"><img src="assets/chart-hard-cost.svg" alt="Balkendiagramm: Faktor an weniger Kontingent und Geld gegenüber Ohne Token Beggar bei schweren Aufgaben, pro Aufgabe. Alle Aufgaben: 1.54x für Main vor v0.3.0 und 1.42x für v0.3.0. Eine gestrichelte Linie markiert 1.0x, keine Ersparnis."></p>
+<p align="center"><img src="assets/chart-hard-cost.svg" alt="Balkendiagramm: Faktor an weniger Kontingent und Geld mit Token Beggar als ohne, pro schwerer Aufgabe. Alle Aufgaben: 1.42x. Eine gestrichelte Linie markiert 1.0x, die Kosten ohne Token Beggar."></p>
 
-<p align="center"><em>17 der 18 schweren Aufgaben kosteten mit Token Beggar weniger, und die eine, die mehr kostete (structlog-exception-outside), kostete etwa 10% mehr.</em></p>
+<p align="center"><em>17 der 18 Aufgaben kosteten mit Token Beggar weniger. Die eine, die mehr kostete (structlog-exception-outside), kostete etwa 10% mehr.</em></p>
 
-<p align="center"><img src="assets/chart-hard-quality.svg" alt="Balkendiagramm: Anteil schwerer Aufgaben, bei denen das Problem behoben wurde, pro Aufgabe. Alle Aufgaben: 70% Ohne Token Beggar, 65% Main vor v0.3.0, 69% v0.3.0."></p>
+Die Kosten sinken um 29 Prozent und der Anteil gelöster Issues bleibt gleichauf (69% gegenüber 70% ist ein Gleichstand innerhalb der Streuung). Die Zeit liegt ebenfalls gleichauf (168 Sekunden gegenüber 187), nicht schneller.
 
-<p align="center"><em>Der Anteil behobener Probleme bleibt nahe an der Arbeit allein, was bestätigt, dass die Ersparnis nicht mit Qualitätseinbußen erkauft wird.</em></p>
+Kleine Aufgaben wurden nur mit einer früheren Karte gemessen, nicht mit 0.3.0. Sie sparten dort wenig (1.11x, unter der Schwelle von 1.15x, ab der eine Ersparnis geltend gemacht wird), und sie verbleiben im Chat, rechne also bei kleinen Ein-Datei-Änderungen mit so gut wie keiner Veränderung.
 
-Die Kosten sinken um 29 Prozent ($0.49 gegenüber $0.69), und der Anteil behobener Probleme bleibt gleichauf. Main vor v0.3.0 war noch günstiger (1.54x) und löste 65%, was 2 Durchläufe weniger von 54 bedeutet und somit innerhalb der Streuung liegt. Es wurde nicht ausgeliefert, weil es bei mehreren Aufgaben nach 2 oder 3 Turns stoppte und dies bei click-format-filename mit einem falschen Fix tat (0 von 3, gegenüber 3 von 3 allein). v0.3.0 kostet mehr als dieses, weil es das gesamte Diff liest, bevor geantwortet wird.
-
-Was dies nicht zeigt: gleiche Codequalität. Ein Blind-Review durch ein kleines Modell bewertete die Diffs von v0.3.0 schlechter (0.94 auf einer Skala von 0 bis 2 gegenüber 1.33 allein und 1.15 für Main vor v0.3.0), und es stimmt nur schwach mit den verdeckten Tests überein. Die Zeit liegt gleichauf mit der Arbeit allein (168 Sekunden gegenüber 187), nicht schneller.
-
-### Kleine Aufgaben
-
-28 kleine Aufgaben in 7 Klassen, jeweils 3 Durchläufe, 84 Durchläufe pro Setup. 21 wurden für das Tuning verwendet und 7 wurden zurückgehalten. Dieser Benchmark wurde durchgeführt, bevor v0.3.0 existierte, daher ist die letzte Spalte Main vor v0.3.0. Kleine Aufgaben verbleiben bei beiden Karten im Chat, sodass für v0.3.0 eine Übereinstimmung erwartet wird, sie wurde jedoch nicht erneut ausgeführt.
-
-| Gruppe | Ohne Token Beggar | v0.2.0 (vorheriges Release) | Main vor v0.3.0 | Main vor v0.3.0 vs. ohne |
-| --- | --- | --- | --- | --- |
-| Alle 28 Aufgaben | $0.148 | $0.139 | $0.134 | 1.11x (1.08 to 1.14) |
-| Die 7 zurückgehaltenen Aufgaben | $0.134 | $0.136 | $0.129 | 1.04x (0.99 to 1.11) |
-| Mehrere Dateien | $0.260 | $0.194 | $0.185 | 1.40x (1.27 to 1.55) |
-| Routine-Code | $0.152 | $0.149 | $0.132 | 1.15x (1.09 to 1.22) |
-
-<p align="center"><img src="assets/chart-small-cost.svg" alt="Balkendiagramm: Faktor an weniger Kontingent und Geld gegenüber Ohne Token Beggar bei kleinen Aufgaben, nach Klasse, für v0.2.0 und Main vor v0.3.0. Eine gestrichelte Linie markiert 1.0x, keine Ersparnis."></p>
-
-<p align="center"><em>Bei kleinen Aufgaben spart nur die Klasse für mehrere Dateien eindeutig; der Rest liegt nahe der gestrichelten Linie.</em></p>
-
-<p align="center"><img src="assets/chart-small-quality.svg" alt="Balkendiagramm: Mittlere Qualität bei kleinen Aufgaben nach Klasse. Alle kleinen Aufgaben: 0.96 Ohne Token Beggar, 0.96 v0.2.0, 0.99 Main vor v0.3.0."></p>
-
-<p align="center"><em>Die Antwortqualität bei kleinen Aufgaben sank in keinem Setup.</em></p>
-
-Kleine Aufgaben sparen wenig. Die anderen fünf Klassen (mechanische Änderungen, Lesen, Debugging, Design, Review) lagen zwischen 0.97x und 1.09x, innerhalb des Rauschens. Das gemischte Ergebnis (1.11x) liegt unter der Schwelle von 1.15x, sodass es nicht als Ersparnis gewertet wird, und bei den zurückgehaltenen Aufgaben liegt es innerhalb der Streuung der Arbeit allein. Startkosten von etwa $0.10 pro Worker machen den Großteil einer $0.15-Aufgabe aus, weshalb kleine Aufgaben im Chat verbleiben. Die Antwortqualität sank in keinem Setup.
+Vollständige Benchmark-Details, die Aufgabenliste und wie sich alles reproduzieren lässt: [docs/benchmark.md](docs/benchmark.md). Jeder Rohdurchlauf befindet sich in [`benchmark/results`](benchmark/results).
 
 > [!IMPORTANT]
 > **Wo es hilft und wo nicht.** Es hilft bei großen Aufgaben mit Opus 5.5 bei hohem Effort (1.42x, gemessen) sowie bei jedem Effort von Fable 5.1 und Opus bei max, wo auch bei kleinen Aufgaben eine Ersparnis gemessen wurde. Bei Opus mit anderen Efforts und bei Sonnet 5.5 belässt es kleine Aufgaben im Chat und sendet große an einen Worker. Die Ersparnis bei großen Aufgaben wurde nur für Opus high gemessen; bei Sonnet ist sie daher ungemessen, und die Fußzeile nennt die Kosten dann ohne Faktor. Bei Haiku 5.5, dem günstigsten Modell, tut es nichts. Wenn du überwiegend kleine Ein-Datei-Änderungen durchführst, ist mit so gut wie keiner Veränderung zu rechnen.
-
-Die Tabellen, die Aufgabenliste, die Hebel, die ausprobiert und wieder verworfen wurden (Massenlesevorgänge mit einem externen Tool, frühe Komprimierung), und wie sich alles reproduzieren lässt, stehen in [docs/benchmark.md](docs/benchmark.md). Jeder Rohdurchlauf befindet sich in [`benchmark/results`](benchmark/results).
 
 ## Funktionsweise
 
@@ -168,10 +138,10 @@ Alles Weitere, einschließlich Prompts wie "no gemini": [docs/config.md](docs/co
 
 ## Grenzen
 
-- Kleine Aufgaben sparen wenig. Unter etwa 1.15x lässt es sich nicht von keiner Ersparnis unterscheiden, und das gemischte Ergebnis bei kleinen Aufgaben (1.11x) liegt darunter.
+- Kleine Aufgaben sparen wenig. Unter etwa 1.15x lässt es sich nicht von keiner Ersparnis unterscheiden, und das Ergebnis bei kleinen Aufgaben von der früheren Karte (1.11x) liegt darunter.
 - Der schwere Benchmark deckt ein einziges Chat-Modell und einen Effort ab (Opus 5.5, high) sowie Python-Projekte. Sonnet, Haiku und Fable bei großen Aufgaben sind nicht gemessen.
-- 69% gegenüber 70% gelösten Aufgaben ist ein Gleichstand innerhalb der Streuung, und das Blind-Review bewertete die Diffs von v0.3.0 schlechter. Es ist nicht belegt, dass der Code gleich gut ist.
-- Die veröffentlichte Version v0.2.0 wurde nicht auf den schweren Aufgaben ausgeführt, und v0.3.0 wurde auf den kleinen Aufgaben nicht erneut ausgeführt.
+- 69% gegenüber 70% gelösten Aufgaben ist ein Gleichstand innerhalb der Streuung, und ein Blind-Review durch ein kleines Modell bewertete die Diffs von v0.3.0 schlechter als die Arbeit allein (0.94 gegenüber 1.33 auf einer Skala von 0 bis 2), obwohl es nur schwach mit den Tests übereinstimmt, sodass nicht belegt ist, dass der Code gleich gut ist.
+- v0.3.0 wurde auf den kleinen Aufgaben nicht erneut ausgeführt.
 - Bei kleinen Dateien wurde durch externe KI-Tools keine Ersparnis festgestellt, und Gemini wurde nicht gemessen. Große Lesevorgänge sind ungemessen.
 - Frühe Komprimierung kostete in der einen getesteten langen Sitzung mehr, daher ist sie Opt-in.
 - Die Fußzeile wird anhand eines gemessenen Verhältnisses geschätzt, nicht anhand deiner konkreten Aufgabe. Hooks können das Chat-Modell nicht einsehen; daher wird es aus dem Transkript, danach aus den Prozess-Flags, der Umgebung und den Einstellungen ausgelesen. Wenn keines davon Aufschluss gibt, meldet die Karte, dass die Obergrenze unbekannt ist.

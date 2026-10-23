@@ -70,57 +70,27 @@ token-beggar doctor
 
 ## Results
 
-Opus 5.5 at high effort as the chat model. Cost is list price for the chat and every worker, cache included. Intervals are 95 percent. A saving is claimed only at 1.15x or more with the whole interval above 1.0x.
+Two setups, and only two. **Without Token Beggar** is the chat model working alone, the way you use it normally. **With Token Beggar** is the card shipped in this release, version 0.3.0. Opus 5.5 at high effort is the chat model. Cost is list price for the chat and every worker, cache included. Intervals are 95 percent.
 
-A version here means a tagged release of this repository. **Without Token Beggar** is the chat model working alone. **v0.3.0 (this release)** is this version. **v0.2.0 (previous release)** is the one before it. The hard benchmark compares against **Main before v0.3.0**, the card on the main branch just before this release, because v0.2.0 itself was not run on it.
+Hard tasks are 18 merged pull requests from 12 open source Python projects (Django, Sphinx, pylint, sympy, click and others). The chat starts from the commit before the fix with the issue text, and is scored by the tests the maintainers added, which it never sees. 3 runs per task, 54 per setup.
 
-### Hard tasks: real bug fixes
-
-18 merged pull requests from 12 open source Python projects (Django, Sphinx, pylint, sympy, click and others). The chat starts from the commit before the fix with the issue text, and is scored by the tests the maintainers added, which it never sees. 3 runs per task, 54 per setup.
-
-| Setup | Cost per run | Multiple vs Without Token Beggar | Resolved |
+| Setup | Cost per task | Multiple | Issues resolved |
 | --- | --- | --- | --- |
 | Without Token Beggar | $0.69 | 1.00x | 70% |
-| Main before v0.3.0 | $0.45 | 1.54x (1.46 to 1.64) | 65% |
-| v0.3.0 (this release) | $0.49 | 1.42x (1.33 to 1.51) | 69% |
+| With Token Beggar | $0.49 | 1.42x less (1.33 to 1.51) | 69% |
 
-<p align="center"><img src="assets/chart-hard-cost.svg" alt="Bar chart: times less quota and money than Without Token Beggar on hard tasks, per task. All tasks: 1.54x for Main before v0.3.0 and 1.42x for v0.3.0. A dashed line marks 1.0x, no saving."></p>
+<p align="center"><img src="assets/chart-hard-cost.svg" alt="Bar chart: times less quota and money with Token Beggar than without it, per hard task. All tasks: 1.42x. A dashed line marks 1.0x, the cost without Token Beggar."></p>
 
-<p align="center"><em>17 of the 18 hard tasks cost less with Token Beggar, and the one that cost more (structlog-exception-outside) cost about 10% more.</em></p>
+<p align="center"><em>17 of the 18 tasks cost less with Token Beggar. The one that cost more (structlog-exception-outside) cost about 10% more.</em></p>
 
-<p align="center"><img src="assets/chart-hard-quality.svg" alt="Bar chart: share of hard tasks where the issue was fixed, per task. All tasks: 70% Without Token Beggar, 65% Main before v0.3.0, 69% v0.3.0."></p>
+Cost is down by 29 percent and the share of issues resolved is level (69% against 70% is a tie within the spread). Time is level too (168 seconds against 187), not faster.
 
-<p align="center"><em>The share of issues fixed stays close to working alone, which is the check that the saving is not paid for in quality.</em></p>
+Small tasks were measured only with an earlier card, not with 0.3.0. They saved little there (1.11x, under the 1.15x line at which a saving is claimed), and they stay in the chat, so expect close to no change on small one-file edits.
 
-Cost is down by 29 percent ($0.49 against $0.69) and the share of issues fixed is level. Main before v0.3.0 was cheaper still (1.54x) and resolved 65%, which is 2 runs fewer out of 54 and so inside the spread. It is not the one shipped because on several tasks it stopped after 2 or 3 turns, and on click-format-filename it did so with a wrong fix (0 of 3, against 3 of 3 alone). v0.3.0 costs more than it, because it reads the whole diff before it answers.
-
-What this does not show: equal code quality. A blind review by a small model rated v0.3.0 diffs lower (0.94 on a 0 to 2 scale, against 1.33 alone and 1.15 for Main before v0.3.0), and it agrees only weakly with the hidden tests. Time is level with working alone (168 seconds against 187), not faster.
-
-### Small tasks
-
-28 small tasks in 7 classes, 3 runs each, 84 runs per setup. 21 were used for tuning and 7 were held out. This benchmark was run before v0.3.0 existed, so its last column is Main before v0.3.0. Small tasks stay in the chat in both cards, so v0.3.0 is expected to match, but it was not re-run.
-
-| Group | Without Token Beggar | v0.2.0 (previous release) | Main before v0.3.0 | Main before v0.3.0 vs without |
-| --- | --- | --- | --- | --- |
-| All 28 tasks | $0.148 | $0.139 | $0.134 | 1.11x (1.08 to 1.14) |
-| The 7 held-out tasks | $0.134 | $0.136 | $0.129 | 1.04x (0.99 to 1.11) |
-| Several files | $0.260 | $0.194 | $0.185 | 1.40x (1.27 to 1.55) |
-| Routine code | $0.152 | $0.149 | $0.132 | 1.15x (1.09 to 1.22) |
-
-<p align="center"><img src="assets/chart-small-cost.svg" alt="Bar chart: times less quota and money than Without Token Beggar on small tasks, by class, for v0.2.0 and Main before v0.3.0. A dashed line marks 1.0x, no saving."></p>
-
-<p align="center"><em>On small tasks only the multi-file class clearly saves, and the rest sits near the dashed line.</em></p>
-
-<p align="center"><img src="assets/chart-small-quality.svg" alt="Bar chart: mean quality on small tasks by class. All small tasks: 0.96 Without Token Beggar, 0.96 v0.2.0, 0.99 Main before v0.3.0."></p>
-
-<p align="center"><em>Answer quality on small tasks did not drop in any setup.</em></p>
-
-Small tasks save little. The other five classes (mechanical edits, reading, debugging, design, review) came out between 0.97x and 1.09x, within noise. The mixed result (1.11x) is under the 1.15x line, so it is not claimed as a saving, and on the held-out tasks it is inside the spread of working alone. A start cost of about $0.10 per worker is most of a $0.15 task, which is why small tasks stay in the chat. Answer quality did not drop in any setup.
+Full benchmark details, the task list and how to reproduce everything: [docs/benchmark.md](docs/benchmark.md). Every raw run is in [`benchmark/results`](benchmark/results).
 
 > [!IMPORTANT]
 > **Where it helps and where it does not.** It helps on large tasks with Opus 5.5 at high effort (1.42x, measured), and on every effort of Fable 5.1 and Opus at max, where small tasks measure a saving too. On Opus at other efforts and on Sonnet 5.5 it keeps small tasks in the chat and sends large ones to a worker. The large task saving is measured for Opus high only, so on Sonnet it is unmeasured and the footer then states the cost without a multiple. On Haiku 5.5, the cheapest model, it does nothing. If you mostly run small one-file edits, expect close to no change.
-
-The tables, the task list, the levers that were tried and reverted (reading in bulk with an outside tool, early compaction) and how to reproduce everything are in [docs/benchmark.md](docs/benchmark.md). Every raw run is in [`benchmark/results`](benchmark/results).
 
 ## How it works
 
@@ -168,10 +138,10 @@ All of it, including prompts such as "no gemini": [docs/config.md](docs/config.m
 
 ## Limits
 
-- Small tasks save little. Under about 1.15x it cannot be told from none, and the small task mixed result (1.11x) is under it.
+- Small tasks save little. Under about 1.15x it cannot be told from none, and the small task result from the earlier card (1.11x) is under it.
 - The hard benchmark covers one chat model and effort (Opus 5.5, high) and Python projects. Sonnet, Haiku and Fable on large tasks are not measured.
-- 69% against 70% resolved is a tie within the spread, and the blind review rated the v0.3.0 diffs lower. It is not shown that the code is as good.
-- The released v0.2.0 was not run on the hard tasks, and v0.3.0 was not re-run on the small tasks.
+- 69% against 70% resolved is a tie within the spread, and a blind review by a small model rated the v0.3.0 diffs lower than working alone (0.94 against 1.33 on a 0 to 2 scale), though it agrees only weakly with the tests, so it is not shown that the code is as good.
+- v0.3.0 was not re-run on the small tasks.
 - No saving from outside AI tools was found on small files, and Gemini was not measured. Large reads are unmeasured.
 - Early compaction cost more in the one long session tested, so it is opt in.
 - The footer is estimated from a measured ratio, not from your task. Hooks cannot see the chat model, so it is read from the transcript, then the process flags, the environment and settings. If none says, the card says the ceiling is unknown.
