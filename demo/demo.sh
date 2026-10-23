@@ -56,7 +56,7 @@ echo '$ # measured: 18 real bug fixes, 3 runs each, Opus 5.5 high as the chat mo
 python3 - "$here" <<'PY'
 import json, sys
 rows = json.load(open(sys.argv[1] + "/benchmark/results/hard/summary.json"))["arms"]
-names = {"alone": "Without Token Beggar", "main": "Main before v0.3.0", "scoped": "v0.3.0 (this release)"}
+names = {"alone": "Without Token Beggar", "scoped": "With Token Beggar"}
 print(f"{'':<24}{'cost/run':<10}{'multiple':<26}resolved")
 for key, name in names.items():
     r = rows[key]
