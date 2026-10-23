@@ -5,7 +5,7 @@
 | `TOKEN_BEGGAR=off` | disable the hooks for this process |
 | a file named `off` in the state directory | disable the hooks everywhere |
 | `TOKEN_BEGGAR_HOME` | state directory. `token-beggar env` prints the one in use |
-| `TOKEN_BEGGAR_MODE` | `off`, `lean` or `full`. Forces how much the skill acts. Unset, the measured cost ratio for the ceiling decides |
+| `TOKEN_BEGGAR_MODE` | `off`, `sized` or `full`. Forces how much the skill acts. Unset, the measured cost ratio for the ceiling decides |
 | `TOKEN_BEGGAR_EARLY=1` | turn on the early `/compact` suggestion at a finished phase. Off by default |
 | `TOKEN_BEGGAR_OFFLINE=1` | never fetch the models page |
 | `TOKEN_BEGGAR_EXTERNAL` | comma list of outside tools routing may use (for example `agy`), or `none` |

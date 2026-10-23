@@ -109,11 +109,12 @@ def summarise(rows, base, arms, blind):
 
 
 def render(summary, base, arms, label):
-    lines = ["| setup | runs | cost per run | multiple vs " + label[base] + " (95% interval) | resolved | regressions | turns | seconds |", "|---|---|---|---|---|---|---|---|"]
+    lines = ["| setup | runs | cost per run | multiple vs " + label[base] + " (95% interval) | resolved | regressions | blind review (0 to 2) | turns | seconds |", "|---|---|---|---|---|---|---|---|---|"]
     for arm in arms:
         s = summary["arms"][arm]
         mult = "1.00x" if arm == base else f"{s['multiple']:.2f}x ({s['low']:.2f} to {s['high']:.2f})" + ("" if s["claim"] else " within noise")
-        lines.append(f"| {label[arm]} | {s['runs']} | ${s['cost']:.2f} | {mult} | {s['resolved'] * 100:.0f}% | {s['regressions']} | {s['turns']:.0f} | {s['seconds']:.0f} |")
+        blind = f"{s['blind']:.2f}" if s.get("blind") else "not reviewed"
+        lines.append(f"| {label[arm]} | {s['runs']} | ${s['cost']:.2f} | {mult} | {s['resolved'] * 100:.0f}% | {s['regressions']} | {blind} | {s['turns']:.0f} | {s['seconds']:.0f} |")
     lines += ["", "## Per task", "", "| task | setup | runs | cost per run | multiple | resolved | tests fixed | turns | seconds |", "|---|---|---|---|---|---|---|---|---|"]
     for t, row in summary["per_task"].items():
         for arm in arms:
@@ -136,7 +137,7 @@ def main():
     ap.add_argument("--blind", default="")
     args = ap.parse_args()
     arms = args.arms.split(",")
-    label = {"alone": "Without Token Beggar", "main": "v0.2.0 (previous release)", "scoped": "v0.3.0 (this release)", "verify": "Draft 2 of v0.3.0 (not shipped)", "sized": "Draft 1 of v0.3.0 (not shipped)"}
+    label = {"alone": "Without Token Beggar", "main": "Main before v0.3.0 (commit b761ce6)", "scoped": "v0.3.0 (this release)", "verify": "Draft 2 of v0.3.0 (not shipped)", "sized": "Draft 1 of v0.3.0 (not shipped)"}
     rows = [r for r in load(args.out) if r["arm"] in arms]
     blind = json.loads(Path(args.blind).read_text()) if args.blind else {}
     summary = summarise(rows, args.base, arms, blind)

@@ -58,11 +58,11 @@ The host can run the Stop hook before it has written the final message. The hook
 
 | Mode | When | What the hooks do |
 | --- | --- | --- |
-| `full` | ratio at or above 1.15 (a saving clear of the run-to-run spread), or a model that was not measured | the whole menu, the reminder after it and the footer |
-| `lean` | ratio from 0.95 to 1.15 and a measured multi-file saving | a one line card that sends changes to three or more files to one worker, and a footer only for that kind |
-| `off` | anything lower | no card, no delegation, no footer |
+| `full` | the small task ratio is at or above 1.15 (a saving clear of the run to run spread), or the model was not measured | the whole menu, the reminder after it and the footer, small tasks included |
+| `sized` | everything else | one short card that decides by task size. Small tasks stay inline with nothing added. Large tasks (an issue in code you have not read, more than about 5 tool calls, more than one file, an edit and test loop) go to one worker, and the chat reads the whole diff before it answers. A footer follows a large task only |
+| `off` | the chat is already the cheapest model | no card, no delegation, no footer |
 
-`TOKEN_BEGGAR_MODE` forces one of the three. The compaction guard runs in every mode. `token-beggar doctor` forces `full` for its own hook check so the result does not depend on the ceiling.
+The task decides first and the model second: `sized` is what every model gets unless its small task ratio clears 1.15. A step counter (`PostToolUse`) sends a one line reminder once a small task passes about 5 steps, so the rest of it is routed. The footer's multiple for a large task comes from the `large` key of `data/measured.json` (hard task benchmark, Opus 5.5 at high effort only). `TOKEN_BEGGAR_MODE` forces one of the three. The compaction guard runs in every mode. `token-beggar doctor` forces `full` for its own hook check so the result does not depend on the ceiling.
 
 ## Compaction guard
 

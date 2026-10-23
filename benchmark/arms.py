@@ -2,7 +2,7 @@
 
 alone                    no plugin
 v020                     the released v0.2.0 (commit 9b63cdb), built once from git
-main                     main before the size aware strategy (commit b761ce6), built once from git (hard task benchmark)
+main                     main before the size aware strategy (commit b761ce6, called "Main before v0.3.0" in the reports; the released v0.2.0 is 9b63cdb), built once from git (hard task benchmark)
 sized                    the first wording of the size aware card (hard task benchmark), not shipped: it judged every real issue small and routed 1 run in 26
 verify                   this tree, the size aware card with the large task triggers and the required review of the diff (hard task benchmark), copied once
 scoped                   this tree, the size aware card plus the scope rule (the worker lists every site that shares the symptom, the chat checks the list), copied once

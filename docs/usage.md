@@ -4,18 +4,17 @@ You do not have to do anything. On the first non-trivial prompt of a session, a 
 
 ## What gets routed
 
-Nothing is fixed in advance. The chat model splits the prompt into subtasks and picks each route from the menu: itself inline, a worker (any model and effort at or under the ceiling) or an outside tool. The rules it follows are in `data/profiles.json` and print with `token-beggar menu`. In short:
+The chat model sizes the task before it reads any code.
 
-- Small, ambiguous or risky work, design, root causes and anything that needs this conversation stays inline.
-- Mechanical edits and bulk reading go to the smallest model that does them right, usually in a worker.
-- Multi-file work with a test that can verify it goes to a worker one step below the ceiling.
-- Bulk reading, a first draft and a second opinion can go to an outside tool when one is available.
+- Small (a one-shot answer, an edit to one named file): it works inline. Nothing is dispatched and no footer is added.
+- Large (an issue or bug in a repository it has not read, more than about 5 tool calls, more than one file, an edit and test loop): it sends one worker the whole reproduce, explore, fix and run-the-tests list. The worker reports in under 150 words, then the chat reads the whole `git diff`, runs the tests itself and keeps the root cause, the design choices and the answer.
+- A small task that grows past about 5 steps, or sits in a long context, is large from then on.
 
-Chat, one line answers and anything under about three tool calls stay inline. A worker starts with its own base context, so tiny jobs would cost more as workers.
+The worker is one tier below your chat model (Haiku under Sonnet or higher). Outside tools (`agy`, `gemini`, `codex`) are used only when you name one or a single job reads about 100k tokens or more. The full menu of providers, models and efforts, with the rules behind it, is in `data/profiles.json` and prints with `token-beggar menu`.
 
 ## When it stands down
 
-Where the benchmark measured no saving, the skill does nothing. For the model and effort of the chat, `data/measured.json` holds the cost with the skill over the cost alone. At or above 1.15 the whole menu is used (`full`). From 0.95 up, a one line card sends only multi-file changes to a worker (`lean`). Below that there is no card, no delegation and no footer (`off`). `TOKEN_BEGGAR_MODE=full|lean|off` forces a mode. In the measured data, Fable and Opus at max effort get `full`, Opus at the other efforts gets `lean`, and Sonnet and Haiku get `off`.
+`data/measured.json` holds the cost with the skill over the cost alone for the model and effort of your chat. Where small tasks measured a saving clear of the spread (1.15x or more) the whole menu is used (`full`: Fable at every effort, Opus at max). Everywhere else the size decides (`sized`). If the chat is already the cheapest model there is nothing cheaper to send work to, so there is no card, no delegation and no footer (`off`). `TOKEN_BEGGAR_MODE=full|sized|off` forces a mode.
 
 ## The ceiling
 
