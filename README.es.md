@@ -83,6 +83,10 @@ Las tareas difíciles son 18 pull requests fusionados de 12 proyectos open sourc
 
 <p align="center"><em>17 de las 18 tareas costaron menos con Token Beggar. La que costó más (structlog-exception-outside) costó aproximadamente un 10% más.</em></p>
 
+<p align="center"><img src="assets/chart-hard-quality.svg" alt="Gráfico de barras: proporción de incidencias resueltas en las 18 tareas difíciles, 70% sin Token Beggar y 69% con Token Beggar."></p>
+
+<p align="center"><em>Sin Token Beggar se resolvió el 70% de las incidencias y con él el 69%: empate dentro de la dispersión, 54 ejecuciones por configuración.</em></p>
+
 El costo se reduce en un 29 por ciento y la proporción de issues resueltos se mantiene al mismo nivel (69% frente a 70% es un empate dentro de la dispersión). El tiempo también está al mismo nivel (168 segundos frente a 187), no más rápido.
 
 Las tareas pequeñas se midieron solo con una tarjeta anterior, no con 0.3.0. Ahorraron poco allí (1.11x, por debajo de la línea de 1.15x en la que se afirma un ahorro), y se quedan en el chat, por lo que no esperes prácticamente ningún cambio en pequeñas ediciones de un solo archivo.

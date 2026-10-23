@@ -83,6 +83,10 @@ Les tâches difficiles sont 18 pull requests fusionnées issues de 12 projets Py
 
 <p align="center"><em>17 des 18 tâches coûtent moins cher avec Token Beggar. La seule ayant coûté plus cher (structlog-exception-outside) a coûté environ 10% de plus.</em></p>
 
+<p align="center"><img src="assets/chart-hard-quality.svg" alt="Graphique en barres : part des problèmes résolus sur les 18 tâches difficiles, 70 % sans Token Beggar et 69 % avec Token Beggar."></p>
+
+<p align="center"><em>Sans Token Beggar, 70 % des problèmes sont résolus, avec lui 69 % : égalité dans la dispersion, 54 exécutions par configuration.</em></p>
+
 Le coût diminue de 29 pour cent et la proportion d'issues résolues est équivalente (69% contre 70% correspond à une égalité dans la marge de variation). Le temps passé est équivalent lui aussi (168 secondes contre 187), pas plus rapide.
 
 Les tâches simples n'ont été mesurées qu'avec une fiche antérieure, pas avec 0.3.0. Elles y ont permis peu d'économies (1.11x, sous la barre des 1.15x à partir de laquelle une économie est revendiquée), et elles restent dans la discussion, attendez-vous donc à un résultat quasiment inchangé sur de petites modifications d'un seul fichier.

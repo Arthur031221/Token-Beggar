@@ -83,6 +83,10 @@ token-beggar doctor
 
 <p align="center"><em>18 个任务中有 17 个在使用 Token Beggar 时成本更低。唯一成本增加的任务（structlog-exception-outside）成本高出约 10%。</em></p>
 
+<p align="center"><img src="assets/chart-hard-quality.svg" alt="条形图：18 个高难度任务中解决问题的比例，未使用 Token Beggar 为 70%，使用 Token Beggar 为 69%。"></p>
+
+<p align="center"><em>未使用 Token Beggar 解决 70% 的问题，使用后为 69%：在波动范围内持平，每组 54 次运行。</em></p>
+
 成本降低了 29%，且解决的 issue 比例持平（69% 对 70% 属于波动范围内的持平）。耗时同样相当（168 秒对 187 秒），并未更快。
 
 小任务仅在较早的提示卡上进行了测量，未在 0.3.0 上测量。它们在当时节省甚微（1.11x，低于认定为节省的 1.15x 分界线），且它们留在聊天中处理，因此在单文件的微小编辑上预计几乎不会有任何变化。

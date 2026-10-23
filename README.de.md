@@ -83,6 +83,10 @@ Schwere Aufgaben sind 18 gemergte Pull Requests aus 12 Open-Source-Python-Projek
 
 <p align="center"><em>17 der 18 Aufgaben kosteten mit Token Beggar weniger. Die eine, die mehr kostete (structlog-exception-outside), kostete etwa 10% mehr.</em></p>
 
+<p align="center"><img src="assets/chart-hard-quality.svg" alt="Balkendiagramm: Anteil gelöster Issues bei den 18 schweren Aufgaben, 70 % ohne Token Beggar und 69 % mit Token Beggar."></p>
+
+<p align="center"><em>Ohne Token Beggar werden 70 % der Issues gelöst, mit ihm 69 %: ein Gleichstand innerhalb der Streuung, 54 Läufe pro Variante.</em></p>
+
 Die Kosten sinken um 29 Prozent und der Anteil gelöster Issues bleibt gleichauf (69% gegenüber 70% ist ein Gleichstand innerhalb der Streuung). Die Zeit liegt ebenfalls gleichauf (168 Sekunden gegenüber 187), nicht schneller.
 
 Kleine Aufgaben wurden nur mit einer früheren Karte gemessen, nicht mit 0.3.0. Sie sparten dort wenig (1.11x, unter der Schwelle von 1.15x, ab der eine Ersparnis geltend gemacht wird), und sie verbleiben im Chat, rechne also bei kleinen Ein-Datei-Änderungen mit so gut wie keiner Veränderung.

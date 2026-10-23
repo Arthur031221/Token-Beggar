@@ -83,6 +83,10 @@ Tarefas difíceis são 18 pull requests mesclados de 12 projetos Python de códi
 
 <p align="center"><em>17 das 18 tarefas custaram menos com o Token Beggar. A única que custou mais (structlog-exception-outside) custou cerca de 10% a mais.</em></p>
 
+<p align="center"><img src="assets/chart-hard-quality.svg" alt="Gráfico de barras: proporção de issues resolvidas nas 18 tarefas difíceis, 70% sem o Token Beggar e 69% com o Token Beggar."></p>
+
+<p align="center"><em>Sem o Token Beggar, 70% das issues foram resolvidas e com ele 69%: empate dentro da dispersão, 54 execuções por configuração.</em></p>
+
 O custo caiu 29 por cento e a proporção de issues resolvidas fica no mesmo nível (69% contra 70% é um empate dentro da dispersão). O tempo também fica no mesmo nível (168 segundos contra 187), não mais rápido.
 
 Tarefas pequenas foram medidas apenas com um cartão anterior, não com a 0.3.0. Elas economizaram pouco lá (1.11x, abaixo da linha de 1.15x em que uma economia é alegada), e elas permanecem no chat, portanto espere quase nenhuma mudança em pequenas edições em um único arquivo.

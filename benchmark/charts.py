@@ -1,4 +1,4 @@
-"""Draws the one README chart from the hard benchmark summary: cost on real bug fixes, Without against With Token Beggar.
+"""Draws the two README charts from the hard benchmark summary: cost and share resolved on real bug fixes, Without against With Token Beggar.
 
     python3 charts.py
 
@@ -97,12 +97,37 @@ def hard(name_of):
     )
 
 
+def quality(name_of):
+    """Second README chart: share of issues resolved, Without against With Token Beggar.
+
+    Two overall bars, not per task: at 3 runs a task can only read 0, 33, 67 or 100 percent, which looks like noise."""
+    s = json.loads((RESULTS / "hard" / "summary.json").read_text())
+    keys = ["base", "this"]
+    rows = [("All tasks", {k: s["arms"][name_of[k]]["resolved"] for k in keys})]
+    runs = s["arms"][name_of["this"]]["runs"]
+    bars(
+        ASSETS / "chart-hard-quality.svg",
+        "Real bug fixes: how many get fixed?",
+        [
+            f"Share of issues resolved, scored by the maintainers' hidden tests, 3 runs per task ({runs} per setup).",
+            "Higher is better. 70% against 69% is a tie within the spread.",
+        ],
+        rows,
+        keys,
+        percent,
+        1.0,
+        HARD_NAMES,
+    )
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--hard-map", default="base:alone,previous:main,this:scoped")
     args = ap.parse_args()
     ASSETS.mkdir(exist_ok=True)
-    hard(dict(p.split(":") for p in args.hard_map.split(",")))
+    names = dict(p.split(":") for p in args.hard_map.split(","))
+    hard(names)
+    quality(names)
 
 
 if __name__ == "__main__":

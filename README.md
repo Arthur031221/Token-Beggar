@@ -83,6 +83,10 @@ Hard tasks are 18 merged pull requests from 12 open source Python projects (Djan
 
 <p align="center"><em>17 of the 18 tasks cost less with Token Beggar. The one that cost more (structlog-exception-outside) cost about 10% more.</em></p>
 
+<p align="center"><img src="assets/chart-hard-quality.svg" alt="Bar chart: share of issues resolved on the 18 hard tasks, Without Token Beggar 70% and With Token Beggar 69%."></p>
+
+<p align="center"><em>Without Token Beggar 70% of issues resolved, with it 69%: a tie within the spread, 54 runs per setup.</em></p>
+
 Cost is down by 29 percent and the share of issues resolved is level (69% against 70% is a tie within the spread). Time is level too (168 seconds against 187), not faster.
 
 Small tasks were measured only with an earlier card, not with 0.3.0. They saved little there (1.11x, under the 1.15x line at which a saving is claimed), and they stay in the chat, so expect close to no change on small one-file edits.
