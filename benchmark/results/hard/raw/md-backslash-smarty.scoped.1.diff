@@ -1,0 +1,159 @@
+diff --git a/docs/change_log/release-3.4.md b/docs/change_log/release-3.4.md
+index 9d1cd17..c6aadd8 100644
+--- a/docs/change_log/release-3.4.md
++++ b/docs/change_log/release-3.4.md
+@@ -97,3 +97,6 @@ The following bug fixes are included in the 3.4 release:
+ 
+ * Extension entry-points are only loaded if needed (#1216).
+ * Added additional checks to the `<pre><code>` handling of `PrettifyTreeprocessor` (#1261, #1263).
++* Backslash-escaped characters are now restored by a new `UnescapeTreeprocessor` before
++  serialization, so that they are HTML-escaped as needed. Previously, `![x\"x](x)` with the
++  `smarty` extension resulted in invalid HTML (`alt="x"x"`).
+diff --git a/docs/extensions/api.md b/docs/extensions/api.md
+index d7eb689..24cc411 100644
+--- a/docs/extensions/api.md
++++ b/docs/extensions/api.md
+@@ -497,7 +497,7 @@ Some postprocessors in the Markdown source tree include:
+ | ------------------------------|-----------|----------------------------------------------------|
+ | [`raw_html`][p1]              | built-in  | Restore raw html from `htmlStash`, stored by `HTMLBlockPreprocessor`, and code highlighters |
+ | [`amp_substitute`][p2]        | built-in  | Convert ampersand substitutes to `&`; used in links |
+-| [`unescape`][p3]              | built-in  | Convert some escaped characters back from integers; used in links |
++| [`unescape`][p3]              | built-in  | Convert any escaped characters left over from integers (most are restored by the `unescape` tree processor) |
+ | [`FootnotePostProcessor`][p4] | extension | Replace footnote placeholders with html entities; as set by other stages |
+ 
+  [p1]: https://github.com/Python-Markdown/markdown/blob/master/markdown/postprocessors.py
+diff --git a/markdown/treeprocessors.py b/markdown/treeprocessors.py
+index e02a505..b254dfd 100644
+--- a/markdown/treeprocessors.py
++++ b/markdown/treeprocessors.py
+@@ -19,6 +19,7 @@ Copyright 2004 Manfred Stienstra (the original version)
+ License: BSD (see LICENSE.md for details).
+ """
+ 
++import re
+ import xml.etree.ElementTree as etree
+ from . import util
+ from . import inlinepatterns
+@@ -29,6 +30,7 @@ def build_treeprocessors(md, **kwargs):
+     treeprocessors = util.Registry()
+     treeprocessors.register(InlineProcessor(md), 'inline', 20)
+     treeprocessors.register(PrettifyTreeprocessor(md), 'prettify', 10)
++    treeprocessors.register(UnescapeTreeprocessor(md), 'unescape', 0)
+     return treeprocessors
+ 
+ 
+@@ -429,3 +431,34 @@ class PrettifyTreeprocessor(Treeprocessor):
+                 # Only prettify code containing text only
+                 if not len(code) and code.text is not None:
+                     code.text = util.AtomicString(code.text.rstrip() + '\n')
++
++
++class UnescapeTreeprocessor(Treeprocessor):
++    """
++    Restore escaped chars.
++
++    This runs on the tree (rather than the serialized output) so that the
++    serializer HTML-escapes the restored chars where needed, i.e. in
++    attribute values.
++    """
++
++    RE = re.compile(r'{}(\d+){}'.format(util.STX, util.ETX))
++
++    def _unescape(self, m):
++        return chr(int(m.group(1)))
++
++    def unescape(self, text):
++        return self.RE.sub(self._unescape, text)
++
++    def run(self, root):
++        """ Loop over all elements and unescape all text. """
++        for elem in root.iter():
++            # Unescape text content
++            if elem.text and not elem.tag == 'code':
++                elem.text = self.unescape(elem.text)
++            # Unescape tail content
++            if elem.tail:
++                elem.tail = self.unescape(elem.tail)
++            # Unescape attribute values
++            for key, value in elem.items():
++                elem.set(key, self.unescape(value))
+diff --git a/tests/basic/backlash-escapes.html b/tests/basic/backlash-escapes.html
+index ef7c4b5..876775f 100644
+--- a/tests/basic/backlash-escapes.html
++++ b/tests/basic/backlash-escapes.html
+@@ -9,7 +9,7 @@
+ <p>Right bracket: ]</p>
+ <p>Left paren: (</p>
+ <p>Right paren: )</p>
+-<p>Greater-than: ></p>
++<p>Greater-than: &gt;</p>
+ <p>Hash: #</p>
+ <p>Period: .</p>
+ <p>Bang: !</p>
+diff --git a/tests/test_syntax/extensions/test_smarty.py b/tests/test_syntax/extensions/test_smarty.py
+new file mode 100644
+index 0000000..544b5cb
+--- /dev/null
++++ b/tests/test_syntax/extensions/test_smarty.py
+@@ -0,0 +1,30 @@
++from markdown.test_tools import TestCase
++
++
++class TestSmarty(TestCase):
++
++    default_kwargs = {'extensions': ['smarty']}
++
++    def test_escaped_quote_in_alt(self):
++        self.assertMarkdownRenders(
++            r'![x\"x](x)',
++            '<p><img alt="x&quot;x" src="x" /></p>'
++        )
++
++    def test_escaped_apostrophe_in_alt(self):
++        self.assertMarkdownRenders(
++            r"![x\'x](x)",
++            '<p><img alt="x\'x" src="x" /></p>'
++        )
++
++    def test_escaped_quote_in_title(self):
++        self.assertMarkdownRenders(
++            r'[a](b "x\"y")',
++            '<p><a href="b" title="x&quot;y">a</a></p>'
++        )
++
++    def test_escaped_quote_in_text(self):
++        self.assertMarkdownRenders(
++            r'a \" b',
++            '<p>a " b</p>'
++        )
+diff --git a/tests/test_syntax/inline/test_images.py b/tests/test_syntax/inline/test_images.py
+index c9c7cb8..2a68d44 100644
+--- a/tests/test_syntax/inline/test_images.py
++++ b/tests/test_syntax/inline/test_images.py
+@@ -182,3 +182,9 @@ class TestAdvancedImages(TestCase):
+             ),
+             '<p><a href="http://example.com/"><img alt="img ref" src="./image.jpg" /></a></p>'
+         )
++
++    def test_escaped_char_in_alt(self):
++        self.assertMarkdownRenders(
++            r'![a \> b \* c](./image.jpg)',
++            '<p><img alt="a &gt; b * c" src="./image.jpg" /></p>'
++        )
+diff --git a/tests/test_syntax/inline/test_links.py b/tests/test_syntax/inline/test_links.py
+index 0458756..58d8923 100644
+--- a/tests/test_syntax/inline/test_links.py
++++ b/tests/test_syntax/inline/test_links.py
+@@ -98,6 +98,12 @@ class TestInlineLinks(TestCase):
+             """Text</a> more text</p>"""
+         )
+ 
++    def test_escaped_char_in_title(self):
++        self.assertMarkdownRenders(
++            r'[Text](http://example.com "a \> b")',
++            '<p><a href="http://example.com" title="a &gt; b">Text</a></p>'
++        )
++
+     def test_mixed_title_quotes6(self):
+         self.assertMarkdownRenders(
+             """[Text](http://link.com/with spaces "and quotes" 'and title') more text""",

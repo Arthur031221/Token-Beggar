@@ -1,0 +1,256 @@
+diff --git a/CHANGES.rst b/CHANGES.rst
+index 14cc09d..f4f9292 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -13,6 +13,9 @@ Unreleased
+     function. :pr:`2421`
+ -   Bash version detection doesn't fail on Windows. :issue:`2461`
+ -   Completion works if there is a dot (``.``) in the program name. :issue:`2166`
++-   ``format_filename`` replaces surrogate escapes and undecodable bytes with
++    U+FFFD so the result can always be printed, fixing a regression from
++    Click 7. ``File``, ``Path``, and ``FileError`` messages use it.
+ -   Improve type annotations for pyright type checker. :issue:`2268`
+ -   Improve responsiveness of ``click.clear()``. :issue:`2284`
+ -   Improve command name detection when using Shiv or PEX. :issue:`2332`
+diff --git a/docs/arguments.rst b/docs/arguments.rst
+index e5765c9..9cdc87f 100644
+--- a/docs/arguments.rst
++++ b/docs/arguments.rst
+@@ -124,16 +124,14 @@ File Path Arguments
+ 
+ In the previous example, the files were opened immediately.  But what if
+ we just want the filename?  The naïve way is to use the default string
+-argument type.  However, remember that Click is Unicode-based, so the string
+-will always be a Unicode value.  Unfortunately, filenames can be Unicode or
+-bytes depending on which operating system is being used.  As such, the type
+-is insufficient.
+-
+-Instead, you should be using the :class:`Path` type, which automatically
+-handles this ambiguity.  Not only will it return either bytes or Unicode
+-depending on what makes more sense, but it will also be able to do some
++argument type.  The :class:`Path` type is better, as it can also do some
+ basic checks for you such as existence checks.
+ 
++By default :class:`Path` returns a ``str``.  Pass ``path_type=bytes`` if you
++need bytes.  Filenames may contain bytes that cannot be decoded; to display
++one safely, use :func:`format_filename`, which replaces such bytes with
++U+FFFD instead of failing.
++
+ Example:
+ 
+ .. click:example::
+diff --git a/docs/utils.rst b/docs/utils.rst
+index 995c171..a5b1e1b 100644
+--- a/docs/utils.rst
++++ b/docs/utils.rst
+@@ -243,8 +243,9 @@ tricky.
+ 
+ The way this works with click is through the :func:`format_filename`
+ function.  It does a best-effort conversion of the filename to Unicode and
+-will never fail.  This makes it possible to use these filenames in the
+-context of a full Unicode string.
++will never fail; bytes that cannot be decoded are replaced with U+FFFD.
++This makes it possible to use these filenames in the context of a full
++Unicode string.
+ 
+ Example::
+ 
+diff --git a/src/click/_compat.py b/src/click/_compat.py
+index 1273ddf..52a8652 100644
+--- a/src/click/_compat.py
++++ b/src/click/_compat.py
+@@ -389,8 +389,8 @@ def open_stream(
+     binary = "b" in mode
+ 
+     # Standard streams first. These are simple because they ignore the
+-    # atomic flag. Use fsdecode to handle Path("-").
+-    if os.fsdecode(filename) == "-":
++    # atomic flag. Use fspath to handle Path("-").
++    if os.fspath(filename) in ("-", b"-"):
+         if any(m in mode for m in ["w", "a", "x"]):
+             if binary:
+                 return get_binary_stdout(), False
+diff --git a/src/click/exceptions.py b/src/click/exceptions.py
+index 76a06ff..8b4a939 100644
+--- a/src/click/exceptions.py
++++ b/src/click/exceptions.py
+@@ -5,6 +5,7 @@ from gettext import ngettext
+ 
+ from ._compat import get_text_stderr
+ from .utils import echo
++from .utils import format_filename
+ 
+ if t.TYPE_CHECKING:
+     from .core import Command
+@@ -262,7 +263,7 @@ class FileError(ClickException):
+             hint = _("unknown error")
+ 
+         super().__init__(hint)
+-        self.ui_filename: str = os.fsdecode(filename)
++        self.ui_filename: str = format_filename(filename)
+         self.filename = filename
+ 
+     def format_message(self) -> str:
+diff --git a/src/click/types.py b/src/click/types.py
+index c684861..d2340fa 100644
+--- a/src/click/types.py
++++ b/src/click/types.py
+@@ -9,6 +9,7 @@ from ._compat import _get_argv_encoding
+ from ._compat import get_filesystem_encoding
+ from ._compat import open_stream
+ from .exceptions import BadParameter
++from .utils import format_filename
+ from .utils import LazyFile
+ from .utils import safecall
+ 
+@@ -732,7 +733,7 @@ class File(ParamType):
+ 
+             return f
+         except OSError as e:  # noqa: B014
+-            self.fail(f"'{os.fsdecode(value)}': {e.strerror}", param, ctx)
++            self.fail(f"'{format_filename(value)}': {e.strerror}", param, ctx)
+ 
+     def shell_complete(
+         self, ctx: "Context", param: "Parameter", incomplete: str
+@@ -851,7 +852,7 @@ class Path(ParamType):
+                 # until Python 3.8. Use pathlib for now.
+                 import pathlib
+ 
+-                rv = os.fsdecode(pathlib.Path(rv).resolve())
++                rv = os.fspath(pathlib.Path(rv).resolve())
+ 
+             try:
+                 st = os.stat(rv)
+@@ -860,7 +861,7 @@ class Path(ParamType):
+                     return self.coerce_path_result(rv)
+                 self.fail(
+                     _("{name} {filename!r} does not exist.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -869,7 +870,7 @@ class Path(ParamType):
+             if not self.file_okay and stat.S_ISREG(st.st_mode):
+                 self.fail(
+                     _("{name} {filename!r} is a file.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -877,7 +878,7 @@ class Path(ParamType):
+             if not self.dir_okay and stat.S_ISDIR(st.st_mode):
+                 self.fail(
+                     _("{name} '{filename}' is a directory.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -886,7 +887,7 @@ class Path(ParamType):
+             if self.readable and not os.access(rv, os.R_OK):
+                 self.fail(
+                     _("{name} {filename!r} is not readable.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -895,7 +896,7 @@ class Path(ParamType):
+             if self.writable and not os.access(rv, os.W_OK):
+                 self.fail(
+                     _("{name} {filename!r} is not writable.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -904,7 +905,7 @@ class Path(ParamType):
+             if self.executable and not os.access(value, os.X_OK):
+                 self.fail(
+                     _("{name} {filename!r} is not executable.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+diff --git a/src/click/utils.py b/src/click/utils.py
+index 6e74ace..72a8381 100644
+--- a/src/click/utils.py
++++ b/src/click/utils.py
+@@ -398,7 +398,8 @@ def open_file(
+ 
+ 
+ def format_filename(
+-    filename: t.Union[str, bytes, "os.PathLike[t.AnyStr]"], shorten: bool = False
++    filename: "t.Union[str, bytes, os.PathLike[str], os.PathLike[bytes]]",
++    shorten: bool = False,
+ ) -> str:
+     """Formats a filename for user display.  The main purpose of this
+     function is to ensure that the filename can be displayed at all.  This
+@@ -406,6 +407,9 @@ def format_filename(
+     not fail.  Optionally, it can shorten the filename to not include the
+     full path to the filename.
+ 
++    Surrogate escapes (from undecodable filesystem bytes) and undecodable
++    bytes are replaced with U+FFFD, so the result can always be encoded.
++
+     :param filename: formats a filename for UI display.  This will also convert
+                      the filename into unicode without failing.
+     :param shorten: this optionally shortens the filename to strip of the
+@@ -413,8 +417,13 @@ def format_filename(
+     """
+     if shorten:
+         filename = os.path.basename(filename)
++    else:
++        filename = os.fspath(filename)
++
++    if isinstance(filename, bytes):
++        return filename.decode(sys.getfilesystemencoding(), "replace")
+ 
+-    return os.fsdecode(filename)
++    return filename.encode("utf-8", "surrogateescape").decode("utf-8", "replace")
+ 
+ 
+ def get_app_dir(app_name: str, roaming: bool = True, force_posix: bool = False) -> str:
+diff --git a/tests/test_utils.py b/tests/test_utils.py
+index 02a6101..ec3b61d 100644
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+@@ -93,15 +93,26 @@ def test_unstyle_other_ansi(text, expect):
+     assert click.unstyle(text) == expect
+ 
+ 
+-def test_filename_formatting():
+-    assert click.format_filename(b"foo.txt") == "foo.txt"
+-    assert click.format_filename(b"/x/foo.txt") == "/x/foo.txt"
+-    assert click.format_filename("/x/foo.txt") == "/x/foo.txt"
+-    assert click.format_filename("/x/foo.txt", shorten=True) == "foo.txt"
+-
+-    # filesystem encoding on windows permits this.
+-    if not WIN:
+-        assert click.format_filename(b"/x/foo\xff.txt", shorten=True) == "foo\udcff.txt"
++@pytest.mark.parametrize(
++    ("filename", "shorten", "expect"),
++    [
++        (b"foo.txt", False, "foo.txt"),
++        (b"/x/foo.txt", False, "/x/foo.txt"),
++        ("/x/foo.txt", False, "/x/foo.txt"),
++        ("/x/foo.txt", True, "foo.txt"),
++        (b"/x/foo.txt", True, "foo.txt"),
++        (pathlib.Path("foo.txt"), False, "foo.txt"),
++        (pathlib.Path("/x/foo.txt"), True, "foo.txt"),
++        ("foo\udce9", False, "foo\ufffd"),
++        (b"foo\xe9", False, "foo\ufffd"),
++        (b"/x/foo\xff.txt", True, "foo\ufffd.txt"),
++    ],
++)
++def test_filename_formatting(filename, shorten, expect):
++    out = click.format_filename(filename, shorten=shorten)
++    assert out == expect
++    # The result must be printable, i.e. contain no lone surrogates.
++    out.encode("utf-8")
+ 
+ 
+ def test_prompts(runner):

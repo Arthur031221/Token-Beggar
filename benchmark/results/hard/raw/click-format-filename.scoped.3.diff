@@ -1,0 +1,227 @@
+diff --git a/CHANGES.rst b/CHANGES.rst
+index 14cc09d..077adbb 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -5,6 +5,8 @@ Version 8.1.4
+ 
+ Unreleased
+ 
++-   ``format_filename`` replaces surrogate escapes with U+FFFD so the result
++    can always be printed.
+ -   Replace all ``typing.Dict`` occurrences to ``typing.MutableMapping`` for
+     parameter hints. :issue:`2255`
+ -   Improve type hinting for decorators and give all generic types parameters.
+diff --git a/docs/arguments.rst b/docs/arguments.rst
+index e5765c9..a5581ea 100644
+--- a/docs/arguments.rst
++++ b/docs/arguments.rst
+@@ -130,9 +130,9 @@ bytes depending on which operating system is being used.  As such, the type
+ is insufficient.
+ 
+ Instead, you should be using the :class:`Path` type, which automatically
+-handles this ambiguity.  Not only will it return either bytes or Unicode
+-depending on what makes more sense, but it will also be able to do some
+-basic checks for you such as existence checks.
++handles this ambiguity.  It returns a :class:`str` by default (or bytes or
++a :mod:`pathlib` path, depending on ``path_type``), and it will also be able
++to do some basic checks for you such as existence checks.
+ 
+ Example:
+ 
+diff --git a/src/click/_compat.py b/src/click/_compat.py
+index 1273ddf..24055c7 100644
+--- a/src/click/_compat.py
++++ b/src/click/_compat.py
+@@ -389,8 +389,8 @@ def open_stream(
+     binary = "b" in mode
+ 
+     # Standard streams first. These are simple because they ignore the
+-    # atomic flag. Use fsdecode to handle Path("-").
+-    if os.fsdecode(filename) == "-":
++    # atomic flag. Use fspath to handle Path("-").
++    if os.fspath(filename) == "-":
+         if any(m in mode for m in ["w", "a", "x"]):
+             if binary:
+                 return get_binary_stdout(), False
+diff --git a/src/click/exceptions.py b/src/click/exceptions.py
+index 76a06ff..fe68a36 100644
+--- a/src/click/exceptions.py
++++ b/src/click/exceptions.py
+@@ -1,10 +1,10 @@
+-import os
+ import typing as t
+ from gettext import gettext as _
+ from gettext import ngettext
+ 
+ from ._compat import get_text_stderr
+ from .utils import echo
++from .utils import format_filename
+ 
+ if t.TYPE_CHECKING:
+     from .core import Command
+@@ -262,7 +262,7 @@ class FileError(ClickException):
+             hint = _("unknown error")
+ 
+         super().__init__(hint)
+-        self.ui_filename: str = os.fsdecode(filename)
++        self.ui_filename: str = format_filename(filename)
+         self.filename = filename
+ 
+     def format_message(self) -> str:
+diff --git a/src/click/types.py b/src/click/types.py
+index c684861..54122b2 100644
+--- a/src/click/types.py
++++ b/src/click/types.py
+@@ -10,6 +10,7 @@ from ._compat import get_filesystem_encoding
+ from ._compat import open_stream
+ from .exceptions import BadParameter
+ from .utils import LazyFile
++from .utils import format_filename
+ from .utils import safecall
+ 
+ if t.TYPE_CHECKING:
+@@ -732,7 +733,7 @@ class File(ParamType):
+ 
+             return f
+         except OSError as e:  # noqa: B014
+-            self.fail(f"'{os.fsdecode(value)}': {e.strerror}", param, ctx)
++            self.fail(f"'{format_filename(value)}': {e.strerror}", param, ctx)
+ 
+     def shell_complete(
+         self, ctx: "Context", param: "Parameter", incomplete: str
+@@ -851,7 +852,7 @@ class Path(ParamType):
+                 # until Python 3.8. Use pathlib for now.
+                 import pathlib
+ 
+-                rv = os.fsdecode(pathlib.Path(rv).resolve())
++                rv = os.fspath(pathlib.Path(rv).resolve())
+ 
+             try:
+                 st = os.stat(rv)
+@@ -860,7 +861,7 @@ class Path(ParamType):
+                     return self.coerce_path_result(rv)
+                 self.fail(
+                     _("{name} {filename!r} does not exist.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -869,7 +870,7 @@ class Path(ParamType):
+             if not self.file_okay and stat.S_ISREG(st.st_mode):
+                 self.fail(
+                     _("{name} {filename!r} is a file.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -877,7 +878,7 @@ class Path(ParamType):
+             if not self.dir_okay and stat.S_ISDIR(st.st_mode):
+                 self.fail(
+                     _("{name} '{filename}' is a directory.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -886,7 +887,7 @@ class Path(ParamType):
+             if self.readable and not os.access(rv, os.R_OK):
+                 self.fail(
+                     _("{name} {filename!r} is not readable.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -895,7 +896,7 @@ class Path(ParamType):
+             if self.writable and not os.access(rv, os.W_OK):
+                 self.fail(
+                     _("{name} {filename!r} is not writable.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+@@ -904,7 +905,7 @@ class Path(ParamType):
+             if self.executable and not os.access(value, os.X_OK):
+                 self.fail(
+                     _("{name} {filename!r} is not executable.").format(
+-                        name=self.name.title(), filename=os.fsdecode(value)
++                        name=self.name.title(), filename=format_filename(value)
+                     ),
+                     param,
+                     ctx,
+diff --git a/src/click/utils.py b/src/click/utils.py
+index 6e74ace..c9d5ad4 100644
+--- a/src/click/utils.py
++++ b/src/click/utils.py
+@@ -404,17 +404,26 @@ def format_filename(
+     function is to ensure that the filename can be displayed at all.  This
+     will decode the filename to unicode if necessary in a way that it will
+     not fail.  Optionally, it can shorten the filename to not include the
+-    full path to the filename.
++    full path to the filename.  Undecodable bytes and surrogate escapes are
++    replaced with U+FFFD.
+ 
+     :param filename: formats a filename for UI display.  This will also convert
+                      the filename into unicode without failing.
+     :param shorten: this optionally shortens the filename to strip of the
+                     path that leads up to it.
++
++    .. versionchanged:: 8.1.4
++        Surrogate escapes in the filename are replaced with U+FFFD.
+     """
+     if shorten:
+         filename = os.path.basename(filename)
++    else:
++        filename = os.fspath(filename)
++
++    if isinstance(filename, bytes):
++        return filename.decode(sys.getfilesystemencoding(), "replace")
+ 
+-    return os.fsdecode(filename)
++    return filename.encode("utf-8", "surrogateescape").decode("utf-8", "replace")
+ 
+ 
+ def get_app_dir(app_name: str, roaming: bool = True, force_posix: bool = False) -> str:
+diff --git a/tests/test_utils.py b/tests/test_utils.py
+index 02a6101..a663af6 100644
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+@@ -101,7 +101,7 @@ def test_filename_formatting():
+ 
+     # filesystem encoding on windows permits this.
+     if not WIN:
+-        assert click.format_filename(b"/x/foo\xff.txt", shorten=True) == "foo\udcff.txt"
++        assert click.format_filename(b"/x/foo\xff.txt", shorten=True) == "foo\ufffd.txt"
+ 
+ 
+ def test_prompts(runner):
+@@ -499,3 +499,26 @@ def test_make_default_short_help(value, max_length, alter, expect):
+ 
+     out = click.utils.make_default_short_help(value, max_length)
+     assert out == expect
++
++
++@pytest.mark.skipif(
++    sys.getfilesystemencodeerrors() != "surrogateescape",
++    reason="filesystem encoding does not use surrogateescape",
++)
++def test_format_filename_surrogates():
++    name = os.fsdecode(b"foo\xe9")
++    assert click.format_filename(name) == "foo�"
++    assert click.format_filename(b"foo\xe9") == "foo�"
++    assert click.format_filename(os.path.join("dir", name), shorten=True) == "foo�"
++    assert click.format_filename(pathlib.Path(name)) == "foo�"
++    assert click.format_filename(pathlib.Path("a") / name, shorten=True) == "foo�"
++
++
++@pytest.mark.skipif(
++    sys.getfilesystemencodeerrors() != "surrogateescape",
++    reason="filesystem encoding does not use surrogateescape",
++)
++def test_file_error_surrogates():
++    err = click.FileError(os.fsdecode(b"foo\xe9"), hint="bad")
++    assert err.ui_filename == "foo�"
++    err.format_message().encode("utf-8")

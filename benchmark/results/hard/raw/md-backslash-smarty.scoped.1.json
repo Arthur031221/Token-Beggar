@@ -1,0 +1,132 @@
+{
+ "task": "md-backslash-smarty",
+ "arm": "scoped",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 164329,
+  "stop_reason": "end_turn",
+  "session_id": "a2d9ccd1-6f0a-4f1f-8923-e9794b8776d0",
+  "total_cost_usd": 0.7562705000000001,
+  "usage": {
+   "input_tokens": 44,
+   "cache_creation_input_tokens": 32962,
+   "cache_read_input_tokens": 751663,
+   "output_tokens": 13274,
+   "output_tokens_details": {
+    "thinking_tokens": 4619
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 32962,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 992,
+     "cache_read_input_tokens": 45047,
+     "cache_creation_input_tokens": 811,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 811
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 44,
+    "outputTokens": 13274,
+    "cacheReadInputTokens": 751663,
+    "cacheCreationInputTokens": 32962,
+    "webSearchRequests": 0,
+    "costUSD": 0.6796846000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 4619,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 22,
+    "outputTokens": 3907,
+    "cacheReadInputTokens": 124094,
+    "cacheCreationInputTokens": 10025,
+    "webSearchRequests": 0,
+    "costUSD": 0.07658590000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 749,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 25,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The issue is fixed: `![x\\\"x](x)` with smarty now renders `<p><img alt=\"x&quot;x\" src=\"x\" /></p>`, the same as the unescaped version. Nothing is committed.\n\n**Cause:** a backslash escape is held as a placeholder during parsing, and the placeholder used to be swapped back to the real character *after* the HTML was written out. Characters restored that late were never HTML-escaped, so a raw `\"` ended up inside the `alt`/`title` attribute. Smarty makes `\"` and `'` escapable, which is why it showed up there. Without smarty the same thing happens with `\\>`.\n\n**Fix:** a new `UnescapeTreeprocessor` in `markdown/treeprocessors.py` restores escaped characters in text and attribute values *before* the HTML is written, so they get escaped like everything else. Upstream Python-Markdown fixed this the same way.\n\n- A subagent first tried a regex over the final HTML string to find tags. I replaced it with this approach because it's fragile.\n- I left the old `UnescapePostprocessor` registered. With the fix it should only catch leftover placeholders, e.g. in HTML that third-party extensions stash. Removing it would break extensions that call `deregister('unescape')`. Anything left for it is still restored without HTML-escaping.\n\n**One visible change:** an escaped `\\>` in normal text now renders as `&gt;` where it used to be a raw `>`. Both are valid HTML. I updated the one expected-output file that depended on it, `tests/basic/backlash-escapes.html`.\n\n**Tests:**\n- New `tests/test_syntax/extensions/test_smarty.py`: escaped `\"` in an image alt and in a link title, `\\'` in an alt, and `\\\"` in plain text.\n- Core tests for an escaped `>` in an image alt (`test_images.py`) and in a link title (`test_links.py`).\n- Four of the new tests fail on the old code and all pass with the fix. The other two, `\\'` in an alt and `\\\"` in plain text, pass with or without it; they check that harmless cases still render as before.\n- The full suite, run with `.venv/bin/python -m unittest discover tests`, has the same 8 failures as before my change (raw-HTML tests in `test_html_blocks` and `test_md_in_html`), and nothing new fails.\n- `pytest tests` on the whole directory stops before running anything, because it can't collect `test_md_in_html.py`. That happens without my change too, so I ran pytest on the affected files instead: 290 passed.\n- Escapes also render correctly with md_in_html, toc, footnotes and tables.\n\n**Docs:** a bug-fix note in `docs/change_log/release-3.4.md`, and the `unescape` postprocessor entry in `docs/extensions/api.md` now says the new tree processor restores most escapes and the postprocessor only handles leftovers.",
+  "ttft_ms": 4979,
+  "type": "result",
+  "duration_ms": 174721,
+  "uuid": "1aa490b4-8b9f-4360-b9da-c710784d2653",
+  "ttft_stream_ms": 894,
+  "time_to_request_ms": 137,
+  "first_content_frame_ms": 895,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

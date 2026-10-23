@@ -1,0 +1,121 @@
+diff --git a/docs/change_log/release-3.4.md b/docs/change_log/release-3.4.md
+index 9d1cd17..109eee4 100644
+--- a/docs/change_log/release-3.4.md
++++ b/docs/change_log/release-3.4.md
+@@ -97,3 +97,4 @@ The following bug fixes are included in the 3.4 release:
+ 
+ * Extension entry-points are only loaded if needed (#1216).
+ * Added additional checks to the `<pre><code>` handling of `PrettifyTreeprocessor` (#1261, #1263).
++* Ensure backslash-escaped characters in image alt text and link attributes are properly HTML-escaped, e.g. with the Smarty extension.
+diff --git a/markdown/inlinepatterns.py b/markdown/inlinepatterns.py
+index eb313bd..d4c3e0a 100644
+--- a/markdown/inlinepatterns.py
++++ b/markdown/inlinepatterns.py
+@@ -191,6 +191,9 @@ The pattern classes
+ """
+ 
+ 
++ESCAPE_PLACEHOLDER_RE = re.compile('{}(\\d+){}'.format(util.STX, util.ETX))
++
++
+ class Pattern:  # pragma: no cover
+     """Base class that inline patterns subclass. """
+ 
+@@ -247,7 +250,10 @@ class Pattern:  # pragma: no cover
+                 else:
+                     # An etree Element - return text content only
+                     return ''.join(value.itertext())
+-        return util.INLINE_PLACEHOLDER_RE.sub(get_stash, text)
++        text = util.INLINE_PLACEHOLDER_RE.sub(get_stash, text)
++        # Restore backslash-escaped chars so the serializer escapes them
++        # properly when used in attribute values.
++        return ESCAPE_PLACEHOLDER_RE.sub(lambda m: chr(int(m.group(1))), text)
+ 
+ 
+ class InlineProcessor(Pattern):
+diff --git a/tests/test_syntax/extensions/test_smarty.py b/tests/test_syntax/extensions/test_smarty.py
+new file mode 100644
+index 0000000..e5df51a
+--- /dev/null
++++ b/tests/test_syntax/extensions/test_smarty.py
+@@ -0,0 +1,66 @@
++"""
++Python Markdown
++
++A Python implementation of John Gruber's Markdown.
++
++Documentation: https://python-markdown.github.io/
++GitHub: https://github.com/Python-Markdown/markdown/
++PyPI: https://pypi.org/project/Markdown/
++
++License: BSD (see LICENSE.md for details).
++"""
++
++from markdown.test_tools import TestCase
++
++
++class TestSmarty(TestCase):
++
++    default_kwargs = {'extensions': ['smarty']}
++
++    def test_escaped_quote_in_img_alt(self):
++        self.assertMarkdownRenders(
++            r'![x\"x](x)',
++            '<p><img alt="x&quot;x" src="x" /></p>'
++        )
++
++    def test_quote_in_img_alt(self):
++        self.assertMarkdownRenders(
++            '![x"x](x)',
++            '<p><img alt="x&quot;x" src="x" /></p>'
++        )
++
++    def test_escaped_quote_in_img_title(self):
++        self.assertMarkdownRenders(
++            r'![x](x "a\"b")',
++            '<p><img alt="x" src="x" title="a&quot;b" /></p>'
++        )
++
++    def test_escaped_quote_in_link_title(self):
++        self.assertMarkdownRenders(
++            r'[a](x "t\"t")',
++            '<p><a href="x" title="t&quot;t">a</a></p>'
++        )
++
++    def test_escaped_quote_in_href(self):
++        self.assertMarkdownRenders(
++            r'[a](x\"y)',
++            '<p><a href="x&quot;y">a</a></p>'
++        )
++
++    def test_escaped_quote_in_text(self):
++        self.assertMarkdownRenders(
++            r'a\"b',
++            '<p>a"b</p>'
++        )
++
++    def test_escaped_single_quote_in_img_alt(self):
++        self.assertMarkdownRenders(
++            r"![x\'x](x)",
++            "<p><img alt=\"x'x\" src=\"x\" /></p>"
++        )
++
++    def test_escaped_amp_in_img_alt(self):
++        self.assertMarkdownRenders(
++            r'![x\&x](x)',
++            '<p><img alt="x\\&amp;x" src="x" /></p>'
++        )
+diff --git a/tests/test_syntax/inline/test_images.py b/tests/test_syntax/inline/test_images.py
+index c9c7cb8..e0fa07b 100644
+--- a/tests/test_syntax/inline/test_images.py
++++ b/tests/test_syntax/inline/test_images.py
+@@ -182,3 +182,9 @@ class TestAdvancedImages(TestCase):
+             ),
+             '<p><a href="http://example.com/"><img alt="img ref" src="./image.jpg" /></a></p>'
+         )
++
++    def test_escaped_char_in_alt_no_ext(self):
++        self.assertMarkdownRenders(
++            r'![x\*x](x)',
++            '<p><img alt="x*x" src="x" /></p>'
++        )
