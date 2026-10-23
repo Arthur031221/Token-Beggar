@@ -1,0 +1,168 @@
+diff --git a/changelog/7792.bugfix.rst b/changelog/7792.bugfix.rst
+new file mode 100644
+index 000000000..8f6563789
+--- /dev/null
++++ b/changelog/7792.bugfix.rst
+@@ -0,0 +1,5 @@
++Marks are now inherited according to the full MRO in test classes. Previously, if a test class inherited from two or more classes, only marks from the first super-class would apply.
++
++When inheriting marks from super-classes, marks from the sub-classes are now ordered before marks from the super-classes, in MRO order. Previously it was the reverse.
++
++When inheriting marks from super-classes, the `pytestmark` attribute of the sub-class now only contains the marks directly applied to it. Previously, it also contained marks from its super-classes. Please note that this attribute should not normally be accessed directly; use :func:`pytest.Node.iter_markers` instead.
+diff --git a/src/_pytest/mark/structures.py b/src/_pytest/mark/structures.py
+index 800a25c92..5d53c24d9 100644
+--- a/src/_pytest/mark/structures.py
++++ b/src/_pytest/mark/structures.py
+@@ -355,12 +355,35 @@ class MarkDecorator:
+         return self.with_args(*args, **kwargs)
+ 
+ 
+-def get_unpacked_marks(obj: object) -> Iterable[Mark]:
+-    """Obtain the unpacked marks that are stored on an object."""
+-    mark_list = getattr(obj, "pytestmark", [])
+-    if not isinstance(mark_list, list):
+-        mark_list = [mark_list]
+-    return normalize_mark_list(mark_list)
++def get_unpacked_marks(
++    obj: Union[object, type],
++    *,
++    consider_mro: bool = True,
++) -> List[Mark]:
++    """Obtain the unpacked marks that are stored on an object.
++
++    If obj is a class and consider_mro is true, return marks applied to
++    this class and all of its super-classes in MRO order. If consider_mro
++    is false, only return marks applied directly to this class.
++    """
++    if isinstance(obj, type):
++        if not consider_mro:
++            mark_lists = [obj.__dict__.get("pytestmark", [])]
++        else:
++            mark_lists = [x.__dict__.get("pytestmark", []) for x in obj.__mro__]
++        mark_list = []
++        for item in mark_lists:
++            if isinstance(item, list):
++                mark_list.extend(item)
++            else:
++                mark_list.append(item)
++    else:
++        mark_attribute = getattr(obj, "pytestmark", [])
++        if isinstance(mark_attribute, list):
++            mark_list = mark_attribute
++        else:
++            mark_list = [mark_attribute]
++    return list(normalize_mark_list(mark_list))
+ 
+ 
+ def normalize_mark_list(
+@@ -388,7 +411,9 @@ def store_mark(obj, mark: Mark) -> None:
+     assert isinstance(mark, Mark), mark
+     # Always reassign name to avoid updating pytestmark in a reference that
+     # was only borrowed.
+-    obj.pytestmark = [*get_unpacked_marks(obj), mark]
++    # Only store marks applied directly to the object (not inherited through
++    # the MRO), since inherited marks are merged in by get_unpacked_marks.
++    obj.pytestmark = [*get_unpacked_marks(obj, consider_mro=False), mark]
+ 
+ 
+ # Typing for builtin pytest marks. This is cheating; it gives builtin marks
+diff --git a/testing/test_mark.py b/testing/test_mark.py
+index 65f2581bd..f59d5772c 100644
+--- a/testing/test_mark.py
++++ b/testing/test_mark.py
+@@ -561,6 +561,65 @@ class TestFunctional:
+         items, rec = pytester.inline_genitems(p)
+         self.assert_markers(items, test_foo=("a", "b", "c"), test_bar=("a", "b", "d"))
+ 
++    def test_mark_decorator_multiple_baseclasses_merged(
++        self, pytester: Pytester
++    ) -> None:
++        """#7792"""
++        p = pytester.makepyfile(
++            """
++            import pytest
++
++            @pytest.mark.a
++            class Base1: pass
++
++            @pytest.mark.b
++            class Base2: pass
++
++            @pytest.mark.c
++            class Base3(Base1, Base2): pass
++
++            class Base4: pytestmark = [pytest.mark.d]
++
++            class Test1(Base3, Base4):
++                def test_foo(self): pass
++
++            @pytest.mark.e
++            class Test2(Base3):
++                def test_bar(self): pass
++        """
++        )
++        items, rec = pytester.inline_genitems(p)
++        self.assert_markers(
++            items, test_foo=("a", "b", "c", "d"), test_bar=("a", "b", "c", "e")
++        )
++        # Marks are not duplicated, and are ordered according to the MRO.
++        test_foo, test_bar = items
++        assert [m.name for m in test_foo.iter_markers()] == ["c", "a", "b", "d"]
++        assert [m.name for m in test_bar.iter_markers()] == ["e", "c", "a", "b"]
++
++    def test_mark_closest_considers_mro(self, pytester: Pytester) -> None:
++        p = pytester.makepyfile(
++            """
++            import pytest
++
++            @pytest.mark.c(location="base")
++            class Base: pass
++
++            @pytest.mark.c(location="sub")
++            class TestSub(Base):
++                def test_foo(self): pass
++        """
++        )
++        items, rec = pytester.inline_genitems(p)
++        (item,) = items
++        marker = item.get_closest_marker("c")
++        assert marker is not None
++        assert marker.kwargs == {"location": "sub"}
++        assert [m.kwargs["location"] for m in item.iter_markers("c")] == [
++            "sub",
++            "base",
++        ]
++
+     def test_mark_closest(self, pytester: Pytester) -> None:
+         p = pytester.makepyfile(
+             """
+@@ -1109,3 +1168,29 @@ def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -> None:
+     result = pytester.runpytest(foo, "-m", expr)
+     result.stderr.fnmatch_lines([expected])
+     assert result.ret == ExitCode.USAGE_ERROR
++
++
++def test_mark_mro() -> None:
++    xfail = pytest.mark.xfail
++
++    @xfail("a")
++    class A:
++        pass
++
++    @xfail("b")
++    class B:
++        pass
++
++    @xfail("c")
++    class C(A, B):
++        pass
++
++    from _pytest.mark.structures import get_unpacked_marks
++
++    all_marks = get_unpacked_marks(C)
++
++    assert all_marks == [xfail("c").mark, xfail("a").mark, xfail("b").mark]
++
++    assert get_unpacked_marks(C, consider_mro=False) == [xfail("c").mark]
++    # Inherited marks are not copied into the subclass's own pytestmark.
++    assert C.pytestmark == [xfail("c").mark]

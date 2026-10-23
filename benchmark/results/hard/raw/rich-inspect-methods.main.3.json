@@ -1,0 +1,116 @@
+{
+ "task": "rich-inspect-methods",
+ "arm": "main",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 90054,
+  "stop_reason": "end_turn",
+  "session_id": "2a2e8f32-2180-4cac-86bb-94fd39cb4966",
+  "total_cost_usd": 0.5356546,
+  "usage": {
+   "input_tokens": 42,
+   "cache_creation_input_tokens": 28606,
+   "cache_read_input_tokens": 673393,
+   "output_tokens": 8598,
+   "output_tokens_details": {
+    "thinking_tokens": 1875
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 28606,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 722,
+     "cache_read_input_tokens": 40739,
+     "cache_creation_input_tokens": 763,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 763
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 42,
+    "outputTokens": 8598,
+    "cacheReadInputTokens": 673393,
+    "cacheCreationInputTokens": 28606,
+    "webSearchRequests": 0,
+    "costUSD": 0.5356546,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1875,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 25,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the bug in `Text`, not in `inspect`. `inspect(pyparsing, all=True)` and `methods=True` now render without errors.\n\n**Cause:** pyparsing's `WordEnd` docstring contains a literal backspace character (``` ``\\b`` ```). `Text.__init__` (`rich/text.py:144`) removes control codes like that from the stored text, but it recorded the length of the original string. So the `Text` claimed to be one character longer than it was. When `inspect` applied the docstring style across the whole `Text`, the style span ran one character past the end. When the text was later split into lines, `Text.divide` looked for a line that span ended on, ran off the end of the list, and raised the `IndexError`.\n\n**Fix (`rich/text.py`):**\n- `__init__` now stores the length of the text after control codes are removed.\n- The `plain` setter had the same flaw (it didn't remove control codes at all), so it now removes them and records the matching length too.\n\n**Tests:**\n- `tests/test_text.py`: two new tests. One checks `len()` after control codes are removed, both on creation and through the `plain` setter. The other checks that styling and splitting text containing `\\b` gives correct ranges and lines.\n- `tests/test_inspect.py`: a new test that inspects a module whose function's docstring contains `\\b`, checked against the exact rendered output.\n- All three new tests fail before the fix and pass after it. I also ran the original pyparsing 3.0.8 case: it reproduced the `IndexError` before the fix, and `inspect(pyparsing, all=True)` and `methods=True` both render cleanly now.\n\nI also added a line to the Unreleased \"Fixed\" section of `CHANGELOG.md`. Nothing is committed.\n\n**Full test suite:** 17 tests fail, but the same 17 fail on the untouched code too. They're in `test_syntax`, `test_markdown`, `test_inspect` and a few others, and they compare exact rendered output. They're probably due to the Python and Pygments versions in this environment rather than anything in this change.",
+  "ttft_ms": 1592,
+  "type": "result",
+  "duration_ms": 110323,
+  "uuid": "c7ab8c92-8301-4818-a11f-54cff27f1d13",
+  "ttft_stream_ms": 1122,
+  "time_to_request_ms": 133,
+  "first_content_frame_ms": 1122,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 12,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

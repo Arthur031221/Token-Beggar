@@ -1,0 +1,116 @@
+{
+ "task": "django-constraint-violation",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 159965,
+  "stop_reason": "end_turn",
+  "session_id": "98a07a3f-ca29-47a1-9104-718361a60a0c",
+  "total_cost_usd": 1.1712524,
+  "usage": {
+   "input_tokens": 46,
+   "cache_creation_input_tokens": 61961,
+   "cache_read_input_tokens": 1298302,
+   "output_tokens": 20786,
+   "output_tokens_details": {
+    "thinking_tokens": 3284
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 61961,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1011,
+     "cache_read_input_tokens": 74148,
+     "cache_creation_input_tokens": 709,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 709
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 46,
+    "outputTokens": 20786,
+    "cacheReadInputTokens": 1298302,
+    "cacheCreationInputTokens": 61961,
+    "webSearchRequests": 0,
+    "costUSD": 1.1712524,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3284,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 31,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Constraints now accept a `violation_error_code` argument, and the `ValidationError` raised by `validate()` uses it as its `code`. The relevant test modules pass on SQLite. I couldn't run the PostgreSQL tests because there's no PostgreSQL server or driver here, so those were only checked for syntax. Nothing is committed.\n\n**What changed** (`django/db/models/constraints.py`, `django/contrib/postgres/constraints.py`):\n- `BaseConstraint` takes `violation_error_code`, which defaults to `None`, so existing errors are unchanged. You can also set it as a class attribute on a subclass.\n- `CheckConstraint`, `UniqueConstraint` and the PostgreSQL `ExclusionConstraint` accept it and pass it to `ValidationError(..., code=...)` everywhere they raise.\n- It's included in `deconstruct()` (so migrations keep it), `__eq__`, and `__repr__`.\n- It's keyword-only, so it doesn't affect the deprecated positional-argument handling.\n\n**Second fix you should know about** (`django/db/models/base.py`): `Model.validate_constraints()` looks up `constraint.fields` whenever an error's code is `\"unique\"`. Until now only `UniqueConstraint` could raise that code. With a custom code, `CheckConstraint(..., violation_error_code=\"unique\")` crashed with `AttributeError: 'CheckConstraint' object has no attribute 'fields'`. I reproduced the crash, then changed the lookup to `getattr(constraint, \"fields\", ())`. I added a regression test and confirmed it fails without the fix and passes with it.\n\n**One limitation:** a `UniqueConstraint` with `fields` and no `condition` still ignores the custom code. It raises the same error as `unique=True` / `unique_together`, code included. That matches how `violation_error_message` already behaves for these constraints, and the docs now say so.\n\n**Tests:**\n- `tests/constraints/tests.py`: default and custom codes, the class attribute, `clone()`, `deconstruct()`, `__eq__`, `__repr__`, and the code on the raised error for check constraints and for unique constraints with expressions or conditions.\n- `tests/postgres_tests/test_constraints.py`: `__eq__`, `__repr__`, and the raised code with and without a condition. These are the tests I couldn't run.\n\n**Docs:** I documented the new parameter in `docs/ref/models/constraints.txt` and `docs/ref/contrib/postgres/constraints.txt`, and added entries to `docs/releases/5.0.txt`.",
+  "ttft_ms": 1315,
+  "type": "result",
+  "duration_ms": 193007,
+  "uuid": "e2d20669-97b6-4792-bc9f-6b0c8fe35af9",
+  "ttft_stream_ms": 630,
+  "time_to_request_ms": 61,
+  "first_content_frame_ms": 630,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 8,
+  "f2p_total": 8,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

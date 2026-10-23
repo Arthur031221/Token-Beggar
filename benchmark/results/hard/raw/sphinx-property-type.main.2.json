@@ -1,0 +1,132 @@
+{
+ "task": "sphinx-property-type",
+ "arm": "main",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 108074,
+  "stop_reason": "end_turn",
+  "session_id": "7738bb1d-4752-411a-a4d9-aca101641860",
+  "total_cost_usd": 0.3612409000000001,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 10889,
+   "cache_read_input_tokens": 33027,
+   "output_tokens": 3565,
+   "output_tokens_details": {
+    "thinking_tokens": 1196
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 10889,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 818,
+     "cache_read_input_tokens": 20131,
+     "cache_creation_input_tokens": 3654,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 3654
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 4,
+    "outputTokens": 3565,
+    "cacheReadInputTokens": 33027,
+    "cacheCreationInputTokens": 10889,
+    "webSearchRequests": 0,
+    "costUSD": 0.1650334,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1196,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 44,
+    "outputTokens": 9656,
+    "cacheReadInputTokens": 430045,
+    "cacheCreationInputTokens": 22622,
+    "webSearchRequests": 0,
+    "costUSD": 0.19620750000000003,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1596,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Members that use both `@classmethod` and `@property` now get documented. Autodoc writes them as a `py:property` with a new `:classmethod:` option, so they render as \"class property\". The targeted test files pass on the venv's Python 3.9.25 (148 passed). Nothing is committed.\n\n**Why it happened:** on Python 3.9, looking the attribute up on the class runs the property and returns its value. Autodoc saw a plain value with no docstring and skipped it. The fix looks the name up in the class's own `__dict__` instead. If that holds a `classmethod` wrapping a `property`, autodoc documents the property itself.\n\n**Changes:**\n- `sphinx/ext/autodoc/__init__.py`: the property documenter now recognises and imports these class properties and adds the `:classmethod:` line. One extra change: the member-filtering step now passes the class and member name when fetching docstrings, so these members aren't dropped from class listings.\n- `sphinx/util/inspect.py`: `isclassmethod` and `getdoc` can now find a classmethod through the class's `__dict__`, so the right docstring is picked up.\n- `sphinx/domains/python.py`: the `py:property` directive accepts `:classmethod:` and shows the \"class property\" prefix.\n- `doc/usage/restructuredtext/domains.rst` and `CHANGES`: the new option is documented and the change is noted against issue #9461.\n- **Tests:** a class property was added to the `target/properties.py` test fixture, with expectations updated in `tests/test_ext_autodoc_autoproperty.py` and `tests/test_ext_autodoc_autoclass.py`. There is a new directive test in `tests/test_domain_py.py`. The autodoc test is skipped below Python 3.9.\n\n**Test caveats:**\n- `tests/test_util_inspect.py` could not run: it fails to load because the `_testcapi` module isn't installed in the venv. The `inspect.py` changes are covered only indirectly, through the autodoc tests.\n- In a wider run, two tests in `test_ext_autodoc_autosummary` failed (`test_autodoc` and `test_autodoc_typed_instance_variables`). They fail the same way without these changes.\n- Python 3.13 removed the ability to stack `@classmethod` on `@property`, so this only applies to 3.9\u20133.12.\n\nI took these results from the subagent's report and have not re-run the tests or reviewed the diff myself.",
+  "ttft_ms": 11255,
+  "type": "result",
+  "duration_ms": 214943,
+  "uuid": "883edff8-9a4a-4066-a8b5-08f1efdc1cbe",
+  "ttft_stream_ms": 855,
+  "time_to_request_ms": 205,
+  "first_content_frame_ms": 855,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

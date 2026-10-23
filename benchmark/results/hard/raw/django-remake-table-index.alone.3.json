@@ -1,0 +1,116 @@
+{
+ "task": "django-remake-table-index",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 161656,
+  "stop_reason": "end_turn",
+  "session_id": "6bcbb0a0-8402-493b-b34c-e7ce03807a72",
+  "total_cost_usd": 0.7593006,
+  "usage": {
+   "input_tokens": 44,
+   "cache_creation_input_tokens": 40240,
+   "cache_read_input_tokens": 858723,
+   "output_tokens": 13273,
+   "output_tokens_details": {
+    "thinking_tokens": 4208
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 40240,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 969,
+     "cache_read_input_tokens": 52551,
+     "cache_creation_input_tokens": 585,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 585
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 44,
+    "outputTokens": 13273,
+    "cacheReadInputTokens": 858723,
+    "cacheCreationInputTokens": 40240,
+    "webSearchRequests": 0,
+    "costUSD": 0.7593006,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 4208,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 33,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "When a primary key (or unique field) changes collation, the foreign key columns that point to it now get the same collation, so the `ADD CONSTRAINT` statements from the issue no longer fail. Nothing is committed. I could only run the tests on SQLite; the MySQL, PostgreSQL and Oracle code paths have not been run against a real database.\n\n**Library changes**\n- **`django/db/models/fields/related.py`:** `ForeignKey.db_parameters()` now reports the collation of the field it points to. As a result, new FK columns are created with that collation, including on SQLite, which rebuilds tables.\n- **`django/db/backends/base/schema.py`, in `_alter_field()`:**\n  - A collation change on a primary key or unique field now drops and recreates the incoming FK constraints, the same way a type change already did.\n  - When the collation differs, each referencing FK column is altered with the collation statement instead of a plain type change.\n  - `_alter_column_collation_sql()` now also takes `old_field`. This changes a semi-private hook's signature, so a third-party backend that overrides it would need updating.\n- **`django/db/backends/mysql/schema.py`:** a new `_alter_column_collation_sql()` override keeps the column's NULL / NOT NULL setting. Without it, `MODIFY ... COLLATE` on MySQL quietly makes a column nullable. The issue's expected SQL (`NOT NULL COLLATE ...`) needs this, and it also fixes the same problem for ordinary collation changes.\n- **`django/db/backends/oracle/schema.py`:** its override is updated to the new signature.\n- **`django/db/backends/sqlite3/schema.py`:** tables with FKs pointing to the field are now rebuilt when the collation changes, not only when the type does.\n\n**Tests**\n- I added `test_alter_field_pk_fk_db_collation` in `tests/migrations/test_operations.py`. It changes the collation of a `CharField` primary key that a `ForeignKey` and a nullable `OneToOneField` point to. In both directions it checks the FK columns' collation, that their NULL setting is unchanged, and that the FK constraints still exist.\n- I added an `assertColumnCollation` helper in `tests/migrations/test_base.py`.\n- With the library changes temporarily reverted, the new test fails (`None != 'nocase'`); with them applied it passes. The `schema`, `migrations`, `model_fields`, `invalid_models_tests`, `inspectdb`, `backends` and `introspection` suites all pass: 1861 tests.\n\n`black` and `flake8` aren't installed in `.venv`, so I wrapped long lines by hand and didn't run either tool.",
+  "ttft_ms": 12922,
+  "type": "result",
+  "duration_ms": 177737,
+  "uuid": "2eb39806-9e28-4009-9d25-914aa9f7dffb",
+  "ttft_stream_ms": 2334,
+  "time_to_request_ms": 90,
+  "first_content_frame_ms": 2335,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

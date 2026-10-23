@@ -1,0 +1,116 @@
+{
+ "task": "sphinx-include-source-read",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 137415,
+  "stop_reason": "end_turn",
+  "session_id": "b2833526-7e06-4288-903f-9b49863ebf35",
+  "total_cost_usd": 0.5089629999999998,
+  "usage": {
+   "input_tokens": 38,
+   "cache_creation_input_tokens": 24518,
+   "cache_read_input_tokens": 569135,
+   "output_tokens": 9942,
+   "output_tokens_details": {
+    "thinking_tokens": 3017
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 24518,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1037,
+     "cache_read_input_tokens": 36172,
+     "cache_creation_input_tokens": 1242,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1242
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 38,
+    "outputTokens": 9942,
+    "cacheReadInputTokens": 569135,
+    "cacheCreationInputTokens": 24518,
+    "webSearchRequests": 0,
+    "costUSD": 0.5089629999999998,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3017,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 20,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The `source-read` event now also fires for files pulled in with `.. include::`, so its changes show up in the output. On the issue's exact example, the build gives `<p>REPLACED</p>` twice and no `&REPLACE_ME;` is left. Nothing is committed.\n\n**Cause:** docutils' `include` directive reads the file itself and inserts the text straight into the document being parsed. Sphinx emitted `source-read` when it read `something-to-include.rst` as a document of its own. But that edited copy is not what gets inserted at the include point, so the change never reached `index.html`.\n\n**Fix (`sphinx/directives/other.py`):**\n- During `Include.run()`, docutils' insertion step is wrapped so the included text goes through `source-read` before it is inserted. Handlers get it as `source[0]`, exactly as for normal documents. The two lines docutils adds to mark the end of an inclusion are kept out of the handler's text and put back afterwards. This also works for includes inside included files.\n- The wrapper is only installed when something is listening for `source-read`, and it's removed again when the directive finishes.\n- If the included file isn't a document itself (an `*.inc` file, say), handlers get the name of the document that includes it. That keeps `docname` a string; returning nothing (`None`) could break existing handlers.\n- Literal and `:code:` includes don't fire the event, because they aren't parsed as reST. Docutils' built-in `<...>` includes (e.g. `<isonum.txt>`) don't either.\n\n**Tests:** I added a test project `tests/roots/test-directive-include/` and three tests in `tests/test_directive_other.py`. They check which events fire and with what docname and text, that a replacement reaches nested includes, and an HTML build. All 10 tests in that file pass.\n\nIn a wider run over the directive, environment, HTML-build, intersphinx and duration tests, 612 passed and 3 failed. The 3 failures (`test_literal_include_linenos`, `test_linenothreshold`, `test_html_code_role`) also fail with my change stashed; they're mismatches in Pygments' output. I couldn't run ruff or mypy because neither is installed in `.venv`.\n\n**Two things to check:**\n- **Include paths:** Sphinx resolves a relative include path against the top-level document, not against the file containing the `include`. So the test files use a path from the source root (`/text.inc`). I left that behaviour alone.\n- **Behaviour change:** handlers now also run once per include, which they didn't before. For example, `sphinx.ext.duration` restarts its timer at each include.\n\nI also added a changelog entry in `CHANGES` and a note on the `source-read` event in `doc/extdev/appapi.rst`. I numbered the changelog entry #10678 from memory, so please check it's the right issue.",
+  "ttft_ms": 5506,
+  "type": "result",
+  "duration_ms": 190729,
+  "uuid": "f1b9db7e-da0e-4393-9fb7-79ba494c2edf",
+  "ttft_stream_ms": 3956,
+  "time_to_request_ms": 55,
+  "first_content_frame_ms": 3956,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

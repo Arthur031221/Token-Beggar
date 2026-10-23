@@ -1,0 +1,116 @@
+{
+ "task": "werkzeug-rule-methods",
+ "arm": "main",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 118804,
+  "stop_reason": "end_turn",
+  "session_id": "0d6c7975-84d7-4f35-a90f-49f17ee4f800",
+  "total_cost_usd": 0.5746258000000001,
+  "usage": {
+   "input_tokens": 20,
+   "cache_creation_input_tokens": 32216,
+   "cache_read_input_tokens": 322889,
+   "output_tokens": 12612,
+   "output_tokens_details": {
+    "thinking_tokens": 6504
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 32216,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1198,
+     "cache_read_input_tokens": 44276,
+     "cache_creation_input_tokens": 836,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 836
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 20,
+    "outputTokens": 12612,
+    "cacheReadInputTokens": 322889,
+    "cacheCreationInputTokens": 32216,
+    "webSearchRequests": 0,
+    "costUSD": 0.5746258000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 6504,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 13,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The duplicate check now takes methods into account. The full test suite passes (981 tests) and `ruff check` and `ruff format --check` are clean. mypy isn't installed in the venv, so I didn't type-check. Nothing is committed.\n\n**What changed**\n\n- **`src/werkzeug/routing/rules.py`**: added `Rule._is_duplicate_of(existing)`. Two rules are duplicates only if they are equal (same path, subdomain/host and websocket mode, as before) **and** they share a method. As the issue asked, `__eq__` is left alone so `==` keeps its current meaning.\n- **`src/werkzeug/routing/matcher.py`**: `StateMachineMatcher.add` now calls `_is_duplicate_of` instead of `==`.\n- **`docs/routing.rst`** and **`CHANGES.rst`**: describe the new rules, including how slashes are handled.\n- **`tests/test_routing.py`**: cases for duplicate and non-duplicate method combinations, `strict_slashes`, and `merge_slashes` on and off. The non-duplicate tests also check that each rule is still matched for its own methods.\n\n**Decision for you: I didn't use a plain intersection.** Checking `self.methods & other.methods` alone would break normal Flask apps. Flask adds `OPTIONS` to every rule, so `@app.get(\"/x\")` plus `@app.post(\"/x\")` gives `{GET, HEAD, OPTIONS}` and `{POST, OPTIONS}`, which share `OPTIONS`. Werkzeug also adds `HEAD` whenever `GET` is present. So:\n\n- Sharing any method other than `HEAD` or `OPTIONS` makes a duplicate.\n- Sharing only `HEAD`/`OPTIONS` is allowed, unless the new rule has no methods left that the earlier rule doesn't already handle. For example, `[GET]` followed by `[HEAD]` is a duplicate, because the `HEAD` rule could never match.\n- `methods=None` counts as \"every method\", so it overlaps everything except an earlier rule that only has `HEAD`/`OPTIONS`.\n\nIf you'd rather have the strict intersection the issue describes, it's a one-line change, but it would break that Flask pattern.\n\n**`strict_slashes` and `merge_slashes`**\n\n- **`strict_slashes`**: no change needed. `/a` and `/a/` are already different rules, and each one still matches its own URL whatever `strict_slashes` is set to. The setting only controls redirects and fallback matching.\n- **`merge_slashes`**: no change needed either. It's applied when the rule is compiled, before the comparison, so `/a//b` already counts as a duplicate of `/a/b`. If a rule turns `merge_slashes` off, `/a//b` is matched literally and isn't a duplicate. There are tests for both cases now.\n\n**Why `Rule.methods` can be `None`:** `None` means \"any method\", not \"GET\". The `Rule` docstring says \"If not specified, all methods are allowed\", and the matcher treats `methods is None` as matching every method, as do `MethodNotAllowed` handling and building. There is no logic that defaults to `GET` because Werkzeug has no such default; the `GET`-only default you may be thinking of is Flask's, set in `add_url_rule`. Making `methods` always a set would be a breaking change, so I didn't do it here. The new check handles `None` explicitly.",
+  "ttft_ms": 2424,
+  "type": "result",
+  "duration_ms": 131209,
+  "uuid": "5a84cef3-35c8-48b2-826d-21fcc7bedf06",
+  "ttft_stream_ms": 1399,
+  "time_to_request_ms": 166,
+  "first_content_frame_ms": 1399,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

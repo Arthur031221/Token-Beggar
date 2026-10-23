@@ -1,0 +1,206 @@
+diff --git a/CHANGES.rst b/CHANGES.rst
+index c88b161c..3df9ce32 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -44,7 +44,8 @@ Unreleased
+ -   ``SpooledTemporaryFile`` is always used for multipart file parsing.
+     :pr:`3101`
+ -   Raise a ``DuplicateRuleError`` when attempting to add a rule to a map with
+-    an equal rule. :issue:`3037`
++    an equal rule. Rules are only duplicates if they share at least one
++    method. :issue:`3037`
+ 
+ 
+ Version 3.1.5
+diff --git a/docs/routing.rst b/docs/routing.rst
+index 5df9e974..eb5b984c 100644
+--- a/docs/routing.rst
++++ b/docs/routing.rst
+@@ -96,10 +96,18 @@ variables. Unlike the path, where multiple parts are separated by ``/``, the
+ domain is always matched as a single part.
+ 
+ If a duplicate rule is added to a map, a :exc:`.DuplicateRuleError` will be
+-raised. Rules are compared based on their path, subdomain or host, and websocket
+-mode. Variable parts are not equal if they use different converters, although
+-this heuristic may not be perfect depending on what the different converters can
+-actually match.
++raised. Rules are compared based on their path, subdomain or host, websocket
++mode, and methods. Variable parts are not equal if they use different
++converters, although this heuristic may not be perfect depending on what the
++different converters can actually match. Rules with the same path are only
++duplicates if they share at least one method. A rule that does not specify
++``methods`` allows all methods, so it is a duplicate of any other rule with the
++same path.
++
++The path is compared after ``merge_slashes`` is applied, so ``/a//b`` is a
++duplicate of ``/a/b`` unless merging is disabled for that rule. A branch
++``/a/`` and a leaf ``/a`` are never duplicates, even if ``strict_slashes`` is
++disabled, as requests for each are routed to the rule that matches exactly.
+ 
+ 
+ Rule Priority
+diff --git a/src/werkzeug/routing/matcher.py b/src/werkzeug/routing/matcher.py
+index ee7651db..521aaaa2 100644
+--- a/src/werkzeug/routing/matcher.py
++++ b/src/werkzeug/routing/matcher.py
+@@ -53,7 +53,7 @@ class StateMachineMatcher:
+                     state = new_state
+ 
+         for existing in state.rules:
+-            if rule == existing:
++            if rule._is_duplicate(existing):
+                 raise DuplicateRuleError(existing, rule)
+ 
+         state.rules.append(rule)
+diff --git a/src/werkzeug/routing/rules.py b/src/werkzeug/routing/rules.py
+index 18cfba1b..b37c5bf7 100644
+--- a/src/werkzeug/routing/rules.py
++++ b/src/werkzeug/routing/rules.py
+@@ -380,7 +380,9 @@ class Rule(RuleFactory):
+ 
+     `methods`
+         A sequence of http methods this rule applies to.  If not specified, all
+-        methods are allowed. For example this can be useful if you want different
++        methods are allowed, and :attr:`methods` is ``None``. There is no
++        default of `GET`; frameworks built on Werkzeug may apply their own
++        default. For example this can be useful if you want different
+         endpoints for `POST` and `GET`.  If methods are defined and the path
+         matches but the method matched against is not in this list or in the
+         list of another rule for that path the error raised is of the type
+@@ -914,6 +916,27 @@ class Rule(RuleFactory):
+ 
+     __hash__ = None  # type: ignore
+ 
++    def _is_duplicate(self, other: Rule) -> bool:
++        """Check if this rule would match the same requests as another rule,
++        such that only one of them would ever be used for a given method.
++
++        In addition to the rules being equal, they must share at least one
++        method. If either rule does not specify ``methods``, it matches all
++        methods, and so shares methods with any other rule.
++
++        This is not part of ``==``, as having overlapping methods is not the
++        same as being equal.
++
++        :internal:
++        """
++        if self != other:
++            return False
++
++        if self.methods is None or other.methods is None:
++            return True
++
++        return not self.methods.isdisjoint(other.methods)
++
+     def __str__(self) -> str:
+         out = self.rule
+ 
+@@ -922,6 +945,9 @@ class Rule(RuleFactory):
+         elif self.map.host_matching and self.host:
+             out = f"{self.host} {out}"
+ 
++        if self.methods is not None:
++            out = f"{','.join(sorted(self.methods))} {out}"
++
+         if self.websocket:
+             out = f"websocket {out}"
+ 
+diff --git a/tests/test_routing.py b/tests/test_routing.py
+index 4f31037c..c6ef2c2d 100644
+--- a/tests/test_routing.py
++++ b/tests/test_routing.py
+@@ -320,6 +320,94 @@ def test_no_duplicate_different_converters() -> None:
+     )
+ 
+ 
++def test_no_duplicate_different_methods() -> None:
++    """Rules with no shared methods are not duplicates, and each one matches."""
++    adapter = r.Map(
++        [
++            r.Rule("/", endpoint="get", methods=["GET"]),
++            r.Rule("/", endpoint="post", methods=["POST"]),
++            r.Rule("/", endpoint="put", methods=["PUT", "PATCH"]),
++        ]
++    ).bind("localhost")
++    assert adapter.match("/", method="GET") == ("get", {})
++    assert adapter.match("/", method="POST") == ("post", {})
++    assert adapter.match("/", method="PATCH") == ("put", {})
++
++
++@pytest.mark.parametrize(
++    ("a", "b"),
++    [
++        pytest.param(["GET", "POST"], ["POST"], id="shared"),
++        pytest.param(["GET"], ["HEAD"], id="implicit head"),
++        pytest.param(None, ["POST"], id="all first"),
++        pytest.param(["POST"], None, id="all second"),
++        pytest.param(None, None, id="all both"),
++    ],
++)
++def test_duplicate_methods(a: list[str] | None, b: list[str] | None) -> None:
++    """Rules with any shared method are duplicates. Not specifying methods means
++    all methods are allowed.
++    """
++    with pytest.raises(DuplicateRuleError):
++        r.Map(
++            [
++                r.Rule("/", endpoint="a", methods=a),
++                r.Rule("/", endpoint="b", methods=b),
++            ]
++        )
++
++
++def test_duplicate_methods_error_str() -> None:
++    """The error message shows the methods of the existing rule."""
++    with pytest.raises(DuplicateRuleError, match=r"^GET,HEAD,POST / → a$"):
++        r.Map(
++            [
++                r.Rule("/", endpoint="a", methods=["GET", "POST"]),
++                r.Rule("/", endpoint="b", methods=["POST"]),
++            ]
++        )
++
++
++def test_no_duplicate_strict_slashes() -> None:
++    """A leaf and branch are not duplicates even if strict slashes is disabled,
++    as each is still matched by its exact path.
++    """
++    adapter = r.Map(
++        [
++            r.Rule("/a", endpoint="leaf"),
++            r.Rule("/a/", endpoint="branch"),
++        ],
++        strict_slashes=False,
++    ).bind("localhost")
++    assert adapter.match("/a") == ("leaf", {})
++    assert adapter.match("/a/") == ("branch", {})
++
++
++def test_duplicate_merge_slashes() -> None:
++    """Paths are compared after merging slashes."""
++    with pytest.raises(DuplicateRuleError):
++        r.Map(
++            [
++                r.Rule("/a/b", endpoint="a"),
++                r.Rule("/a//b", endpoint="b"),
++            ]
++        )
++
++
++def test_no_duplicate_merge_slashes_disabled() -> None:
++    """If a rule disables merging slashes, its path is not merged before
++    comparing, and it matches its exact path.
++    """
++    adapter = r.Map(
++        [
++            r.Rule("/a/b", endpoint="a"),
++            r.Rule("/a//b", endpoint="b", merge_slashes=False),
++        ]
++    ).bind("localhost")
++    assert adapter.match("/a/b") == ("a", {})
++    assert adapter.match("/a//b") == ("b", {})
++
++
+ def test_environ_defaults():
+     environ = create_environ("/foo")
+     assert environ["PATH_INFO"] == "/foo"

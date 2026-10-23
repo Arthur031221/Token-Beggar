@@ -1,0 +1,319 @@
+diff --git a/django/contrib/contenttypes/fields.py b/django/contrib/contenttypes/fields.py
+index 5b327b6ae4..065b130030 100644
+--- a/django/contrib/contenttypes/fields.py
++++ b/django/contrib/contenttypes/fields.py
+@@ -9,6 +9,7 @@ from django.db import DEFAULT_DB_ALIAS, models, router, transaction
+ from django.db.models import DO_NOTHING, ForeignObject, ForeignObjectRel
+ from django.db.models.base import ModelBase, make_foreign_order_accessors
+ from django.db.models.fields.mixins import FieldCacheMixin
++from django.db.models.fields.related_descriptors import _filter_prefetch_queryset
+ from django.db.models.fields.related import (
+     ReverseManyToOneDescriptor,
+     lazy_related_operation,
+@@ -645,7 +646,11 @@ def create_generic_related_manager(superclass, rel):
+             object_id_converter = instances[0]._meta.pk.to_python
+             content_type_id_field_name = "%s_id" % self.content_type_field_name
+             return (
+-                queryset.filter(query),
++                _filter_prefetch_queryset(
++                    queryset,
++                    query,
++                    [self.content_type_field_name, self.object_id_field_name],
++                ),
+                 lambda relobj: (
+                     object_id_converter(getattr(relobj, self.object_id_field_name)),
+                     getattr(relobj, content_type_id_field_name),
+diff --git a/django/db/models/fields/related_descriptors.py b/django/db/models/fields/related_descriptors.py
+index b192df4fbf..e5981279e9 100644
+--- a/django/db/models/fields/related_descriptors.py
++++ b/django/db/models/fields/related_descriptors.py
+@@ -64,14 +64,50 @@ and two directions (forward and reverse) for a total of six combinations.
+ """
+ 
+ from django.core.exceptions import FieldError
+-from django.db import connections, router, transaction
+-from django.db.models import Q, signals
++from django.db import (
++    DEFAULT_DB_ALIAS,
++    NotSupportedError,
++    connections,
++    router,
++    transaction,
++)
++from django.db.models import Q, Window, signals
++from django.db.models.functions import RowNumber
++from django.db.models.lookups import GreaterThan, LessThanOrEqual
+ from django.db.models.query import QuerySet
+ from django.db.models.query_utils import DeferredAttribute
+ from django.db.models.utils import resolve_callables
+ from django.utils.functional import cached_property
+ 
+ 
++def _filter_prefetch_queryset(queryset, predicate, partition_by):
++    """
++    Filter a prefetch queryset with the given predicate. If the queryset is
++    sliced, emulate the slice for each partition (i.e. per related instance)
++    with a ROW_NUMBER() window function since a sliced queryset can't be
++    filtered.
++    """
++    if not isinstance(predicate, Q):
++        predicate = Q(**predicate)
++    if queryset.query.is_sliced:
++        db = queryset._db or DEFAULT_DB_ALIAS
++        if not connections[db].features.supports_over_clause:
++            raise NotSupportedError(
++                "Prefetching from a limited queryset is only supported on backends "
++                "that support window functions."
++            )
++        low_mark, high_mark = queryset.query.low_mark, queryset.query.high_mark
++        order_by = [
++            expr for expr, _ in queryset.query.get_compiler(using=db).get_order_by()
++        ]
++        window = Window(RowNumber(), partition_by=partition_by, order_by=order_by)
++        predicate &= GreaterThan(window, low_mark)
++        if high_mark is not None:
++            predicate &= LessThanOrEqual(window, high_mark)
++        queryset.query.clear_limits()
++    return queryset.filter(predicate)
++
++
+ class ForeignKeyDeferredAttribute(DeferredAttribute):
+     def __set__(self, instance, value):
+         if instance.__dict__.get(self.field.attname) != value and self.field.is_cached(
+@@ -719,7 +755,7 @@ def create_reverse_many_to_one_manager(superclass, rel):
+             instance_attr = self.field.get_foreign_related_value
+             instances_dict = {instance_attr(inst): inst for inst in instances}
+             query = {"%s__in" % self.field.name: instances}
+-            queryset = queryset.filter(**query)
++            queryset = _filter_prefetch_queryset(queryset, query, self.field.name)
+ 
+             # Since we just bypassed this class' get_queryset(), we must manage
+             # the reverse relation manually.
+@@ -1052,7 +1088,9 @@ def create_forward_many_to_many_manager(superclass, rel, reverse):
+             queryset = queryset.using(queryset._db or self._db)
+ 
+             query = {"%s__in" % self.query_field_name: instances}
+-            queryset = queryset._next_is_sticky().filter(**query)
++            queryset = _filter_prefetch_queryset(
++                queryset._next_is_sticky(), query, self.query_field_name
++            )
+ 
+             # M2M: need to annotate the query in order to get the primary model
+             # that the secondary model was actually related to. We know that
+diff --git a/django/db/models/query.py b/django/db/models/query.py
+index be0deb90b0..aeded9770c 100644
+--- a/django/db/models/query.py
++++ b/django/db/models/query.py
+@@ -2496,6 +2496,13 @@ def prefetch_one_level(instances, prefetcher, lookup, level):
+     # Whether or not we're prefetching the last part of the lookup.
+     leaf = len(lookup.prefetch_through.split(LOOKUP_SEP)) - 1 == level
+ 
++    lookup_queryset = lookup.queryset
++    if lookup_queryset is not None and lookup_queryset.query.is_sliced:
++        # The slice has already been applied per instance when fetching the
++        # related objects, and a sliced queryset cannot be filtered further.
++        lookup_queryset = lookup_queryset._chain()
++        lookup_queryset.query.clear_limits()
++
+     for obj in instances:
+         instance_attr_val = instance_attr(obj)
+         vals = rel_obj_cache.get(instance_attr_val, [])
+@@ -2519,8 +2526,8 @@ def prefetch_one_level(instances, prefetcher, lookup, level):
+                 setattr(obj, to_attr, vals)
+             else:
+                 manager = getattr(obj, to_attr)
+-                if leaf and lookup.queryset is not None:
+-                    qs = manager._apply_rel_filters(lookup.queryset)
++                if leaf and lookup_queryset is not None:
++                    qs = manager._apply_rel_filters(lookup_queryset)
+                 else:
+                     qs = manager.get_queryset()
+                 qs._result_cache = vals
+diff --git a/docs/ref/models/querysets.txt b/docs/ref/models/querysets.txt
+index 223bb452b0..ae6f0bc5bd 100644
+--- a/docs/ref/models/querysets.txt
++++ b/docs/ref/models/querysets.txt
+@@ -4007,6 +4007,22 @@ relation, hence reducing the number of queries even further:
+     >>> Question.objects.prefetch_related(prefetch).get().choice_set.all()
+     <QuerySet [<Choice: The sky>]>
+ 
++The ``queryset`` can also be :ref:`sliced <limiting-querysets>`, in which case
++the slice is applied to the related objects of each instance separately, e.g.
++to fetch the three most voted choices of each question:
++
++    >>> top_choices = Choice.objects.order_by('-votes')[:3]
++    >>> prefetch = Prefetch('choice_set', queryset=top_choices, to_attr='top_choices')
++    >>> Question.objects.prefetch_related(prefetch).get().top_choices
++    [<Choice: The sky>, <Choice: Not much>, <Choice: Just hacking again>]
++
++Prefetching from a sliced queryset is only supported on database backends that
++support :ref:`window functions <window-functions>`.
++
++.. versionchanged:: 4.2
++
++    Support for sliced querysets was added.
++
+ The ``to_attr`` argument sets the result of the prefetch operation to a custom
+ attribute:
+ 
+diff --git a/docs/releases/4.2.txt b/docs/releases/4.2.txt
+index ed00ee1350..1eaf22173a 100644
+--- a/docs/releases/4.2.txt
++++ b/docs/releases/4.2.txt
+@@ -193,6 +193,9 @@ Models
+   :ref:`window-functions` with the exception of disjunctive filter lookups
+   against window functions when performing aggregation.
+ 
++* :meth:`~.QuerySet.prefetch_related` now supports
++  :class:`~django.db.models.Prefetch` objects with sliced querysets.
++
+ Requests and Responses
+ ~~~~~~~~~~~~~~~~~~~~~~
+ 
+diff --git a/tests/prefetch_related/tests.py b/tests/prefetch_related/tests.py
+index 1ac17fde73..bd86077a1c 100644
+--- a/tests/prefetch_related/tests.py
++++ b/tests/prefetch_related/tests.py
+@@ -2,11 +2,16 @@ from unittest import mock
+ 
+ from django.contrib.contenttypes.models import ContentType
+ from django.core.exceptions import ObjectDoesNotExist
+-from django.db import connection
++from django.db import NotSupportedError, connection
+ from django.db.models import Prefetch, QuerySet, prefetch_related_objects
+ from django.db.models.query import get_prefetcher
+ from django.db.models.sql import Query
+-from django.test import TestCase, override_settings
++from django.test import (
++    TestCase,
++    override_settings,
++    skipIfDBFeature,
++    skipUnlessDBFeature,
++)
+ from django.test.utils import CaptureQueriesContext, ignore_warnings
+ from django.utils.deprecation import RemovedInDjango50Warning
+ 
+@@ -1908,3 +1913,123 @@ class NestedPrefetchTests(TestCase):
+         self.assertIs(Room.house.is_cached(self.room), True)
+         with self.assertNumQueries(0):
+             house.rooms.first().house.address
++
++
++@skipUnlessDBFeature("supports_over_clause")
++class PrefetchLimitTests(TestDataMixin, TestCase):
++    def test_m2m_forward(self):
++        authors = Author.objects.all()  # Meta.ordering
++        with self.assertNumQueries(3):
++            books = list(
++                Book.objects.prefetch_related(
++                    Prefetch("authors", authors),
++                    Prefetch("authors", authors[1:], to_attr="authors_sliced"),
++                )
++            )
++        for book in books:
++            with self.subTest(book=book):
++                self.assertEqual(book.authors_sliced, list(book.authors.all())[1:])
++
++    def test_m2m_reverse(self):
++        books = Book.objects.order_by("title")
++        with self.assertNumQueries(3):
++            authors = list(
++                Author.objects.prefetch_related(
++                    Prefetch("books", books),
++                    Prefetch("books", books[1:2], to_attr="books_sliced"),
++                )
++            )
++        for author in authors:
++            with self.subTest(author=author):
++                self.assertEqual(author.books_sliced, list(author.books.all())[1:2])
++
++    def test_foreignkey_reverse(self):
++        authors = Author.objects.order_by("-name")
++        with self.assertNumQueries(3):
++            books = list(
++                Book.objects.prefetch_related(
++                    Prefetch(
++                        "first_time_authors",
++                        authors,
++                    ),
++                    Prefetch(
++                        "first_time_authors",
++                        authors[1:],
++                        to_attr="first_time_authors_sliced",
++                    ),
++                )
++            )
++        for book in books:
++            with self.subTest(book=book):
++                self.assertEqual(
++                    book.first_time_authors_sliced,
++                    list(book.first_time_authors.all())[1:],
++                )
++        book = Book.objects.prefetch_related(
++            Prefetch("first_time_authors", authors[:2], to_attr="sliced")
++        ).get(pk=self.book1.pk)
++        self.assertEqual(book.sliced, [self.author3, self.author1])
++
++    def test_without_to_attr(self):
++        with self.assertNumQueries(2):
++            books = list(
++                Book.objects.prefetch_related(
++                    Prefetch("authors", Author.objects.order_by("-name")[:2])
++                )
++            )
++        with self.assertNumQueries(0):
++            self.assertEqual(
++                [list(book.authors.all()) for book in books],
++                [
++                    [self.author3, self.author1],
++                    [self.author1],
++                    [self.author3],
++                    [self.author4],
++                ],
++            )
++
++    def test_reverse_ordering(self):
++        authors = Author.objects.reverse()  # Reverse Meta.ordering
++        with self.assertNumQueries(3):
++            books = list(
++                Book.objects.prefetch_related(
++                    Prefetch("authors", authors),
++                    Prefetch("authors", authors[1:], to_attr="authors_sliced"),
++                )
++            )
++        for book in books:
++            with self.subTest(book=book):
++                self.assertEqual(book.authors_sliced, list(book.authors.all())[1:])
++
++    def test_generic_relation(self):
++        bookmarks = [Bookmark.objects.create(url=f"http://{i}.com") for i in range(2)]
++        for i, bookmark in enumerate(bookmarks):
++            for j in range(3):
++                TaggedItem.objects.create(tag=f"tag-{i}-{j}", content_object=bookmark)
++        # A tag with the same object_id but a different content type isn't
++        # counted towards the limit.
++        TaggedItem.objects.create(tag="other", content_object=self.book1)
++        tags = TaggedItem.objects.order_by("-tag")
++        with self.assertNumQueries(3):
++            bookmarks = list(
++                Bookmark.objects.prefetch_related(
++                    Prefetch("tags", tags),
++                    Prefetch("tags", tags[:2], to_attr="tags_sliced"),
++                )
++            )
++        for bookmark in bookmarks:
++            with self.subTest(bookmark=bookmark):
++                self.assertEqual(len(bookmark.tags_sliced), 2)
++                self.assertEqual(bookmark.tags_sliced, list(bookmark.tags.all())[:2])
++
++
++class PrefetchLimitNotSupportedTests(TestDataMixin, TestCase):
++    @skipIfDBFeature("supports_over_clause")
++    def test_window_not_supported(self):
++        authors = Author.objects.all()
++        msg = (
++            "Prefetching from a limited queryset is only supported on backends that "
++            "support window functions."
++        )
++        with self.assertRaisesMessage(NotSupportedError, msg):
++            list(Book.objects.prefetch_related(Prefetch("authors", authors[1:])))

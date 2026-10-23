@@ -1,0 +1,116 @@
+{
+ "task": "structlog-exception-outside",
+ "arm": "main",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 71864,
+  "stop_reason": "end_turn",
+  "session_id": "52aadc04-e17b-4be1-9157-61522e0cc0c6",
+  "total_cost_usd": 0.42502480000000004,
+  "usage": {
+   "input_tokens": 24,
+   "cache_creation_input_tokens": 26138,
+   "cache_read_input_tokens": 356324,
+   "output_tokens": 7228,
+   "output_tokens_details": {
+    "thinking_tokens": 2162
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 26138,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 753,
+     "cache_read_input_tokens": 38052,
+     "cache_creation_input_tokens": 982,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 982
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 24,
+    "outputTokens": 7228,
+    "cacheReadInputTokens": 356324,
+    "cacheCreationInputTokens": 26138,
+    "webSearchRequests": 0,
+    "costUSD": 0.42502480000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2162,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 22,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Calling `exception()` outside an exception handler no longer adds an `exception` key. With `dict_tracebacks` it now logs just `{\"event\": \"oh no\"}`. The full test suite passes (852 passed, 16 skipped), and nothing is committed.\n\n**The crash itself was already fixed on this branch.** The `AttributeError` from the issue no longer happens here: an earlier fix (#657) made `ExceptionDictTransformer` return `[]` when there's no exception. What remained was a meaningless value in the log output:\n- with `dict_tracebacks`: `{\"event\": \"oh no\", \"exception\": []}`\n- with `format_exc_info`: `{\"event\": \"oh no\", \"exception\": \"MISSING\"}`\n\n**The change** is in `src/structlog/processors.py`. `ExceptionRenderer` (which both `format_exc_info` and `dict_tracebacks` use) still removes `exc_info`, but if there's no actual exception it doesn't add an `exception` key. This covers `exc_info=True` with no active exception and an explicit `(None, None, None)`. That second case is what the stdlib logging setup in the issue produces when a library like aiormq calls `logger.exception()` outside a handler. I also updated the docstring with a `versionchanged:: 25.1.0` note and added a line to `CHANGELOG.md` under Fixed.\n\n**One behaviour change:** output that used to say `\"exception\": \"MISSING\"` now has no `exception` key at all. Anything that looked for that string would need updating. `_format_exception` still returns `\"MISSING\"` when called directly, and `ExceptionPrettyPrinter` is unchanged; it still prints `MISSING` in this case.\n\n**Tests** are in `tests/processors/test_renderers.py`:\n- I updated `test_no_exception` to expect `{}` instead of `{\"exception\": \"MISSING\"}`.\n- I added the same check for `dict_tracebacks`.\n- I added a test that calls `log.exception(\"oh no\")` outside a handler through a logger with `dict_tracebacks` and checks the event has no `exception` key.",
+  "ttft_ms": 2341,
+  "type": "result",
+  "duration_ms": 75426,
+  "uuid": "eac3e2a6-cd0a-4c42-946d-843ce9556fb2",
+  "ttft_stream_ms": 1583,
+  "time_to_request_ms": 111,
+  "first_content_frame_ms": 1584,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 4,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

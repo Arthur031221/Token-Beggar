@@ -1,0 +1,132 @@
+{
+ "task": "django-constraint-violation",
+ "arm": "main",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 81337,
+  "stop_reason": "end_turn",
+  "session_id": "26ac1126-834f-45fb-8823-412fe8742090",
+  "total_cost_usd": 0.3288722,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 9959,
+   "cache_read_input_tokens": 54964,
+   "output_tokens": 2747,
+   "output_tokens_details": {
+    "thinking_tokens": 816
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9959,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 637,
+     "cache_read_input_tokens": 22438,
+     "cache_creation_input_tokens": 417,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 417
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 2747,
+    "cacheReadInputTokens": 54964,
+    "cacheCreationInputTokens": 9959,
+    "webSearchRequests": 0,
+    "costUSD": 0.1456288,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 816,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 20,
+    "outputTokens": 8283,
+    "cacheReadInputTokens": 209134,
+    "cacheCreationInputTokens": 31784,
+    "webSearchRequests": 0,
+    "costUSD": 0.1832434,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 375,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I added a `violation_error_code` keyword argument to `BaseConstraint`, `CheckConstraint`, `UniqueConstraint` and `ExclusionConstraint`. When it's set, the `ValidationError` raised by `validate()` uses that code, so you no longer need to subclass a constraint just to set one. The `constraints`, `migrations.test_autodetector` and `migrations.test_operations` tests pass. The new `ExclusionConstraint` tests were skipped because this environment has no PostgreSQL database, so they still need a run against PostgreSQL. Nothing is committed.\n\nWhat changed:\n- **Library code** (`django/db/models/constraints.py`, `django/contrib/postgres/constraints.py`):\n  - The new argument is keyword-only and defaults to `None`. The existing deprecation of positional arguments to `BaseConstraint` still works as before.\n  - Constraints with different codes no longer compare as equal.\n  - `__repr__()` and `deconstruct()` include the code only when it's set, so migrations for existing constraints don't change.\n- **One limitation:** a `UniqueConstraint` defined only with `fields` and no `condition` still raises the old `unique_error_message()` error, and the custom code doesn't apply there. That case was left alone for backward compatibility; changing it would alter the error those constraints raise today.\n- **Tests:** in `tests/constraints/tests.py` and `tests/postgres_tests/test_constraints.py`, covering equality, `repr`, `deconstruct`, and the code on errors raised by `validate()`.\n- **Docs:** the two constraint reference pages, with version notes, plus an entry in `docs/releases/5.0.txt`.\n\nWhile working, the subagent I delegated this to accidentally ran `black` over the whole repository, which reformatted about 200 unrelated files. It reverted them, and I checked that only the seven intended files are now modified.",
+  "ttft_ms": 8975,
+  "type": "result",
+  "duration_ms": 117583,
+  "uuid": "8e2269bc-bbcc-4c97-80f1-e0f126662c09",
+  "ttft_stream_ms": 2495,
+  "time_to_request_ms": 152,
+  "first_content_frame_ms": 2496,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 8,
+  "f2p_total": 8,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

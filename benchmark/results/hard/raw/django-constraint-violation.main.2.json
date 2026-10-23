@@ -1,0 +1,132 @@
+{
+ "task": "django-constraint-violation",
+ "arm": "main",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 90159,
+  "stop_reason": "end_turn",
+  "session_id": "2198f02f-d44c-448c-9aa6-3ca4811dd324",
+  "total_cost_usd": 0.3697028,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 9669,
+   "cache_read_input_tokens": 54762,
+   "output_tokens": 2728,
+   "output_tokens_details": {
+    "thinking_tokens": 696
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9669,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 686,
+     "cache_read_input_tokens": 22236,
+     "cache_creation_input_tokens": 329,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 329
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 2728,
+    "cacheReadInputTokens": 54762,
+    "cacheCreationInputTokens": 9669,
+    "webSearchRequests": 0,
+    "costUSD": 0.1428884,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 696,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 24,
+    "outputTokens": 9572,
+    "cacheReadInputTokens": 287639,
+    "cacheCreationInputTokens": 40913,
+    "webSearchRequests": 0,
+    "costUSD": 0.2268144,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 155,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Constraints now take a `violation_error_code` argument, which sets the `code` on the `ValidationError` that `validate()` raises. The core tests pass, but the PostgreSQL constraint (`ExclusionConstraint`) tests were skipped because there's no PostgreSQL database here. Nothing is committed.\n\n**What changed**\n- **Models** (`django/db/models/constraints.py`): `BaseConstraint`, `CheckConstraint` and `UniqueConstraint` accept `violation_error_code=None`. It's included in equality checks, shown in `__repr__` when set, saved by `deconstruct()`, and passed as `code=` whenever `validate()` raises using the constraint's error message.\n- **PostgreSQL** (`django/contrib/postgres/constraints.py`): `ExclusionConstraint` gets the same treatment.\n- **One exception:** a `UniqueConstraint` with `fields` and no `condition` still raises the model's standard unique-error message, so it ignores the custom code. This keeps existing behaviour the same.\n- **Docs:** the parameter is documented in `docs/ref/models/constraints.txt` and `docs/ref/contrib/postgres/constraints.txt` (marked as new in 5.0), with an entry in `docs/releases/5.0.txt`.\n- **Tests:** added to `tests/constraints/tests.py` and `tests/postgres_tests/test_constraints.py`, covering equality, `__repr__`, `deconstruct()`, and the code on raised errors.\n\n**Test results**\n- `constraints`, `validation` and `model_forms`: 321 tests ran, all passed (5 skipped).\n- `postgres_tests.test_constraints`: all 50 tests were skipped, so they need a run against PostgreSQL.\n- flake8 isn't installed in the virtualenv, so linting wasn't run.\n\nThe formatter (black) was run across all of `django/` by mistake, which reformatted 133 unrelated files. Those were reverted, and `git status` now shows only the seven files above as modified.",
+  "ttft_ms": 6254,
+  "type": "result",
+  "duration_ms": 117219,
+  "uuid": "cfcc8755-b90c-4c37-bf7f-9b46375be20e",
+  "ttft_stream_ms": 822,
+  "time_to_request_ms": 133,
+  "first_content_frame_ms": 822,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 8,
+  "f2p_total": 8,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

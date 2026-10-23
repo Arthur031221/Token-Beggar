@@ -1,0 +1,116 @@
+{
+ "task": "packaging-extras-marker",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 98741,
+  "stop_reason": "end_turn",
+  "session_id": "149e2527-63cb-414e-8dd9-16fa6f182a56",
+  "total_cost_usd": 0.608126,
+  "usage": {
+   "input_tokens": 28,
+   "cache_creation_input_tokens": 36152,
+   "cache_read_input_tokens": 479890,
+   "output_tokens": 11141,
+   "output_tokens_details": {
+    "thinking_tokens": 2909
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 36152,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 898,
+     "cache_read_input_tokens": 48721,
+     "cache_creation_input_tokens": 327,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 327
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 28,
+    "outputTokens": 11141,
+    "cacheReadInputTokens": 479890,
+    "cacheCreationInputTokens": 36152,
+    "webSearchRequests": 0,
+    "costUSD": 0.608126,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2909,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 15,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`packaging.markers` now supports the PEP 751 `extras` and `dependency_groups` markers. The full test suite passes (27,225 tests), and mypy and ruff format are clean on the changed files. Nothing is committed.\n\n```python\nm = Marker('\"cli\" in extras and \"test\" not in dependency_groups')\nm.evaluate({\"extras\": {\"CLI\"}}, context=\"lock_file\")  # True\n```\n\n**Library changes**\n- **`src/packaging/_tokenizer.py`:** the parser now accepts `extras` and `dependency_groups` as marker names, so they also work in `Requirement` strings.\n- **`src/packaging/markers.py`:**\n  - **Set values:** both markers take a set of names as their value. Names on both sides are normalized, so `\"Foo_Bar\" in extras` matches `{\"foo-bar\"}`.\n  - **Allowed comparisons:** only `\"name\" in <var>` and `\"name\" not in <var>` are allowed. Any other operator (`==`, `<`, \u2026), or putting the variable on the left (`extras in \"foo\"`), raises `UndefinedComparison`.\n  - **New `context` parameter on `Marker.evaluate()`:** it controls which defaults are filled in before your `environment` overrides are applied:\n    - `\"metadata\"` is the default and keeps the old behaviour: `extra` defaults to `\"\"`.\n    - `\"lock_file\"` sets `extras` and `dependency_groups` to empty sets. In this context, an `extra` marker with no value supplied raises `KeyError`.\n    - `\"requirement\"` sets no defaults.\n  - **Exports:** I added an `EvaluateContext` type alias, exported in `__all__`.\n\n**Behaviour you might trip over:** outside `lock_file` context, these two markers have no defaults. Evaluating `\"foo\" in extras` without passing a value raises `KeyError`, the same way any other missing marker does.\n\n**Tests (`tests/test_markers.py`)**\n- `extras` and `dependency_groups` are added to the existing parse tests.\n- New evaluation tests cover:\n  - `in` / `not in`, including empty and default sets, `and`/`or` combinations and name normalization\n  - rejected operators and left-hand-side use\n  - the default values for each `context`\n\n**Docs:** `docs/markers.rst` documents the new parameter and the set-valued markers, and there's a changelog entry in `CHANGELOG.rst`.\n\nRuff reports many lint warnings across the repo. They're all in existing code (the installed ruff is newer than the version the project pins), and none come from these changes.",
+  "ttft_ms": 15941,
+  "type": "result",
+  "duration_ms": 156206,
+  "uuid": "e6ac414a-e10a-4343-aa46-301a44d2915b",
+  "ttft_stream_ms": 1016,
+  "time_to_request_ms": 68,
+  "first_content_frame_ms": 1017,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 20,
+  "f2p_total": 20,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

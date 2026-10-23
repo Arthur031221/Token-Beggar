@@ -1,0 +1,121 @@
+{
+ "task": "django-aggregate-count",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 214212,
+  "stop_reason": "end_turn",
+  "session_id": "0801c985-7733-4880-ba93-64cd107e697c",
+  "total_cost_usd": 1.0982404,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 5858,
+   "cache_read_input_tokens": 284879,
+   "output_tokens": 2225,
+   "output_tokens_details": {
+    "thinking_tokens": 271
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5858,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 953,
+     "cache_read_input_tokens": 60008,
+     "cache_creation_input_tokens": 558,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 558
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 60,
+    "outputTokens": 22718,
+    "cacheReadInputTokens": 1311402,
+    "cacheCreationInputTokens": 47670,
+    "webSearchRequests": 0,
+    "costUSD": 1.0982404,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 13071,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvkhdorp-7a39ff10"
+  },
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`count()` and `aggregate()` now leave out annotations that nothing in the query uses. `Book.objects.annotate(Count('chapters')).count()` no longer computes `COUNT(chapters)`, and non-aggregate annotations like `annotate(n=Lower('name')).count()` give a plain `SELECT COUNT(*)` with no subquery. The fix is in `get_aggregation()` in `django/db/models/sql/query.py`. Nothing is committed.\n\n**What changed**\n- **Deciding whether to wrap in a subquery:** before, any existing annotation forced a subquery. Now a subquery is used only when it's needed:\n  - an annotation contains an aggregate (including ones added with `alias()`),\n  - a filter on an aggregate creates a HAVING clause,\n  - an `aggregate()` call refers to an existing annotation,\n  - there's a filter on a window function,\n  - or one of the existing triggers applies (GROUP BY, slicing, distinct, set operations).\n- **Without a subquery:** existing annotations are taken out of the SELECT. Any joins they added stay, so counts over multi-valued relations don't change.\n- **Inside a subquery:** the only annotations kept are the ones the new aggregates refer to, plus any the GROUP BY refers to by name. Without the second part, `values('annotation').annotate(...).count()` would give wrong counts. This trimming is skipped for distinct queries (the selected columns decide what counts as distinct), window-function filters and set-operation queries, which all depend on the selected columns.\n- **Helper:** I added a small `Query._get_refs()` that collects which annotation names an expression refers to.\n\n**Tests**\n- I added 7 tests to `tests/aggregation/tests.py`. They cover:\n  - non-aggregate and unused aggregate annotations being dropped,\n  - aggregate annotations added with `alias()`,\n  - filters on an aggregate annotation,\n  - a referenced annotation being kept while unused ones are dropped,\n  - annotations that join across a many-valued relation,\n  - grouping by an annotation.\n- Six of them fail without the fix. The `alias()` test already passed before and guards against a regression.\n- I also checked that the grouping test fails if the GROUP BY handling is removed (count 6 instead of 4).\n- The query-related test modules (4,233 tests) all pass. The full suite (16,092 tests) has 7 failures, in `mail`, `admin_scripts`, `utils_tests.test_html` and `test_utils`. The same 7 fail on the unchanged code, so they come from the environment, not this change.\n\nAll test runs used SQLite only. On Oracle, GROUP BY uses the full expression rather than the column name, so that case should still work but hasn't been run.",
+  "ttft_ms": 1809,
+  "type": "result",
+  "duration_ms": 66679,
+  "uuid": "1a13bdab-a2ec-4dd3-ab97-548e62dac717",
+  "ttft_stream_ms": 1094,
+  "time_to_request_ms": 29,
+  "first_content_frame_ms": 1094,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

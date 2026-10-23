@@ -1,0 +1,116 @@
+{
+ "task": "sphinx-property-type",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 166106,
+  "stop_reason": "end_turn",
+  "session_id": "d12f5826-48ed-4a26-9fa6-b8f6ce5064de",
+  "total_cost_usd": 0.8701277999999999,
+  "usage": {
+   "input_tokens": 50,
+   "cache_creation_input_tokens": 40389,
+   "cache_read_input_tokens": 932279,
+   "output_tokens": 18018,
+   "output_tokens_details": {
+    "thinking_tokens": 6862
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 40389,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1262,
+     "cache_read_input_tokens": 50475,
+     "cache_creation_input_tokens": 2810,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2810
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 50,
+    "outputTokens": 18018,
+    "cacheReadInputTokens": 932279,
+    "cacheCreationInputTokens": 40389,
+    "webSearchRequests": 0,
+    "costUSD": 0.8701277999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 6862,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 25,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've fixed it: autodoc now documents `@classmethod` + `@property` members. With `:members:` they come out as `.. py:property:: Foo.class_prop` with a new `:classmethod:` flag, and that renders as \"class property\". The issue's explanation is right: `getattr(cls, name)` returns the property's value, not the property. So autodoc either skipped the member or picked up the value type's docstring (e.g. `int`'s).\n\n**What changed**\n- **`sphinx/util/inspect.py`**\n  - `isclassmethod()` takes optional `cls`/`name` arguments. With them, it walks the class hierarchy and checks the raw entry in each class's `__dict__`.\n  - `getdoc()` uses that to take the docstring from the wrapped property instead of from the computed value.\n- **`sphinx/ext/autodoc/__init__.py`**\n  - A new helper, `get_classmethod_property()`, finds the property wrapped by a `classmethod` in the class or its bases.\n  - `PropertyDocumenter` uses it to accept these members and to swap in the real property object, so the docstring and return type are read correctly. It also adds the `:classmethod:` option.\n  - The member filter now passes the class and member name to `getdoc()`. It used to pass the class's own parent and name, which meant the inherited-docstring lookup never applied to members.\n- **`sphinx/domains/python.py`**: `py:property` accepts `:classmethod:`, and it combines with `:abstractmethod:` to give \"abstract class property\".\n- **Docs/CHANGES**: documented the new option and added changelog entries under 4.2.0. I used issue number #9445, which I believe is the upstream number but didn't check, so please confirm.\n\n**Tests**\n- New test module `tests/roots/test-ext-autodoc/target/classproperties.py`. It's a separate file because this syntax only works on Python 3.9+, and the new tests are skipped below 3.9.\n- New tests:\n  - autoproperty: direct and inherited\n  - autoclass: `:members:` and `:inherited-members:`\n  - `py:property :classmethod:` in the Python domain\n  - `isclassmethod` and `getdoc` in `test_util_inspect.py`\n\nAll new tests pass. On the full suite, the 11 failures and 1 error are exactly the same with and without my change. They're environment-related (LaTeX, linkcheck, etc.), plus two autodoc tests that only fail when several test files run together.\n\n`tests/test_util_inspect.py` can't load in this virtualenv because the `_testcapi` module is missing. I ran it with a temporary stand-in module outside the repo: the new tests pass, and the one failure (`test_isattributedescriptor`) comes from the stand-in itself. flake8 and mypy aren't installed, so I haven't run lint or type checks.\n\n**Not covered:** autosummary's member listing still won't classify these as properties. Its `get_documenter()` doesn't pass the member name, so the class can't be looked up.\n\nNothing is committed.",
+  "ttft_ms": 6381,
+  "type": "result",
+  "duration_ms": 478262,
+  "uuid": "d8062f28-0e86-419d-a112-53643ab182cb",
+  "ttft_stream_ms": 1022,
+  "time_to_request_ms": 70,
+  "first_content_frame_ms": 1022,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

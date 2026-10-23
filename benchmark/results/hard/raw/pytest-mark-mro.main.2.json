@@ -1,0 +1,132 @@
+{
+ "task": "pytest-mark-mro",
+ "arm": "main",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 53137,
+  "stop_reason": "end_turn",
+  "session_id": "936eecdb-bb1f-4634-867c-7d1c2060014a",
+  "total_cost_usd": 0.22854190000000002,
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 12103,
+   "cache_read_input_tokens": 58616,
+   "output_tokens": 3499,
+   "output_tokens_details": {
+    "thinking_tokens": 1268
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 12103,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 778,
+     "cache_read_input_tokens": 24584,
+     "cache_creation_input_tokens": 415,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 415
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 6,
+    "outputTokens": 3499,
+    "cacheReadInputTokens": 58616,
+    "cacheCreationInputTokens": 12103,
+    "webSearchRequests": 0,
+    "costUSD": 0.17855120000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1268,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 2957,
+    "cacheReadInputTokens": 40657,
+    "cacheCreationInputTokens": 6534,
+    "webSearchRequests": 0,
+    "costUSD": 0.0499907,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 0,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the issue: a test class that inherits from several marked base classes now gets the marks from every class in its MRO (the order Python looks up attributes through a class and its bases), not just the first base. The relevant tests pass: 557 passed, 21 skipped, 2 xfailed. One test file, `testing/python/metafunc.py`, couldn't be collected. I checked by stashing my changes and running it on the unchanged code, and it fails the same way there. The error is `AttributeError: module '_pytest.fixtures' has no attribute 'FixtureFunctionDefinition'`, raised from the installed hypothesis package, so it's a problem with the environment and not this change.\n\n**The change** (`src/_pytest/mark/structures.py`):\n- **Reading marks:** `get_unpacked_marks` has a new keyword-only option, `consider_mro=True`. For a class, it now collects the `pytestmark` that each class in the MRO defines itself and merges them. Previously it read `pytestmark` as one attribute, which only ever found one base's marks.\n- **Applying marks:** `store_mark` passes `consider_mro=False`, so a class's own `pytestmark` holds only the marks applied directly to it. Inherited marks are picked up when marks are read, which avoids counting them twice.\n- **Other callers:** the two in `src/_pytest/python.py` needed no changes.\n\n**Behaviour changes users could notice:**\n- Marks from a subclass now come before its base classes' marks, in MRO order. It used to be the other way round.\n- A subclass's `pytestmark` attribute no longer includes its bases' marks.\n\nBoth are described in a new changelog entry, `changelog/7792.breaking.rst`. It's split into three paragraphs, while the neighbouring changelog entries are one line each, so you may want to reformat it.\n\n**Tests** (`testing/test_mark.py`):\n- `test_mark_mro` checks the merged order for `class C(A, B)` (C's marks, then A's, then B's) and that only C's own marks come back with `consider_mro=False`.\n- `test_mark_mro_collected` runs the scenario from the issue: `TestDings(Foo, Bar)` now has both the `foo` and `bar` markers.\n- No existing tests needed updating.\n\nI didn't add you to `AUTHORS`. Nothing is committed.",
+  "ttft_ms": 12092,
+  "type": "result",
+  "duration_ms": 86835,
+  "uuid": "1fa11441-3470-4333-a7c4-d7d10c7cdac6",
+  "ttft_stream_ms": 942,
+  "time_to_request_ms": 244,
+  "first_content_frame_ms": 942,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

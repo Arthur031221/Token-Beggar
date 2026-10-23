@@ -1,0 +1,116 @@
+{
+ "task": "django-remake-table-index",
+ "arm": "main",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 81047,
+  "stop_reason": "end_turn",
+  "session_id": "b492f589-c786-4b4a-9020-02c1e1850139",
+  "total_cost_usd": 0.44976439999999995,
+  "usage": {
+   "input_tokens": 26,
+   "cache_creation_input_tokens": 26781,
+   "cache_read_input_tokens": 374962,
+   "output_tokens": 8021,
+   "output_tokens_details": {
+    "thinking_tokens": 2527
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 26781,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 823,
+     "cache_read_input_tokens": 37791,
+     "cache_creation_input_tokens": 1886,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1886
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 26,
+    "outputTokens": 8021,
+    "cacheReadInputTokens": 374962,
+    "cacheCreationInputTokens": 26781,
+    "webSearchRequests": 0,
+    "costUSD": 0.44976439999999995,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2527,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 13,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Foreign keys now pick up the `db_collation` of the field they point to, so changing the collation of a primary key also changes the collation of the FK columns that reference it. I only ran this on SQLite. There's no MySQL or PostgreSQL driver or server here, so the `MODIFY \u2026 COLLATE` statements that MySQL (the database in the issue) would get have not been run.\n\n**What I changed**\n\n- **`django/db/models/fields/related.py`**: a foreign key now reports the collation of the field it points to. This also means new tables get `COLLATE \u2026` on their FK columns, so they match from the start.\n- **`django/db/backends/base/schema.py`** (`_alter_field`), the path MySQL, PostgreSQL and Oracle use:\n  - A collation change on a primary key or unique field now drops the incoming FK constraints first. Before, only a type change did that.\n  - Each referencing column is then altered with the new collation. Adding the constraints back afterwards works because the columns now match, which is the output the issue asks for: `MODIFY account_id varchar(22) NOT NULL COLLATE utf8_bin`.\n- **`django/db/backends/sqlite3/schema.py`**: SQLite now also rebuilds the referencing tables when a primary key or unique field changes only its collation.\n\n**Tests**\n\n- `tests/migrations/test_operations.py`: new `test_alter_field_pk_fk_db_collation`. It changes a primary key's collation with `AlterField` while a `ForeignKey` and a `ManyToManyField` point at it. It checks that both FK columns get the new collation and that the FK constraints are still there, then checks the same after reversing the migration. It fails without the fix and passes with it.\n- `tests/migrations/test_base.py`: new `assertColumnCollation` helper for that test.\n- `tests/schema/tests.py`: new `test_db_collation_fk_to_charfield_pk`. It checks that a newly created FK column gets the collation of the primary key it points to.\n- The `schema`, `migrations`, `model_fields`, `inspectdb` and `backends` suites pass (1570 tests, 185 skipped).\n\nNothing is committed, and flake8/black aren't installed in the venv, so style wasn't checked.",
+  "ttft_ms": 12016,
+  "type": "result",
+  "duration_ms": 103525,
+  "uuid": "7de994cf-d480-46ac-ae69-5290820f7b96",
+  "ttft_stream_ms": 3425,
+  "time_to_request_ms": 120,
+  "first_content_frame_ms": 3425,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,116 @@
+{
+ "task": "sphinx-include-source-read",
+ "arm": "main",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 87172,
+  "stop_reason": "end_turn",
+  "session_id": "889d8003-d457-4096-b1dd-b4c1ef6e1159",
+  "total_cost_usd": 0.4852863999999999,
+  "usage": {
+   "input_tokens": 40,
+   "cache_creation_input_tokens": 23875,
+   "cache_read_input_tokens": 577232,
+   "output_tokens": 8934,
+   "output_tokens_details": {
+    "thinking_tokens": 2342
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23875,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 838,
+     "cache_read_input_tokens": 36289,
+     "cache_creation_input_tokens": 482,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 482
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 40,
+    "outputTokens": 8934,
+    "cacheReadInputTokens": 577232,
+    "cacheCreationInputTokens": 23875,
+    "webSearchRequests": 0,
+    "costUSD": 0.4852863999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2342,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 23,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Changes made by a `source-read` handler now reach the output for files pulled in with `.. include::`. The new tests fail without the fix and pass with it. Nothing is committed.\n\n**Cause:** Sphinx did run `source-read` for `something-to-include.rst`, but only because that file is also a document in its own right. The `include` directive then read the file from disk again and inserted the original, unmodified text into the including page. That's why `index.html` still showed `&REPLACE_ME;`.\n\n**Fix** (`sphinx/directives/other.py`, `Include.run`): while the directive runs, I intercept the point where it hands the included lines over for parsing. At that point Sphinx now:\n- runs `source-read` on the included text, leaving out the two marker lines that docutils (the library that parses reST) adds at the end;\n- passes handlers a docname: the usual one for `.rst` files, or the path relative to the source directory without its extension for non-document files, so `baz/baz.inc` gives `baz/baz`;\n- parses the text the handlers returned.\n\nThe override is removed as soon as the directive finishes, so nothing else is affected. It is only installed when something is listening for `source-read`. Includes using `:literal:`, `:code:` or `:parser:` don't go through this path, so they behave as before.\n\n**Tests:**\n- New test project `tests/roots/test-directive-include/`: `index.rst` includes `foo.rst`, which in turn includes `baz/baz.inc`.\n- Two new tests in `tests/test_directive_other.py`:\n  - `test_include_source_read_event` checks that the event fires for an included non-document file, with the right docname and text.\n  - `test_include_source_read_event_modifies_content` does a full HTML build of the issue's scenario, nested include included, and checks that no `&REPLACE_ME;` is left.\n- I also added a line to `CHANGES` under \"Bugs fixed\".\n\n**Results:** the full suite gives 2002 passed and 12 failed. The same 12 tests fail with my change removed, because of this environment: Pygments output differences, lualatex, cython, and two `test_intl` tests. Ruff and mypy aren't installed in `.venv`, so I couldn't run the linters or type check.\n\nOne behaviour to know: a file that is both included and built as its own page (like `something-to-include.rst` in the issue) now gets `source-read` once for itself and once per include. Handlers that only do substitutions, like the Yocto one, are unaffected.",
+  "ttft_ms": 1706,
+  "type": "result",
+  "duration_ms": 329910,
+  "uuid": "14d58fb9-71c8-4760-b8df-9156702c1095",
+  "ttft_stream_ms": 838,
+  "time_to_request_ms": 125,
+  "first_content_frame_ms": 838,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

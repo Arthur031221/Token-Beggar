@@ -1,0 +1,116 @@
+{
+ "task": "sphinx-include-source-read",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 91469,
+  "stop_reason": "end_turn",
+  "session_id": "311f35e0-22ee-4020-a686-0dedf4317b16",
+  "total_cost_usd": 0.39832020000000007,
+  "usage": {
+   "input_tokens": 28,
+   "cache_creation_input_tokens": 19994,
+   "cache_read_input_tokens": 372581,
+   "output_tokens": 8187,
+   "output_tokens_details": {
+    "thinking_tokens": 2611
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 19994,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 966,
+     "cache_read_input_tokens": 32403,
+     "cache_creation_input_tokens": 487,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 487
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 28,
+    "outputTokens": 8187,
+    "cacheReadInputTokens": 372581,
+    "cacheCreationInputTokens": 19994,
+    "webSearchRequests": 0,
+    "costUSD": 0.39832020000000007,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2611,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 17,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Changes made to `source-read` by event handlers now reach the final output for files pulled in with `.. include::`. The new tests pass, and the full test suite fails the same 12 tests with and without my change.\n\n**Why it happened:** Sphinx emits `source-read` when it reads a document. But docutils' `include` directive reads the included file itself and feeds its lines straight into the parser. So when your handler ran for `something-to-include.rst`, it was editing that file as a separate document, and the copy inserted into `index.rst` was never touched.\n\n**The fix** (`sphinx/directives/other.py`): `Include.run()` now wraps the parser's `insert_input()` call, which docutils uses to inject included lines. The text first goes through `source-read`, and the edited version is what gets parsed.\n- **Only when needed:** the wrapper is installed only if something listens to `source-read`, and it's removed again right after the include runs.\n- **Nested includes work:** each include runs its own pass, so an include inside an included file is also processed.\n- **Marker lines kept:** docutils adds a blank line and an end-of-inclusion comment to the included text. These are left out of what handlers see and put back afterwards.\n- **`docname` argument:** for an included file that is itself a document, handlers get that file's name (e.g. `baz/baz`). For a non-document such as `text.txt`, they get the including document's name, so they always receive a string, never `None`.\n- **Literal includes are skipped:** `:literal:` and `:code:` includes don't use this path, so they don't trigger the event.\n\n**Two side effects:**\n- If an included `.rst` file is also built as its own page, `source-read` fires for it twice: once when it's read as a document and once each time it's included. A handler that isn't safe to run twice on the same text will need to cope with that.\n- The fix works by swapping out a method on docutils' parser object while the include runs, because docutils has no proper way to hook into this. A future docutils release could break it.\n\n**Tests:** I added a test project, `tests/roots/test-directive-include/`, with nested includes, a `.txt` include and the `&REPLACE_ME;` case from the issue, plus three tests in `tests/test_directive_other.py`:\n- the event fires for included files and respects `:start-line:`;\n- replacements apply through nested includes;\n- a full HTML build leaves no `&REPLACE_ME;`.\n\nAll three fail without the fix and pass with it.\n\nThe 12 suite failures are in `test_highlighting` and `test_intl`, and they fail the same way on the original code, so they look like environment issues. I couldn't run ruff or mypy because they aren't installed in `.venv`.\n\nI also added an entry to `CHANGES`. I used `#10678` as the issue number, which is my guess, so please correct it if it's wrong. Nothing is committed.",
+  "ttft_ms": 2885,
+  "type": "result",
+  "duration_ms": 493456,
+  "uuid": "f4b854e9-dd31-4e03-bd97-b2ce6ed17af0",
+  "ttft_stream_ms": 1801,
+  "time_to_request_ms": 131,
+  "first_content_frame_ms": 1801,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

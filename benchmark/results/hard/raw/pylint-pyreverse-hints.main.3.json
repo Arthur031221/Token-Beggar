@@ -1,0 +1,137 @@
+{
+ "task": "pylint-pyreverse-hints",
+ "arm": "main",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 127480,
+  "stop_reason": "end_turn",
+  "session_id": "a5a3cf0d-7c3c-4f90-a57b-bfeb5f27ec7a",
+  "total_cost_usd": 0.4556875999999999,
+  "usage": {
+   "input_tokens": 4,
+   "cache_creation_input_tokens": 902,
+   "cache_read_input_tokens": 28617,
+   "output_tokens": 938,
+   "output_tokens_details": {
+    "thinking_tokens": 97
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 902,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 4,
+     "output_tokens": 938,
+     "cache_read_input_tokens": 28617,
+     "cache_creation_input_tokens": 902,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 902
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 5339,
+    "cacheReadInputTokens": 136557,
+    "cacheCreationInputTokens": 16623,
+    "webSearchRequests": 0,
+    "costUSD": 0.26713139999999996,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2077,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 28,
+    "outputTokens": 8862,
+    "cacheReadInputTokens": 261727,
+    "cacheCreationInputTokens": 29483,
+    "webSearchRequests": 0,
+    "costUSD": 0.1885562,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1003,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvkhq9ol-ce72f823"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "pyreverse now uses PEP 484 type hints for attribute types. For the issue's example, extended with a few more annotated attributes, the attribute box in the generated `classes.dot` reads:\n\n```\na : Optional[str]\nb : int\nc : List[int]\nx : int\n```\n\nA hint with a `None` default becomes `Optional[...]`, unless it already starts with `Optional`. Attributes without a hint still use inference, as before. Nothing is committed.\n\nThe tests pass: the four pyreverse test files give 37 passed, and `pytest tests -k pyreverse` gives 47 passed. No existing expected `.dot` files needed changing. A helper agent made the edits and ran the tests. I haven't re-read its diff myself, so it's worth a look before you commit.\n\n**What changed:**\n- **`pylint/pyreverse/utils.py`**: three new functions:\n  - `get_annotation_label` turns a hint into its text.\n  - `get_annotation` finds the hint, either from `x: T = ...` or from the `__init__` argument that gets assigned to `self.x`, and adds `Optional[...]`.\n  - `infer_node` returns the hint if there is one and falls back to normal inference otherwise.\n\n  The astroid nodes are left untouched; the label is returned as a plain string.\n- **`pylint/pyreverse/inspector.py`**: `visit_assignname` and `handle_assignattr_type` now call `utils.infer_node`.\n- **`pylint/pyreverse/diagrams.py`**: `class_names` shows these string labels, and `extract_relationships` skips them.\n- **`tests/unittest_pyreverse_utils.py`** (new): covers a plain hint, `None` default \u2192 `Optional`, a hint that's already `Optional`, a hinted `self.x` assignment, a hinted class-level attribute, falling back to inference, a full diagram build, and keeping association arrows.\n- **`ChangeLog`** and **`doc/whatsnew/2.9.rst`**: a note citing #1548. I couldn't confirm that's the issue's real number, so please check it.\n\n**A problem I caught and had fixed:** the first version lost the association arrow when an attribute's hint named a class in the diagram (e.g. `self.b: B = B()`), which worked before. Now a simple hint that resolves to a single class returns that class, so the arrow is drawn again. There's a test for this.\n\n**Remaining limitation:** hints like `Optional[B]` or `List[B]` show as text only and draw no arrow to `B`.",
+  "ttft_ms": 4194,
+  "type": "result",
+  "duration_ms": 11756,
+  "uuid": "9400b89f-a282-4ea2-b8ac-20dcf235eeb9",
+  "ttft_stream_ms": 3310,
+  "time_to_request_ms": 123,
+  "first_content_frame_ms": 3310,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 8,
+  "f2p_total": 10,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

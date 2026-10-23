@@ -1,0 +1,116 @@
+{
+ "task": "pytest-mark-mro",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 112180,
+  "stop_reason": "end_turn",
+  "session_id": "8c5d0dac-0f0a-4cbe-b12b-2b22168e1a8d",
+  "total_cost_usd": 0.44838979999999995,
+  "usage": {
+   "input_tokens": 42,
+   "cache_creation_input_tokens": 22180,
+   "cache_read_input_tokens": 586009,
+   "output_tokens": 7679,
+   "output_tokens_details": {
+    "thinking_tokens": 1157
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 22180,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 894,
+     "cache_read_input_tokens": 34783,
+     "cache_creation_input_tokens": 293,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 293
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 42,
+    "outputTokens": 7679,
+    "cacheReadInputTokens": 586009,
+    "cacheCreationInputTokens": 22180,
+    "webSearchRequests": 0,
+    "costUSD": 0.44838979999999995,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1157,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 25,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed it: a test class that inherits from several marked base classes now gets the marks of all of them. Without the fix, only the first base class in the MRO counted.\n\n**The fix** (`src/_pytest/mark/structures.py`):\n- `get_unpacked_marks()` now reads `pytestmark` from each class's own `__dict__` along the full `__mro__` and merges them. Before, it used `getattr`, which only finds the first matching attribute. It takes a new keyword-only `consider_mro=True` option. Functions and other non-class objects behave as before.\n- `store_mark()` now calls it with `consider_mro=False`, so each class stores only the marks applied directly to it. If it still copied inherited marks into the subclass, merging along the MRO would count them twice.\n\n**Behaviour changes users could notice** (written up in `changelog/7792.bugfix.rst`):\n- Marks are now ordered subclass first, then base classes in MRO order. Before, inherited marks came first.\n- A subclass's `pytestmark` attribute no longer includes marks from its base classes. Code that reads that attribute directly instead of using `Node.iter_markers()` will see the difference.\n\n**Tests** (`testing/test_mark.py`):\n- `test_mark_decorator_multiple_baseclasses_merged` covers the issue's case (`class T(Foo, Bar)`) plus a deeper diamond-free hierarchy where the test class and test method have their own marks too.\n- `test_mark_decorator_baseclasses_not_duplicated` checks that `iter_markers()` returns marks subclass first, and that the subclass's own `pytestmark` holds only its own mark.\n\nBoth new tests fail without the fix and pass with it. The mark, collection, python, skipping, unittest and nodes test suites pass (806 passed, 31 skipped, 3 xfailed), except for `testing/python/metafunc.py`. That file can't be collected in this virtualenv (`_pytest.fixtures` has no `FixtureFunctionDefinition`), and it fails the same way without my change, so I left it out. I couldn't run mypy because it isn't installed in `.venv`.\n\nI didn't add an `AUTHORS` entry: the template wants a real name and your git user is only the handle `Arthur031221`, so add one yourself if you want it. Nothing is committed.",
+  "ttft_ms": 3687,
+  "type": "result",
+  "duration_ms": 136694,
+  "uuid": "17e75162-6999-4bf9-94e1-448997bd2191",
+  "ttft_stream_ms": 2572,
+  "time_to_request_ms": 106,
+  "first_content_frame_ms": 2572,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

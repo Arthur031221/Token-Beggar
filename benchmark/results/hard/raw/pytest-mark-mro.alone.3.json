@@ -1,0 +1,116 @@
+{
+ "task": "pytest-mark-mro",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 96917,
+  "stop_reason": "end_turn",
+  "session_id": "5261f422-fd48-4582-b622-77eb12d747c5",
+  "total_cost_usd": 0.41513420000000006,
+  "usage": {
+   "input_tokens": 30,
+   "cache_creation_input_tokens": 21118,
+   "cache_read_input_tokens": 403151,
+   "output_tokens": 8272,
+   "output_tokens_details": {
+    "thinking_tokens": 2024
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 21118,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1157,
+     "cache_read_input_tokens": 33545,
+     "cache_creation_input_tokens": 469,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 469
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 30,
+    "outputTokens": 8272,
+    "cacheReadInputTokens": 403151,
+    "cacheCreationInputTokens": 21118,
+    "webSearchRequests": 0,
+    "costUSD": 0.41513420000000006,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2024,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 21,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Classes now get marks from every class in their MRO, so in the issue's example `test_dings` has both `foo` and `bar`. The mark tests pass. The full suite gives the same 41 failures/errors with and without my change: terminal colour/highlighting tests and one `legacypath` test. Two test files can't be collected in this venv at all: `testing/python/metafunc.py`, because the installed `hypothesis` is too new for this pytest, and `testing/test_junitxml.py`. I skipped both, so none of their tests ran.\n\n**The fix** (`src/_pytest/mark/structures.py`):\n- **Reading marks:** for a class, `get_unpacked_marks` now collects the `pytestmark` defined directly on each class in `__mro__`, instead of the one attribute that wins normal lookup. It takes a new keyword-only option, `consider_mro=True`. Functions and modules work as before.\n- **Storing marks:** `store_mark` now uses `consider_mro=False`. A decorated class's `pytestmark` holds only the marks applied to it directly, so inherited marks aren't copied in and counted twice.\n- **Order:** marks come back in MRO order, subclass first. This changes existing behaviour: before, a subclass's mark came after its base's, so `get_closest_marker` returned the base's mark. Now the subclass's mark wins, as you'd expect from attribute overriding.\n\n**Tests** (`testing/test_mark.py`):\n- `test_mark_decorator_multiple_baseclasses_merged`: diamond-style inheritance, including a plain `pytestmark = [...]` class attribute. It checks that all marks are present, in order and without duplicates.\n- `test_mark_closest_considers_mro`: the subclass's mark is the closest one.\n- `test_mark_mro`: a unit test of `get_unpacked_marks` with and without `consider_mro`, and of what ends up in `C.pytestmark`.\n\n**Changelog:** `changelog/7792.bugfix.rst` describes the fix, the new order, and that `pytestmark` no longer includes inherited marks. I'm assuming the upstream issue number is #7792, so check that before submitting.\n\n**Things to know:**\n- The metaclass workaround from the issue would now lose its marks. Its setter stores them in `_pytestmark`, while the new code only reads `pytestmark` defined directly on each class. That workaround isn't needed any more, but anyone who copied it should remove it.\n- I didn't add anyone to `AUTHORS` (the PR checklist asks for it), and nothing is committed.",
+  "ttft_ms": 2787,
+  "type": "result",
+  "duration_ms": 468337,
+  "uuid": "053df139-9294-4f69-b767-2781fdb4ee81",
+  "ttft_stream_ms": 1898,
+  "time_to_request_ms": 92,
+  "first_content_frame_ms": 1898,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

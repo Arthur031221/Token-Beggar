@@ -1,0 +1,132 @@
+{
+ "task": "sphinx-property-type",
+ "arm": "main",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 106331,
+  "stop_reason": "end_turn",
+  "session_id": "df0133ab-38d4-42b9-b0c7-c5a1801ae68d",
+  "total_cost_usd": 0.4137980000000001,
+  "usage": {
+   "input_tokens": 18,
+   "cache_creation_input_tokens": 15218,
+   "cache_read_input_tokens": 217113,
+   "output_tokens": 4994,
+   "output_tokens_details": {
+    "thinking_tokens": 1464
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 15218,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 838,
+     "cache_read_input_tokens": 27782,
+     "cache_creation_input_tokens": 332,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 332
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 4994,
+    "cacheReadInputTokens": 217113,
+    "cacheCreationInputTokens": 15218,
+    "webSearchRequests": 0,
+    "costUSD": 0.26511860000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1464,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 24,
+    "outputTokens": 7857,
+    "cacheReadInputTokens": 197914,
+    "cacheCreationInputTokens": 20108,
+    "webSearchRequests": 0,
+    "costUSD": 0.14867940000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 883,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 9,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Autodoc now documents members decorated with both `@classmethod` and `@property` on Python 3.9+. They render as `class property` (or `abstract class property`). Nothing is committed.\n\n**Cause:** reading such a member from the class returns the property's value, not the `property` object. The existing check looked for a `property` object, didn't find one, and skipped the member.\n\n**Fix:**\n- **`sphinx/ext/autodoc/importer.py`, `get_class_members`:** when the class `__dict__` entry is a classmethod wrapping a property, the property itself is used as the member. Without this, the member had no docstring and was filtered out of `:members:` before any other check ran.\n- **`sphinx/ext/autodoc/__init__.py`, `PropertyDocumenter`:**\n  - `can_document_member` also accepts a classmethod-wrapped property found in the parent class's `__dict__`.\n  - A new `import_object` swaps in the inner property.\n  - `add_directive_header` emits a `:classmethod:` option.\n- **`sphinx/domains/python.py`, `PyProperty`:** new `:classmethod:` flag that adds the `class` prefix.\n- **Docs:** a `CHANGES` entry, and the new option documented in `doc/usage/restructuredtext/domains.rst` (as new in 4.2).\n\n**Tests:**\n- Added a `classprop` member to the `Foo` test target in `tests/roots/test-ext-autodoc/target/properties.py`.\n- Added `test_class_properties` in `tests/test_ext_autodoc_autoproperty.py` (skipped below Python 3.9).\n- Updated `test_properties` in `tests/test_ext_autodoc_autoclass.py` to expect the new member.\n- Extended the property test in `tests/test_domain_py.py` to cover the `class property` prefix.\n\nI handed the edits to a subagent; the `importer.py` change was its addition, and I checked that diff myself.\n\n**Test results:** each test file passes when run on its own. Running all `tests/test_ext_autodoc*.py` together gives 2 failures in `tests/test_ext_autodoc.py` (`test_autodoc` and `test_autodoc_typed_instance_variables`). The same two fail with my changes stashed, so they come from test ordering and are not caused by this change.",
+  "ttft_ms": 7528,
+  "type": "result",
+  "duration_ms": 160543,
+  "uuid": "885deb6d-42e5-44e6-8042-945daadfe385",
+  "ttft_stream_ms": 1595,
+  "time_to_request_ms": 192,
+  "first_content_frame_ms": 1595,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,191 @@
+diff --git a/ChangeLog b/ChangeLog
+index 2ee8bc0a..441af3a2 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -11,6 +11,10 @@ Release date: TBA
+ 
+ * astroid has been upgraded to 2.6.0
+ 
++* ``pyreverse`` now uses PEP 484 type hints to determine UML attribute types.
++
++  Closes #1548
++
+ * Fix false positive ``useless-type-doc`` on ignored argument using ``pylint.extensions.docparams``
+   when a function was typed using pep484 but not inside the docstring.
+ 
+diff --git a/doc/whatsnew/2.9.rst b/doc/whatsnew/2.9.rst
+index ec89eb51..b0feb9f6 100644
+--- a/doc/whatsnew/2.9.rst
++++ b/doc/whatsnew/2.9.rst
+@@ -49,6 +49,8 @@ New checkers
+ Other Changes
+ =============
+ 
++* ``pyreverse`` now uses PEP 484 type hints to determine UML attribute types (Closes #1548).
++
+ * Pylint's tags are now the standard form ``vX.Y.Z`` and not ``pylint-X.Y.Z`` anymore.
+ 
+ * Fix false-positive ``too-many-ancestors`` when inheriting from builtin classes,
+diff --git a/pylint/pyreverse/diagrams.py b/pylint/pyreverse/diagrams.py
+index bf9f67af..7bb0575e 100644
+--- a/pylint/pyreverse/diagrams.py
++++ b/pylint/pyreverse/diagrams.py
+@@ -16,7 +16,7 @@
+ import astroid
+ 
+ from pylint.checkers.utils import decorated_with_property
+-from pylint.pyreverse.utils import FilterMixIn, is_interface
++from pylint.pyreverse.utils import FilterMixIn, get_annotation_label, is_interface
+ 
+ 
+ class Figure:
+@@ -129,6 +129,11 @@ class ClassDiagram(Figure, FilterMixIn):
+                 if node.name not in names:
+                     node_name = node.name
+                     names.append(node_name)
++            elif isinstance(node, (astroid.Subscript, astroid.Name)):
++                # annotation that could not be inferred, e.g. Optional[str]
++                label = get_annotation_label(node)
++                if label and label not in names:
++                    names.append(label)
+         return names
+ 
+     def nodes(self):
+diff --git a/pylint/pyreverse/inspector.py b/pylint/pyreverse/inspector.py
+index 8fa12202..19c39d4f 100644
+--- a/pylint/pyreverse/inspector.py
++++ b/pylint/pyreverse/inspector.py
+@@ -218,7 +218,7 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
+                     self.visit_module(frame)
+ 
+             current = frame.locals_type[node.name]
+-            values = set(node.infer())
++            values = utils.infer_node(node)
+             frame.locals_type[node.name] = list(set(current) | values)
+         except astroid.InferenceError:
+             pass
+@@ -230,7 +230,7 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
+         handle instance_attrs_type
+         """
+         try:
+-            values = set(node.infer())
++            values = utils.infer_node(node)
+             current = set(parent.instance_attrs_type[node.attrname])
+             parent.instance_attrs_type[node.attrname] = list(current | values)
+         except astroid.InferenceError:
+diff --git a/pylint/pyreverse/utils.py b/pylint/pyreverse/utils.py
+index a24d227e..0daed923 100644
+--- a/pylint/pyreverse/utils.py
++++ b/pylint/pyreverse/utils.py
+@@ -20,6 +20,8 @@ import os
+ import re
+ import sys
+ 
++import astroid
++
+ RCFILE = ".pyreverserc"
+ 
+ 
+@@ -113,6 +115,53 @@ VIS_MOD = {
+ }
+ 
+ 
++def get_annotation_label(ann):
++    """return a printable label for an annotation node"""
++    if isinstance(ann, astroid.Name):
++        return ann.name
++    if isinstance(ann, astroid.NodeNG):
++        return ann.as_string()
++    return ""
++
++
++def get_annotation(node):
++    """return the annotation node (PEP 484) of an AssignName/AssignAttr, or None"""
++    ann = None
++    parent = node.parent
++    if isinstance(parent, astroid.AnnAssign):
++        return parent.annotation
++    if isinstance(node, astroid.AssignAttr):
++        value = getattr(parent, "value", None)
++        func = node.frame()
++        if (
++            isinstance(parent, astroid.Assign)
++            and isinstance(value, astroid.Name)
++            and isinstance(func, astroid.FunctionDef)
++            and func.name == "__init__"
++        ):
++            args = func.args
++            for index, arg in enumerate(args.args or []):
++                if arg.name != value.name:
++                    continue
++                if index < len(args.annotations):
++                    ann = args.annotations[index]
++                break
++    return ann
++
++
++def infer_node(node):
++    """return the set of inferred values  of a node"""
++    ann = get_annotation(node)
++    if isinstance(ann, astroid.Subscript):
++        return {ann}
++    try:
++        if ann:
++            return set(ann.infer())
++        return set(node.infer())
++    except astroid.InferenceError:
++        return {ann} if ann else set()
++
++
+ class FilterMixIn:
+     """filter nodes according to a mode and nodes' visibility"""
+ 
+diff --git a/tests/unittest_pyreverse_utils.py b/tests/unittest_pyreverse_utils.py
+new file mode 100644
+index 00000000..21694156
+--- /dev/null
++++ b/tests/unittest_pyreverse_utils.py
+@@ -0,0 +1,43 @@
++"""Unit tests for the type hint helpers of pyreverse."""
++import astroid
++import pytest
++
++from pylint.pyreverse.utils import get_annotation, get_annotation_label, infer_node
++
++
++@pytest.mark.parametrize(
++    "code, label",
++    [
++        ("class C:\n    x: int = None", "int"),
++        ("class C:\n    x: Optional[str] = None", "Optional[str]"),
++    ],
++)
++def test_class_level_annotation(code, label):
++    module = astroid.parse(code)
++    target = module.body[0].body[0].target
++    assert get_annotation_label(get_annotation(target)) == label
++
++
++def test_init_argument_annotation():
++    module = astroid.parse(
++        "class C:\n    def __init__(self, a: str = None):\n        self.a = a\n"
++    )
++    attr = module["C"].instance_attrs["a"][0]
++    assert get_annotation_label(get_annotation(attr)) == "str"
++    assert [v.name for v in infer_node(attr)] == ["str"]
++
++
++def test_instance_annotated_assign():
++    module = astroid.parse(
++        "class C:\n    def __init__(self):\n        self.b: Optional[str] = None\n"
++    )
++    attr = module["C"].instance_attrs["b"][0]
++    assert get_annotation_label(get_annotation(attr)) == "Optional[str]"
++    assert len(infer_node(attr)) == 1
++
++
++def test_no_annotation():
++    module = astroid.parse("class C:\n    def __init__(self, a):\n        self.a = a\n")
++    attr = module["C"].instance_attrs["a"][0]
++    assert get_annotation(attr) is None
++    assert infer_node(attr) == set(attr.infer())

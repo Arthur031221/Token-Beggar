@@ -1,0 +1,156 @@
+diff --git a/CHANGES b/CHANGES
+index ce1185c76..4c952ff77 100644
+--- a/CHANGES
++++ b/CHANGES
+@@ -72,6 +72,8 @@ Bugs fixed
+   Patch by Bénédikt Tran.
+ * #10930: Highlight all search terms on the search results page.
+   Patch by Dmitry Shachnev.
++* #10678: Emit :event:`source-read` events for files read via
++  the :dudir:`include` directive.
+ 
+ Testing
+ -------
+diff --git a/sphinx/directives/other.py b/sphinx/directives/other.py
+index 19f7c0a8d..cf2f0dbe2 100644
+--- a/sphinx/directives/other.py
++++ b/sphinx/directives/other.py
+@@ -8,6 +8,7 @@ from docutils.parsers.rst import directives
+ from docutils.parsers.rst.directives.admonitions import BaseAdmonition
+ from docutils.parsers.rst.directives.misc import Class
+ from docutils.parsers.rst.directives.misc import Include as BaseInclude
++from docutils.statemachine import StateMachine
+ 
+ from sphinx import addnodes
+ from sphinx.domains.changeset import VersionChange  # noqa: F401  # for compatibility
+@@ -369,6 +370,18 @@ class Include(BaseInclude, SphinxDirective):
+     """
+ 
+     def run(self) -> list[Node]:
++        # To emit "source-read" events for included reST text, we temporarily
++        # patch ``StateMachine.insert_input()`` on this state machine instance,
++        # which docutils' Include directive uses to insert the included lines.
++        if self.env.app.events.listeners.get('source-read'):
++            self.state_machine.insert_input = self._insert_input  # type: ignore[method-assign]
++            try:
++                return self._run()
++            finally:
++                del self.state_machine.insert_input
++        return self._run()
++
++    def _run(self) -> list[Node]:
+         if self.arguments[0].startswith('<') and \
+            self.arguments[0].endswith('>'):
+             # docutils "standard" includes, do not do path processing
+@@ -378,6 +391,21 @@ class Include(BaseInclude, SphinxDirective):
+         self.env.note_included(filename)
+         return super().run()
+ 
++    def _insert_input(self, include_lines: list[str], source: str) -> None:
++        # docutils appends two marker lines to the included content
++        # (cf. docutils.parsers.rst.directives.misc.Include.run());
++        # keep them out of the "source-read" event.
++        text = '\n'.join(include_lines[:-2])
++
++        docname = self.env.path2doc(source)
++        arg = [text]
++        self.env.events.emit('source-read', docname, arg)
++        text = arg[0]
++
++        include_lines = text.splitlines() + include_lines[-2:]
++        # call the class method, not the patched instance attribute
++        StateMachine.insert_input(self.state_machine, include_lines, source)
++
+ 
+ def setup(app: Sphinx) -> dict[str, Any]:
+     directives.register_directive('toctree', TocTree)
+diff --git a/tests/roots/test-directive-include/baz.rst b/tests/roots/test-directive-include/baz.rst
+new file mode 100644
+index 000000000..0b74be0ba
+--- /dev/null
++++ b/tests/roots/test-directive-include/baz.rst
+@@ -0,0 +1,6 @@
++Baz
++===
++
++.. include:: foo.rst
++
++Baz was here.
+diff --git a/tests/roots/test-directive-include/conf.py b/tests/roots/test-directive-include/conf.py
+new file mode 100644
+index 000000000..a45d22e28
+--- /dev/null
++++ b/tests/roots/test-directive-include/conf.py
+@@ -0,0 +1 @@
++exclude_patterns = ['_build']
+diff --git a/tests/roots/test-directive-include/foo.rst b/tests/roots/test-directive-include/foo.rst
+new file mode 100644
+index 000000000..0f82e661b
+--- /dev/null
++++ b/tests/roots/test-directive-include/foo.rst
+@@ -0,0 +1 @@
++The #magical foo.
+diff --git a/tests/roots/test-directive-include/index.rst b/tests/roots/test-directive-include/index.rst
+new file mode 100644
+index 000000000..ec1257a1d
+--- /dev/null
++++ b/tests/roots/test-directive-include/index.rst
+@@ -0,0 +1,6 @@
++test-directive-include
++======================
++
++.. include:: baz.rst
++
++.. include:: text.txt
+diff --git a/tests/roots/test-directive-include/text.txt b/tests/roots/test-directive-include/text.txt
+new file mode 100644
+index 000000000..43e5530c3
+--- /dev/null
++++ b/tests/roots/test-directive-include/text.txt
+@@ -0,0 +1 @@
++This is plain #magical text.
+diff --git a/tests/test_directive_other.py b/tests/test_directive_other.py
+index f221db075..8021ba11c 100644
+--- a/tests/test_directive_other.py
++++ b/tests/test_directive_other.py
+@@ -148,3 +148,40 @@ def test_toctree_twice(app):
+     assert_node(doctree[0][0],
+                 entries=[(None, 'foo'), (None, 'foo')],
+                 includefiles=['foo', 'foo'])
++
++
++@pytest.mark.sphinx(testroot='directive-include')
++def test_include_source_read_event(app):
++    sources_reported = {}
++
++    def source_read_handler(app, doc, source):
++        sources_reported[doc] = source[0]
++
++    app.connect("source-read", source_read_handler)
++    text = (".. include:: baz.rst\n"
++            "   :start-line: 4\n\n"
++            ".. include:: text.txt\n"
++            "   :literal:    \n")
++    app.env.find_files(app.config, app.builder)
++    restructuredtext.parse(app, text, 'index')
++    assert "index" in sources_reported
++    assert "text.txt" not in sources_reported  # text was included as literal, no rst parsing
++    assert "baz" in sources_reported
++    assert sources_reported["baz"] == "\nBaz was here."
++
++
++@pytest.mark.sphinx(testroot='directive-include')
++def test_include_source_read_event_nested_includes(app):
++
++    def source_read_handler(app, doc, source):
++        text = source[0].replace("#magical", "amazing")
++        source[0] = text
++
++    app.connect("source-read", source_read_handler)
++    text = (".. include:: baz.rst\n")
++    app.env.find_files(app.config, app.builder)
++    doctree = restructuredtext.parse(app, text, 'index')
++    assert_node(doctree, addnodes.document)
++    assert len(doctree.children) == 3
++    assert_node(doctree.children[1], nodes.paragraph)
++    assert doctree.children[1].rawsource == "The amazing foo."

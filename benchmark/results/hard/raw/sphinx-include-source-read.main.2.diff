@@ -1,0 +1,147 @@
+diff --git a/CHANGES b/CHANGES
+index ce1185c76..54a66465c 100644
+--- a/CHANGES
++++ b/CHANGES
+@@ -56,6 +56,8 @@ Bugs fixed
+   Patch by Ralf Grubenmann.
+ * #11529: Line Block in LaTeX builder outputs spurious empty token.
+   Patch by Adrian Vollmer.
++* #10678: Emit :event:`source-read` events for files read via
++  the :dudir:`include` directive.
+ * #11196: autosummary: Summary line extraction failed with "e.g."
+ * #10614: Fixed a number of bugs in inheritance diagrams that resulted in
+   missing or broken links.
+diff --git a/sphinx/directives/other.py b/sphinx/directives/other.py
+index 19f7c0a8d..2ad5baa27 100644
+--- a/sphinx/directives/other.py
++++ b/sphinx/directives/other.py
+@@ -1,5 +1,6 @@
+ from __future__ import annotations
+ 
++import os
+ import re
+ from typing import TYPE_CHECKING, Any, cast
+ 
+@@ -8,6 +9,7 @@ from docutils.parsers.rst import directives
+ from docutils.parsers.rst.directives.admonitions import BaseAdmonition
+ from docutils.parsers.rst.directives.misc import Class
+ from docutils.parsers.rst.directives.misc import Include as BaseInclude
++from docutils.statemachine import StateMachine
+ 
+ from sphinx import addnodes
+ from sphinx.domains.changeset import VersionChange  # noqa: F401  # for compatibility
+@@ -376,7 +378,39 @@ class Include(BaseInclude, SphinxDirective):
+         rel_filename, filename = self.env.relfn2path(self.arguments[0])
+         self.arguments[0] = filename
+         self.env.note_included(filename)
+-        return super().run()
++
++        # Only patch the state machine if there are 'source-read' listeners.
++        if not self.env.events.listeners.get('source-read'):
++            return super().run()
++
++        # The docutils Include directive passes the included lines to
++        # ``state_machine.insert_input()`` when including as reST source.
++        # Intercept that call so that the "source-read" event is emitted for
++        # the included content, as it is for regular source files.
++        def _insert_input(include_lines: list[str], source: str) -> None:
++            # The last two lines are markers added by docutils
++            # (cf. parsers.rst.states.Body.comment()); keep them out of the event.
++            text = '\n'.join(include_lines[:-2])
++
++            path = os.path.abspath(source)
++            docname = self.env.path2doc(path)
++            if docname is None:
++                # the included file is not a document (e.g. ``*.inc``)
++                docname = os.path.splitext(os.path.relpath(path, self.env.srcdir))[0]
++                docname = docname.replace(os.path.sep, '/')
++
++            arg = [text]
++            self.env.events.emit('source-read', docname, arg)
++            include_lines = arg[0].splitlines() + include_lines[-2:]
++
++            # Call the class method; only the instance attribute is patched.
++            return StateMachine.insert_input(self.state_machine, include_lines, source)
++
++        self.state_machine.insert_input = _insert_input  # type: ignore[method-assign]
++        try:
++            return super().run()
++        finally:
++            del self.state_machine.insert_input
+ 
+ 
+ def setup(app: Sphinx) -> dict[str, Any]:
+diff --git a/tests/roots/test-directive-include/baz/baz.inc b/tests/roots/test-directive-include/baz/baz.inc
+new file mode 100644
+index 000000000..9e5d61087
+--- /dev/null
++++ b/tests/roots/test-directive-include/baz/baz.inc
+@@ -0,0 +1 @@
++Baz was here: &REPLACE_ME;
+diff --git a/tests/roots/test-directive-include/conf.py b/tests/roots/test-directive-include/conf.py
+new file mode 100644
+index 000000000..a4768582f
+--- /dev/null
++++ b/tests/roots/test-directive-include/conf.py
+@@ -0,0 +1,2 @@
++project = 'test-directive-include'
++exclude_patterns = ['_build']
+diff --git a/tests/roots/test-directive-include/foo.rst b/tests/roots/test-directive-include/foo.rst
+new file mode 100644
+index 000000000..07f84f19b
+--- /dev/null
++++ b/tests/roots/test-directive-include/foo.rst
+@@ -0,0 +1,6 @@
++Testing
++=======
++
++.. include:: baz/baz.inc
++
++&REPLACE_ME;
+diff --git a/tests/roots/test-directive-include/index.rst b/tests/roots/test-directive-include/index.rst
+new file mode 100644
+index 000000000..3d14bcb13
+--- /dev/null
++++ b/tests/roots/test-directive-include/index.rst
+@@ -0,0 +1,6 @@
++test-directive-include
++======================
++
++.. include:: foo.rst
++
++&REPLACE_ME;
+diff --git a/tests/test_directive_other.py b/tests/test_directive_other.py
+index f221db075..7fe850399 100644
+--- a/tests/test_directive_other.py
++++ b/tests/test_directive_other.py
+@@ -148,3 +148,30 @@ def test_toctree_twice(app):
+     assert_node(doctree[0][0],
+                 entries=[(None, 'foo'), (None, 'foo')],
+                 includefiles=['foo', 'foo'])
++
++
++@pytest.mark.sphinx(testroot='directive-include')
++def test_include_source_read_event(app):
++    sources_reported = {}
++
++    def source_read_handler(app, doc, source):
++        sources_reported[doc] = source[0]
++
++    app.connect('source-read', source_read_handler)
++    text = ".. include:: baz/baz.inc\n"
++    restructuredtext.parse(app, text, 'index')
++    assert sources_reported['baz/baz'] == 'Baz was here: &REPLACE_ME;'
++
++
++@pytest.mark.sphinx(testroot='directive-include')
++def test_include_source_read_event_modifies_content(app):
++    def source_read_handler(app, doc, source):
++        source[0] = source[0].replace('&REPLACE_ME;', 'REPLACED')
++
++    app.connect('source-read', source_read_handler)
++    app.build()
++
++    content = (app.outdir / 'index.html').read_text(encoding='utf8')
++    assert '&amp;REPLACE_ME;' not in content
++    assert '<p>Baz was here: REPLACED</p>' in content
++    assert content.count('<p>REPLACED</p>') == 2

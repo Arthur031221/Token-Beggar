@@ -1,0 +1,116 @@
+{
+ "task": "sphinx-property-type",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 121678,
+  "stop_reason": "end_turn",
+  "session_id": "8d84ddd2-d799-4051-9486-657e9474cb24",
+  "total_cost_usd": 0.726907,
+  "usage": {
+   "input_tokens": 44,
+   "cache_creation_input_tokens": 36200,
+   "cache_read_input_tokens": 767355,
+   "output_tokens": 14183,
+   "output_tokens_details": {
+    "thinking_tokens": 3594
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 36200,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1027,
+     "cache_read_input_tokens": 48444,
+     "cache_creation_input_tokens": 652,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 652
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 44,
+    "outputTokens": 14183,
+    "cacheReadInputTokens": 767355,
+    "cacheCreationInputTokens": 36200,
+    "webSearchRequests": 0,
+    "costUSD": 0.726907,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3594,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 25,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the bug: properties decorated with `@classmethod @property` are now documented. They show up both under `:members:` (including inherited ones) and when documented directly with `autoproperty`, and they're labelled \"class property\".\n\n**Cause:** reading such an attribute from the class runs the getter, so autodoc saw the return value rather than a `property` object. That meant the property documenter never matched it. The docstring check also looked at the return value, so the member was dropped as undocumented.\n\n**Changes:**\n- **`sphinx/ext/autodoc/importer.py`**: a new helper, `get_classmethod_property()`, looks the name up through the class and its base classes and returns the wrapped `property` if it finds a `classmethod` around one. When collecting class members, the real `property` now replaces the evaluated value, so the property's own docstring is used.\n- **`sphinx/ext/autodoc/__init__.py`**: `PropertyDocumenter` now accepts such members, swaps the evaluated value for the real `property` when importing it, and adds `:classmethod:` to the output. The docstring, `:type:` and `:abstractmethod:` then work as they do for normal properties.\n- **`sphinx/domains/python.py`**: `py:property` has a new `:classmethod:` option, which prefixes the signature with \"class property\". It's documented in `doc/usage/restructuredtext/domains.rst`, and there are two entries in `CHANGES` (one feature, one bug fix).\n\nThe lookup reads the class's own attribute table rather than the evaluated value, so it doesn't depend on the Python version. I only ran it on Python 3.9, though. Python 3.13 dropped `classmethod` wrapping a `property`; such code is then documented as a class property even though accessing the attribute won't actually work.\n\n**Tests:**\n- `target/properties.py` now has `Foo.prop1` (a normal property, renamed from `prop`), `Foo.prop2` (a classmethod property) and a subclass `Bar` that inherits both.\n- I updated or added tests in `test_ext_autodoc_autoclass.py` (members and inherited members), `test_ext_autodoc_autoproperty.py` (direct and inherited) and `test_domain_py.py` (the new option).\n\n**Results:** 271 passed and 2 failed across the autodoc, autosummary and napoleon tests; the Python-domain tests all pass. The 2 failures (`test_autodoc` and `test_autodoc_typed_instance_variables`) only happen when `test_ext_autodoc.py` runs together with the other autodoc test files. They fail the same way on the code without my changes, and `test_ext_autodoc.py` passes on its own. `tests/test_util_inspect.py` couldn't be collected because this venv's Python lacks the `_testcapi` module, and flake8 and mypy aren't installed in the venv, so I didn't run the linters. Nothing is committed.",
+  "ttft_ms": 7698,
+  "type": "result",
+  "duration_ms": 172994,
+  "uuid": "e9d22179-c582-4fb4-9589-064da443e856",
+  "ttft_stream_ms": 1034,
+  "time_to_request_ms": 315,
+  "first_content_frame_ms": 1035,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

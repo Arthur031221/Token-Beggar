@@ -1,0 +1,116 @@
+{
+ "task": "django-aggregate-count",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 177786,
+  "stop_reason": "end_turn",
+  "session_id": "7728fff7-b689-4b50-a14c-f6a7fcd6da1a",
+  "total_cost_usd": 0.7352292,
+  "usage": {
+   "input_tokens": 44,
+   "cache_creation_input_tokens": 35139,
+   "cache_read_input_tokens": 743606,
+   "output_tokens": 15261,
+   "output_tokens_details": {
+    "thinking_tokens": 6119
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 35139,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1125,
+     "cache_read_input_tokens": 45865,
+     "cache_creation_input_tokens": 2170,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2170
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 44,
+    "outputTokens": 15261,
+    "cacheReadInputTokens": 743606,
+    "cacheCreationInputTokens": 35139,
+    "webSearchRequests": 0,
+    "costUSD": 0.7352292,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 6119,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 23,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`count()` and `aggregate()` now leave out annotations that the result doesn't need. The new tests pass, and so does the full suite apart from 7 failures that also happen on the original code.\n\n**What changed** (in `get_aggregation()` in `django/db/models/sql/query.py`):\n\n- **Annotations without aggregates** (e.g. `annotate(x=F(\"pages\") * 2).count()`) no longer force a subquery. Before, any annotation at all wrapped the count in a subquery. Now it's a single `SELECT COUNT(*)`. If an aggregate refers to such an annotation, as in `aggregate(Sum(\"x\"))`, the annotation's expression is substituted in directly.\n- **Aggregate annotations** (e.g. `annotate(Count(\"chapters\")).count()`) still need a subquery grouped by primary key, because the join can multiply rows. But the inner query now selects only:\n  - the aggregates being computed,\n  - any annotations they refer to,\n  - any annotations used in the query's `GROUP BY`.\n  \n  Everything else is dropped from the select list.\n- **Filters on an aggregate that isn't selected** (e.g. `alias(n=Count(...)).filter(n__gt=1)`) still use a subquery, as they need to.\n\nTwo cases deliberately keep the old behaviour:\n- **Filters on window functions:** the inner query is not trimmed.\n- **`distinct()` querysets:** the inner query is not trimmed, because removing columns would change which rows count as distinct.\n\nTo find which annotations an aggregate uses, I added a small `get_refs()` method to expressions (`django/db/models/expressions.py`) and to `WhereNode` (`django/db/models/sql/where.py`).\n\n**Limitation:** with `annotate(Count(\"chapters\")).count()`, the `Count` itself is gone but the join to chapters and the `GROUP BY` stay in the subquery. Dropping the join safely would need much deeper changes, so the speed-up for aggregate annotations comes from computing fewer expressions, not from losing the join.\n\n**Tests:** I added 7 tests at the end of `tests/aggregation/tests.py`. They check the generated SQL (number of `SELECT`s, and that unused aliases are absent) as well as the results. One covers `values()` grouped on an annotation; when I temporarily disabled that part of the fix it gave a wrong count (6 instead of 4), so the test does catch it. I also checked by hand a few more cases against the original code (window-function filters, sliced and `distinct()` querysets, annotations that build on aggregates, filtered `Count`s), and the results were identical.\n\n**Test run:** the full suite ran serially, 16,092 tests. The 7 failures are in `mail`, `admin_scripts` and `utils_tests.test_html`, and the same tests fail on the unmodified code, so they come from the environment. Running with `--parallel 4` crashed while reporting one of those failures, which is why I re-ran serially.\n\nNothing is committed.",
+  "ttft_ms": 5561,
+  "type": "result",
+  "duration_ms": 703946,
+  "uuid": "fe9939e9-b0ed-47e5-8d94-b7369475f8c1",
+  "ttft_stream_ms": 3168,
+  "time_to_request_ms": 78,
+  "first_content_frame_ms": 3168,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

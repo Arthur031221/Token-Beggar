@@ -1,0 +1,116 @@
+{
+ "task": "jinja-namespace-tuple",
+ "arm": "main",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 96924,
+  "stop_reason": "end_turn",
+  "session_id": "f9dd860d-01af-4c19-a645-49bbae15ef29",
+  "total_cost_usd": 0.47277600000000003,
+  "usage": {
+   "input_tokens": 28,
+   "cache_creation_input_tokens": 25287,
+   "cache_read_input_tokens": 410740,
+   "output_tokens": 9411,
+   "output_tokens_details": {
+    "thinking_tokens": 2290
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 25287,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 745,
+     "cache_read_input_tokens": 37820,
+     "cache_creation_input_tokens": 363,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 363
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 28,
+    "outputTokens": 9411,
+    "cacheReadInputTokens": 410740,
+    "cacheCreationInputTokens": 25287,
+    "webSearchRequests": 0,
+    "costUSD": 0.47277600000000003,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2290,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 23,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`{% set ns.a, ns.b = ... %}` now works. The template from the issue renders correctly (`/a/b /a/b/c`), and the full test suite passes (913 tests).\n\n**Cause:** the parser only recognized `ns.attr` when it was the entire target of `set`. Inside a tuple, the target was parsed as a plain name, so it stopped at the `.` and then failed on the `,`. The compiler had a second problem: it put the \"is this really a namespace?\" check right in the middle of the target code. That only works when there's a single target.\n\n**Changes:**\n- **`src/jinja2/parser.py`**: `parse_primary()` and `parse_tuple()` take a new `with_namespace` option, which lets them read `name.attr` as a namespace reference. `parse_assign_target()` now passes it through for both single and tuple targets. Only `set` turns it on, so `for` loop targets behave as before.\n- **`src/jinja2/compiler.py`**: `visit_NSRef` now just writes the reference. A new `_write_namespace_checks` helper checks every namespace reference in the target before the assignment, so assigning to something that isn't a namespace still raises `TemplateRuntimeError`. This is used for both the one-line `set` and the `{% set %}...{% endset %}` block form.\n- **`tests/test_core_tags.py`**: new tests for:\n  - basic tuple assignment\n  - swapping two values\n  - mixing namespace attributes and plain variables (the issue's case)\n  - two different namespaces in one statement\n  - the error for a non-namespace target\n  - the block form\n  - `for ns.a, b in ...` still being a syntax error\n- **`CHANGES.rst`**: an entry under 3.1.5. I cited it as `:issue:`1413`` from memory and didn't confirm it, so please check the issue number before merging.\n\nI couldn't run a type check because mypy isn't installed in `.venv`. Nothing is committed.",
+  "ttft_ms": 2722,
+  "type": "result",
+  "duration_ms": 102358,
+  "uuid": "019deee2-b756-4814-ac2a-7920fcf1ba87",
+  "ttft_stream_ms": 2467,
+  "time_to_request_ms": 468,
+  "first_content_frame_ms": 2467,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

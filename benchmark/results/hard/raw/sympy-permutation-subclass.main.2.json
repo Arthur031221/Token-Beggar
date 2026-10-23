@@ -1,0 +1,116 @@
+{
+ "task": "sympy-permutation-subclass",
+ "arm": "main",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 111494,
+  "stop_reason": "end_turn",
+  "session_id": "cca47383-1ad7-42cb-8d17-558aa2a440e0",
+  "total_cost_usd": 0.48447880000000004,
+  "usage": {
+   "input_tokens": 36,
+   "cache_creation_input_tokens": 25360,
+   "cache_read_input_tokens": 527174,
+   "output_tokens": 8801,
+   "output_tokens_details": {
+    "thinking_tokens": 1817
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 25360,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 888,
+     "cache_read_input_tokens": 36840,
+     "cache_creation_input_tokens": 1416,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1416
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 36,
+    "outputTokens": 8801,
+    "cacheReadInputTokens": 527174,
+    "cacheCreationInputTokens": 25360,
+    "webSearchRequests": 0,
+    "costUSD": 0.48447880000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1817,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 19,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the issue: subclasses of `Permutation` now get instances of their own class back, both when you create them directly and from any method that returns a new permutation. The new test passes. All changes are in `sympy/combinatorics/permutations.py`, and nothing is committed.\n\n**What I changed**\n- **`_af_new`** is now a classmethod and builds the object with `Basic.__new__(cls, perm)`, where it used to always use `Perm`. `rmul_with_af` became a classmethod too, for the same reason.\n- **`__new__`** uses `cls` / `cls._af_new` everywhere. If you pass in an existing permutation, it's returned as-is only when it's already an instance of `cls`. So `MyPerm(plain_perm)` gives you a `MyPerm`, while `Permutation(my_perm)` still returns `my_perm` unchanged.\n- **Every other method** that made a new permutation now uses `self._af_new` / `self.__class__` / `self(...)`. That covers multiplication, power, conjugation, inverse, the commutator, the `next_*` methods, all the `unrank_*` methods, `from_sequence`, `from_inversion_vector`, `josephus`, `random`, `__add__` and `__call__`. (The classmethods name their first argument `self`, so `self(...)` is the class there.)\n- **`__pow__`** used `type(n) == Perm` to reject raising a permutation to a permutation. A subclass would have slipped past that check, so it's now `isinstance(n, Permutation)`.\n- The module-level `_af_new = Perm._af_new` alias is unchanged. It now refers to `Permutation._af_new`, so other modules that use it, like `perm_groups` and `tensor_can`, behave exactly as before.\n\n**Test:** I added `test_permutation_subclass` to `sympy/combinatorics/tests/test_permutations.py`. It includes the example from the issue: a subclass with its own `__call__`, `__eq__` and `__hash__`. It then checks that each construction route and each method listed above returns an instance of the subclass.\n\n**Test results:** the tests in `sympy/combinatorics` and `sympy/tensor` show 236 passed and 4 failed. Those 4 are tests marked skip or expected-failure, which plain pytest counts as failures; three of them already fail the same way on the unchanged code. The doctests have 30 failures, and the unchanged code has the same 30.\n\nTwo things I left alone because they were already that way and aren't part of this issue:\n- `__repr__` still prints `Permutation(...)` for subclass instances.\n- `p * [list]` still raises, as before; only `[list] * p` is supported.",
+  "ttft_ms": 5286,
+  "type": "result",
+  "duration_ms": 240660,
+  "uuid": "6e72f7ef-fd60-46b8-a11d-5f82129c2b57",
+  "ttft_stream_ms": 4400,
+  "time_to_request_ms": 170,
+  "first_content_frame_ms": 4400,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,163 @@
+diff --git a/doc/whatsnew/fragments/7229.bugfix b/doc/whatsnew/fragments/7229.bugfix
+new file mode 100644
+index 000000000..bc6c4e80a
+--- /dev/null
++++ b/doc/whatsnew/fragments/7229.bugfix
+@@ -0,0 +1,3 @@
++Fix crash when a regexp_csv option (e.g. bad-names-rgxs) contains a regular expression with a comma inside braces, such as (foo{1,3}).
++
++Closes #7229
+diff --git a/pylint/config/argument.py b/pylint/config/argument.py
+index 30a5fd175..2d2a46a3f 100644
+--- a/pylint/config/argument.py
++++ b/pylint/config/argument.py
+@@ -114,7 +114,7 @@ def _regex_transformer(value: str) -> Pattern[str]:
+ def _regexp_csv_transfomer(value: str) -> Sequence[Pattern[str]]:
+     """Transforms a comma separated list of regular expressions."""
+     patterns: list[Pattern[str]] = []
+-    for pattern in _csv_transformer(value):
++    for pattern in pylint_utils._check_regexp_csv(value):
+         patterns.append(_regex_transformer(pattern))
+     return patterns
+ 
+diff --git a/pylint/utils/__init__.py b/pylint/utils/__init__.py
+index 61833a598..eecb3cbe3 100644
+--- a/pylint/utils/__init__.py
++++ b/pylint/utils/__init__.py
+@@ -14,6 +14,7 @@ from pylint.utils.utils import (
+     HAS_ISORT_5,
+     IsortDriver,
+     _check_csv,
++    _check_regexp_csv,
+     _splitstrip,
+     _unquote,
+     decoding_stream,
+@@ -32,6 +33,7 @@ __all__ = [
+     "HAS_ISORT_5",
+     "IsortDriver",
+     "_check_csv",
++    "_check_regexp_csv",
+     "_splitstrip",
+     "_unquote",
+     "decoding_stream",
+diff --git a/pylint/utils/utils.py b/pylint/utils/utils.py
+index fa7f7b92f..fbf0df49d 100644
+--- a/pylint/utils/utils.py
++++ b/pylint/utils/utils.py
+@@ -22,7 +22,8 @@ import sys
+ import textwrap
+ import tokenize
+ import warnings
+-from collections.abc import Sequence
++from collections import deque
++from collections.abc import Iterable, Sequence
+ from io import BufferedReader, BytesIO
+ from typing import (
+     TYPE_CHECKING,
+@@ -253,6 +254,34 @@ def _check_csv(value: list[str] | tuple[str] | str) -> Sequence[str]:
+     return _splitstrip(value)
+ 
+ 
++def _check_regexp_csv(value: list[str] | tuple[str] | str) -> Iterable[str]:
++    r"""Split a comma-separated string of regexes, ignoring commas inside braces.
++
++    See: https://github.com/pylint-dev/pylint/issues/7229.
++    """
++    if isinstance(value, (list, tuple)):
++        yield from value
++    else:
++        columns = deque(value)
++        current: list[str] = []
++        depth = 0
++        for char in columns:
++            if char == "{":
++                depth += 1
++            elif char == "}" and depth > 0:
++                depth -= 1
++            if char == "," and depth == 0:
++                item = "".join(current).strip()
++                if item:
++                    yield item
++                current = []
++            else:
++                current.append(char)
++        item = "".join(current).strip()
++        if item:
++            yield item
++
++
+ def _comment(string: str) -> str:
+     """Return string as a comment."""
+     lines = [line.strip() for line in string.splitlines()]
+diff --git a/tests/config/test_config.py b/tests/config/test_config.py
+index 83c8b072e..9d1d5e40e 100644
+--- a/tests/config/test_config.py
++++ b/tests/config/test_config.py
+@@ -5,6 +5,7 @@
+ from __future__ import annotations
+ 
+ import os
++import re
+ from pathlib import Path
+ from tempfile import TemporaryDirectory
+ 
+@@ -137,16 +138,24 @@ def test_csv_regex_error(capsys: CaptureFixture) -> None:
+     """
+     with pytest.raises(SystemExit):
+         Run(
+-            [str(EMPTY_MODULE), r"--bad-names-rgx=(foo{1,3})"],
++            [str(EMPTY_MODULE), r"--bad-names-rgx=(foo{1,}"],
+             exit=False,
+         )
+     output = capsys.readouterr()
+     assert (
+-        r"Error in provided regular expression: (foo{1 beginning at index 0: missing ), unterminated subpattern"
++        r"Error in provided regular expression: (foo{1,} beginning at index 0: missing ), unterminated subpattern"
+         in output.err
+     )
+ 
+ 
++def test_regexp_csv_with_braces() -> None:
++    """Commas inside braces must not split a regexp_csv value (issue #7229)."""
++    run = Run([str(EMPTY_MODULE), "--bad-names-rgxs=(foo{1,3})"], exit=False)
++    assert len(run.linter.config.bad_names_rgxs) == 1
++    assert isinstance(run.linter.config.bad_names_rgxs[0], re.Pattern)
++    assert run.linter.config.bad_names_rgxs[0].pattern == "(foo{1,3})"
++
++
+ def test_short_verbose(capsys: CaptureFixture) -> None:
+     """Check that we correctly handle the -v flag."""
+     Run([str(EMPTY_MODULE), "-v"], exit=False)
+diff --git a/tests/utils/unittest_utils.py b/tests/utils/unittest_utils.py
+index d2cfbd5b2..ebc1b4307 100644
+--- a/tests/utils/unittest_utils.py
++++ b/tests/utils/unittest_utils.py
+@@ -4,6 +4,8 @@
+ 
+ import io
+ 
++import pytest
++
+ from pylint.utils import utils
+ 
+ 
+@@ -22,3 +24,19 @@ def test_decoding_stream_known_encoding() -> None:
+     binary_io = io.BytesIO("€".encode("cp1252"))
+     stream = utils.decoding_stream(binary_io, "cp1252")
+     assert stream.read() == "€"
++
++
++@pytest.mark.parametrize(
++    "value,expected",
++    [
++        ("foo", ["foo"]),
++        ("foo,bar", ["foo", "bar"]),
++        ("foo, bar", ["foo", "bar"]),
++        ("foo, bar{1,3}", ["foo", "bar{1,3}"]),
++        ("(foo{1,3})", ["(foo{1,3})"]),
++        ("foo,,bar", ["foo", "bar"]),
++        (["foo", "bar{1,3}"], ["foo", "bar{1,3}"]),
++    ],
++)
++def test_check_regexp_csv(value, expected) -> None:
++    assert list(utils._check_regexp_csv(value)) == expected

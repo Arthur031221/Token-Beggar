@@ -1,0 +1,191 @@
+diff --git a/CHANGES.rst b/CHANGES.rst
+index c88b161c..27ff02c1 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -44,7 +44,8 @@ Unreleased
+ -   ``SpooledTemporaryFile`` is always used for multipart file parsing.
+     :pr:`3101`
+ -   Raise a ``DuplicateRuleError`` when attempting to add a rule to a map with
+-    an equal rule. :issue:`3037`
++    an equal rule. Rules are only duplicates if they share a method, other
++    than only ``HEAD`` or ``OPTIONS``. :issue:`3037`
+ 
+ 
+ Version 3.1.5
+diff --git a/docs/routing.rst b/docs/routing.rst
+index 5df9e974..1b2c2be3 100644
+--- a/docs/routing.rst
++++ b/docs/routing.rst
+@@ -101,6 +101,17 @@ mode. Variable parts are not equal if they use different converters, although
+ this heuristic may not be perfect depending on what the different converters can
+ actually match.
+ 
++Equal rules are only duplicates if they share a method, since the earlier rule
++would always be matched for that method. A rule without ``methods`` matches any
++method. ``HEAD`` and ``OPTIONS`` are often added automatically (``HEAD`` is
++added if ``GET`` is present), so sharing only those is allowed unless the new
++rule has no other methods left to match.
++
++``strict_slashes`` does not affect duplicates. A rule with a trailing slash is
++not equal to the same rule without one, and each is still matched by its own
++URL. ``merge_slashes`` is applied to the rule before comparing, so with it
++enabled ``/a//b`` duplicates ``/a/b``.
++
+ 
+ Rule Priority
+ =============
+diff --git a/src/werkzeug/routing/matcher.py b/src/werkzeug/routing/matcher.py
+index ee7651db..6cbd9a86 100644
+--- a/src/werkzeug/routing/matcher.py
++++ b/src/werkzeug/routing/matcher.py
+@@ -53,7 +53,7 @@ class StateMachineMatcher:
+                     state = new_state
+ 
+         for existing in state.rules:
+-            if rule == existing:
++            if rule._is_duplicate_of(existing):
+                 raise DuplicateRuleError(existing, rule)
+ 
+         state.rules.append(rule)
+diff --git a/src/werkzeug/routing/rules.py b/src/werkzeug/routing/rules.py
+index 18cfba1b..63136f33 100644
+--- a/src/werkzeug/routing/rules.py
++++ b/src/werkzeug/routing/rules.py
+@@ -914,6 +914,34 @@ class Rule(RuleFactory):
+ 
+     __hash__ = None  # type: ignore
+ 
++    def _is_duplicate_of(self, existing: Rule) -> bool:
++        """Check if this rule duplicates a rule that was already added to the
++        map. The rules must be equal, and must share a method that would always
++        be matched by the existing rule instead of this rule.
++
++        ``HEAD`` and ``OPTIONS`` are commonly added automatically, for example
++        ``HEAD`` is added if ``GET`` is present, and Flask adds ``OPTIONS`` to
++        every rule. Sharing only those does not make a duplicate, unless all of
++        this rule's methods are already handled by the existing rule.
++
++        :param existing: The rule that was already added to the map, which
++            would be matched before this rule.
++
++        :internal:
++        """
++        if self != existing:
++            return False
++
++        # None means the rule matches any method.
++        if existing.methods is None:
++            return True
++
++        if self.methods is None:
++            return bool(existing.methods - {"HEAD", "OPTIONS"})
++
++        shared = self.methods & existing.methods
++        return bool(shared - {"HEAD", "OPTIONS"}) or self.methods <= shared
++
+     def __str__(self) -> str:
+         out = self.rule
+ 
+diff --git a/tests/test_routing.py b/tests/test_routing.py
+index 4f31037c..c56629d8 100644
+--- a/tests/test_routing.py
++++ b/tests/test_routing.py
+@@ -320,6 +320,98 @@ def test_no_duplicate_different_converters() -> None:
+     )
+ 
+ 
++@pytest.mark.parametrize(
++    ("existing", "new"),
++    [
++        (None, None),
++        (None, ["POST"]),
++        (["GET"], None),
++        (["GET"], ["GET"]),
++        (["GET"], ["GET", "POST"]),
++        (["GET", "POST"], ["POST", "PUT"]),
++        # sharing only HEAD or OPTIONS, but nothing left to match
++        (["GET"], ["HEAD"]),
++        (["OPTIONS"], ["OPTIONS"]),
++        (["GET", "HEAD", "OPTIONS"], ["HEAD", "OPTIONS"]),
++    ],
++)
++def test_duplicate_methods(existing: list[str] | None, new: list[str] | None) -> None:
++    """Equal rules that share a method are duplicates."""
++    with pytest.raises(DuplicateRuleError):
++        r.Map(
++            [
++                r.Rule("/", endpoint="a", methods=existing),
++                r.Rule("/", endpoint="b", methods=new),
++            ]
++        )
++
++
++@pytest.mark.parametrize(
++    ("existing", "new", "match_existing", "match_new"),
++    [
++        (["GET"], ["POST"], "GET", "POST"),
++        # HEAD is added automatically
++        (["HEAD"], ["GET"], "HEAD", "GET"),
++        # Flask adds OPTIONS to every rule
++        (["GET", "OPTIONS"], ["POST", "OPTIONS"], "GET", "POST"),
++        (["OPTIONS"], None, "OPTIONS", "GET"),
++    ],
++)
++def test_no_duplicate_methods(
++    existing: list[str] | None,
++    new: list[str] | None,
++    match_existing: str,
++    match_new: str,
++) -> None:
++    """Equal rules that don't share a method, or that only share HEAD or OPTIONS,
++    are not duplicates. Each rule is still matched for its other methods.
++    """
++    m = r.Map(
++        [
++            r.Rule("/", endpoint="a", methods=existing),
++            r.Rule("/", endpoint="b", methods=new),
++        ]
++    )
++    a = m.bind("localhost")
++    assert a.match("/", method=match_existing) == ("a", {})
++    assert a.match("/", method=match_new) == ("b", {})
++
++
++@pytest.mark.parametrize("strict_slashes", [True, False])
++def test_no_duplicate_strict_slashes(strict_slashes: bool) -> None:
++    """A rule with a trailing slash is not a duplicate of one without, and each
++    still matches its own URL.
++    """
++    m = r.Map(
++        [
++            r.Rule("/a", endpoint="leaf", strict_slashes=strict_slashes),
++            r.Rule("/a/", endpoint="branch", strict_slashes=strict_slashes),
++        ]
++    )
++    a = m.bind("localhost")
++    assert a.match("/a") == ("leaf", {})
++    assert a.match("/a/") == ("branch", {})
++
++
++def test_duplicate_merge_slashes() -> None:
++    """Rules are compared after merging slashes."""
++    with pytest.raises(DuplicateRuleError):
++        r.Map([r.Rule("/a/b", endpoint="a"), r.Rule("/a//b", endpoint="b")])
++
++
++def test_no_duplicate_merge_slashes_disabled() -> None:
++    """If a rule disables merge_slashes, consecutive slashes are matched exactly."""
++    m = r.Map(
++        [
++            r.Rule("/a/b", endpoint="a"),
++            r.Rule("/a//b", endpoint="b", merge_slashes=False),
++        ]
++    )
++    a = m.bind("localhost")
++    assert a.match("/a/b") == ("a", {})
++    assert a.match("/a//b") == ("b", {})
++
++
+ def test_environ_defaults():
+     environ = create_environ("/foo")
+     assert environ["PATH_INFO"] == "/foo"

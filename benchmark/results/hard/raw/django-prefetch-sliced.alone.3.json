@@ -1,0 +1,116 @@
+{
+ "task": "django-prefetch-sliced",
+ "arm": "alone",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 196558,
+  "stop_reason": "end_turn",
+  "session_id": "1ad205d8-2304-4c0d-b649-bb520edd3d32",
+  "total_cost_usd": 0.9430575999999999,
+  "usage": {
+   "input_tokens": 60,
+   "cache_creation_input_tokens": 43407,
+   "cache_read_input_tokens": 1151208,
+   "output_tokens": 18266,
+   "output_tokens_details": {
+    "thinking_tokens": 5815
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 43407,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1114,
+     "cache_read_input_tokens": 55760,
+     "cache_creation_input_tokens": 543,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 543
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 60,
+    "outputTokens": 18266,
+    "cacheReadInputTokens": 1151208,
+    "cacheCreationInputTokens": 43407,
+    "webSearchRequests": 0,
+    "costUSD": 0.9430575999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 5815,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 44,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`prefetch_related()` now accepts `Prefetch` objects with sliced querysets, so the example in the issue works. The slice is applied to each parent separately: `Post.objects.all()[:3]` gives each category its own first three posts. I haven't committed anything.\n\n**How it works.** The repo's latest commit added support for filtering against window functions, and the fix builds on that. When the prefetch queryset is sliced, the slice is removed and replaced with a `ROW_NUMBER() OVER (PARTITION BY <related key> ORDER BY <queryset ordering>)` filter. It's still one query for the whole prefetch. I checked the SQL it generates: the partition reuses the existing join, and the row-number bounds match the slice.\n\n**Changes:**\n- `django/db/models/fields/related_descriptors.py`: a new helper, `_filter_prefetch_queryset()`, used for reverse foreign key and many-to-many prefetches. On databases without window function support it raises `NotSupportedError` with a clear message instead of the old filter-after-slice error.\n- `django/contrib/contenttypes/fields.py`: the same support for `GenericRelation`. The partition is by content type and object id, so objects of different types with the same id don't count against each other's limit.\n- `django/db/models/query.py`: a bug I hit while testing. Without `to_attr`, the prefetch still failed with the old filter-after-slice error. Prefetching stores its results in each object's related manager, and building that stored queryset re-filters the lookup queryset, which isn't allowed on a sliced one. The slice is now removed from a single copy before that loop. The cached results are still sliced. The catch is that chaining onto the manager afterwards, e.g. `book.authors.filter(...)`, queries the full relation rather than the sliced one.\n- Docs: a section in `docs/ref/models/querysets.txt` (with a `versionchanged:: 4.2` note) and an entry in `docs/releases/4.2.txt`.\n\n**Tests:** new `PrefetchLimitTests` in `tests/prefetch_related/tests.py` cover many-to-many in both directions, reverse foreign key, generic relations, reversed ordering, and the case without `to_attr`. These run only where window functions are supported. A separate test checks the `NotSupportedError` on databases without them; it's skipped on SQLite here, so I triggered that error by hand once by patching the feature flag off. The `prefetch_related`, `generic_relations`, `contenttypes_tests`, `many_to_many`, `many_to_one`, `queries`, `expressions_window` and `foreign_object` suites all pass (880 tests) on SQLite. I couldn't run flake8 or black because they aren't installed in `.venv`.\n\nTwo limits:\n- Forward foreign key and one-to-one prefetches still don't accept slices. Each of those fetches a single object per parent, so a slice doesn't mean much there.\n- A slice with no ordering on the queryset, and none in the model's `Meta.ordering`, picks arbitrary rows per parent, just as an unordered slice does in a normal query.",
+  "ttft_ms": 8740,
+  "type": "result",
+  "duration_ms": 203131,
+  "uuid": "dabb8e7c-7134-48fd-90a4-7a339aa3f049",
+  "ttft_stream_ms": 1836,
+  "time_to_request_ms": 61,
+  "first_content_frame_ms": 1837,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 4,
+  "f2p_total": 4,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

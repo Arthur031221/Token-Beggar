@@ -1,0 +1,116 @@
+{
+ "task": "django-aggregate-count",
+ "arm": "main",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 180929,
+  "stop_reason": "end_turn",
+  "session_id": "8c57cb4a-0e61-46cc-899a-de2f7503033e",
+  "total_cost_usd": 0.8259164000000001,
+  "usage": {
+   "input_tokens": 38,
+   "cache_creation_input_tokens": 39364,
+   "cache_read_input_tokens": 743462,
+   "output_tokens": 18108,
+   "output_tokens_details": {
+    "thinking_tokens": 10020
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 39364,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 997,
+     "cache_read_input_tokens": 51834,
+     "cache_creation_input_tokens": 426,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 426
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 38,
+    "outputTokens": 18108,
+    "cacheReadInputTokens": 743462,
+    "cacheCreationInputTokens": 39364,
+    "webSearchRequests": 0,
+    "costUSD": 0.8259164000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 10020,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 22,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`Book.objects.annotate(Count('chapters')).count()` no longer computes the unused `COUNT(chapters)`. More generally, `count()` and `aggregate()` now leave out annotations that nothing refers to. The new tests and the ORM test suites pass. Nothing is committed.\n\n**Library changes**\n- **`django/db/models/expressions.py`**: added `get_refs()`, which returns the set of annotation aliases an expression refers to through `Ref()`. I also added it to `WhereNode` in `django/db/models/sql/where.py`, so it sees inside an aggregate's `filter=`.\n- **`Query.get_aggregation()` in `django/db/models/sql/query.py`**:\n  - **No subquery for non-aggregate annotations.** An annotation like `annotate(x=F('rating') * 2)` used to force a `SELECT COUNT(*) FROM (...)` wrapper. Now a subquery is only used when it's actually needed: existing aggregates (including `alias()` ones), a HAVING or QUALIFY filter, `values()` grouping, slicing, `distinct()`, combined queries, or an aggregate that refers to an existing annotation. Otherwise the existing annotations are simply dropped and the count runs directly on the table.\n  - **Fewer columns when a subquery is used.** The inner query selects only what's needed: annotations the outer aggregates refer to, aliases used by a `values()` grouping, and grouped annotations whose columns feed into the GROUP BY. Everything else is dropped.\n  - **Filters still apply.** An annotation used in a filter, such as `filter(authors_count__gt=1)`, still takes effect through the WHERE or HAVING clause.\n\n**Where it stays conservative**\n- **Joins stay.** Joins added by a dropped annotation are kept, so with a multi-valued relation the count is the same as before. The saving is the skipped aggregate computation, not the join.\n- **No stripping for window-function filters (QUALIFY) or combined queries** like `union()`. Both would need columns renamed across queries, so they keep their current behaviour.\n\n**Tests:** I added six tests to `tests/aggregation/tests.py` covering:\n- the SQL no longer containing the unused annotations;\n- counts with multi-valued joins and with filters on annotations;\n- referenced annotations still being kept;\n- `values()` grouping being preserved.\n\nWith the library change reverted, three of them fail, as expected.\n\nThe aggregation, aggregation_regress, annotations, expressions, expressions_window, queries, lookup, db_functions, filtered_relation and ordering suites all pass. The full suite has 7 failures, all in `mail`, `admin_scripts` and `utils_tests.test_html`. Those also fail with my change reverted, so they're unrelated to this work.",
+  "ttft_ms": 14001,
+  "type": "result",
+  "duration_ms": 1051619,
+  "uuid": "06494753-7a6c-4e13-9c3c-bed400434ec7",
+  "ttft_stream_ms": 1480,
+  "time_to_request_ms": 123,
+  "first_content_frame_ms": 1480,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,116 @@
+{
+ "task": "django-remake-table-index",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 157408,
+  "stop_reason": "end_turn",
+  "session_id": "f05068bc-629b-4664-b02a-0518cb62f66d",
+  "total_cost_usd": 0.8654822,
+  "usage": {
+   "input_tokens": 48,
+   "cache_creation_input_tokens": 43288,
+   "cache_read_input_tokens": 1018831,
+   "output_tokens": 15761,
+   "output_tokens_details": {
+    "thinking_tokens": 6852
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 43288,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1139,
+     "cache_read_input_tokens": 55885,
+     "cache_creation_input_tokens": 299,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 299
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 48,
+    "outputTokens": 15761,
+    "cacheReadInputTokens": 1018831,
+    "cacheCreationInputTokens": 43288,
+    "webSearchRequests": 0,
+    "costUSD": 0.8654822,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 6852,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 32,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed the bug: changing `db_collation` on a primary key (or unique field) now passes the new collation on to the foreign key columns that point at it. Here the new tests and the existing `schema`, `migrations`, `model_fields`, `invalid_models_tests`, `inspectdb`, `backends` and `field_deconstruction` suites pass, but only on SQLite. I couldn't run MySQL or Oracle, so the MySQL SQL in the issue isn't checked directly. black and flake8 aren't installed in the venv, so I only checked line lengths by hand.\n\n**The cause:** a `ForeignKey` never reported the collation of the field it points to. So the migration code never saw a collation change on the foreign key columns, and new foreign key columns were created without the collation too.\n\n**Changes:**\n- **`django/db/models/fields/related.py`**: `ForeignKey.db_parameters()` now includes the target field's `collation`. As a result, new foreign key columns get `COLLATE \u2026` when they're created.\n- **`django/db/backends/base/schema.py`** (`_alter_field`):\n  - A collation change on a primary key or unique field now counts as a change on its own, even when the column type stays the same. Incoming foreign key constraints are dropped and the referencing columns get updated.\n  - When a referencing column's collation changes, it's altered with `_alter_column_collation_sql`, so the `COLLATE` clause now appears in those statements.\n- **`django/db/backends/mysql/schema.py`**: added a `_alter_column_collation_sql` override that keeps `NULL`/`NOT NULL`. MySQL's `MODIFY` resets the column's settings, so without this the foreign key columns would have quietly become nullable. With it, the output matches what the issue asks for, e.g. ``MODIFY `account_id` varchar(22) NOT NULL COLLATE `utf8_bin` ``.\n- **`django/db/backends/sqlite3/schema.py`**: tables whose foreign keys point to the field are now rebuilt when its collation changes, not only when its type changes.\n- **`django/db/backends/oracle/features.py`**: the new migration test is skipped on Oracle, because Oracle can't change the collation of an indexed column and foreign key columns are indexed.\n\n**Tests:**\n- `migrations.test_operations.OperationTests.test_alter_field_pk_fk_db_collation`: changes a primary key's collation and checks the one-to-one and many-to-many foreign key columns going forwards and backwards. It checks the collation, `NOT NULL`, and that the foreign key constraints still exist. It fails without the fix (`None != 'nocase'`) and passes with it. It uses a new `assertColumnCollation` helper in `tests/migrations/test_base.py`.\n- `schema.tests.SchemaTests.test_db_collation_fk_to_collated_pk`: checks that a new foreign key column gets the collation of the primary key it references.\n\n**One limitation:** on MySQL the override takes the null setting from the new field, because this method isn't given the old one. If a single change alters the collation, makes the field `NOT NULL`, and adds a default, and the table already has NULL rows, the collation statement could fail before those rows are filled in. Before this change, that statement made the column nullable instead. This only affects the field being altered, not the foreign key columns this issue is about. Fixing it properly would mean changing the method's signature.",
+  "ttft_ms": 12590,
+  "type": "result",
+  "duration_ms": 172358,
+  "uuid": "2c5f9691-ef86-44b2-98f5-55b524e9d238",
+  "ttft_stream_ms": 1432,
+  "time_to_request_ms": 82,
+  "first_content_frame_ms": 1433,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

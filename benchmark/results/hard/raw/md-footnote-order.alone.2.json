@@ -1,0 +1,116 @@
+{
+ "task": "md-footnote-order",
+ "arm": "alone",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 185043,
+  "stop_reason": "end_turn",
+  "session_id": "c1f23f83-db18-4719-9f37-c7fbd7631cee",
+  "total_cost_usd": 0.9150347999999999,
+  "usage": {
+   "input_tokens": 36,
+   "cache_creation_input_tokens": 48173,
+   "cache_read_input_tokens": 699934,
+   "output_tokens": 19476,
+   "output_tokens_details": {
+    "thinking_tokens": 6280
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 48173,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 945,
+     "cache_read_input_tokens": 60219,
+     "cache_creation_input_tokens": 850,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 850
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 36,
+    "outputTokens": 19476,
+    "cacheReadInputTokens": 699934,
+    "cacheCreationInputTokens": 48173,
+    "webSearchRequests": 0,
+    "costUSD": 0.9150347999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 6280,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 18,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Footnotes are now numbered and listed in the order they're first referenced. Your example gives `blurb` as 1 and `blah` as 2. This changes the default behaviour, so I added a `USE_DEFINITION_ORDER` option (default `False`) that brings back the old definition-order numbering. All 1062 tests pass with unittest, including 6 new ones. Nothing is committed.\n\n**How it works** (`markdown/extensions/footnotes.py`)\n- I first tried recording references as the inline processor met them. That gave wrong numbers, because the inline processor doesn't walk the tree in document order. The `raw-html` legacy test caught it.\n- Instead, each reference now gets a temporary placeholder in place of its number. A new tree processor, `FootnoteReorderingProcessor`, runs after inline processing. It walks the finished tree in document order, assigns the numbers, replaces the placeholders, moves the footnote list items into that order and fixes their backlink titles.\n- It runs before the step that copies backlinks for repeated references, so those copies get the right titles too.\n\n**Ordering rules**\n- References in the document body are numbered first, by first occurrence. A footnote cited more than once keeps the number from its first reference.\n- A footnote cited only from inside another footnote is numbered after all body references, in the order those footnotes appear in the final list.\n- Footnotes that are defined but never referenced come last, in definition order.\n- I checked a few combinations by hand: a custom `SUPERSCRIPT_TEXT` containing Markdown (e.g. `*[{}]*`) still renders as emphasis, and it works alongside `toc` and the `PLACE_MARKER`.\n\n**Tests** (`tests/test_syntax/extensions/test_footnotes.py`): six new cases cover the issue's example, `USE_DEFINITION_ORDER`, unreferenced footnotes, repeated references, references inside footnotes, and a custom `SUPERSCRIPT_TEXT`.\n\n**Docs**: `docs/extensions/footnotes.md` now explains the ordering and documents the new option, and `docs/changelog.md` has a \"Changed\" entry under Unreleased.\n\nIf you'd rather not change the default, you could set `USE_DEFINITION_ORDER` to `True` and keep only the documentation part, which the issue also suggested.\n\nOne thing about running tests: `pytest tests` stops during collection on a warning from the `TestSuite` class in `test_md_in_html.py`. That isn't related to this change. I ran the full suite with `.venv/bin/python -m unittest discover tests`, and `pytest` on the footnotes test file on its own passes.",
+  "ttft_ms": 3343,
+  "type": "result",
+  "duration_ms": 192856,
+  "uuid": "5f42e341-c3be-4409-800d-9d2f38a6fab6",
+  "ttft_stream_ms": 2175,
+  "time_to_request_ms": 85,
+  "first_content_frame_ms": 2175,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

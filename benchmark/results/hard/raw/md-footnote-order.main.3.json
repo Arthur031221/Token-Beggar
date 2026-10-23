@@ -1,0 +1,132 @@
+{
+ "task": "md-footnote-order",
+ "arm": "main",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 147691,
+  "stop_reason": "end_turn",
+  "session_id": "5cd82087-e3a7-4a7c-a3b4-0bf48a62fb12",
+  "total_cost_usd": 0.5991012,
+  "usage": {
+   "input_tokens": 16,
+   "cache_creation_input_tokens": 28311,
+   "cache_read_input_tokens": 226451,
+   "output_tokens": 9226,
+   "output_tokens_details": {
+    "thinking_tokens": 2916
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 28311,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 835,
+     "cache_read_input_tokens": 39473,
+     "cache_creation_input_tokens": 1734,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1734
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 9226,
+    "cacheReadInputTokens": 226451,
+    "cacheCreationInputTokens": 28311,
+    "webSearchRequests": 0,
+    "costUSD": 0.4563622000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2916,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 20,
+    "outputTokens": 7464,
+    "cacheReadInputTokens": 167990,
+    "cacheCreationInputTokens": 20504,
+    "webSearchRequests": 0,
+    "costUSD": 0.14273899999999998,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1672,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 9,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Footnotes are now numbered and listed in the order they're first referenced, so the issue's example gives 1 then 2. A new `USE_DEFINITION_ORDER` option (off by default) brings back the old definition-order behavior. All tests pass: 1062 ran (110 skipped) with `.venv/bin/python -m unittest discover tests`, and the footnote test file passes under pytest (18 tests). Nothing is committed.\n\nOne thing you should know: `.venv/bin/python -m pytest tests` stops with a collection error in `test_md_in_html.py` before running anything. I stashed my changes and got the same error, so it was already there.\n\n**How it works** (`markdown/extensions/footnotes.py`):\n- The footnote list is built before the inline step creates the references, so the numbers can't be set at that point. A new step, `FootnoteReorderingProcessor`, runs right after the inline step and before duplicate-reference handling.\n- It walks the document in reading order, numbers each reference by when its footnote is first seen, and sorts the list to match. It also updates the \"Jump back to footnote N\" link titles.\n- A footnote referenced only from inside another footnote comes next in line, after the ones referenced in the body. Footnotes that are never referenced go last, in definition order.\n\n**A bug I fixed in the first version:** the inline step doesn't visit nested blocks in reading order. The first version numbered references at that step, so references inside blockquotes, lists or nested HTML could be numbered backwards. An existing test file, `tests/extensions/extra/raw-html.html`, had been edited to accept that wrong output. I restored it, and it now passes unchanged.\n\n**Tests** (`tests/test_syntax/extensions/test_footnotes.py`): new cases cover:\n- the issue's example\n- `USE_DEFINITION_ORDER=True`\n- an unreferenced footnote going last\n- a repeated reference\n- references inside a blockquote and a list\n- a footnote referenced only from another footnote\n\n**Docs:** the option is described in `docs/extensions/footnotes.md`, and `docs/changelog.md` has an entry under Unreleased flagging this as a behavior change.\n\nThere's a separate, older quirk I left alone: when one footnote is referenced several times from nested blocks, the `fnref`/`fnref2` ids can still be given out in the wrong order. The numbers and back-links are correct; only which reference gets the `fnref2` id differs.",
+  "ttft_ms": 14813,
+  "type": "result",
+  "duration_ms": 155558,
+  "uuid": "f24f31ec-3f57-4d4d-88d9-c229e1c87256",
+  "ttft_stream_ms": 2145,
+  "time_to_request_ms": 116,
+  "first_content_frame_ms": 2145,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

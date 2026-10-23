@@ -1,0 +1,116 @@
+{
+ "task": "sphinx-include-source-read",
+ "arm": "main",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 93417,
+  "stop_reason": "end_turn",
+  "session_id": "e5038871-9494-4888-8dce-8f3b4509c769",
+  "total_cost_usd": 0.45546679999999995,
+  "usage": {
+   "input_tokens": 32,
+   "cache_creation_input_tokens": 24301,
+   "cache_read_input_tokens": 465754,
+   "output_tokens": 8389,
+   "output_tokens_details": {
+    "thinking_tokens": 2515
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 24301,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 884,
+     "cache_read_input_tokens": 36964,
+     "cache_creation_input_tokens": 233,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 233
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 32,
+    "outputTokens": 8389,
+    "cacheReadInputTokens": 465754,
+    "cacheCreationInputTokens": 24301,
+    "webSearchRequests": 0,
+    "costUSD": 0.45546679999999995,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2515,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 17,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Files pulled in with `.. include::` now go through the `source-read` event, so the reproduction from the issue works: when I built it, `index.html` had no `&REPLACE_ME;` left and both paragraphs said `REPLACED`. Nothing is committed.\n\n**Why it happened:** docutils' `include` directive reads the file and inserts its lines straight into the parser, so Sphinx never emitted `source-read` for them. The handler did fire for `something-to-include.rst`, but only because that file is also built as a page of its own. That copy isn't the text that gets inserted into `index.rst`.\n\n**Fix** (`sphinx/directives/other.py`): docutils hands the included lines over through `state_machine.insert_input()`. Sphinx's `Include.run()` now swaps in its own version of that method while the directive runs (only if a `source-read` handler is registered) and removes it afterwards. That version:\n- joins the included lines into text, leaving out the two end-of-inclusion marker lines docutils adds;\n- emits `source-read` with the included file's docname and lets handlers change the text;\n- splits the text back into lines, re-adds the markers, and passes them on as before.\n\nIncludes nested inside included files get the event too. `:literal:` and `:code:` includes don't, because they aren't parsed as reST.\n\n**One thing to watch:** if the included file isn't a document in the source tree (it's outside the source directory, or a docutils standard include like `<isonum.txt>`), the handler gets `docname=None`. A handler that assumes `docname` is always a string could break on that.\n\n**Tests:** I added a test root, `tests/roots/test-directive-include/`, and two tests in `tests/test_directive_other.py`. The first checks that the event fires for an included file (respecting `:start-line:`) but not for a literal include. The second checks that a replacement made by a handler shows up in the parsed doctree when one include contains another. Both fail on the original code and pass with the fix. I also added a CHANGES entry under \"Bugs fixed\".\n\n**Full suite:** 2002 passed and 12 failed. I re-ran 8 of those 12 on the original code (`test_directive_code`, `test_intl`, `test_highlighting`, `test_ext_viewcode`, `test_html_code_role`) and they fail there too, so they aren't caused by this change. The other 4 (lualatex and code-role in `test_build_latex`, and `test_cython`) I didn't re-run; their errors point to the environment (lualatex, a Cython build error, Pygments output). I couldn't run ruff or mypy because neither is installed in `.venv`.",
+  "ttft_ms": 10501,
+  "type": "result",
+  "duration_ms": 253840,
+  "uuid": "42255c3b-ee46-4160-8b71-2c79b931b83a",
+  "ttft_stream_ms": 1707,
+  "time_to_request_ms": 180,
+  "first_content_frame_ms": 1707,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

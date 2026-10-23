@@ -1,0 +1,116 @@
+{
+ "task": "django-remake-table-index",
+ "arm": "main",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 114022,
+  "stop_reason": "end_turn",
+  "session_id": "d8f8aa78-51df-414d-872d-83674b0a1851",
+  "total_cost_usd": 0.5979285999999999,
+  "usage": {
+   "input_tokens": 34,
+   "cache_creation_input_tokens": 31485,
+   "cache_read_input_tokens": 587963,
+   "output_tokens": 11416,
+   "output_tokens_details": {
+    "thinking_tokens": 2892
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 31485,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 968,
+     "cache_read_input_tokens": 44174,
+     "cache_creation_input_tokens": 207,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 207
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 34,
+    "outputTokens": 11416,
+    "cacheReadInputTokens": 587963,
+    "cacheCreationInputTokens": 31485,
+    "webSearchRequests": 0,
+    "costUSD": 0.5979285999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2892,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 0,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 0,
+   "spawned_by_subagents": 0,
+   "completed": 0,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 22,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "A primary key's `db_collation` now carries over to the foreign key columns that point at it. The new tests pass, but only on SQLite. MySQL, where the issue was reported, isn't set up here, so the MySQL code path hasn't actually been run.\n\n**Changes**\n\n- **`django/db/models/fields/related.py`**: `ForeignKey.db_parameters()` now returns the collation of the field it points to. New tables therefore create FK and OneToOne columns with the matching `COLLATE`.\n- **`django/db/backends/base/schema.py`**: `_alter_field()` used to drop and rebuild incoming foreign keys only when a PK or unique field's type changed. It now does the same when the collation changes. When it updates the referencing columns, it changes their collation too, using the same SQL the main column gets.\n- **`django/db/backends/sqlite3/schema.py`**: tables whose foreign keys point at the field are also rebuilt when only the collation changes.\n- **`django/db/backends/mysql/schema.py`**: the collation `MODIFY` statement now includes `NULL`/`NOT NULL`. On MySQL, `MODIFY` resets columns to nullable unless told otherwise, so without this a `NOT NULL` foreign key would quietly become nullable. This produces the SQL the issue asks for, e.g. `MODIFY account_id varchar(22) NOT NULL COLLATE utf8_bin`.\n\n**Tests**\n\n- `schema.tests.SchemaTests.test_db_collation_propagated_to_foreign_keys`: creating models with a collated PK gives the `ForeignKey` and `OneToOneField` columns the same collation.\n- `migrations.test_operations.OperationTests.test_alter_field_pk_fk_db_collation`: an `AlterField` that adds a collation to a PK updates the FK column and the M2M join-table column. It also checks the FK constraints still exist, and that reversing the migration works.\n- I added an `assertColumnCollation()` helper to `tests/migrations/test_base.py`.\n\nBoth new tests fail when the library changes are removed and pass with them. The `schema`, `migrations`, `model_fields`, `inspectdb`, `introspection` and `backends` suites all pass (1590 tests, 186 skipped). black and flake8 aren't installed in the venv, so I only checked line lengths by hand.\n\n**Known limitation**\n\nOn MySQL, if a single `AlterField` changes a column's collation and also makes it `NOT NULL` using a default, the collation statement already sets `NOT NULL`. That happens before existing NULL rows are filled with the default, so the migration would fail on those rows. The FK case from the issue isn't affected.\n\nNothing is committed.",
+  "ttft_ms": 10977,
+  "type": "result",
+  "duration_ms": 127179,
+  "uuid": "3094abcb-f67f-4802-b13c-61fdaca15a35",
+  "ttft_stream_ms": 3171,
+  "time_to_request_ms": 356,
+  "first_content_frame_ms": 3171,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}
