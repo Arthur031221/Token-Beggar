@@ -30,7 +30,7 @@ All seven run `python3 -m token_beggar hook <name>` from the plugin directory. A
 
 ## Where it writes
 
-One state directory, `~/.claude/token-beggar` (`TOKEN_BEGGAR_HOME` moves it; `token-beggar env` prints it): the model list and the date of its last refresh, the tool inventory, per session counters and notes, a ledger of workers, `errors.log`. It writes no agent settings and no files in your project.
+One state directory, `~/.claude/token-beggar` (`TOKEN_BEGGAR_HOME` moves it, and `token-beggar env` prints it): the model list and the date of its last refresh, the tool inventory, per session counters and notes, a ledger of workers, `errors.log`. It writes no agent settings and no files in your project.
 
 ## Turn it off or remove it
 

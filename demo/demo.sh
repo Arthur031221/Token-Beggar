@@ -20,9 +20,9 @@ echo
 fi
 
 if want 2; then
-echo '$ # a multi-file prompt arrives on Opus high; the hook adds this card (lean mode)'
-printf '%s' '{"prompt":"Add a coupon discount to the cart, billing and invoice modules and run the tests","session_id":"demo","cwd":"'"$work"'","transcript_path":""}' |
-  tb hook prompt | python3 -c 'import json,sys; print(json.load(sys.stdin)["hookSpecificOutput"]["additionalContext"])' | fold -s -w 90
+echo '$ # a bug report arrives on Opus high; the hook adds this card (sized mode, first lines)'
+printf '%s' '{"prompt":"Fix this issue: format_filename raises on non-unicode paths. Reproduce it, find every place with the same symptom, fix it and run the tests","session_id":"demo","cwd":"'"$work"'","transcript_path":""}' |
+  tb hook prompt | python3 -c 'import json,sys; print(json.load(sys.stdin)["hookSpecificOutput"]["additionalContext"])' | fold -s -w 90 | sed -n 1,15p
 echo
 fi
 
@@ -52,15 +52,15 @@ echo
 fi
 
 if want 5; then
-echo '$ # measured: 84 runs per arm (28 tasks x 3), Opus 5.5 high as the chat model'
+echo '$ # measured: 18 real bug fixes, 3 runs each, Opus 5.5 high as the chat model'
 python3 - "$here" <<'PY'
 import json, sys
-rows = json.load(open(sys.argv[1] + "/benchmark/results/final/summary.json"))
-names = {"all": "all 28 tasks", "multi_file": "multi-file", "routine_code": "routine code", "debugging": "bug root cause", "mechanical": "mechanical edits", "reading": "reading"}
-print(f"{'':<17}{'alone':<9}{'this release':<14}{'saving':<18}quality")
+rows = json.load(open(sys.argv[1] + "/benchmark/results/hard/summary.json"))["arms"]
+names = {"alone": "Without Token Beggar", "main": "Main before v0.3.0", "scoped": "v0.3.0 (this release)"}
+print(f"{'':<24}{'cost/run':<10}{'multiple':<26}resolved")
 for key, name in names.items():
     r = rows[key]
-    mult = f"{r['final']['multiple']:.2f}x" + ("" if r["final"]["claim"] else " (noise)")
-    print(f"{name:<17}${r['alone']['cost']:<8.3f}${r['final']['cost']:<13.3f}{mult:<18}{r['alone']['quality']:.2f} -> {r['final']['quality']:.2f}")
+    mult = "1.00x" if key == "alone" else f"{r['multiple']:.2f}x ({r['low']:.2f} to {r['high']:.2f})"
+    print(f"{name:<24}${r['cost']:<9.2f}{mult:<26}{r['resolved'] * 100:.0f}%")
 PY
 fi
