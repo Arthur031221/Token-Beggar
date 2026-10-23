@@ -1,9 +1,9 @@
 import json
 import os
-from unittest import mock
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+from unittest import mock
 
 from token_beggar import footer, transcript, usage
 from token_beggar.__main__ import main

@@ -1,234 +1,222 @@
-<p align="center"><img src="assets/logo.svg" width="120" alt="Token Beggar 標誌"></p>
+# Token Beggar 🪙: 相同的回答，更低的帳單
 
-# Token Beggar（Token 乞丐）
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
+  <img src="assets/banner-light.svg" alt="Token Beggar: 相同的回答，更低的帳單。將每個任務指派給依然能正確完成該任務的最便宜模型。" width="100%">
+</picture>
 
-**把每個 token 都乞討回來。答案一樣，額度和費用更少。**
+<p align="center">
+  <a href="https://github.com/Arthur031221/Token-Beggar/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Arthur031221/Token-Beggar/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
+  <a href="https://github.com/Arthur031221/Token-Beggar/releases"><img src="https://img.shields.io/github/v/release/Arthur031221/Token-Beggar?style=flat-square&label=release" alt="發布"></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square" alt="Python 3.10+"></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square" alt="零相依性"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Arthur031221/Token-Beggar?style=flat-square" alt="授權條款"></a>
+</p>
 
-[English](README.md) | [繁體中文](README.zh-TW.md)
+[English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt-BR.md)
 
-![Token Beggar 示範](assets/demo.gif)
+Token Beggar 是 Claude Code 的外掛程式。在大型模型執行工作之前，它會先檢查是否有更便宜的模型能做得一樣好。小型任務會保留在對話中。大型任務（例如在尚未閱讀過的儲存庫中修復 bug）會指派給一個更便宜的 worker，隨後對話會檢查整個 diff 並執行測試。設計、根本原因與最終回答則仍由你選擇的模型負責。
 
-我是給終端機程式代理用的技能，只有一個習慣：大模型動手之前，先問有沒有更便宜的路線能做得一樣好。對話模型會把你的提示拆成子任務，每個子任務挑「品質夠用、最便宜」的供應商、模型與 effort：worker 裡的小模型、外部工具的命令列（例如 `agy`），或自己做。設計、找根本原因與最後的答覆，都留給你選的那個模型。
+**在 18 個真實 bug 修復中，它消耗的額度與費用比單獨運作少了 1.42x，且隱藏測試通過比例相當（69% 對比 70%）。**
 
-我也知道什麼時候什麼都不做。對每個模型與 effort，我都帶著有我與沒有我的實測成本。省不下來的地方，我不加卡片、不委派、也不印頁尾。
+它在你的電腦上、在你的 Claude Code 工作階段中執行。它使用你已登入的 Claude Code，絕不向任何地方傳送關於你的任何資訊，並且只寫入它自己的資料夾。[具體運作內容](docs/on-your-machine.md)。
+
+[安裝](#安裝) · [快速開始](#快速開始) · [結果](#結果) · [運作方式](#運作方式) · [常見問題](#常見問題) · [說明文件](#說明文件) · [變更記錄](CHANGELOG.md)
+
+<p align="center"><img src="assets/demo.gif" width="760" alt="Terminal recording of the routing card, the compaction guard and the benchmark table"></p>
+
+> [!TIP]
+> 不確定是否正常運作？執行 `token-beggar doctor`。它會列出可能悄悄停止路由的因素，並在有問題時以結束代碼 1 退出。
+
+## 安裝
+
+需要 Claude Code 與 Python 3.10 或更新版本。它僅使用標準函式庫。
 
 ```
+# From the marketplace in this repository (inside Claude Code)
 /plugin marketplace add Arthur031221/Token-Beggar
 /plugin install token-beggar@token-beggar
 ```
 
-重新啟動代理，或執行 `/reload-plugins`，再執行 `token-beggar doctor` 確認 hook 正常運作。需要 Python 3.10 以上，只用標準函式庫。
-
-我出手、而且有實測節省的回覆，結尾會有一行：
-
 ```
-Token Beggar: about 1.3x less quota than Opus 5.5 high alone, saved about $0.06 (est.) | multi-file feature | routed 1: sonnet medium x1
+# Try it for one session without installing
+git clone https://github.com/Arthur031221/Token-Beggar
+claude --plugin-dir ./Token-Beggar
 ```
 
-倍數是我量測到的比值：沒有我時的牌價花費，除以有我時的牌價花費（主對話加所有 worker，含快取），依你的模型、effort 與任務種類而定。金額是這則回覆自己的牌價成本，乘上比值減一。兩者都是估計，也都會標明。頁尾從不顯示 token 數。比值低於 1.15 倍時，頁尾不給倍數，因為那在每次執行的波動範圍內。比值來自沒跑過的格子時，頁尾會標 `interpolated`。
+```
+# From a shell, the same two steps as the first block
+claude plugin marketplace add Arthur031221/Token-Beggar
+claude plugin install token-beggar@token-beggar
+```
 
-## 省多少
+重新啟動代理或執行 `/reload-plugins`。更多資訊請參閱 [docs/install.md](docs/install.md)，包括如何在其他能讀取技能的代理中使用此技能。
 
-誠實的結果很小：**混合任務集 1.11 倍（每個任務約 $0.014，約 9%），多檔案工作 1.40 倍，對話模型是 Opus 5.5、effort 為 high。** 混合集的區間是 1.08 到 1.14，剛好低於我宣稱節省所需的 1.15 倍。換成其他對話模型，情況不同，有些模型我乾脆不動作（見「哪些模型有用」）。
+## 快速開始
 
-量測方式：7 類共 28 個小任務，每個跑 3 次，每組 84 次。其中 21 個是我調整時用的任務，7 個是留出任務，調整期間從沒用過。三組的提示、工具、模型與 effort 都相同：模型單獨做、v0.2.0（上一版，commit 9b63cdb），以及這一版。另有第四組「完整卡片」，和這一版相同，但在每個上限都強制開啟完整選單。成本是對話加所有 worker 的牌價花費。倍數是單獨做除以該組，附 95% 區間。
+按照你平常的方式工作即可。在工作階段的第一個正式提示中，hook 會加入一張簡短的路由卡片，對話模型會評估任務規模。在有進行路由且測得節省的回覆結尾，你會看到一行提示：
 
-| 群組 | 單獨 | v0.2.0 | 完整卡片 | 這一版 | 這一版對單獨 | 品質：單獨 / v0.2.0 / 完整 / 這版 |
-| --- | --- | --- | --- | --- | --- | --- |
-| 全部 28 個任務 | $0.148 | $0.139 | $0.141 | **$0.134** | 1.11x（1.08 到 1.14） | 0.96 / 0.96 / 0.96 / 0.99 |
-| 21 個調整用任務 | $0.153 | $0.140 | $0.141 | **$0.135** | 1.13x（1.09 到 1.16） | 0.95 / 0.96 / 0.95 / 0.98 |
-| 7 個留出任務 | $0.134 | $0.136 | $0.142 | **$0.129** | 1.04x（0.99 到 1.11） | 0.98 / 0.99 / 0.98 / 1.00 |
-| 機械式修改 | $0.120 | $0.112 | $0.112 | **$0.124** | 0.97x（0.92 到 1.02） | 1.00 / 1.00 / 1.00 / 1.00 |
-| 閱讀與摘要 | $0.092 | $0.095 | $0.099 | **$0.091** | 1.00x（0.94 到 1.07） | 0.94 / 0.90 / 0.90 / 0.98 |
-| 一般程式 | $0.152 | $0.149 | $0.149 | **$0.132** | 1.15x（1.09 到 1.22） | 1.00 / 1.00 / 1.00 / 1.00 |
-| 多檔案功能 | $0.260 | $0.194 | $0.192 | **$0.185** | 1.40x（1.27 到 1.55） | 1.00 / 1.00 / 1.00 / 1.00 |
-| 找根本原因 | $0.153 | $0.154 | $0.163 | **$0.140** | 1.09x（1.02 到 1.17） | 1.00 / 1.00 / 1.00 / 1.00 |
-| 設計 | $0.114 | $0.116 | $0.125 | **$0.114** | 1.00x（0.94 到 1.06） | 0.94 / 0.94 / 0.92 / 1.00 |
-| 程式碼審查 | $0.144 | $0.153 | $0.149 | **$0.148** | 0.97x（0.91 到 1.04） | 0.83 / 0.92 / 0.88 / 0.92 |
+```
+Token Beggar: about 1.4x less quota than Opus 5.5 high alone, saved about $0.21 (est.) | large task | routed 1: haiku medium x1
+```
 
-<p align="center"><img src="assets/chart-cost.svg" alt="各類別與各組相對模型單獨做所省的額度與費用倍數"><img src="assets/chart-quality.svg" alt="各類別與各組的平均品質"></p>
+此倍數是針對你的模型與 effort 所測得未使用 Token Beggar 相較於使用時的牌價成本比值。金額則是該回覆本身的成本乘以該比值減一。兩者皆為估計值並已標明。該行從不計算 token 數量，且在低於 1.15x 時不顯示倍數，因為那屬於各次執行之間的波動範圍。
 
-白話解讀：
+若要針對未觸發它的提示手動開啟，請輸入 `/token-beggar`。接著確認各 hook 正常執行：
 
-- 這一版在混合集上比 v0.2.0 便宜（$0.134 對 $0.139），品質相同或更好。在 7 個留出任務上，兩者都落在單獨做的波動範圍內（1.04 倍與 0.99 倍），所以我不能說哪一個有省。調整用任務上的 1.13 倍，就是對著一組任務調整所換來的。遇到像留出任務那樣的工作，預期 1.0 到 1.1 倍。
-- 只有多檔案工作（1.40 倍）和一般程式（1.15 倍）清楚高於雜訊。其餘的節省，我分不出和沒省的差別。
-- **在機械式修改上，這一版比 v0.2.0 差**（$0.124 對 $0.112），也沒有比單獨做好。精簡模式只把多檔案的改動送給 worker，而完整卡片在修改上表現較好。我保留精簡卡片，是因為它在混合集上勝出，我沒找到兩邊都贏的規則。
-- 審查品質是 0.92 對單獨的 0.83。檢查清單很短，一項就讓分數大幅變動，而且那裡的節省低於 1.0 倍，所以我不宣稱有改進。
-- 速度：每個任務 24 秒，單獨做 22 秒，v0.2.0 是 29 秒。
-- 小幅節省有一個我能量到的原因：每次啟動代理都要付約 $0.10 的固定啟動成本，這佔了 $0.15 任務的大部分。任務越大，節省越多。
-- 一般程式（1.15 倍）與找根本原因（1.09 倍）為什麼有進步，我不知道。精簡卡片並不會路由這兩類，所以在更大的實驗證明之前，我把它們當成每次執行的波動。
+```
+token-beggar doctor
+```
 
-### 槓桿
+## 結果
 
-五項以降低花費為目標的改動，各自單獨測試：從完整卡片拿掉其中一項再比較，16 個任務，各跑 3 次。只有品質在波動範圍內才保留。品質欄那一項的差距（0.97 對 0.98）在範圍內。節省欄是拿掉該槓桿的成本，所以正號代表該槓桿省了那麼多。
+以 Opus 5.5 搭配 high effort 作為對話模型。成本為對話及每個 worker 的牌價，包含快取。區間為 95 百分比。唯有達到 1.15x 或更高且整個區間皆高於 1.0x 時，才視為有節省。
 
-| 槓桿 | 拿掉它的成本（每任務） | 品質：有 / 沒有 | 結論 |
+這裡的版本是指此儲存庫帶有標籤的發布版本。**未使用 Token Beggar (Without Token Beggar)** 是對話模型單獨運作。**v0.3.0 (本次發布) (v0.3.0 (this release))** 是這個版本。**v0.2.0 (前次發布) (v0.2.0 (previous release))** 是它前一個版本。高難度基準測試是與 **v0.3.0 前的 main (Main before v0.3.0)** 比較，即本次發布前 main 分支上的卡片，因為 v0.2.0 本身並未在其上執行。
+
+### 高難度任務：真實 Bug 修復
+
+來自 12 個開源 Python 專案（Django、Sphinx、pylint、sympy、click 等）的 18 個已合併 Pull Request。對話從修復前一個 commit 搭配 issue 說明文字開始，並由維護者新增的測試進行評分，對話模型從未看過這些測試。每個任務執行 3 次，每個設定執行 54 次。
+
+| 設定 | 每次執行成本 | 相較未使用 Token Beggar 的倍數 | 解決率 |
 | --- | --- | --- | --- |
-| 精簡 worker（六個工具，而不是全部） | +$0.011（0.93x，0.88 到 0.97） | 0.97 / 0.98 | 保留。唯一一項節省清楚高於雜訊的槓桿 |
-| 批次派工（相關工作交給一個 worker） | +$0.005（0.97x，0.93 到 1.01） | 0.97 / 0.98 | 保留。品質持平，但節省在雜訊內 |
-| 較短輸出（worker 簡短回報、簡短答覆） | +$0.003（0.98x，0.95 到 1.01） | 0.97 / 0.98 | 保留。品質持平，但節省在雜訊內 |
-| 大量讀取交給 `agy` | -$0.007（1.05x，1.02 到 1.09） | 0.97 / 0.98 | 還原。它讓成本變高。留作條件規則：只在你指名該工具，或讀取量約 100k token 以上時使用，這部分我沒量 |
-| 長工作階段提早壓縮 | 每個 $2.98 的工作階段多 $0.12，見下 | 0.85 / 1.00 | 還原。除非設 `TOKEN_BEGGAR_EARLY=1`，否則關閉 |
+| 未使用 Token Beggar | $0.69 | 1.00x | 70% |
+| v0.3.0 前的 main | $0.45 | 1.54x (1.46 to 1.64) | 65% |
+| v0.3.0 (本次發布) | $0.49 | 1.42x (1.33 to 1.51) | 69% |
 
-提早壓縮我跑了一個長工作階段：把 15 個記錄檔一個一個貼進去，直到上下文超過 300k，再問早期與各階段看到什麼，只接受完全吻合的答案。每組跑 3 次。
+<p align="center"><img src="assets/chart-hard-cost.svg" alt="長條圖：高難度任務中每個任務相較未使用 Token Beggar 所節省的額度與費用倍數。所有任務：v0.3.0 前的 main 為 1.54x，v0.3.0 為 1.42x。虛線標記 1.0x，表示無節省。"></p>
 
-| 組別 | 每個工作階段成本 | 上下文峰值 | 壓縮次數 | 品質 |
+<p align="center"><em>18 個高難度任務中有 17 個在搭配 Token Beggar 時成本更低，而唯一成本較高的任務（structlog-exception-outside）約多花費 10%。</em></p>
+
+<p align="center"><img src="assets/chart-hard-quality.svg" alt="長條圖：高難度任務中問題被修復的比例，依任務劃分。所有任務：未使用 Token Beggar 為 70%，v0.3.0 前的 main 為 65%，v0.3.0 為 69%。"></p>
+
+<p align="center"><em>修復問題的比例與單獨運作相近，這證實了節省並未以犧牲品質為代價。</em></p>
+
+成本降低約三分之一，問題修復比例維持持平。v0.3.0 前的 main 雖然更便宜，但解決的數量較少，且在 click-format-filename 任務中於 2 個回合後給出錯誤修復並停止（3 次中 0 次成功，相較單獨運作 3 次全中）。v0.3.0 將部分節省的成本用於在回答前完整閱讀 diff。這就是最終發布此版本的原因。
+
+這項測試未顯示的部分：同等的程式碼品質。由小型模型進行的盲測審查對 v0.3.0 的 diff 給出較低評分（以 0 到 2 為標準，得分為 0.94，相較單獨運作的 1.33），且其與隱藏測試的一致性較弱。耗時方面與單獨運作持平（168 秒對 187 秒），並未更快。
+
+### 小型任務
+
+7 個類別共 28 個小型任務，每個執行 3 次，每個設定共 84 次執行。其中 21 個用於調校，7 個保留未動。此基準測試在 v0.3.0 出現之前即已執行，因此最後一欄為 v0.3.0 前的 main。在兩種卡片中小型任務皆保留在對話內，因此預期 v0.3.0 會有一致表現，但未重新執行。
+
+| 群組 | 未使用 Token Beggar | v0.2.0 (前次發布) | v0.3.0 前的 main | v0.3.0 前的 main 相較未使用 |
 | --- | --- | --- | --- | --- |
-| 單獨 | $2.978 | 306k | 0 | 1.00 |
-| 技能，關閉提早建議 | $2.985 | 306k | 0 | 1.00 |
-| 技能，開啟提早建議 | $3.102 | 192k | 2 到 3 | 0.85（有一次是 0.57） |
+| 全部 28 個任務 | $0.148 | $0.139 | $0.134 | 1.11x (1.08 to 1.14) |
+| 7 個保留任務 | $0.134 | $0.136 | $0.129 | 1.04x (0.99 to 1.11) |
+| 多個檔案 | $0.260 | $0.194 | $0.185 | 1.40x (1.27 to 1.55) |
+| 常規程式碼 | $0.152 | $0.149 | $0.132 | 1.15x (1.09 to 1.22) |
 
-提早壓縮確實把上下文峰值從 306k 壓到 192k，但每次壓縮都要付摘要與重讀的成本，工作階段貴了 4%，而且有一次回憶的事實掉到 0.57。這不是我預期的節省，所以改成選用。比這更長的工作階段結果可能相反，但我沒量過。
+<p align="center"><img src="assets/chart-small-cost.svg" alt="長條圖：小型任務中各類別相較未使用 Token Beggar 所節省的額度與費用倍數（v0.2.0 與 v0.3.0 前的 main）。虛線標記 1.0x，表示無節省。"></p>
 
-### 哪些模型有用
+<p align="center"><em>在小型任務中，只有多檔案類別有明顯節省；其餘則落在虛線附近。</em></p>
 
-`data/measured.json` 存的是我跑過的每個模型與 effort 上，單獨做的花費除以有我時的花費。技能怎麼做，由它決定：
+<p align="center"><img src="assets/chart-small-quality.svg" alt="長條圖：小型任務中各類別的平均品質。所有小型任務：未使用 Token Beggar 為 0.96，v0.2.0 為 0.96，v0.3.0 前的 main 為 0.99。"></p>
 
-- `full`（比值 1.15 以上）：完整選單、提醒與頁尾。
-- `lean`（0.95 到 1.15，且多檔案工作實測有勝出）：一行卡片，把動到三個以上檔案的改動交給一個 worker，頁尾只在這一類顯示。
-- `off`（低於上述）：不加卡片、不委派、不印頁尾。
+<p align="center"><em>小型任務的回答品質在任何設定下均未下降。</em></p>
 
-`token-beggar mode --all` 會印出這張表。`TOKEN_BEGGAR_MODE=full|lean|off` 可強制指定模式。我沒量過的模型一律走 `full`。
+小型任務節省甚微。其餘五個類別（機械式修改、閱讀、除錯、設計、審查）結果介於 0.97x 到 1.09x 之間，屬於雜訊範圍。綜合結果（1.11x）低於 1.15x 的標準，因此未列為節省，且在保留任務上的表現落在單獨運作的波動範圍之內。每個 worker 約 $0.10 的啟動成本佔據了 $0.15 任務的大部分費用，這就是為什麼小型任務保留在對話中處理。回答品質在任何設定下均未下降。
 
-| 模型 | low | medium | high | xhigh | max |
-| --- | --- | --- | --- | --- | --- |
-| Fable 5.1 | full 1.22x | full 1.16x | full 1.16x | full 1.16x | full 1.43x |
-| Opus 5.5 | lean 1.02x | lean 1.06x | lean 1.11x | lean 0.99x | full 1.22x |
-| Sonnet 5.5 | off 0.84x | off 0.89x | off 0.85x | off 0.82x | off 1.06x |
-| Haiku 5.5 | off 0.75x | off 0.86x | off 0.83x | off 1.03x | off 0.89x |
+> [!IMPORTANT]
+> **適用與不適用的情境。** 它在 Opus 5.5 搭配 high effort 的大型任務上發揮效用（實測 1.42x），並在 Fable 5.1 的所有 effort 以及 Opus at max 上有所助益，這些情境下小型任務亦測得節省。在其他 effort 的 Opus 以及 Sonnet 5.5 上，它會將小型任務保留在對話中，並將大型任務指派給 worker。大型任務的節省僅針對 Opus high 進行量測，因此在 Sonnet 上屬於未量測，頁尾將僅列出成本而不顯示倍數。在最便宜的模型 Haiku 5.5 上，它不會有任何動作。若你的主要工作為單一檔案的小幅修改，請預期幾乎不會有任何變化。
 
-所以我在 Fable 任何 effort 上有用，在 Opus 的 max 上有用。Opus 其他 effort 我做得很少，做的只是多檔案工作。Sonnet 與 Haiku 我選擇退場：worker 的啟動成本，比便宜模型在本來就便宜的任務上省下的還多。每一格是每類一個小任務，單獨跑一次、有我跑一次，所以單一格雜訊大。Opus high 這格是例外，它是上面那個 84 次的基準測試。矩陣裡 Fable medium 與 xhigh 沒有跑：它們取最近、有跑的 effort，並標 `interpolated`。和 1.15 倍規則不同的地方是精簡模式有 0.95 倍的下限：低於它就退場。
+各表格、任務清單、曾經嘗試並還原的調整項目（使用外部工具大量讀取、提早壓縮）以及如何重現所有內容，均收錄於 [docs/benchmark.md](docs/benchmark.md)。所有原始執行記錄皆位於 [`benchmark/results`](benchmark/results)。
 
-每個模型各自把量過的 effort 合併後，按任務種類的花費比值（大於 1 代表有我時花費較少）：
+## 運作方式
 
-| 種類 | Opus 5.5 | Sonnet 5.5 | Haiku 5.5 | Fable 5.1 |
-| --- | --- | --- | --- | --- |
-| 多檔案功能 | 1.34 | 0.72 | 0.80 | 2.56 |
-| 精確修改 | 1.04 | 1.15 | 1.01 | 1.36 |
-| 一個函式加測試 | 1.15 | 1.02 | 0.86 | 1.00 |
-| 設計 | 1.24 | 1.51 | 1.39 | 1.28 |
-| 讀取並回答 | 0.92 | 0.95 | 0.76 | 0.91 |
-| 審查 | 0.97 | 1.15 | 1.06 | 1.04 |
-| 修 bug | 1.07 | 1.00 | 0.70 | 1.26 |
-| 摘要多個檔案 | 0.86 | 0.68 | 0.83 | 1.01 |
+1. **查詢模式。** 根據你對話的模型與 effort，從 `data/measured.json` 中選取三種模式之一。小型任務測得節省達 1.15x 以上、或該模型從未進行量測時，採用 `full`（提供完整的模型、effort 與外部工具選單）。其餘情況採用 `sized`。最便宜的模型則為 `off`。`token-beggar mode --all` 可印出此矩陣，而 `TOKEN_BEGGAR_MODE=full|sized|off` 可強制指定模式。
+2. **評估任務規模。** 在 `sized` 模式下，卡片指引小型任務直接在對話中執行，而大型任務則將重現、探索、修復與執行測試的完整清單交由單一 worker 處理。大型任務是指模型尚未閱讀過的儲存庫中的 issue、超過約 5 次工具呼叫、動及多個檔案，或是包含編輯與測試的循環。步驟超過約 5 步的小型任務將轉變為大型任務。
+3. **檢查 worker 的工作成果。** Worker 會在 150 字以內回報，並列出具有相同症狀的所有位置。對話端會讀取完整的 `git diff`、執行測試、核對該清單，若有遺漏則將同一個 worker 再次派回。
+4. **遵循上限。** 你對話的模型與 effort 會做為同一廠商其他模型的上限。在 Sonnet medium 上，絕不會將工作分配給 Opus 或 high effort。
+5. **回報。** Stop hook 會加入頁尾。此頁尾並非由模型撰寫，因此數字無法在文字中憑空捏造。
 
-這是 288 次列印模式執行，每格每組一次。依賴任何數字之前，請先知道：
+門檻值的由來：1.15x 大致等於多次重複執行所觀察到的波動範圍，因此較低的比值不被視為節省。大型任務的 1.42x 比值來自上述高難度基準測試。詳情請參閱 [docs/benchmark.md](docs/benchmark.md#models-and-efforts)。
 
-- 沒有我時，中位數任務在 max effort 的成本約是 medium 的 4.7 倍，xhigh 是 1.5 倍。小工作用 `max` 是我看過最大的單項成本，比我能路由掉的任何東西都大。
-- Fable 的多檔案數字（2.56 倍）每個 effort 只有一格。它是這個儲存庫裡最強、也最少被重複驗證的數字。
-- 每個合併比值裡，各 effort 之間的波動在資料中（`cell_min`、`cell_max`）。
+### 各組件如何協同運作
 
-### 外部工具
+- **Skill**：對話模型讀取的路由規則。[`skills/token-beggar/SKILL.md`](skills/token-beggar/SKILL.md)，詳見 [docs/usage.md](docs/usage.md)。
+- **Hooks**：七個小型 hook，負責加入卡片、限制 worker 不得超過上限、保護壓縮機制以及加入頁尾。[docs/on-your-machine.md](docs/on-your-machine.md)。
+- **Worker**：擁有六個工具並負責執行委派工作之單一代理。[`agents/beggar-worker.md`](agents/beggar-worker.md)，參見 [docs/architecture.md](docs/architecture.md)。
+- **CLI**：`token-beggar` 提供 `doctor`、`mode`、`stats`、`inventory`、`ask` 等指令。[docs/usage.md](docs/usage.md#commands)。
 
-在 PATH 上有 `agy` 且已登入時，我量了三項「把大量工作交給外部工具應該能降低對話花費」的工作：把每個承運商模組讀成一份排序清單、一份初稿，以及對一個設計的第二意見。每組 3 次，Opus 5.5 high。這裡顯示對話 token，因為外部工具自己的額度和你的對話方案分開。
+它也能保護長工作階段。它會偵測主機壓縮上下文的切入點，並在壓縮前提示對話儲存簡短筆記，且能在步驟執行途中延後自動壓縮，事後再將筆記放回。參見 [docs/architecture.md](docs/architecture.md)。
 
-| 工作 | 單獨的對話 token | 有技能 | 比值 | 交給 agy | 品質：單獨 / 有技能 |
-| --- | --- | --- | --- | --- | --- |
-| 讀多個檔案 | 59,097 | 61,714 | 0.96x | 3 / 3 | 1.00 / 1.00 |
-| 初稿 | 97,103 | 97,870 | 0.99x | 1 / 3 | 1.00 / 1.00 |
-| 第二意見 | 38,826 | 42,160 | 0.92x | 0 / 3 | 0.75 / 0.67 |
+## 在你的電腦上的行為
 
-這些都沒有節省。工作交出去的時候（讀取那項，每次都有），對話總量還是和自己做持平，因為檔案很小，對話模型為派工、說明和檢查付出的，跟自己讀的差不多。背後還是同樣約 $0.10 的固定啟動成本。我預期在幾十萬 token 的輸入上差距會拉開，但我沒量，所以不宣稱。因此規則現在寫成：你指名外部 AI，或讀取量大才用，否則留在原地做。我量測的機器上 Gemini 命令列沒登入，所以 Gemini 完全沒量。
+> [!NOTE]
+> 以下所有內容亦收錄於 [docs/on-your-machine.md](docs/on-your-machine.md)，包含 hook 對照表。
 
-### 怎麼量的
+- **讀取**：目前工作階段的對話記錄（用以計算成本並掌握上下文大小與模型）、透過 `ps` 取得對話程序的啟動旗標，以及用於模型與 effort 的環境與設定檔。這些資訊絕不會離開你的電腦。
+- **執行**：呼叫 `python3 -m token_beggar hook <name>` 的七個 hook。若 hook 發生失敗，會記錄錯誤並以 0 退出，因此絕不會中斷你的工作階段。Worker 均在你自己的權限設定下執行。
+- **傳送**：每週下載一次廠商的公開模型頁面以保持價格最新（`TOKEN_BEGGAR_OFFLINE=1` 可停止下載）。只有在你已安裝且明確指定該外部 AI 工具（`agy`、`gemini`、`codex`），或者讀取量達約 100k token 以上時，文字才會傳送給外部 AI 工具。檔名與看似金鑰的文字均會被拒絕傳送。
+- **寫入**：僅單一資料夾 `~/.claude/token-beggar`。不寫入代理設定，亦不寫入你的專案檔案。
+- **關閉方式**：可在單一 shell 中設定 `TOKEN_BEGGAR=off`，在該資料夾內建立名為 `off` 的檔案永久關閉，或執行 `/plugin uninstall token-beggar`。
 
-- 一個小型 Python 商店專案。28 個任務：機械式修改、閱讀、一般程式、多檔案功能、除錯、設計、審查各 4 個，每類 3 個在調整集，1 個留出。
-- 每一組的提示、允許的工具、對話模型與 effort 都相同。
-- 程式任務用隱藏的檢查加專案測試評分。回答類任務由盲測評審對照檢查清單評分，評審看不到是哪一組寫的。
-- 成本是對話與所有子代理的牌價總和，取自代理自己的 JSON（`modelUsage`），含快取。外部工具的 token 另外計。
-- 區間是 95%，來自對每個任務的各次執行做自助重抽樣（2000 次）。只有在 1.15 倍以上、且整個區間高於 1.0 倍時才宣稱節省，因為我看到的每次執行波動大約就是那麼大。
-- 原始執行：[`benchmark/results/final/raw`](benchmark/results/final/raw)（這張表與槓桿）、[`long`](benchmark/results/long)（長工作階段）、[`matrix/raw`](benchmark/results/matrix/raw)（模型與 effort 的格子）、[`agy/raw`](benchmark/results/agy/raw)（外部 AI）。表格：[`final/report.md`](benchmark/results/final/report.md) 與 [`levers/report.md`](benchmark/results/levers/report.md)。
-- 重現：`python3 benchmark/run.py --arms alone,v020,fullcard,final`，接著 `score.py` 與 `report.py --out final --arms alone,v020,fullcard,final`。格子用 `matrix.py run|score|fit`，長工作階段用 `long_session.py`，外部工具的工作用 `agy_bench.py`。最終基準測試連同槓桿各組的牌價約 $74，格子約 $46，長工作階段約 $27。基準測試從不呼叫 Codex。
+## 設定
 
-## 安裝
+你不需要進行任何設定。預設值均來自量測結果。
 
-不想安裝、只試一個工作階段的話，clone 這個儲存庫，用 `--plugin-dir ./Token-Beggar` 啟動代理。
+| 設定 | 作用 |
+| --- | --- |
+| `TOKEN_BEGGAR=off` | 在此 shell 中關閉 |
+| `TOKEN_BEGGAR_MODE=full\|sized\|off` | 強制指定模式以取代量測模式 |
+| `TOKEN_BEGGAR_EARLY=1` | 在長工作階段中建議提早壓縮（實測成本較高，故預設關閉） |
+| `TOKEN_BEGGAR_OFFLINE=1` | 停用每週下載 |
+| `token-beggar cap agy flash` | 限制外部工具僅使用其 flash 模型 |
 
-<details>
-<summary>其他代理</summary>
+所有設定（包含像是「no gemini」的提示詞）：[docs/config.md](docs/config.md)。
 
-路由卡片、worker 與 hook 用的是上面那個代理的功能，所以外掛在其他代理上不能運作。有兩件事可以：在支援的代理上，已安裝的 `agy`、`gemini`、`codex` 可以當路由目標；而 `skills/token-beggar/SKILL.md` 是純 Markdown，可以複製到任何讀技能的代理。
-</details>
+## 限制事項
 
-<details>
-<summary>關閉</summary>
+- 小型任務節省有限。低於約 1.15x 時無法與無節省區分，而小型任務的綜合結果（1.11x）正低於此門檻。
+- 高難度基準測試僅涵蓋單一對話模型與 effort（Opus 5.5，high）及 Python 專案。Sonnet、Haiku 與 Fable 在大型任務上的表現尚未量測。
+- 解決率 69% 對 70% 落在波動範圍內屬於持平，且盲測審查對 v0.3.0 的 diff 給予較低評分。並未證實程式碼品質完全相當。
+- 已發布的 v0.2.0 未在高難度任務上執行，而 v0.3.0 未在小型任務上重新執行。
+- 小型檔案未發現外部 AI 工具帶來節省，且 Gemini 尚未量測。大量讀取情境亦未量測。
+- 在測試的單一長工作階段中提早壓縮成本較高，因此為選用功能。
+- 頁尾是根據量測比值估算，而非來自你的具體任務。各 hook 無法直接取得對話模型，因此會從對話記錄、程序旗標、環境變數與設定中依序讀取。若均未指明，卡片將標示上限未知。
+- Worker 如同一般工作階段會載入你的專案記憶檔。基準測試專案中沒有此檔案，因此該成本未計入數據中。
 
-啟動代理時在環境裡設 `TOKEN_BEGGAR=off`，只對那個 shell 有效。要永久關閉，在狀態目錄（`token-beggar env` 會印出）建一個叫 `off` 的檔案。`/plugin uninstall token-beggar` 會移除它。
-</details>
+## 常見問題
 
-詳情見 [docs/install.md](docs/install.md)。
+**它會改變我的回答嗎？** 在高難度任務中，它修復了 69% 的 issue，相較單獨運作的 70%，在波動範圍內持平。它並不宣稱程式碼品質完全同等。
 
-## 我怎麼運作
+**為什麼有時沒有頁尾？** 僅在有路由任務且針對你的模型、effort 及任務類型測得 1.15x 以上的節省時，才會顯示頁尾。
 
-1. **查上限與實測比值。** 從對話的模型與 effort，我查出上面的模式。在 `off` 就到此為止。
-2. **拆解。** 在 `full`，hook 會在工作階段第一個正式提示加上選單，之後每次加一行提醒。選單列出你能用的每個供應商、模型與 effort，附各自擅長與不擅長的事、能力分數與價格。在 `lean`，卡片只有一行。很短的提示與斜線指令什麼都不加。對話模型把提示拆成子任務。
-3. **逐項選擇。** 決策規則會問規模、模糊程度、風險、要讀多少，以及有沒有測試能驗證結果。能過關的組合中最便宜的勝出。一行答案或小修改留在原地，因為 worker 一開始就帶著自己的基底上下文。
-4. **守住上限。** 你對話用的模型與 effort，是同一家廠商模型的上限。你用 Sonnet medium，就不會有工作送到 Opus 或更高的 effort。其他供應商不設上限，除非你在提示裡說：「agy max flash」讓 agy 只用 flash 模型，「no gemini」在這個工作階段關掉它。
-5. **便宜地檢查。** 跑一次測試或 `git diff --stat`，不重讀全部。判斷與最後的答覆留給對話模型。
-6. **回報。** 由 Stop hook 加上面的頁尾，不是模型寫的：hook 直接數對話記錄，所以數字不會是文字編出來的。
+**為什麼它在 Sonnet 或 Haiku 上沒有動作？** Haiku 是最便宜的模型，因此沒有更便宜的模型可以派工。在 Sonnet 上，小型任務測得負效益（約 0.85x），因此保留在對話中處理，而大型任務的節省則尚未量測。
 
-說 `/token-beggar` 或「token beggar」，可以對沒有自動觸發的提示手動啟用我。
+**它會消耗我的額度嗎？** Worker 會以更便宜的模型消耗你的標準 Claude 額度。外部 AI 工具則消耗其自身的額度，不會消耗你的額度。
 
-### 外部工具當作路由
+**有任何東西會傳送到伺服器嗎？** 僅有不包含任何個人資料的每週模型頁面下載，以及你交給所指定外部工具的檔案。請參閱[在你的電腦上的行為](#在你的電腦上的行為)。
 
-PATH 上的 `agy`、`gemini`、`codex` 與 MCP 伺服器都會出現在選單。`token-beggar inventory` 會列出它們，並偵測各工具的模型（`agy models`）。優先順序是代理自己的模型先，其次 Codex，再來 Gemini，所以大量讀取與初稿可以外送，需要這段對話、要改檔案或有風險的工作則不行。我絕不傳送機密：看起來像金鑰的檔名與文字會被拒絕。
+**還有哪些工具與它類似？** 路由代理伺服器（router proxies）會依情境將 API 請求轉發至其他供應商；子代理模型變數則將單一模型固定分配給子代理；而像是 ccusage 這類的計量工具則是在事後回報支出。Token Beggar 則是在工作階段內運作，評估任務與上限，其倍數來自基準測試而非你的歷史記錄。它能與更短的提示詞和更小的上下文搭配使用。若有工具未收錄於此，歡迎提出 issue。
+
+## 說明文件
+
+| 目標 | 從這裡開始 |
+| --- | --- |
+| 安裝或在單一工作階段中試用 | [docs/install.md](docs/install.md) |
+| 了解路由項目與相關指令 | [docs/usage.md](docs/usage.md) |
+| 查看在你的電腦上的行為 | [docs/on-your-machine.md](docs/on-your-machine.md) |
+| 修改設定或規則 | [docs/config.md](docs/config.md) |
+| 理解各組件與模式 | [docs/architecture.md](docs/architecture.md) |
+| 檢驗數據或進行重現 | [docs/benchmark.md](docs/benchmark.md) |
+| 查看變更內容 | [CHANGELOG.md](CHANGELOG.md) |
+
+## 開發
 
 ```
-token-beggar ask agy --model gemini-3.8-flash-low --file 'src/**/*.py' "list every public function with its arguments"
-token-beggar cap agy flash
+python3 -m unittest discover -s tests -t .
+cd benchmark && python3 selftest.py
+uvx ruff check . && uvx ruff format --check .
 ```
 
-`--file` 接受萬用字元與目錄。工具回應用量上限時，我會解析錯誤訊息裡的重置時間，並在那之前把該工具（或該模型）從選單拿掉。訊息沒寫時間的話，額度用完算五小時，登入問題算一天。對話廠商的模型用完額度，處理方式一樣（`token-beggar exhausted <別名>`）。外部的答案只是草稿，對話模型用之前會先看過。
+## 參與貢獻
 
-### 壓縮
+歡迎提出 Issue 與 Pull Request。對卡片、skill 或 `data/profiles.json` 的修改，需在變更前後各執行一次基準測試，並同時列出退步與進步的結果。詳情請參閱 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-不用設定就能運作，每個模式都一樣。代理在依上下文視窗算出的點壓縮，預設比視窗少 33k token。我自己找出這個點（`token-beggar window` 會印出），所以你不需要設壓縮視窗的環境變數。你設了它，或設了百分比覆寫，那個點就是你的，我絕不移動。
+## 授權條款
 
-- **常常檢查。** 每個提示，以及長回合中每次工具呼叫之後。
-- **提早警告。** 到壓縮點的 87.5%，或離壓縮點 30k token 時（取先到者），我請對話模型判斷是否正在某一步的中間（修改尚未驗證、跨檔案的改動做到一半、計畫進行中），並用 `token-beggar note` 存一份筆記：目標、已完成、下一步，幾行即可。模型沒寫的話，機械式擷取（原始請求、改過的檔案、最後的指令）是備案。
-- **延後中途的壓縮。** `PreCompact` hook 回傳結束碼 2，可以延後自動壓縮。我最多延後 3 次，每次是視窗的 5%，絕不靠近到離代理拒絕請求的水位不到 5k token，而且只在筆記標明中途時才延後。手動 `/compact` 從不攔。
-- **讀回來。** 壓縮之後，工作階段開始的 hook 會把筆記連同選單放回去。壓縮前很久才寫的筆記會被標為舊的。
-- **為什麼不移動壓縮點。** 代理只在啟動時讀視窗設定，而我不寫任何設定，所以從工作階段內部選壓縮點做不到。挑一個時機建議 `/compact` 是做得到的，但那個建議預設關閉，原因見槓桿那一節。
-
-我用列印模式在真實工作階段測過：視窗 100k，逐一讀 8 份長文件。警告在 67k 壓縮點的 47k 和 63k 兩次出現，模型在中途寫了筆記，兩次壓縮被延後，代理在 95k 壓縮了一次，之後模型從筆記接續，並正確列出八個檔案的第一個字。限制：worker 內做的修改我看不到，所以不為它們延後，也不會列進筆記。一次工具結果若大於壓縮點前的餘裕，可以直接跳過那個點。代理把視窗限制在 100k 到 1M。見 [docs/architecture.md](docs/architecture.md)。
-
-### 檢查與查看它做了什麼
-
-`token-beggar doctor` 列出會悄悄讓路由失效的事：不支援的 Python、無法寫入的狀態目錄、被環境變數強制的 worker 模型、hook 的錯誤記錄，以及 hook 進入點能不能跑。有問題時結束碼為 1。
-
-`token-beggar stats` 讀你自己最近的工作階段（預設 7 天，用 `--days N` 修改）。每個 worker 模型會印出跑了幾個 worker、花了多少錢，以及同樣的工作用啟動它的模型來跑會花多少。最後一欄是委派搬動金額的上限，不是淨節省。
-
-### 模型
-
-`data/models.json` 列出各模型家族、價格與預設 effort。GitHub Action 每週從廠商公開的模型頁面更新，已安裝的副本則在本機每週檢查一次。`data/profiles.json` 放能力與成本資料，以及產生選單用的決策規則。
-
-## 類似工具
-
-我在做這個之前看過這些，也保留了它們做得好的部分。差異是事實陳述，不是排名。
-
-| 工具 | 做什麼 | 我的不同 |
-| --- | --- | --- |
-| 本機路由代理（例如 musistudio 的專案） | 依情境把代理的請求轉到其他供應商的代理伺服器 | 我不碰 API 路徑，而是用代理自己的子代理在工作階段內路由，並以對話模型作為上限 |
-| 子代理的模型變數與 agent 檔的 `model:` | 把子代理固定在一個模型 | 靜態：不評估任務與上限，也無法每次呼叫選 effort |
-| ccusage 類的用量表 | 事後回報花費 | 我在花錢之前動作，倍數來自基準測試而不是你的歷史 |
-| 省 token 的指南與上下文技能 | 較短的提示、較小的上下文、較少的讀取 | 和我相容。我只改變誰來做 |
-
-我漏掉的話，請開 issue。
-
-## 限制
-
-- 小任務因為 worker 啟動成本，節省有限。低於約 1.15 倍我無法和沒省區分，而混合集的結果（1.11 倍）就低於它。
-- 版本比較涵蓋一個專案、一個對話模型與 effort（Opus 5.5、high）。格子涵蓋四個模型和五種 effort，每格跑一次，單一格子雜訊大，Fable 有些格子是內插的。
-- 在留出任務上我量到 1.04 倍。把調整用任務的數字當成上限。
-- 在 Sonnet 與 Haiku，以及 Opus 在 max 以下（多檔案工作除外），我什麼都不做，因為實測只支持這樣。
-- 在機械式修改上，這一版沒有比單獨做好，也比 v0.2.0 差。
-- 在我測的小檔案上，沒有顯示外部工具帶來節省，Gemini 命令列也沒量。大型讀取沒量。
-- 提早壓縮只用一種長工作階段設計測過，沒有回本，所以是選用。
-- 頁尾是依比值估計的。金額是真實的牌價成本乘上一個實測比值，而這個比值不是你這個任務的量測。代理有時在最後一則訊息寫入前就執行 Stop hook，我會等最多 4 秒，仍沒出現就印「at least」。
-- hook 看不到對話模型，所以先從對話記錄讀模型，再看執行中代理程序的啟動旗標、環境變數與設定。都沒說是哪個模型時，卡片會說上限未知，並要我絕不超過自己的模型。
-- worker 和任何工作階段一樣會載入你專案的記憶檔。基準測試專案沒有，所以那份成本不在數字裡。
-- 由模型評分的任務可能評錯。基準測試裡的檢查是為了抓出這點，不是消除它。
-
-更多見 [docs/usage.md](docs/usage.md)、[docs/config.md](docs/config.md) 與 [docs/architecture.md](docs/architecture.md)。參與貢獻：[CONTRIBUTING.md](CONTRIBUTING.md)。MIT 授權。
+MIT © Arthur031221
 
 Assisted by Claude/Codex.

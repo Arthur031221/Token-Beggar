@@ -26,11 +26,20 @@ def load(out: str) -> list[dict]:
         r, s = d["result"], d["score"]
         if not isinstance(r, dict) or r.get("total_cost_usd") is None:
             continue
-        rows.append({
-            "task": d["task"], "arm": d["arm"], "rep": d["rep"], "cost": r["total_cost_usd"], "turns": r.get("num_turns") or 0,
-            "seconds": (r.get("duration_ms") or 0) / 1000, "resolved": bool(s["resolved"]), "f2p": s["f2p_passed"] / max(1, s["f2p_total"]),
-            "regressions": s["regressions"], "ran": s.get("suite_ran", True),
-        })
+        rows.append(
+            {
+                "task": d["task"],
+                "arm": d["arm"],
+                "rep": d["rep"],
+                "cost": r["total_cost_usd"],
+                "turns": r.get("num_turns") or 0,
+                "seconds": (r.get("duration_ms") or 0) / 1000,
+                "resolved": bool(s["resolved"]),
+                "f2p": s["f2p_passed"] / max(1, s["f2p_total"]),
+                "regressions": s["regressions"],
+                "ran": s.get("suite_ran", True),
+            }
+        )
     return rows
 
 
@@ -71,9 +80,13 @@ def claim(m, lo) -> bool:
 def stats(rows, arm, tasks=None):
     chosen = [r for r in rows if r["arm"] == arm and (tasks is None or r["task"] in tasks)]
     return {
-        "runs": len(chosen), "cost": mean(r["cost"] for r in chosen), "resolved": mean(r["resolved"] for r in chosen),
-        "f2p": mean(r["f2p"] for r in chosen), "regressions": sum(1 for r in chosen if r["regressions"]),
-        "seconds": mean(r["seconds"] for r in chosen), "turns": mean(r["turns"] for r in chosen),
+        "runs": len(chosen),
+        "cost": mean(r["cost"] for r in chosen),
+        "resolved": mean(r["resolved"] for r in chosen),
+        "f2p": mean(r["f2p"] for r in chosen),
+        "regressions": sum(1 for r in chosen if r["regressions"]),
+        "seconds": mean(r["seconds"] for r in chosen),
+        "turns": mean(r["turns"] for r in chosen),
     }
 
 
@@ -109,20 +122,35 @@ def summarise(rows, base, arms, blind):
 
 
 def render(summary, base, arms, label):
-    lines = ["| setup | runs | cost per run | multiple vs " + label[base] + " (95% interval) | resolved | regressions | blind review (0 to 2) | turns | seconds |", "|---|---|---|---|---|---|---|---|---|"]
+    lines = [
+        "| setup | runs | cost per run | multiple vs "
+        + label[base]
+        + " (95% interval) | resolved | regressions | blind review (0 to 2) | turns | seconds |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
     for arm in arms:
         s = summary["arms"][arm]
         mult = "1.00x" if arm == base else f"{s['multiple']:.2f}x ({s['low']:.2f} to {s['high']:.2f})" + ("" if s["claim"] else " within noise")
         blind = f"{s['blind']:.2f}" if s.get("blind") else "not reviewed"
-        lines.append(f"| {label[arm]} | {s['runs']} | ${s['cost']:.2f} | {mult} | {s['resolved'] * 100:.0f}% | {s['regressions']} | {blind} | {s['turns']:.0f} | {s['seconds']:.0f} |")
-    lines += ["", "## Per task", "", "| task | setup | runs | cost per run | multiple | resolved | tests fixed | turns | seconds |", "|---|---|---|---|---|---|---|---|---|"]
+        lines.append(
+            f"| {label[arm]} | {s['runs']} | ${s['cost']:.2f} | {mult} | {s['resolved'] * 100:.0f}% | {s['regressions']} | {blind} | {s['turns']:.0f} | {s['seconds']:.0f} |"
+        )
+    lines += [
+        "",
+        "## Per task",
+        "",
+        "| task | setup | runs | cost per run | multiple | resolved | tests fixed | turns | seconds |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
     for t, row in summary["per_task"].items():
         for arm in arms:
             s = row[arm]
             if not s["runs"]:
                 continue
             mult = "1.00x" if arm == base else f"{s['multiple']:.2f}x"
-            lines.append(f"| {t} | {label[arm]} | {s['runs']} | ${s['cost']:.2f} | {mult} | {s['resolved'] * 100:.0f}% | {s['f2p'] * 100:.0f}% | {s['turns']:.0f} | {s['seconds']:.0f} |")
+            lines.append(
+                f"| {t} | {label[arm]} | {s['runs']} | ${s['cost']:.2f} | {mult} | {s['resolved'] * 100:.0f}% | {s['f2p'] * 100:.0f}% | {s['turns']:.0f} | {s['seconds']:.0f} |"
+            )
     lines += ["", "## Run to run spread of the resolved share (one value per rep)", ""]
     for arm in arms:
         lines.append(f"- {label[arm]}: " + ", ".join(f"rep {k} {v * 100:.0f}%" for k, v in summary["rep_spread"][arm].items()))
@@ -137,12 +165,21 @@ def main():
     ap.add_argument("--blind", default="")
     args = ap.parse_args()
     arms = args.arms.split(",")
-    label = {"alone": "Without Token Beggar", "main": "Main before v0.3.0 (commit b761ce6)", "scoped": "v0.3.0 (this release)", "verify": "Draft 2 of v0.3.0 (not shipped)", "sized": "Draft 1 of v0.3.0 (not shipped)"}
+    label = {
+        "alone": "Without Token Beggar",
+        "main": "Main before v0.3.0 (commit b761ce6)",
+        "scoped": "v0.3.0 (this release)",
+        "verify": "Draft 2 of v0.3.0 (not shipped)",
+        "sized": "Draft 1 of v0.3.0 (not shipped)",
+    }
     rows = [r for r in load(args.out) if r["arm"] in arms]
     blind = json.loads(Path(args.blind).read_text()) if args.blind else {}
     summary = summarise(rows, args.base, arms, blind)
     (RESULTS / args.out / "summary.json").write_text(json.dumps(summary, indent=1) + "\n")
-    text = f"# Hard task benchmark results\n\n{len(rows)} runs, {len(summary['tasks'])} tasks, Opus 5.5 at high effort as the chat model.\n\n" + render(summary, args.base, arms, label)
+    text = (
+        f"# Hard task benchmark results\n\n{len(rows)} runs, {len(summary['tasks'])} tasks, Opus 5.5 at high effort as the chat model.\n\n"
+        + render(summary, args.base, arms, label)
+    )
     (RESULTS / args.out / "report.md").write_text(text + "\n")
     print(text)
 

@@ -139,10 +139,12 @@ def sized(ceiling: dict, inventory: dict) -> str:
         f"LARGE: send ONE token-beggar:beggar-worker Agent call ({_worker_pick(ceiling, inventory)}) the reproduce, explore, fix and "
         "run-the-tests steps as a numbered list, with the goal, exact paths and the check to run. "
         "Tell it to grep, before it edits, for the failing symbol, the helpers it calls and any user-visible text from the issue, and to fix every "
-        "other site that shares the code path or the symptom (sibling functions, other types, error messages, docs), listing each as site, same symptom yes or no, fixed or not and why. "
+        "other site that shares the code path or the symptom (sibling functions, other types, error messages, docs), "
+        "listing each as site, same symptom yes or no, fixed or not and why. "
         "It reports under 150 words: root cause, that list, files changed, the test command and the last lines of its output. "
         "Before you answer you must yourself read the whole `git diff` (the diff, not the files), run the target test and the tests of that module, "
-        "check that the root cause matches the diff, check the list against the issue's wording and grep once yourself for its key symbol or error text. "
+        "check that the root cause matches the diff, check the list against the issue's wording "
+        "and grep once yourself for its key symbol or error text. "
         "If a test fails, they do not match, or a site is missing or left unfixed without a good reason, send the same worker back with the gap "
         "(not a new one), or fix it inline if it takes about 3 steps. Independent jobs go out in one message. "
         "You keep the plan, the root cause, design trade-offs and the answer. "
@@ -159,7 +161,8 @@ def grown() -> str:
         f"Token Beggar: this task is no longer small (more than {GROW_STEPS} steps, or a long context). Dispatch the rest now: one "
         "token-beggar:beggar-worker Agent call with the goal, exact paths, the check to run and 'report under 150 words'. "
         "Have it list every other site that shares the code path or the symptom and fix those too. "
-        "Keep the plan and the root cause, and before you answer read the whole `git diff`, check that list against the issue and run the tests yourself."
+        "Keep the plan and the root cause, and before you answer read the whole `git diff`, "
+        "check that list against the issue and run the tests yourself."
     )
 
 

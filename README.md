@@ -23,6 +23,8 @@ It runs on your machine, in your Claude Code session. It uses the Claude Code yo
 
 [Install](#install) · [Quick start](#quick-start) · [Results](#results) · [How it works](#how-it-works) · [FAQ](#faq) · [Docs](#documentation) · [Changelog](CHANGELOG.md)
 
+<p align="center"><img src="assets/demo.gif" width="760" alt="Terminal recording of the routing card, the compaction guard and the benchmark table"></p>
+
 > [!TIP]
 > Not sure it is working? Run `token-beggar doctor`. It lists what can quietly stop routing and exits 1 when something is broken.
 
@@ -107,7 +109,7 @@ What this does not show: equal code quality. A blind review by a small model rat
 
 <p align="center"><img src="assets/chart-small-cost.svg" alt="Bar chart: times less quota and money than Without Token Beggar on small tasks, by class, for v0.2.0 and Main before v0.3.0. A dashed line marks 1.0x, no saving."></p>
 
-<p align="center"><em>On small tasks only the multi-file class clearly saves; the rest sits near the dashed line.</em></p>
+<p align="center"><em>On small tasks only the multi-file class clearly saves, and the rest sits near the dashed line.</em></p>
 
 <p align="center"><img src="assets/chart-small-quality.svg" alt="Bar chart: mean quality on small tasks by class. All small tasks: 0.96 Without Token Beggar, 0.96 v0.2.0, 0.99 Main before v0.3.0."></p>
 

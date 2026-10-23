@@ -77,8 +77,12 @@ def checkout(task: dict, commit: str, dest: Path) -> Path:
         sh(["uv", "venv", "-q", "--seed", "--python", task["python"], ".venv"], cwd=dest)
     else:
         sh([sys.executable, "-m", "venv", ".venv"], cwd=dest)
-    sh([".venv/bin/pip", "install", "-q", "--disable-pip-version-check", *task["install"].split()], cwd=dest, timeout=1200,
-       env=dict(os.environ, SETUPTOOLS_SCM_PRETEND_VERSION="9.9.9"))  # projects that take their version from git tags have none here
+    sh(
+        [".venv/bin/pip", "install", "-q", "--disable-pip-version-check", *task["install"].split()],
+        cwd=dest,
+        timeout=1200,
+        env=dict(os.environ, SETUPTOOLS_SCM_PRETEND_VERSION="9.9.9"),
+    )  # projects that take their version from git tags have none here
     return dest
 
 
@@ -149,7 +153,11 @@ def prompt_for(task: dict) -> str:
     return (
         "Resolve the issue below in this repository (the current directory) by changing the library code, and add or update tests for it. "
         "A Python virtualenv with the project installed in editable mode is at .venv; run tests with "
-        + (".venv/bin/python tests/runtests.py --parallel 1 <test module, for example queries.tests>" if task.get("runner") == "django" else ".venv/bin/python -m pytest <path>")
+        + (
+            ".venv/bin/python tests/runtests.py --parallel 1 <test module, for example queries.tests>"
+            if task.get("runner") == "django"
+            else ".venv/bin/python -m pytest <path>"
+        )
         + ". "
         "Do not commit.\n\n"
         f"Issue: {data['issue_title']}\n\n{data['issue_body']}"
@@ -255,7 +263,10 @@ def main() -> None:
             return
         rec = run_one(task, arm, rep, args.top, args.effort, out)
         res = rec["result"]
-        print(f"{task['id']:24} {arm:6} rep{rep} cost={res.get('total_cost_usd')} turns={res.get('num_turns')} resolved={rec['score']['resolved']}", flush=True)
+        print(
+            f"{task['id']:24} {arm:6} rep{rep} cost={res.get('total_cost_usd')} turns={res.get('num_turns')} resolved={rec['score']['resolved']}",
+            flush=True,
+        )
 
     with ThreadPoolExecutor(args.workers) as pool:
         list(pool.map(go, jobs))

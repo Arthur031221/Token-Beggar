@@ -19,7 +19,15 @@ INK, PAPER, COPPER, SAND, MUTED, SLATE, LINE, MOSS = "#2b2118", "#fbf3e4", "#c87
 COLORS = {WITHOUT: SAND, V020: MOSS, MAIN: SLATE, V030: COPPER}
 HARD_NAMES = {"base": WITHOUT, "previous": MAIN, "this": V030}
 SMALL_NAMES = {"base": WITHOUT, "previous": V020, "this": MAIN}
-SMALL_CLASSES = [("mechanical", "Mechanical edits"), ("reading", "Reading"), ("routine_code", "Routine code"), ("multi_file", "Several files"), ("debugging", "Debugging"), ("design", "Design"), ("review", "Review")]
+SMALL_CLASSES = [
+    ("mechanical", "Mechanical edits"),
+    ("reading", "Reading"),
+    ("routine_code", "Routine code"),
+    ("multi_file", "Several files"),
+    ("debugging", "Debugging"),
+    ("design", "Design"),
+    ("review", "Review"),
+]
 
 
 def text(x, y, s, size=12, fill=INK, anchor="start", weight="normal", halo=False):
@@ -47,7 +55,9 @@ def bars(path, title, caption, rows, setups, fmt, scale, names, line=None):
         x += 48 + 6.4 * len(names[key])
     if line:
         lx = left + inner * line / scale
-        out.append(f'<line x1="{lx:.1f}" y1="{top - 8}" x2="{lx:.1f}" y2="{top + row_h * len(rows)}" stroke="{LINE}" stroke-width="1.5" stroke-dasharray="5 4"/>')
+        out.append(
+            f'<line x1="{lx:.1f}" y1="{top - 8}" x2="{lx:.1f}" y2="{top + row_h * len(rows)}" stroke="{LINE}" stroke-width="1.5" stroke-dasharray="5 4"/>'
+        )
         out.append(text(lx, top - 14, "1.0x: no saving", 11, LINE, "middle", "bold"))
     for i, (label, values) in enumerate(rows):
         y = top + i * row_h
@@ -83,15 +93,35 @@ def hard(name_of):
     rows_cost.insert(0, ("All tasks", {k: s["arms"][name_of[k]]["multiple"] for k in cost_setups}))
     scale = max(1.5, max(v for _, r in rows_cost for v in r.values()) * 1.08)
     runs = min(s["arms"][name_of[k]]["runs"] for k in setups)
-    bars(ASSETS / "chart-hard-cost.svg", "Hard tasks: how much less quota and money?",
-         ["Take away: on real open source issues the run costs about 1.4 times less than working alone, and only one of the 18 tasks cost more.",
-          f"Cost of working without Token Beggar divided by cost with it, list price, 3 runs per task and setup ({runs} per setup). Higher is cheaper."],
-         rows_cost, cost_setups, times, scale, names, line=1.0)
+    bars(
+        ASSETS / "chart-hard-cost.svg",
+        "Hard tasks: how much less quota and money?",
+        [
+            "Take away: on real open source issues the run costs about 1.4 times less than working alone, and only one of the 18 tasks cost more.",
+            f"Cost of working without Token Beggar divided by cost with it, list price, 3 runs per task and setup ({runs} per setup). Higher is cheaper.",
+        ],
+        rows_cost,
+        cost_setups,
+        times,
+        scale,
+        names,
+        line=1.0,
+    )
     rows_q = [(t, {k: s["per_task"][t][name_of[k]]["resolved"] for k in setups}) for t in s["tasks"]]
     rows_q.insert(0, ("All tasks", {k: s["arms"][name_of[k]]["resolved"] for k in setups}))
-    bars(ASSETS / "chart-hard-quality.svg", "Hard tasks: how often was the issue fixed?",
-         ["Take away: the share of fixed issues stays inside the run to run spread of working alone (69 against 70 percent).",
-          "Share of runs where the fix's own hidden tests pass and no existing test breaks."], rows_q, setups, percent, 1.0, names)
+    bars(
+        ASSETS / "chart-hard-quality.svg",
+        "Hard tasks: how often was the issue fixed?",
+        [
+            "Take away: the share of fixed issues stays inside the run to run spread of working alone (69 against 70 percent).",
+            "Share of runs where the fix's own hidden tests pass and no existing test breaks.",
+        ],
+        rows_q,
+        setups,
+        percent,
+        1.0,
+        names,
+    )
 
 
 def small(out, name_of):
@@ -104,15 +134,35 @@ def small(out, name_of):
     rows_cost.insert(0, ("All small tasks", {k: s["all"][name_of[k]]["multiple"] for k in cost_setups}))
     scale = max(1.5, max(v for _, r in rows_cost for v in r.values()) * 1.08)
     runs = min(s["all"][name_of[k]]["runs"] for k in setups)
-    bars(ASSETS / "chart-small-cost.svg", "Small tasks: how much less quota and money?",
-         ["Take away: small tasks save little. Only work on several files is clear of the noise, so on small tasks the skill mostly stays out.",
-          f"Cost of working without Token Beggar divided by cost with it, list price, {runs} runs per setup. Higher is cheaper."],
-         rows_cost, cost_setups, times, scale, names, line=1.0)
+    bars(
+        ASSETS / "chart-small-cost.svg",
+        "Small tasks: how much less quota and money?",
+        [
+            "Take away: small tasks save little. Only work on several files is clear of the noise, so on small tasks the skill mostly stays out.",
+            f"Cost of working without Token Beggar divided by cost with it, list price, {runs} runs per setup. Higher is cheaper.",
+        ],
+        rows_cost,
+        cost_setups,
+        times,
+        scale,
+        names,
+        line=1.0,
+    )
     rows_q = [(label, {k: s[c][name_of[k]]["quality"] for k in setups if name_of[k] in s[c]}) for c, label in classes]
     rows_q.insert(0, ("All small tasks", {k: s["all"][name_of[k]]["quality"] for k in setups}))
-    bars(ASSETS / "chart-small-quality.svg", "Small tasks: how good were the answers?",
-         ["Take away: answer quality did not drop in any setup.",
-          "Score from 0 to 1: hidden checks and tests for code tasks, a blind judge against a checklist for answers."], rows_q, setups, lambda v: f"{v:.2f}", 1.0, names)
+    bars(
+        ASSETS / "chart-small-quality.svg",
+        "Small tasks: how good were the answers?",
+        [
+            "Take away: answer quality did not drop in any setup.",
+            "Score from 0 to 1: hidden checks and tests for code tasks, a blind judge against a checklist for answers.",
+        ],
+        rows_q,
+        setups,
+        lambda v: f"{v:.2f}",
+        1.0,
+        names,
+    )
 
 
 def main():

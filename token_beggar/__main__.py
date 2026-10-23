@@ -183,7 +183,10 @@ def _cmd_window(args: argparse.Namespace) -> int:
 def _window_text(point: dict) -> str:
     state = "OFF (auto compaction is disabled)" if point["disabled"] else "on"
     if point["user_set"]:
-        mine = f"set by you, so Token Beggar uses it and chooses no other point; a mid-step compaction is still deferred (never past {point['defer_limit']:,})"
+        mine = (
+            "set by you, so Token Beggar uses it and chooses no other point; "
+            f"a mid-step compaction is still deferred (never past {point['defer_limit']:,})"
+        )
     else:
         mine = (
             "the host default; Token Beggar defers a mid-step compaction (never past "
