@@ -84,7 +84,11 @@ A version here means a tagged release of this repository. **Without Token Beggar
 
 <p align="center"><img src="assets/chart-hard-cost.svg" alt="Bar chart: times less quota and money than Without Token Beggar on hard tasks, per task. All tasks: 1.54x for Main before v0.3.0 and 1.42x for v0.3.0. A dashed line marks 1.0x, no saving."></p>
 
+<p align="center"><em>17 of the 18 hard tasks cost less with Token Beggar, and the one that cost more (structlog-exception-outside) cost about 10% more.</em></p>
+
 <p align="center"><img src="assets/chart-hard-quality.svg" alt="Bar chart: share of hard tasks where the issue was fixed, per task. All tasks: 70% Without Token Beggar, 65% Main before v0.3.0, 69% v0.3.0."></p>
+
+<p align="center"><em>The share of issues fixed stays close to working alone, which is the check that the saving is not paid for in quality.</em></p>
 
 Cost is down by about a third and the share of issues fixed is level. Main before v0.3.0 was cheaper still but resolved fewer, and on click-format-filename it stopped after 2 turns with a wrong fix (0 of 3, against 3 of 3 alone). v0.3.0 spends some of that saving on reading the whole diff before it answers. That is why it is the one shipped.
 
@@ -103,7 +107,11 @@ What this does not show: equal code quality. A blind review by a small model rat
 
 <p align="center"><img src="assets/chart-small-cost.svg" alt="Bar chart: times less quota and money than Without Token Beggar on small tasks, by class, for v0.2.0 and Main before v0.3.0. A dashed line marks 1.0x, no saving."></p>
 
+<p align="center"><em>On small tasks only the multi-file class clearly saves; the rest sits near the dashed line.</em></p>
+
 <p align="center"><img src="assets/chart-small-quality.svg" alt="Bar chart: mean quality on small tasks by class. All small tasks: 0.96 Without Token Beggar, 0.96 v0.2.0, 0.99 Main before v0.3.0."></p>
+
+<p align="center"><em>Answer quality on small tasks did not drop in any setup.</em></p>
 
 Small tasks save little. The other five classes (mechanical edits, reading, debugging, design, review) came out between 0.97x and 1.09x, within noise. The mixed result (1.11x) is under the 1.15x line, so it is not claimed as a saving, and on the held-out tasks it is inside the spread of working alone. A start cost of about $0.10 per worker is most of a $0.15 task, which is why small tasks stay in the chat. Answer quality did not drop in any setup.
 
