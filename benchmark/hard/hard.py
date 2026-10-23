@@ -2,7 +2,7 @@
 
     python3 hard.py prepare [--only id,id]      clone the repositories, read the issues, run the reference fix (once per task)
     python3 hard.py run --arms alone,main,sized --reps 1,2,3 [--only id] [--workers 3] [--top opus] [--effort high] [--out hard]
-    python3 hard.py score --out hard            hidden tests and regressions for every raw run (run does this too)
+    python3 hard.py rescore --only task.arm.rep   score a saved run again from its diff (when the test suite did not run)
 
 An agent starts from the parent of the fixing commit with the issue text as the prompt. After it stops, the tests that the fix added or
 changed are put back (the agent never saw them) and the whole test suite runs. fail_to_pass: tests that fail on the parent with those
@@ -201,9 +201,24 @@ def run_one(task: dict, arm: str, rep: int, top: str, effort: str, out: Path) ->
     return record
 
 
+def rescore(name: str) -> None:
+    """Score a saved run again from its diff, for a run whose test suite did not run (a harness failure, not the agent's)."""
+    task_id, arm, rep = name.split(".")
+    task = next(t for t in TASKS if t["id"] == task_id)
+    raw = RESULTS / "raw"
+    work = SCRATCH / f"rescore-{name}" / "repo"
+    checkout(task, info(task)["base"], work)
+    sh(["git", "apply", "--whitespace=nowarn", str(raw / f"{name}.diff")], cwd=work)
+    record = json.loads((raw / f"{name}.json").read_text())
+    record["score"] = score_work(task, work)
+    (raw / f"{name}.json").write_text(json.dumps(record, indent=1))
+    shutil.rmtree(SCRATCH / f"rescore-{name}", ignore_errors=True)
+    print(name, record["score"])
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["prepare", "run"])
+    ap.add_argument("cmd", choices=["prepare", "run", "rescore"])
     ap.add_argument("--only", default="")
     ap.add_argument("--arms", default="alone,main,sized")
     ap.add_argument("--reps", default="1")
@@ -214,6 +229,10 @@ def main() -> None:
     ap.add_argument("--max-cost", type=float, default=0.0, help="stop starting runs once the raw files add up to this many dollars")
     args = ap.parse_args()
     only = set(filter(None, args.only.split(",")))
+    if args.cmd == "rescore":
+        for name in only:
+            rescore(name)
+        return
     chosen = [t for t in TASKS if not only or t["id"] in only]
     if args.cmd == "prepare":
         for task in chosen:
