@@ -1,0 +1,132 @@
+{
+ "task": "rich-inspect-methods",
+ "arm": "scoped",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 68178,
+  "stop_reason": "end_turn",
+  "session_id": "be754911-fc55-411b-9c0f-c67679b3ab0c",
+  "total_cost_usd": 0.285945,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 14919,
+   "cache_read_input_tokens": 141555,
+   "output_tokens": 3046,
+   "output_tokens_details": {
+    "thinking_tokens": 453
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 14919,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 658,
+     "cache_read_input_tokens": 27439,
+     "cache_creation_input_tokens": 376,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 376
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 3046,
+    "cacheReadInputTokens": 141555,
+    "cacheCreationInputTokens": 14919,
+    "webSearchRequests": 0,
+    "costUSD": 0.208631,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 453,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 20,
+    "outputTokens": 3486,
+    "cacheReadInputTokens": 117315,
+    "cacheCreationInputTokens": 12273,
+    "webSearchRequests": 0,
+    "costUSD": 0.07731400000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 629,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've fixed the bug, and `inspect(pyparsing, all=True)` and `methods=True` now both run without error (pyparsing 3.0.8).\n\n**Cause:** `Text.__init__` in `rich/text.py` removes control characters from the string before storing it. But it set the length from the original string, before they were removed. Some pyparsing docstrings contain a backspace character (`\\x08`; `WordEnd` has one), so the recorded length came out longer than the stored text. When inspect then joined more text onto it, the styling markers pointed past the end of the text, and `Text.divide` raised the `IndexError` while wrapping that table cell.\n\n**Fix:** `rich/text.py:144-153` now takes the length from the cleaned-up string. I checked the other places in `text.py` that remove control characters or set the length (`append`, `append_tokens` and the `plain` setter). They already measure the string they actually store, so nothing else needed changing. Nothing in `rich/_inspect.py` needed to change either.\n\n**Tests added:**\n- `tests/test_text.py::test_text_init_control_codes_length`: checks the length, the positions of appended styling, and that `split`/`divide` work on text containing `\\x08`.\n- `tests/test_inspect.py::test_inspect_methods_docstring_control_codes`: a small class whose method docstring contains `\\x08`, inspected with `all=True` and with `methods=True`. It doesn't depend on pyparsing.\n\n**Test results:** `.venv/bin/python -m pytest tests/test_inspect.py tests/test_text.py` gives `3 failed, 92 passed`. The 3 failures (`test_inspect_text`, `test_inspect_builtin_function`, `test_inspect_integer_with_methods`) also fail without my change, so they predate it. Across the full suite there are 17 failures both before and after the change.\n\nTo run the reproduction, I installed pyparsing 3.0.8 into `.venv`. Nothing has been committed.",
+  "ttft_ms": 5678,
+  "type": "result",
+  "duration_ms": 89312,
+  "uuid": "a62928ca-7fd5-44da-b9f2-a028fbd04e3b",
+  "ttft_stream_ms": 2056,
+  "time_to_request_ms": 424,
+  "first_content_frame_ms": 2056,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 12,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

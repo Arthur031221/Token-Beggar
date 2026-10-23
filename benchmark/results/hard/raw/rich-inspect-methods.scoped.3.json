@@ -1,0 +1,137 @@
+{
+ "task": "rich-inspect-methods",
+ "arm": "scoped",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 89377,
+  "stop_reason": "end_turn",
+  "session_id": "e59a7a9d-ba7b-441f-97d5-587cf41ab495",
+  "total_cost_usd": 0.3901895999999999,
+  "usage": {
+   "input_tokens": 14,
+   "cache_creation_input_tokens": 6767,
+   "cache_read_input_tokens": 168801,
+   "output_tokens": 3194,
+   "output_tokens_details": {
+    "thinking_tokens": 796
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6767,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 757,
+     "cache_read_input_tokens": 30774,
+     "cache_creation_input_tokens": 516,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 516
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 4713,
+    "cacheReadInputTokens": 204320,
+    "cacheCreationInputTokens": 18394,
+    "webSearchRequests": 0,
+    "costUSD": 0.282348,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1134,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 26,
+    "outputTokens": 4773,
+    "cacheReadInputTokens": 198246,
+    "cacheCreationInputTokens": 16094,
+    "webSearchRequests": 0,
+    "costUSD": 0.10784160000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 488,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "origin": {
+   "kind": "task-notification",
+   "producer": "session-task",
+   "runId": "0mvkdz410-81178934"
+  },
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 0,
+    "unset": 1
+   },
+   "started_in_background": 1,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The crash is fixed with a two-line change in `rich/text.py`, and both new tests pass. Against the original code, the inspect test fails with the same `IndexError` as the issue.\n\n**Cause:** `Text.__init__` removes control characters (form feed `\\x0c`, vertical tab `\\x0b`, backspace `\\x08`, carriage return `\\r`) from the string it stores. But it set the text's length from the original string, before they were removed. When `inspect` builds a method's signature and docstring, it joins `Text` objects using that length. A docstring containing one of those characters therefore leaves style ranges pointing past the end of the text, and `Text.divide` crashes when it looks them up. pyparsing isn't installed in the venv, so I reproduced it with a hand-made docstring containing those characters rather than pyparsing itself.\n\n**Fix** (`rich/text.py`, `Text.__init__`): measure the length from the cleaned-up string. `Text.append` already measured after stripping, so it didn't need a change.\n\nThe worker agent had also made `Text.divide` silently trim out-of-range style ranges. I removed that: it isn't needed once the length is right, and it would hide similar bugs in future.\n\n**Tests added:**\n- `tests/test_inspect.py::test_inspect_method_docstring_with_control_codes` inspects a class whose method docstring contains those characters, with `methods=True` and with `all=True, help=True`.\n- `tests/test_text.py::test_control_codes_length` checks that the length, styles and line-splitting are correct after the characters are removed. On the original code it fails with `assert 7 == 4`.\n\n**Test results:** the full suite gives 17 failed, 638 passed, 19 skipped. The worker agent found the same 17 failures on the unchanged code. I checked the three in `tests/test_inspect.py` myself (`test_inspect_text`, `test_inspect_builtin_function`, `test_inspect_integer_with_methods`): they fail identically without my change. They compare against the built-in docstrings of `str` and `int`, which differ in this Python version.\n\nNothing is committed.",
+  "ttft_ms": 2091,
+  "type": "result",
+  "duration_ms": 38614,
+  "uuid": "2b96397e-1d91-402e-8513-7cf630b521e5",
+  "ttft_stream_ms": 619,
+  "time_to_request_ms": 69,
+  "first_content_frame_ms": 619,
+  "queued_turn_count": 0,
+  "result_index": 1
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 12,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

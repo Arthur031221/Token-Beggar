@@ -1,0 +1,73 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index bc33fea..59b6e86 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
+ ### Fixed
+ 
+ - Allow exceptions that are raised while a Live is rendered to be displayed and/or processed https://github.com/Textualize/rich/pull/2305
++- Fixed `IndexError` in `Text.divide` (e.g. `inspect(..., methods=True)`) when text contained control codes, which made `Text` length wrong
+ 
+ ## [12.4.4] - 2022-05-24
+ 
+diff --git a/rich/text.py b/rich/text.py
+index f6b349d..e095fec 100644
+--- a/rich/text.py
++++ b/rich/text.py
+@@ -141,7 +141,8 @@ class Text(JupyterMixin):
+         tab_size: Optional[int] = 8,
+         spans: Optional[List[Span]] = None,
+     ) -> None:
+-        self._text = [strip_control_codes(text)]
++        sanitized_text = strip_control_codes(text)
++        self._text = [sanitized_text]
+         self.style = style
+         self.justify: Optional["JustifyMethod"] = justify
+         self.overflow: Optional["OverflowMethod"] = overflow
+@@ -149,7 +150,7 @@ class Text(JupyterMixin):
+         self.end = end
+         self.tab_size = tab_size
+         self._spans: List[Span] = spans or []
+-        self._length: int = len(text)
++        self._length: int = len(sanitized_text)
+ 
+     def __len__(self) -> int:
+         return self._length
+diff --git a/tests/test_inspect.py b/tests/test_inspect.py
+index b4c1d2a..86bd61d 100644
+--- a/tests/test_inspect.py
++++ b/tests/test_inspect.py
+@@ -299,3 +299,16 @@ def test_inspect_module_with_class():
+         "╰──────────────────────────────────────────╯\n"
+     )
+     assert render(module, methods=True) == expected
++
++
++def test_inspect_methods_docstring_with_control_codes():
++    """Docstrings containing control codes must not break rendering."""
++
++    class Foo:
++        def method(self):
++            pass
++
++    Foo.method.__doc__ = "\x0b\x08bell " + "word \x0c" * 40 + "more words here to wrap"
++    console = Console(file=io.StringIO(), width=40, color_system=None)
++    inspect(Foo, methods=True, console=console)
++    assert "\x0c" not in console.file.getvalue()
+diff --git a/tests/test_text.py b/tests/test_text.py
+index 4f02fd4..96f28c8 100644
+--- a/tests/test_text.py
++++ b/tests/test_text.py
+@@ -747,3 +747,12 @@ def test_markup_property():
+         == "[bold]foo [italic]bar[/bold] baz[/italic]"
+     )
+     assert Text("[bold]foo").markup == "\\[bold]foo"
++
++
++def test_text_length_with_control_codes():
++    text = Text("a\x0bb\x08c")
++    assert text.plain == "abc"
++    assert len(text) == 3
++    text.append("x")
++    text.stylize("bold", 0, 4)
++    assert [str(line) for line in text.wrap(Console(width=10), 10)] == ["abcx"]

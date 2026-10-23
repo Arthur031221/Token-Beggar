@@ -1,0 +1,251 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index cc53c62..2e0b998 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -34,6 +34,9 @@ You can find our backwards-compatibility policy [here](https://github.com/hynek/
+ 
+   [#657](https://github.com/hynek/structlog/pull/657)
+ 
++- `structlog.processors.ExceptionRenderer` (and therefore `structlog.processors.format_exc_info` and `structlog.processors.dict_tracebacks`), `structlog.processors.ExceptionPrettyPrinter`, and `structlog.dev.ConsoleRenderer` now treat a missing exception (`exc_info=(None, None, None)` or `exc_info=True` outside of an `except` block -- for example when calling `logger.exception()` outside of an exception handler) as no exception at all.
++  Previously, an `exception` key with the value `"MISSING"` or `[]` was added.
++
+ - Instantiating `structlog.dev.ConsoleRenderer` does not mutate the passed *styles* dict anymore.
+ 
+   [#669](https://github.com/hynek/structlog/pull/669)
+diff --git a/src/structlog/dev.py b/src/structlog/dev.py
+index 40dc636..121ea79 100644
+--- a/src/structlog/dev.py
++++ b/src/structlog/dev.py
+@@ -714,7 +714,7 @@ class ConsoleRenderer:
+     ) -> str:
+         stack = event_dict.pop("stack", None)
+         exc = event_dict.pop("exception", None)
+-        exc_info = event_dict.pop("exc_info", None)
++        exc_info = _figure_out_exc_info(event_dict.pop("exc_info", None))
+ 
+         kvs = [
+             col.formatter(col.key, val)
+@@ -734,10 +734,7 @@ class ConsoleRenderer:
+                 sio.write("\n\n" + "=" * 79 + "\n")
+ 
+         if exc_info:
+-            exc_info = _figure_out_exc_info(exc_info)
+-
+-            if exc_info != (None, None, None):
+-                self._exception_formatter(sio, exc_info)
++            self._exception_formatter(sio, exc_info)
+         elif exc is not None:
+             if self._exception_formatter is not plain_traceback:
+                 warnings.warn(
+diff --git a/src/structlog/processors.py b/src/structlog/processors.py
+index c4803a3..5423a57 100644
+--- a/src/structlog/processors.py
++++ b/src/structlog/processors.py
+@@ -34,6 +34,7 @@ from ._frames import (
+     _find_first_app_frame_and_name,
+     _format_exception,
+     _format_stack,
++    is_missing_exc_info,
+ )
+ from ._log_levels import NAME_TO_LEVEL, add_log_level
+ from ._utils import get_processname
+@@ -386,6 +387,10 @@ class ExceptionRenderer:
+     If there is no ``exc_info`` key, the *event_dict* is not touched. This
+     behavior is analog to the one of the stdlib's logging.
+ 
++    If there is no actual exception -- for example, if the value is
++    ``(None, None, None)`` or `True` outside of an ``except`` block -- the
++    ``exc_info`` key is removed and no ``exception`` key is added.
++
+     Args:
+         exception_formatter:
+             A callable that is used to format the exception from the
+@@ -396,6 +401,9 @@ class ExceptionRenderer:
+         features.
+ 
+     .. versionadded:: 22.1.0
++
++    .. versionchanged:: 25.1.0
++       A missing exception (``(None, None, None)``) is not rendered anymore.
+     """
+ 
+     def __init__(
+@@ -407,11 +415,9 @@ class ExceptionRenderer:
+     def __call__(
+         self, logger: WrappedLogger, name: str, event_dict: EventDict
+     ) -> EventDict:
+-        exc_info = event_dict.pop("exc_info", None)
++        exc_info = _figure_out_exc_info(event_dict.pop("exc_info", None))
+         if exc_info:
+-            event_dict["exception"] = self.format_exception(
+-                _figure_out_exc_info(exc_info)
+-            )
++            event_dict["exception"] = self.format_exception(exc_info)
+ 
+         return event_dict
+ 
+@@ -586,21 +592,29 @@ class MaybeTimeStamper:
+         return event_dict
+ 
+ 
+-def _figure_out_exc_info(v: Any) -> ExcInfo:
++def _figure_out_exc_info(v: Any) -> ExcInfo | None:
+     """
+-    Depending on the Python version will try to do the smartest thing possible
+-    to transform *v* into an ``exc_info`` tuple.
++    Try to convert *v* into an ``exc_info`` tuple.
++
++    Return ``None`` if *v* is falsey or if it doesn't represent an actual
++    exception -- for example ``(None, None, None)`` or ``True`` if there is no
++    exception currently being handled (``logger.exception()`` outside of an
++    ``except`` block).
+     """
+     if isinstance(v, BaseException):
+         return (v.__class__, v, v.__traceback__)
+ 
+     if isinstance(v, tuple):
+-        return v
++        exc_info = v
++    elif v:
++        exc_info = sys.exc_info()
++    else:
++        return None
+ 
+-    if v:
+-        return sys.exc_info()  # type: ignore[return-value]
++    if is_missing_exc_info(exc_info):
++        return None
+ 
+-    return v
++    return exc_info
+ 
+ 
+ class ExceptionPrettyPrinter:
+diff --git a/tests/processors/test_processors.py b/tests/processors/test_processors.py
+index 09ea0e9..bf2fc9e 100644
+--- a/tests/processors/test_processors.py
++++ b/tests/processors/test_processors.py
+@@ -177,6 +177,17 @@ class TestExceptionPrettyPrinter:
+ 
+         assert "" == sio.getvalue()
+ 
++    @pytest.mark.parametrize("ei", [True, (None, None, None)])
++    def test_nop_if_missing_exception(self, sio, ei):
++        """
++        If exc_info is passed but there is no actual exception, don't print
++        anything.
++        """
++        epp = ExceptionPrettyPrinter(sio)
++
++        assert {} == epp(None, None, {"exc_info": ei})
++        assert "" == sio.getvalue()
++
+     def test_own_exc_info(self, sio):
+         """
+         If exc_info is a tuple, use it.
+@@ -269,6 +280,28 @@ class TestFigureOutExcInfo:
+ 
+         assert (e.__class__, e, None) == _figure_out_exc_info(e)
+ 
++    @pytest.mark.parametrize(
++        "v", [True, (None, None, None), False, None, "", 0]
++    )
++    def test_no_exception(self, v):
++        """
++        If there's no exception -- either because v is falsey, is the missing
++        exc_info tuple, or is True outside of an exception handler -- None is
++        returned.
++        """
++        assert None is _figure_out_exc_info(v)
++
++    def test_tuple(self):
++        """
++        exc_info tuples are returned as-is.
++        """
++        try:
++            0 / 0
++        except Exception:
++            ei = sys.exc_info()
++
++        assert ei is _figure_out_exc_info(ei)
++
+ 
+ class TestCallsiteParameterAdder:
+     parameter_strings = {
+diff --git a/tests/processors/test_renderers.py b/tests/processors/test_renderers.py
+index 8f225c8..c9cb7cb 100644
+--- a/tests/processors/test_renderers.py
++++ b/tests/processors/test_renderers.py
+@@ -21,6 +21,7 @@ from structlog.processors import (
+     MaybeTimeStamper,
+     TimeStamper,
+     _json_fallback_handler,
++    dict_tracebacks,
+     format_exc_info,
+ )
+ from structlog.threadlocal import wrap_dict
+@@ -578,8 +579,23 @@ class TestFormatExcInfo:
+     @pytest.mark.parametrize("ei", [True, (None, None, None)])
+     def test_no_exception(self, ei):
+         """
+-        A missing exception does not blow up.
++        A missing exception does not blow up and is not rendered.
+         """
+-        assert {"exception": "MISSING"} == format_exc_info(
+-            None, None, {"exc_info": ei}
+-        )
++        assert {} == format_exc_info(None, None, {"exc_info": ei})
++
++    @pytest.mark.parametrize("ei", [True, (None, None, None)])
++    def test_no_exception_dict_tracebacks(self, ei):
++        """
++        A missing exception does not blow up and is not rendered if exceptions
++        are transformed to dicts.
++        """
++        assert {} == dict_tracebacks(None, None, {"exc_info": ei})
++
++    @pytest.mark.parametrize("ei", [True, (None, None, None)])
++    def test_no_exception_custom_formatter(self, ei):
++        """
++        The exception formatter is not called if there's no exception.
++        """
++        er = ExceptionRenderer(lambda _: pytest.fail("Must not be called."))
++
++        assert {} == er(None, None, {"exc_info": ei})
+diff --git a/tests/test_dev.py b/tests/test_dev.py
+index 1193c04..69ff899 100644
+--- a/tests/test_dev.py
++++ b/tests/test_dev.py
+@@ -538,17 +538,26 @@ class TestConsoleRenderer:
+             pickle.dumps(r, proto)
+         )(None, None, {"event": "foo"})
+ 
+-    def test_no_exception(self):
++    @pytest.mark.parametrize("ei", [True, (None, None, None)])
++    def test_no_exception(self, ei):
+         """
+         If there is no exception, don't blow up.
+         """
+         r = dev.ConsoleRenderer(colors=False)
+ 
+-        assert (
+-            "hi"
+-            == r(
+-                None, None, {"event": "hi", "exc_info": (None, None, None)}
+-            ).rstrip()
++        assert "hi" == r(None, None, {"event": "hi", "exc_info": ei}).rstrip()
++
++    def test_no_exception_with_stack(self):
++        """
++        If there is no exception but a stack, no exception separator is
++        rendered.
++        """
++        r = dev.ConsoleRenderer(colors=False)
++
++        assert "hi\nfake stack" == r(
++            None,
++            None,
++            {"event": "hi", "stack": "fake stack", "exc_info": True},
+         )
+ 
+     def test_columns_warns_about_meaningless_arguments(self, recwarn):

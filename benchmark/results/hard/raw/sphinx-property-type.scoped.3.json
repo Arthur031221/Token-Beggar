@@ -1,0 +1,132 @@
+{
+ "task": "sphinx-property-type",
+ "arm": "scoped",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 119950,
+  "stop_reason": "end_turn",
+  "session_id": "c44b1699-84a5-459c-8b97-d681662eed59",
+  "total_cost_usd": 0.44041379999999997,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 18574,
+   "cache_read_input_tokens": 116564,
+   "output_tokens": 5771,
+   "output_tokens_details": {
+    "thinking_tokens": 2223
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 18574,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 929,
+     "cache_read_input_tokens": 30749,
+     "cache_creation_input_tokens": 721,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 721
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 5771,
+    "cacheReadInputTokens": 116564,
+    "cacheCreationInputTokens": 18574,
+    "webSearchRequests": 0,
+    "costUSD": 0.2873648,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2223,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 26,
+    "outputTokens": 8005,
+    "cacheReadInputTokens": 213695,
+    "cacheCreationInputTokens": 20631,
+    "webSearchRequests": 0,
+    "costUSD": 0.153049,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1388,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Autodoc now documents members decorated with both `@classmethod` and `@property`. They come out as `.. py:property::` with a new `:classmethod:` flag and their real docstring, and render as \"class property *name*\". The autodoc, autoclass, autosummary, events, configs and Python-domain tests all pass (187 passed). The venv runs Python 3.9; I didn't run anything on an older Python. Nothing is committed.\n\n**Root cause:** on the class, `getattr(Foo, 'prop2')` returns the property's *value*, not the property object, which is the behaviour the issue describes. That caused two separate failures:\n- `PropertyDocumenter` refused the member because the value isn't a property.\n- The value's docstring is just its type's docstring, so autodoc treated the member as undocumented and dropped it from `:members:` output.\n\n**Fix:**\n- `sphinx/ext/autodoc/__init__.py`: `PropertyDocumenter` now also looks the name up in the class's `__dict__`. If it finds a `classmethod` wrapping a `property`, it documents the inner property and adds `:classmethod:`.\n- `sphinx/ext/autodoc/importer.py`: when collecting class members, `get_class_members` takes the docstring from the wrapped property, so the member is no longer dropped. I checked that this is needed: without it, the autoclass `:members:` test fails.\n- `sphinx/domains/python.py`: the `py:property` directive gains a `:classmethod:` option. This is documented in `doc/usage/restructuredtext/domains.rst` (`versionadded:: 4.2`).\n- `CHANGES`: two entries citing #9461. I'm fairly sure that's the upstream number for this issue but didn't check it online.\n\n**Tests:**\n- Added a `@classmethod @property` member `prop2` to `tests/roots/test-ext-autodoc/target/properties.py`.\n- New `test_class_properties` in `tests/test_ext_autodoc_autoproperty.py`.\n- Extended `test_properties` in `tests/test_ext_autodoc_autoclass.py`.\n- Extended `test_pyproperty` in `tests/test_domain_py.py` for the new option.\n\nBoth autodoc tests are skipped below Python 3.9, which is the first version that supports this decorator stack.\n\n**Not changed:** autosummary's `get_documenter` doesn't pass the member name to `PropertyDocumenter`, so it can't use the new lookup. Autosummary tables may still label these members as attributes rather than properties.\n\nI wrote the fix with a helper agent. Reviewing its diff, I undid an unrelated docstring change it had made in `__init__.py` and corrected the issue number it had put in `CHANGES`.",
+  "ttft_ms": 9217,
+  "type": "result",
+  "duration_ms": 168680,
+  "uuid": "83a2afd0-a253-4957-965e-9a77384b6652",
+  "ttft_stream_ms": 2478,
+  "time_to_request_ms": 714,
+  "first_content_frame_ms": 2479,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

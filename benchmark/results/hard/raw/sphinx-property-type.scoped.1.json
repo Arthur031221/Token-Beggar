@@ -1,0 +1,132 @@
+{
+ "task": "sphinx-property-type",
+ "arm": "scoped",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 148259,
+  "stop_reason": "end_turn",
+  "session_id": "716d223f-56a0-4a48-a6fd-0ef0cda3dd1c",
+  "total_cost_usd": 0.5981607000000001,
+  "usage": {
+   "input_tokens": 18,
+   "cache_creation_input_tokens": 23863,
+   "cache_read_input_tokens": 256042,
+   "output_tokens": 8843,
+   "output_tokens_details": {
+    "thinking_tokens": 3078
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 23863,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 872,
+     "cache_read_input_tokens": 36021,
+     "cache_creation_input_tokens": 738,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 738
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 8843,
+    "cacheReadInputTokens": 256042,
+    "cacheCreationInputTokens": 23863,
+    "webSearchRequests": 0,
+    "costUSD": 0.4190444,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3078,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 38,
+    "outputTokens": 9118,
+    "cacheReadInputTokens": 343628,
+    "cacheCreationInputTokens": 21399,
+    "webSearchRequests": 0,
+    "costUSD": 0.17911629999999998,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 728,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 11,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Autodoc now documents members decorated with both `@classmethod` and `@property`, and they render as `class property Foo.classprop`. Nothing is committed, and the related test suites pass (244 + 40 + 17 tests).\n\n**Root cause:** autodoc gets class members with `getattr(cls, name)`. For a classmethod property, that runs the property and returns its value, not a `property` object. So the property documenter never picked the member up, and the docstring lookup found nothing.\n\n**Fix:**\n- **`sphinx/ext/autodoc/__init__.py`**\n  - `PropertyDocumenter` now also accepts a member that, in the class's `__dict__`, is a `classmethod` wrapping a `property`. In that case it documents the underlying property and adds `:classmethod:`.\n  - The step that drops undocumented members now gives `getdoc` the class being documented and the member's name. Before, it passed the class's parent, so the docstring lookup missed these members and they were dropped.\n- **`sphinx/util/inspect.py`**\n  - `isclassmethod(obj, cls=None, name=None)` can now look the name up through the class and its base classes. This also covers inherited class properties.\n  - `getdoc` takes the docstring from the function wrapped by the raw `classmethod`.\n- **`sphinx/domains/python.py`:** `py:property` has a new `:classmethod:` option, and the prefix shown becomes `class property`. This is documented in `doc/usage/restructuredtext/domains.rst` and noted in `CHANGES`.\n\n**Tests:**\n- `tests/roots/test-ext-autodoc/target/properties.py` has a new `Foo.classprop` example.\n- New or updated tests are in `test_ext_autodoc_autoproperty.py`, `test_ext_autodoc_autoclass.py`, `test_domain_py.py` and `test_util_inspect.py`.\n- The tests that rely on the new example are skipped below Python 3.9, where `@classmethod @property` doesn't work.\n\n`tests/test_util_inspect.py` won't even load in this virtualenv because `_testcapi` is missing, with or without these changes. I ran it with a throwaway stand-in module (`/tmp/stubcapi`), and all 40 tests passed, including the new one. I couldn't run flake8 because it isn't installed.\n\n**Limitation:** autosummary's summary table still won't label these members as properties. When it picks a documenter there, it doesn't pass the real class, so it can't see the raw `classmethod`. This only affects the table entry, not the autodoc output.",
+  "ttft_ms": 11023,
+  "type": "result",
+  "duration_ms": 248014,
+  "uuid": "ca7b4e6b-f1fb-4890-b499-8a6f2ffbcc37",
+  "ttft_stream_ms": 979,
+  "time_to_request_ms": 266,
+  "first_content_frame_ms": 979,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

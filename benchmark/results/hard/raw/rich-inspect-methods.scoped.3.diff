@@ -1,0 +1,66 @@
+diff --git a/rich/text.py b/rich/text.py
+index f6b349d..e095fec 100644
+--- a/rich/text.py
++++ b/rich/text.py
+@@ -141,7 +141,8 @@ class Text(JupyterMixin):
+         tab_size: Optional[int] = 8,
+         spans: Optional[List[Span]] = None,
+     ) -> None:
+-        self._text = [strip_control_codes(text)]
++        sanitized_text = strip_control_codes(text)
++        self._text = [sanitized_text]
+         self.style = style
+         self.justify: Optional["JustifyMethod"] = justify
+         self.overflow: Optional["OverflowMethod"] = overflow
+@@ -149,7 +150,7 @@ class Text(JupyterMixin):
+         self.end = end
+         self.tab_size = tab_size
+         self._spans: List[Span] = spans or []
+-        self._length: int = len(text)
++        self._length: int = len(sanitized_text)
+ 
+     def __len__(self) -> int:
+         return self._length
+diff --git a/tests/test_inspect.py b/tests/test_inspect.py
+index b4c1d2a..78ccfcd 100644
+--- a/tests/test_inspect.py
++++ b/tests/test_inspect.py
+@@ -299,3 +299,20 @@ def test_inspect_module_with_class():
+         "╰──────────────────────────────────────────╯\n"
+     )
+     assert render(module, methods=True) == expected
++
++
++def test_inspect_method_docstring_with_control_codes():
++    """Regression test: control codes in docstrings should not break rendering."""
++
++    class Thing:
++        def method(self):
++            pass
++
++    Thing.method.__doc__ = "First line\x0c\r\n\x0bsecond\x08 line\n\n\tindented"
++    output = render(Thing, methods=True)
++    assert "First line" in output
++    assert "second line" in output
++    assert "\x0c" not in output and "\x0b" not in output
++    console = Console(file=io.StringIO(), width=40, legacy_windows=False)
++    inspect(Thing, console=console, all=True, help=True)
++    assert "indented" in console.file.getvalue()
+diff --git a/tests/test_text.py b/tests/test_text.py
+index 4f02fd4..46d5638 100644
+--- a/tests/test_text.py
++++ b/tests/test_text.py
+@@ -747,3 +747,13 @@ def test_markup_property():
+         == "[bold]foo [italic]bar[/bold] baz[/italic]"
+     )
+     assert Text("[bold]foo").markup == "\\[bold]foo"
++
++
++def test_control_codes_length():
++    text = Text("a\x0cb\rc\x08d")
++    assert text.plain == "abcd"
++    assert len(text) == 4
++    text.stylize("bold")
++    assert text.spans == [Span(0, 4, "bold")]
++    lines = text.divide([2])
++    assert [line.plain for line in lines] == ["ab", "cd"]

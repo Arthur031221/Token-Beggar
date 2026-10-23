@@ -1,0 +1,132 @@
+{
+ "task": "structlog-exception-outside",
+ "arm": "scoped",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 117362,
+  "stop_reason": "end_turn",
+  "session_id": "a809b904-ea0e-46c0-9926-56d0dd3cfaae",
+  "total_cost_usd": 0.5243153,
+  "usage": {
+   "input_tokens": 26,
+   "cache_creation_input_tokens": 24566,
+   "cache_read_input_tokens": 371996,
+   "output_tokens": 9151,
+   "output_tokens_details": {
+    "thinking_tokens": 3682
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 24566,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 852,
+     "cache_read_input_tokens": 37037,
+     "cache_creation_input_tokens": 425,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 425
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 26,
+    "outputTokens": 9151,
+    "cacheReadInputTokens": 371996,
+    "cacheCreationInputTokens": 24566,
+    "webSearchRequests": 0,
+    "costUSD": 0.4540512,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3682,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 2961,
+    "cacheReadInputTokens": 102896,
+    "cacheCreationInputTokens": 12133,
+    "webSearchRequests": 0,
+    "costUSD": 0.0702641,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 566,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 15,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The crash in the issue was already fixed in this checkout, so I fixed the one remaining spot that still failed and added regression tests. Nothing is committed.\n\n**What's already fixed:** commit 6f9ed85 (#657) makes `ExceptionDictTransformer` return `[]` when there's no exception. I ran the reproduction through `structlog.get_logger().exception(...)`, `exc_info=True`, `exc_info=(None, None, None)`, and the stdlib `ProcessorFormatter` setup the issue describes. All of them now give `{\"event\": \"oh no\", \"exception\": []}` with no `AttributeError`. (The snippet exactly as written in the issue raises an unrelated `TypeError` because it has no renderer, so I added `JSONRenderer`.)\n\n**What I changed:**\n- **The fix:** the issue blames `structlog.tracebacks.extract()`, and that public function still raised `AttributeError: 'NoneType' object has no attribute '__name__'` when given `(None, None, None)`. Anyone calling it directly, or from their own transformer, would still hit the crash. It now returns `Trace(stacks=[])` in that case, in `src/structlog/tracebacks.py`. I added a docstring note and a `versionchanged:: 25.1.0`.\n- **Tests:**\n  - `tests/test_tracebacks.py::test_extract_missing_exc_info` calls `extract()` with no exception.\n  - `tests/processors/test_renderers.py::test_no_exception_dict_tracebacks` checks that `dict_tracebacks` returns `{\"exception\": []}` for `exc_info=True` and `(None, None, None)`.\n- **Changelog:** a \"Fixed\" entry in `CHANGELOG.md`. There's no issue number to link.\n\n**What I left alone:** `format_exc_info` and `ExceptionPrettyPrinter` still output `\"MISSING\"` when there's no exception. That doesn't crash, and an existing test checks for it. Dropping the `exception` key entirely would change that behaviour on purpose, so it's your call.\n\n**Tests:** `.venv/bin/python -m pytest tests` gives `852 passed, 16 skipped`, and mypy is clean on `tracebacks.py`. Running only `tests/processors` shows 15 `TestCallsiteParameterAdder::test_e2e` failures. Those also fail without my changes and pass in the full run.",
+  "ttft_ms": 2838,
+  "type": "result",
+  "duration_ms": 136613,
+  "uuid": "8ca9c311-b0b5-43d1-a120-09b006433539",
+  "ttft_stream_ms": 1902,
+  "time_to_request_ms": 403,
+  "first_content_frame_ms": 1903,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 4,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

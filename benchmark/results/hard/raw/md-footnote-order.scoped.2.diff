@@ -1,0 +1,254 @@
+diff --git a/docs/changelog.md b/docs/changelog.md
+index 3d54e6e..cf73500 100644
+--- a/docs/changelog.md
++++ b/docs/changelog.md
+@@ -12,6 +12,12 @@ See the [Contributing Guide](contributing.md) for details.
+ 
+ ## [Unreleased]
+ 
++### Changed
++
++* Footnotes are now numbered and ordered by their first reference in the
++  document rather than by definition order. Set the new `USE_DEFINITION_ORDER`
++  option of the footnotes extension to `True` to restore the old behavior.
++
+ ### Fixed
+ 
+ * Fix handling of incomplete HTML tags in code spans in Python 3.14.
+diff --git a/docs/extensions/footnotes.md b/docs/extensions/footnotes.md
+index e841a32..da83906 100644
+--- a/docs/extensions/footnotes.md
++++ b/docs/extensions/footnotes.md
+@@ -98,6 +98,12 @@ The following options are provided to configure the output:
+ * **`SEPARATOR`**:
+     The text string used to set the footnote separator. Defaults to `:`.
+ 
++* **`USE_DEFINITION_ORDER`**:
++    If `True`, footnotes are numbered and listed in the order they are defined.
++    If `False`, footnotes are numbered and listed in the order they are first
++    referenced in the document. Footnotes which are defined but never
++    referenced are listed last, in definition order. Defaults to `False`.
++
+ A trivial example:
+ 
+ ```python
+diff --git a/markdown/extensions/footnotes.py b/markdown/extensions/footnotes.py
+index 30c0811..4bafcbe 100644
+--- a/markdown/extensions/footnotes.py
++++ b/markdown/extensions/footnotes.py
+@@ -61,6 +61,9 @@ class FootnoteExtension(Extension):
+             ],
+             'SEPARATOR': [
+                 ':', 'Footnote separator.'
++            ],
++            'USE_DEFINITION_ORDER': [
++                False, 'Order footnotes by definition order rather than by order of first reference.'
+             ]
+         }
+         """ Default configuration options. """
+@@ -101,6 +104,7 @@ class FootnoteExtension(Extension):
+     def reset(self) -> None:
+         """ Clear footnotes on reset, and prepare for distinct document. """
+         self.footnotes: OrderedDict[str, str] = OrderedDict()
++        self.footnote_order: list[str] = []
+         self.unique_prefix += 1
+         self.found_refs = {}
+         self.used_refs = set()
+@@ -150,6 +154,14 @@ class FootnoteExtension(Extension):
+         """ Store a footnote for later retrieval. """
+         self.footnotes[id] = text
+ 
++    def orderedIds(self) -> list[str]:
++        """ Return footnote ids: referenced ones in order of first reference, then the rest. """
++        if self.getConfig("USE_DEFINITION_ORDER"):
++            return list(self.footnotes.keys())
++        seen = set(self.footnote_order)
++        rest = [id for id in self.footnotes.keys() if id not in seen]
++        return self.footnote_order + rest
++
+     def get_separator(self) -> str:
+         """ Get the footnote separator. """
+         return self.getConfig("SEPARATOR")
+@@ -366,6 +378,67 @@ class FootnotePostTreeprocessor(Treeprocessor):
+             if count > 1:
+                 self.add_duplicates(li, count)
+ 
++    def find_refs(self, el: etree.Element, ids: dict[str, str], skip: etree.Element | None = None) -> list[str]:
++        """ Return footnote ids referenced under `el` in document order. """
++        found = []
++        if el is skip:
++            return found
++        if el.tag == 'a' and el.attrib.get('class', '') == 'footnote-ref':
++            id = ids.get(el.attrib.get('href', '')[1:])
++            if id is not None:
++                found.append(id)
++        for child in el:
++            found.extend(self.find_refs(child, ids, skip))
++        return found
++
++    def reorder(self, root: etree.Element, div: etree.Element, ol: etree.Element) -> None:
++        """ Order footnotes by first reference; renumber references and backlink titles. """
++        fn = self.footnotes
++        ids = {fn.makeFootnoteId(id): id for id in fn.footnotes}
++        lis = {li.attrib.get('id', ''): li for li in ol}
++        # References in the body, in document order.
++        order: list[str] = []
++        seen: set[str] = set()
++        for id in self.find_refs(root, ids, skip=div):
++            if id not in seen:
++                seen.add(id)
++                order.append(id)
++        # References nested within footnotes, discovered in order of the footnotes listed so far.
++        i = 0
++        while i < len(order):
++            li = lis.get(fn.makeFootnoteId(order[i]))
++            if li is not None:
++                for id in self.find_refs(li, ids):
++                    if id not in seen:
++                        seen.add(id)
++                        order.append(id)
++            i += 1
++        fn.footnote_order = order
++        final = fn.orderedIds()
++        numbers = {id: n for n, id in enumerate(final, start=1)}
++        # Renumber all references.
++        for a in root.iter('a'):
++            if a.attrib.get('class', '') == 'footnote-ref':
++                id = ids.get(a.attrib.get('href', '')[1:])
++                if id is not None:
++                    a.text = fn.getConfig("SUPERSCRIPT_TEXT").format(numbers[id])
++        # Reorder items and fix backlink titles.
++        backlink_title = fn.getConfig("BACKLINK_TITLE").replace("%d", "{}")
++        items = []
++        for id in final:
++            li = lis.get(fn.makeFootnoteId(id))
++            if li is None:
++                continue
++            items.append(li)
++            for link in li.iter('a'):
++                if link.attrib.get('class', '') == 'footnote-backref':
++                    link.set('title', backlink_title.format(numbers[id]))
++        if len(items) == len(lis):
++            for li in list(ol):
++                ol.remove(li)
++            for li in items:
++                ol.append(li)
++
+     def run(self, root: etree.Element) -> None:
+         """ Crawl the footnote div and add missing duplicate footnotes. """
+         self.offset = 0
+@@ -374,6 +447,8 @@ class FootnotePostTreeprocessor(Treeprocessor):
+                 # Footnotes should be under the first ordered list under
+                 # the footnote div.  So once we find it, quit.
+                 for ol in div.iter('ol'):
++                    if not self.footnotes.getConfig("USE_DEFINITION_ORDER"):
++                        self.reorder(root, div, ol)
+                     self.handle_duplicates(ol)
+                     break
+ 
+diff --git a/tests/test_syntax/extensions/test_footnotes.py b/tests/test_syntax/extensions/test_footnotes.py
+index 6f504e3..144846a 100644
+--- a/tests/test_syntax/extensions/test_footnotes.py
++++ b/tests/test_syntax/extensions/test_footnotes.py
+@@ -336,3 +336,101 @@ class TestFootnotes(TestCase):
+             '</div>',
+             extension_configs={'footnotes': {'SUPERSCRIPT_TEXT': '[{}]'}}
+         )
++
++    def _fn_li(self, id, n, body):
++        return (
++            f'<li id="fn:{id}">\n'
++            f'<p>{body}&#160;<a class="footnote-backref" href="#fnref:{id}"'
++            f' title="Jump back to footnote {n} in the text">&#8617;</a></p>\n'
++            '</li>\n'
++        )
++
++    def _ref(self, id, n, ref_id=None):
++        return f'<sup id="{ref_id or "fnref:" + id}"><a class="footnote-ref" href="#fn:{id}">{n}</a></sup>'
++
++    def test_reference_order(self):
++        self.assertMarkdownRenders(
++            self.dedent(
++                """
++                defined[^b] rather than occurrence[^a] in the text.
++
++                [^a]: blah
++                [^b]: blurb
++                """
++            ),
++            f'<p>defined{self._ref("b", 1)} rather than occurrence{self._ref("a", 2)} in the text.</p>\n'
++            '<div class="footnote">\n<hr />\n<ol>\n'
++            + self._fn_li('b', 1, 'blurb') + self._fn_li('a', 2, 'blah') +
++            '</ol>\n</div>'
++        )
++
++    def test_definition_order(self):
++        self.assertMarkdownRenders(
++            self.dedent(
++                """
++                defined[^b] rather than occurrence[^a] in the text.
++
++                [^a]: blah
++                [^b]: blurb
++                """
++            ),
++            f'<p>defined{self._ref("b", 2)} rather than occurrence{self._ref("a", 1)} in the text.</p>\n'
++            '<div class="footnote">\n<hr />\n<ol>\n'
++            + self._fn_li('a', 1, 'blah') + self._fn_li('b', 2, 'blurb') +
++            '</ol>\n</div>',
++            extension_configs={'footnotes': {'USE_DEFINITION_ORDER': True}}
++        )
++
++    def test_nested_reference_order(self):
++        self.assertMarkdownRenders(
++            self.dedent(
++                """
++                text[^a]
++
++                [^c]: third
++                [^b]: second
++                [^a]: first[^c]
++                """
++            ),
++            f'<p>text{self._ref("a", 1)}</p>\n'
++            '<div class="footnote">\n<hr />\n<ol>\n'
++            + self._fn_li('a', 1, f'first{self._ref("c", 2)}')
++            + self._fn_li('c', 2, 'third') + self._fn_li('b', 3, 'second') +
++            '</ol>\n</div>'
++        )
++
++    def test_unreferenced_footnote_kept(self):
++        self.assertMarkdownRenders(
++            self.dedent(
++                """
++                text[^b]
++
++                [^a]: unused
++                [^b]: used
++                """
++            ),
++            f'<p>text{self._ref("b", 1)}</p>\n'
++            '<div class="footnote">\n<hr />\n<ol>\n'
++            + self._fn_li('b', 1, 'used') + self._fn_li('a', 2, 'unused') +
++            '</ol>\n</div>'
++        )
++
++    def test_duplicate_references_order(self):
++        self.assertMarkdownRenders(
++            self.dedent(
++                """
++                one[^b] two[^a] three[^b]
++
++                [^a]: A
++                [^b]: B
++                """
++            ),
++            f'<p>one{self._ref("b", 1)} two{self._ref("a", 2)} three{self._ref("b", 1, "fnref2:b")}</p>\n'
++            '<div class="footnote">\n<hr />\n<ol>\n'
++            '<li id="fn:b">\n'
++            '<p>B&#160;<a class="footnote-backref" href="#fnref:b" title="Jump back to footnote 1 in the text">'
++            '&#8617;</a><a class="footnote-backref" href="#fnref2:b" title="Jump back to footnote 1 in the text">'
++            '&#8617;</a></p>\n</li>\n'
++            + self._fn_li('a', 2, 'A') +
++            '</ol>\n</div>'
++        )

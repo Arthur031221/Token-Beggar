@@ -1,0 +1,132 @@
+{
+ "task": "jinja-namespace-tuple",
+ "arm": "scoped",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 97749,
+  "stop_reason": "end_turn",
+  "session_id": "1a7c9af2-e5e5-437d-bead-5025675f7de6",
+  "total_cost_usd": 0.39884699999999995,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 18973,
+   "cache_read_input_tokens": 115924,
+   "output_tokens": 5754,
+   "output_tokens_details": {
+    "thinking_tokens": 2037
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 18973,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1120,
+     "cache_read_input_tokens": 30233,
+     "cache_creation_input_tokens": 1636,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1636
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 5754,
+    "cacheReadInputTokens": 115924,
+    "cacheCreationInputTokens": 18973,
+    "webSearchRequests": 0,
+    "costUSD": 0.2900888,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2037,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 5820,
+    "cacheReadInputTokens": 119597,
+    "cacheCreationInputTokens": 15425,
+    "webSearchRequests": 0,
+    "costUSD": 0.10875819999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 775,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`{% set ns.a, ns.b = ... %}` now works, including the loop from the issue. The full test suite passes (912 tests). Nothing is committed.\n\n**Root cause:** the parser only accepted a namespace attribute (`ns.attr`) as the whole target of `set`. It handled that case first and never reached the code that parses comma-separated targets, so the `,` caused the syntax error. There was also a code-generation problem: the \"is this really a namespace?\" check was written out in the middle of the target expression, so it would have produced broken Python inside a tuple.\n\n**Changes:**\n- **`src/jinja2/parser.py`:** `parse_assign_target` now parses each item of a tuple target separately, and each item can be `name.attr` when `with_namespace=True`. To support that, `parse_tuple` takes a new optional `parse_item` callable.\n- **`src/jinja2/compiler.py`:** the namespace check moved into a new `check_namespace_targets` helper. It runs before the assignment for every `ns.attr` in the target, nested ones included, in both `{% set %}` and block `{% set %}\u2026{% endset %}`. `visit_NSRef` now writes only `ref['attr']`. Assigning to an attribute of something that isn't a namespace still raises `TemplateRuntimeError`.\n- **Tests** in `tests/test_core_tags.py`:\n  - two namespace targets\n  - a swap (`ns.a, ns.b = ns.b, ns.a`), which shows the right-hand side is fully evaluated before anything is assigned, as in Python\n  - namespace and plain names mixed in one target\n  - the issue's loop\n  - the error when a target isn't a namespace\n  - a check that `for` loops still reject `ns.a` as a target\n- **Docs:** a note in `docs/templates.rst` and an entry in `CHANGES.rst`.\n\n**Scope:** `for` and `with` targets don't go through the namespace path, so they behave as before. Block `set` also still works.\n\n**Limitation:** a namespace attribute inside an extra pair of parentheses, like `{% set (ns.a, b), c = ... %}`, still gives a syntax error (\"can't assign to 'tuple'\"). Inner parentheses go through the general expression parser, which doesn't know about namespace targets. I left that alone because it's beyond what the issue asked for.\n\nA subagent made the fix. I read the whole diff, reran the tests and edge cases, and made one change: I merged a `parse_item` helper that was defined two different ways into a single function. A type checker (mypy) can object to that pattern, and mypy isn't installed in this environment, so I haven't been able to type-check the change.",
+  "ttft_ms": 2892,
+  "type": "result",
+  "duration_ms": 109974,
+  "uuid": "854c8267-18ce-413c-89ca-9d8d0659efcb",
+  "ttft_stream_ms": 1612,
+  "time_to_request_ms": 324,
+  "first_content_frame_ms": 1612,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

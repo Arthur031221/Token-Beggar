@@ -1,0 +1,132 @@
+{
+ "task": "md-footnote-order",
+ "arm": "scoped",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 102433,
+  "stop_reason": "end_turn",
+  "session_id": "39f46c42-8cc2-40c8-bd3d-99a264e4474c",
+  "total_cost_usd": 0.4060916,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 18670,
+   "cache_read_input_tokens": 112547,
+   "output_tokens": 4524,
+   "output_tokens_details": {
+    "thinking_tokens": 1262
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 18670,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 738,
+     "cache_read_input_tokens": 29518,
+     "cache_creation_input_tokens": 2048,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2048
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 4524,
+    "cacheReadInputTokens": 112547,
+    "cacheCreationInputTokens": 18670,
+    "webSearchRequests": 0,
+    "costUSD": 0.2623894,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1262,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 7833,
+    "cacheReadInputTokens": 113567,
+    "cacheCreationInputTokens": 21595,
+    "webSearchRequests": 0,
+    "costUSD": 0.1437022,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2450,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed it: footnotes are now numbered and listed in the order they are first referenced. For your example, `definedsecond` is now footnote 1 and `definedfirst` is footnote 2. The full suite passes (1061 tests, 110 skipped, run with `.venv/bin/python -m unittest discover tests`), and so do the 17 tests in `tests/test_syntax/extensions/test_footnotes.py`. Nothing is committed.\n\n**Cause:** the inline processor took each reference's number from its position in the list of definitions, and the footnote list at the bottom was built in that same order.\n\n**Fix** (`markdown/extensions/footnotes.py`):\n- I added a step, `FootnoteReorderingProcessor`, that runs right after inline processing. It finds the order in which footnotes are first referenced in the body, then updates the numbers on the references, the \"Jump back to footnote N\" titles, and the order of the list.\n- A reference made inside a footnote gets the next number after the footnote containing it.\n- Footnotes that are never referenced go last, in the order they were defined.\n- A footnote referenced more than once keeps the number from its first reference. Its extra back-links are still handled by the existing code.\n\n**Backward compatibility:** since this changes default output, I added a `USE_DEFINITION_ORDER` option (default `False`). Setting it to `True` brings back the old behaviour. It's documented in `docs/extensions/footnotes.md`, with a \"Changed\" entry in `docs/changelog.md`. No existing tests or fixtures needed changing.\n\n**Tests:** I added five cases: the example from the issue, the same input with `USE_DEFINITION_ORDER=True`, repeated references, an unreferenced footnote, and a reference inside a footnote. I also checked the output by hand with `UNIQUE_IDS` on and with a `///Footnotes Go Here///` marker in the text.\n\nRunning the whole suite with pytest stops with a collection error in `tests/test_syntax/extensions/test_md_in_html.py`. It does the same on the unmodified code, so it's not from this change. That's why I used unittest for the full run.",
+  "ttft_ms": 4843,
+  "type": "result",
+  "duration_ms": 112553,
+  "uuid": "8ed1bbfb-dac9-4c61-8799-8c018b2f47fe",
+  "ttft_stream_ms": 1068,
+  "time_to_request_ms": 322,
+  "first_content_frame_ms": 1069,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,153 @@
+{
+ "task": "packaging-extras-marker",
+ "arm": "scoped",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 93796,
+  "stop_reason": "end_turn",
+  "session_id": "02b2dd3b-f453-4613-999b-b8c0181933e4",
+  "total_cost_usd": 0.4022922,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 18945,
+   "cache_read_input_tokens": 145470,
+   "output_tokens": 6552,
+   "output_tokens_details": {
+    "thinking_tokens": 2362
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 18945,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 942,
+     "cache_read_input_tokens": 31390,
+     "cache_creation_input_tokens": 451,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 451
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 6552,
+    "cacheReadInputTokens": 145470,
+    "cacheCreationInputTokens": 18945,
+    "webSearchRequests": 0,
+    "costUSD": 0.31174199999999996,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2362,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 4798,
+    "cacheReadInputTokens": 57377,
+    "cacheCreationInputTokens": 14725,
+    "webSearchRequests": 0,
+    "costUSD": 0.0905502,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 120,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 9,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Markers now support the two PEP 751 variables, `extras` and `dependency_groups`, used like `'foo' in extras` or `'dev' not in dependency_groups`. The full test suite passes (26940 tests); mypy isn't installed in `.venv`, so the type annotations haven't been checked. Nothing is committed.\n\n**What was wrong:** the marker parser didn't recognise the two names. The evaluation code also assumed every environment value was a single string, so it couldn't check membership in a set of names.\n\n**Changes**\n- `src/packaging/_tokenizer.py`: the parser now accepts `extras` and `dependency_groups`. `extra` is still read correctly.\n- `src/packaging/markers.py`:\n  - The comparison code now handles the right-hand side being a set. Version comparison is only tried when it's a string.\n  - Names are normalized before comparing, on both sides and for every item in the set, the same way `extra` already was. So `'foo-bar' in extras` matches `{\"Foo_Bar\"}`.\n  - `Marker.evaluate(environment=None, context=\"metadata\")` takes a new `context` argument:\n    - `\"metadata\"` (the default) keeps today's behaviour: `extra` defaults to `\"\"`.\n    - `\"lock_file\"` makes `extras` and `dependency_groups` default to empty sets.\n    - `\"requirement\"` adds no defaults.\n  - Passing `extra=None` still works as before.\n- `docs/markers.rst` and `CHANGELOG.rst`: documented the new variables and the `context` argument.\n- `tests/test_markers.py`: a new `TestPEP751Markers` class covers:\n  - parsing and converting back to a string\n  - the empty defaults in `\"lock_file\"`\n  - name normalization for both variables\n  - `and`/`or` combinations\n  - unchanged `extra` behaviour under the default context\n  - the `\"requirement\"` context with sets passed in\n  - telling `extra` and `extras` apart\n\nA subagent wrote the first version. I reviewed the diff and made three fixes:\n- `evaluate`'s `environment` argument was still annotated as string-only, although sets are now valid.\n- The CHANGELOG entry cited an issue number the subagent had guessed, so I removed it.\n- One test checked for a raw `KeyError` when using `extra` in `\"requirement\"` context. I replaced it with real coverage of that context.\n\nIf a marker uses `extra` while evaluating in `\"lock_file\"` or `\"requirement\"` context without supplying a value, it still raises a raw `KeyError`. I left that as is, since the issue scopes this to `extras` and `dependency_groups` for now.",
+  "ttft_ms": 16542,
+  "type": "result",
+  "duration_ms": 144643,
+  "uuid": "df02663e-4680-4958-a901-c8cb626bf1b1",
+  "ttft_stream_ms": 2071,
+  "time_to_request_ms": 390,
+  "first_content_frame_ms": 2072,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 0,
+  "f2p_total": 20,
+  "regressions": 21280,
+  "regressed_tests": [
+   "tests/test_elffile.py::test_elffile_bad_ident[no-magic]",
+   "tests/test_elffile.py::test_elffile_bad_ident[unknown-format]",
+   "tests/test_elffile.py::test_elffile_bad_ident[wrong-magic]",
+   "tests/test_elffile.py::test_elffile_glibc[armv7l-armel-1-1-40]",
+   "tests/test_elffile.py::test_elffile_glibc[armv7l-armhf-1-1-40]",
+   "tests/test_elffile.py::test_elffile_glibc[s390x-s390x-2-2-22]",
+   "tests/test_elffile.py::test_elffile_glibc[x86_64-amd64-2-1-62]",
+   "tests/test_elffile.py::test_elffile_glibc[x86_64-i386-1-1-3]",
+   "tests/test_elffile.py::test_elffile_glibc[x86_64-x32-1-1-62]",
+   "tests/test_elffile.py::test_elffile_invalid_section",
+   "tests/test_elffile.py::test_elffile_musl[aarch64-2-1-183-aarch64]",
+   "tests/test_elffile.py::test_elffile_musl[i386-1-1-3-i386]",
+   "tests/test_elffile.py::test_elffile_musl[x86_64-2-1-62-x86_64]",
+   "tests/test_elffile.py::test_elffile_no_section",
+   "tests/test_elffile.py::test_elffle_no_interpreter_section",
+   "tests/test_licenses.py::test_exceptions",
+   "tests/test_licenses.py::test_licenses",
+   "tests/test_manylinux.py::test_check_glibc_version_warning[2]",
+   "tests/test_manylinux.py::test_check_glibc_version_warning[glibc-2.4.5]",
+   "tests/test_manylinux.py::test_glibc_version_string[2.4-2.4_0]"
+  ],
+  "resolved": false,
+  "suite_ran": false
+ }
+}

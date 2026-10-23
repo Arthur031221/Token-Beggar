@@ -1,0 +1,247 @@
+diff --git a/django/db/backends/base/schema.py b/django/db/backends/base/schema.py
+index 696bfd7742..509b3fb10f 100644
+--- a/django/db/backends/base/schema.py
++++ b/django/db/backends/base/schema.py
+@@ -823,13 +823,15 @@ class BaseDatabaseSchemaEditor:
+                 self.execute(self._delete_unique_sql(model, constraint_name))
+         # Drop incoming FK constraints if the field is a primary key or unique,
+         # which might be a to_field target, and things are going to change.
++        old_collation = old_db_params.get("collation")
++        new_collation = new_db_params.get("collation")
+         drop_foreign_keys = (
+             self.connection.features.supports_foreign_keys
+             and (
+                 (old_field.primary_key and new_field.primary_key)
+                 or (old_field.unique and new_field.unique)
+             )
+-            and old_type != new_type
++            and (old_type != new_type or old_collation != new_collation)
+         )
+         if drop_foreign_keys:
+             # '_meta.related_field' also contains M2M reverse fields, these
+@@ -914,8 +916,6 @@ class BaseDatabaseSchemaEditor:
+         old_type_suffix = old_field.db_type_suffix(connection=self.connection)
+         new_type_suffix = new_field.db_type_suffix(connection=self.connection)
+         # Collation change?
+-        old_collation = old_db_params.get("collation")
+-        new_collation = new_db_params.get("collation")
+         if old_collation != new_collation:
+             # Collation change handles also a type change.
+             fragment = self._alter_column_collation_sql(
+@@ -1038,9 +1038,19 @@ class BaseDatabaseSchemaEditor:
+         for old_rel, new_rel in rels_to_update:
+             rel_db_params = new_rel.field.db_parameters(connection=self.connection)
+             rel_type = rel_db_params["type"]
+-            fragment, other_actions = self._alter_column_type_sql(
+-                new_rel.related_model, old_rel.field, new_rel.field, rel_type
+-            )
++            rel_collation = rel_db_params.get("collation")
++            old_rel_db_params = old_rel.field.db_parameters(connection=self.connection)
++            old_rel_collation = old_rel_db_params.get("collation")
++            if old_rel_collation != rel_collation:
++                # Collation change handles also a type change.
++                fragment = self._alter_column_collation_sql(
++                    new_rel.related_model, new_rel.field, rel_type, rel_collation
++                )
++                other_actions = []
++            else:
++                fragment, other_actions = self._alter_column_type_sql(
++                    new_rel.related_model, old_rel.field, new_rel.field, rel_type
++                )
+             self.execute(
+                 self.sql_alter_column
+                 % {
+diff --git a/django/db/backends/mysql/schema.py b/django/db/backends/mysql/schema.py
+index 562b209eef..59f3007d26 100644
+--- a/django/db/backends/mysql/schema.py
++++ b/django/db/backends/mysql/schema.py
+@@ -169,6 +169,12 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
+         new_type = self._set_field_new_type_null_status(old_field, new_type)
+         return super()._alter_column_type_sql(model, old_field, new_field, new_type)
+ 
++    def _alter_column_collation_sql(self, model, new_field, new_type, new_collation):
++        new_type = self._set_field_new_type_null_status(new_field, new_type)
++        return super()._alter_column_collation_sql(
++            model, new_field, new_type, new_collation
++        )
++
+     def _rename_field_sql(self, table, old_field, new_field, new_type):
+         new_type = self._set_field_new_type_null_status(old_field, new_type)
+         return super()._rename_field_sql(table, old_field, new_field, new_type)
+diff --git a/django/db/backends/sqlite3/schema.py b/django/db/backends/sqlite3/schema.py
+index 21e1b35fce..69612639c9 100644
+--- a/django/db/backends/sqlite3/schema.py
++++ b/django/db/backends/sqlite3/schema.py
+@@ -455,7 +455,10 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
+         # Alter by remaking table
+         self._remake_table(model, alter_field=(old_field, new_field))
+         # Rebuild tables with FKs pointing to this field.
+-        if new_field.unique and old_type != new_type:
++        if new_field.unique and (
++            old_type != new_type
++            or old_db_params.get("collation") != new_db_params.get("collation")
++        ):
+             related_models = set()
+             opts = new_field.model._meta
+             for remote_field in opts.related_objects:
+diff --git a/django/db/models/fields/related.py b/django/db/models/fields/related.py
+index fad5560486..bb4e065e37 100644
+--- a/django/db/models/fields/related.py
++++ b/django/db/models/fields/related.py
+@@ -1180,7 +1180,12 @@ class ForeignKey(ForeignObject):
+         return self.target_field.rel_db_type(connection=connection)
+ 
+     def db_parameters(self, connection):
+-        return {"type": self.db_type(connection), "check": self.db_check(connection)}
++        target_db_parameters = self.target_field.db_parameters(connection)
++        return {
++            "type": self.db_type(connection),
++            "check": self.db_check(connection),
++            "collation": target_db_parameters.get("collation"),
++        }
+ 
+     def convert_empty_strings(self, value, expression, connection):
+         if (not value) and isinstance(value, str):
+diff --git a/tests/model_fields/test_foreignkey.py b/tests/model_fields/test_foreignkey.py
+index ca8eff3540..0841265ba2 100644
+--- a/tests/model_fields/test_foreignkey.py
++++ b/tests/model_fields/test_foreignkey.py
+@@ -3,7 +3,7 @@ from decimal import Decimal
+ from django.apps import apps
+ from django.core import checks
+ from django.core.exceptions import FieldError
+-from django.db import models
++from django.db import connection, models
+ from django.test import TestCase, skipIfDBFeature
+ from django.test.utils import isolate_apps
+ 
+@@ -167,3 +167,25 @@ class ForeignKeyTests(TestCase):
+ 
+     def test_manager_class_getitem(self):
+         self.assertIs(models.ForeignKey["Foo"], models.ForeignKey)
++
++    @isolate_apps("model_fields")
++    def test_db_parameters_collation_from_target_field(self):
++        class Target(models.Model):
++            id = models.CharField(max_length=20, primary_key=True, db_collation="C")
++
++        class Related(models.Model):
++            target = models.ForeignKey(Target, models.CASCADE)
++            one = models.OneToOneField(Target, models.CASCADE, related_name="+")
++
++        for name in ("target", "one"):
++            with self.subTest(name=name):
++                field = Related._meta.get_field(name)
++                self.assertEqual(field.db_parameters(connection)["collation"], "C")
++
++    @isolate_apps("model_fields")
++    def test_db_parameters_no_collation(self):
++        class Related(models.Model):
++            target = models.ForeignKey(Foo, models.CASCADE)
++
++        field = Related._meta.get_field("target")
++        self.assertIsNone(field.db_parameters(connection)["collation"])
+diff --git a/tests/schema/tests.py b/tests/schema/tests.py
+index 2d12796cbd..c1c4787c9f 100644
+--- a/tests/schema/tests.py
++++ b/tests/schema/tests.py
+@@ -4633,6 +4633,99 @@ class SchemaTests(TransactionTestCase):
+         self.assertEqual(self.get_primary_key(Thing._meta.db_table), "when")
+         self.assertIsNone(self.get_column_collation(Thing._meta.db_table, "when"))
+ 
++    @isolate_apps("schema")
++    @skipUnlessDBFeature("supports_collation_on_charfield")
++    def test_create_model_fk_to_collated_pk(self):
++        collation = connection.features.test_collations.get("non_default")
++        if not collation:
++            self.skipTest("Language collations are not supported.")
++
++        class CreateCollatedParent(Model):
++            id = CharField(max_length=20, primary_key=True, db_collation=collation)
++
++            class Meta:
++                app_label = "schema"
++
++        class CreateFKChild(Model):
++            parent = ForeignKey(CreateCollatedParent, CASCADE)
++
++            class Meta:
++                app_label = "schema"
++
++        class CreateO2OChild(Model):
++            parent = OneToOneField(CreateCollatedParent, CASCADE)
++
++            class Meta:
++                app_label = "schema"
++
++        with connection.schema_editor() as editor:
++            editor.create_model(CreateCollatedParent)
++            editor.create_model(CreateFKChild)
++            editor.create_model(CreateO2OChild)
++        for model in (CreateFKChild, CreateO2OChild):
++            self.assertEqual(
++                self.get_column_collation(model._meta.db_table, "parent_id"),
++                collation,
++            )
++
++    @isolate_apps("schema")
++    @skipUnlessDBFeature("supports_collation_on_charfield")
++    def test_alter_primary_key_db_collation_updates_fk(self):
++        collation = connection.features.test_collations.get("non_default")
++        if not collation:
++            self.skipTest("Language collations are not supported.")
++
++        class CollatedParent(Model):
++            id = CharField(max_length=20, primary_key=True)
++
++            class Meta:
++                app_label = "schema"
++
++        class FKChild(Model):
++            parent = ForeignKey(CollatedParent, CASCADE)
++
++            class Meta:
++                app_label = "schema"
++
++        class O2OChild(Model):
++            parent = OneToOneField(CollatedParent, CASCADE)
++
++            class Meta:
++                app_label = "schema"
++
++        with connection.schema_editor() as editor:
++            editor.create_model(CollatedParent)
++            editor.create_model(FKChild)
++            editor.create_model(O2OChild)
++        # Mutate the model's field so that related tables are remade with the
++        # new collation (as happens with migration state models).
++        new_field = CollatedParent._meta.get_field("id")
++        old_field = new_field.clone()
++        old_field.set_attributes_from_name("id")
++        old_field.model = CollatedParent
++        new_field.db_collation = collation
++        with connection.schema_editor() as editor:
++            editor.alter_field(CollatedParent, old_field, new_field, strict=True)
++        for model in (FKChild, O2OChild):
++            self.assertEqual(
++                self.get_column_collation(model._meta.db_table, "parent_id"),
++                collation,
++            )
++            if connection.features.supports_foreign_keys:
++                self.assertTrue(
++                    self.get_constraints_for_column(model, "parent_id")
++                )
++        collated_field = new_field.clone()
++        collated_field.set_attributes_from_name("id")
++        collated_field.model = CollatedParent
++        new_field.db_collation = None
++        with connection.schema_editor() as editor:
++            editor.alter_field(CollatedParent, collated_field, new_field, strict=True)
++        for model in (FKChild, O2OChild):
++            self.assertIsNone(
++                self.get_column_collation(model._meta.db_table, "parent_id")
++            )
++
+     @skipUnlessDBFeature(
+         "supports_collation_on_charfield", "supports_collation_on_textfield"
+     )

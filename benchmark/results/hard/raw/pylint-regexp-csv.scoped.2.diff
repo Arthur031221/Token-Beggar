@@ -1,0 +1,165 @@
+diff --git a/doc/whatsnew/fragments/7229.bugfix b/doc/whatsnew/fragments/7229.bugfix
+new file mode 100644
+index 000000000..c8ef0fa2f
+--- /dev/null
++++ b/doc/whatsnew/fragments/7229.bugfix
+@@ -0,0 +1,5 @@
++Fix crash on regular expressions containing commas in ``regexp_csv`` options such as
++``bad-names-rgxs``: commas inside ``{m,n}`` quantifiers (or escaped as ``\,``) no longer
++split the expression.
++
++Closes #7229
+diff --git a/pylint/config/argument.py b/pylint/config/argument.py
+index 30a5fd175..49ac7a91b 100644
+--- a/pylint/config/argument.py
++++ b/pylint/config/argument.py
+@@ -114,7 +114,7 @@ def _regex_transformer(value: str) -> Pattern[str]:
+ def _regexp_csv_transfomer(value: str) -> Sequence[Pattern[str]]:
+     """Transforms a comma separated list of regular expressions."""
+     patterns: list[Pattern[str]] = []
+-    for pattern in _csv_transformer(value):
++    for pattern in pylint_utils._check_regexp_csv(value):
+         patterns.append(_regex_transformer(pattern))
+     return patterns
+ 
+@@ -122,7 +122,7 @@ def _regexp_csv_transfomer(value: str) -> Sequence[Pattern[str]]:
+ def _regexp_paths_csv_transfomer(value: str) -> Sequence[Pattern[str]]:
+     """Transforms a comma separated list of regular expressions paths."""
+     patterns: list[Pattern[str]] = []
+-    for pattern in _csv_transformer(value):
++    for pattern in pylint_utils._check_regexp_csv(value):
+         patterns.append(
+             re.compile(
+                 str(pathlib.PureWindowsPath(pattern)).replace("\\", "\\\\")
+diff --git a/pylint/utils/__init__.py b/pylint/utils/__init__.py
+index 61833a598..eecb3cbe3 100644
+--- a/pylint/utils/__init__.py
++++ b/pylint/utils/__init__.py
+@@ -14,6 +14,7 @@ from pylint.utils.utils import (
+     HAS_ISORT_5,
+     IsortDriver,
+     _check_csv,
++    _check_regexp_csv,
+     _splitstrip,
+     _unquote,
+     decoding_stream,
+@@ -32,6 +33,7 @@ __all__ = [
+     "HAS_ISORT_5",
+     "IsortDriver",
+     "_check_csv",
++    "_check_regexp_csv",
+     "_splitstrip",
+     "_unquote",
+     "decoding_stream",
+diff --git a/pylint/utils/utils.py b/pylint/utils/utils.py
+index fa7f7b92f..a7ce562d4 100644
+--- a/pylint/utils/utils.py
++++ b/pylint/utils/utils.py
+@@ -22,7 +22,7 @@ import sys
+ import textwrap
+ import tokenize
+ import warnings
+-from collections.abc import Sequence
++from collections.abc import Iterable, Sequence
+ from io import BufferedReader, BytesIO
+ from typing import (
+     TYPE_CHECKING,
+@@ -253,6 +253,45 @@ def _check_csv(value: list[str] | tuple[str] | str) -> Sequence[str]:
+     return _splitstrip(value)
+ 
+ 
++def _check_regexp_csv(value: list[str] | tuple[str] | str) -> Iterable[str]:
++    r"""Split a comma separated string of regular expressions.
++
++    Commas inside ``{...}`` (quantifiers) and escaped commas (``\,``, which is
++    a valid regex for a literal comma and is kept as is) do not split.
++
++    >>> list(_check_regexp_csv("foo{1,3}, bar"))
++    ['foo{1,3}', 'bar']
++    """
++    if isinstance(value, (list, tuple)):
++        yield from value
++        return
++    current: list[str] = []
++    depth = 0
++    i = 0
++    while i < len(value):
++        char = value[i]
++        if char == "\\" and i + 1 < len(value):
++            current.append(value[i : i + 2])
++            i += 2
++            continue
++        if char == "{":
++            depth += 1
++        elif char == "}" and depth:
++            depth -= 1
++        elif char == "," and depth == 0:
++            word = "".join(current).strip()
++            if word:
++                yield word
++            current = []
++            i += 1
++            continue
++        current.append(char)
++        i += 1
++    word = "".join(current).strip()
++    if word:
++        yield word
++
++
+ def _comment(string: str) -> str:
+     """Return string as a comment."""
+     lines = [line.strip() for line in string.splitlines()]
+diff --git a/tests/config/test_config.py b/tests/config/test_config.py
+index 83c8b072e..c37f105de 100644
+--- a/tests/config/test_config.py
++++ b/tests/config/test_config.py
+@@ -11,6 +11,7 @@ from tempfile import TemporaryDirectory
+ import pytest
+ from pytest import CaptureFixture
+ 
++from pylint.config.argument import _regexp_csv_transfomer
+ from pylint.config.exceptions import ArgumentPreprocessingError
+ from pylint.interfaces import CONFIDENCE_LEVEL_NAMES
+ from pylint.lint import Run as LintRun
+@@ -137,16 +138,38 @@ def test_csv_regex_error(capsys: CaptureFixture) -> None:
+     """
+     with pytest.raises(SystemExit):
+         Run(
+-            [str(EMPTY_MODULE), r"--bad-names-rgx=(foo{1,3})"],
++            [str(EMPTY_MODULE), r"--bad-names-rgx=(foo{1,}, foo{1,3}})"],
+             exit=False,
+         )
+     output = capsys.readouterr()
+     assert (
+-        r"Error in provided regular expression: (foo{1 beginning at index 0: missing ), unterminated subpattern"
++        r"Error in provided regular expression: (foo{1,} beginning at index 0: missing ), unterminated subpattern"
+         in output.err
+     )
+ 
+ 
++@pytest.mark.parametrize(
++    "value,expected",
++    [
++        ("foo", ["foo"]),
++        ("foo,bar", ["foo", "bar"]),
++        ("foo, bar", ["foo", "bar"]),
++        ("foo, bar{1,3}", ["foo", "bar{1,3}"]),
++        ("(foo{1,3})", ["(foo{1,3})"]),
++        (r"foo\,bar,baz", [r"foo\,bar", "baz"]),
++    ],
++)
++def test_regexp_csv_transformer(value: str, expected: list[str]) -> None:
++    """Commas inside quantifier braces or escaped do not split regexps."""
++    assert [p.pattern for p in _regexp_csv_transfomer(value)] == expected
++
++
++def test_csv_regex_comma_in_regex(capsys: CaptureFixture) -> None:
++    """Check that a comma in a quantifier does not crash pylint (issue 7229)."""
++    Run([str(EMPTY_MODULE), r"--bad-names-rgxs=(foo{1,3})"], exit=False)
++    assert "Error in provided regular expression" not in capsys.readouterr().err
++
++
+ def test_short_verbose(capsys: CaptureFixture) -> None:
+     """Check that we correctly handle the -v flag."""
+     Run([str(EMPTY_MODULE), "-v"], exit=False)

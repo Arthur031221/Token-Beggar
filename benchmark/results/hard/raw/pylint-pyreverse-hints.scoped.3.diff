@@ -1,0 +1,173 @@
+diff --git a/ChangeLog b/ChangeLog
+index 2ee8bc0a..f0be4ed1 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -11,6 +11,9 @@ Release date: TBA
+ 
+ * astroid has been upgraded to 2.6.0
+ 
++* ``pyreverse`` now uses PEP 484 type hints (argument and variable annotations) for
++  the attribute types shown in UML class diagrams.
++
+ * Fix false positive ``useless-type-doc`` on ignored argument using ``pylint.extensions.docparams``
+   when a function was typed using pep484 but not inside the docstring.
+ 
+diff --git a/pylint/pyreverse/diagrams.py b/pylint/pyreverse/diagrams.py
+index bf9f67af..a63fc7f0 100644
+--- a/pylint/pyreverse/diagrams.py
++++ b/pylint/pyreverse/diagrams.py
+@@ -129,6 +129,14 @@ class ClassDiagram(Figure, FilterMixIn):
+                 if node.name not in names:
+                     node_name = node.name
+                     names.append(node_name)
++            elif isinstance(
++                node,
++                (astroid.Name, astroid.Attribute, astroid.Subscript, astroid.BinOp),
++            ):
++                # annotation node (PEP 484 type hint)
++                node_name = node.as_string()
++                if node_name not in names:
++                    names.append(node_name)
+         return names
+ 
+     def nodes(self):
+diff --git a/pylint/pyreverse/inspector.py b/pylint/pyreverse/inspector.py
+index 8fa12202..19c39d4f 100644
+--- a/pylint/pyreverse/inspector.py
++++ b/pylint/pyreverse/inspector.py
+@@ -218,7 +218,7 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
+                     self.visit_module(frame)
+ 
+             current = frame.locals_type[node.name]
+-            values = set(node.infer())
++            values = utils.infer_node(node)
+             frame.locals_type[node.name] = list(set(current) | values)
+         except astroid.InferenceError:
+             pass
+@@ -230,7 +230,7 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
+         handle instance_attrs_type
+         """
+         try:
+-            values = set(node.infer())
++            values = utils.infer_node(node)
+             current = set(parent.instance_attrs_type[node.attrname])
+             parent.instance_attrs_type[node.attrname] = list(current | values)
+         except astroid.InferenceError:
+diff --git a/pylint/pyreverse/utils.py b/pylint/pyreverse/utils.py
+index a24d227e..2685ca15 100644
+--- a/pylint/pyreverse/utils.py
++++ b/pylint/pyreverse/utils.py
+@@ -20,6 +20,8 @@ import os
+ import re
+ import sys
+ 
++import astroid
++
+ RCFILE = ".pyreverserc"
+ 
+ 
+@@ -213,3 +215,47 @@ class LocalsVisitor(ASTWalker):
+         if methods[1] is not None:
+             return methods[1](node)
+         return None
++
++
++def get_annotation(node):
++    """Return the annotation node of an AssignAttr/AssignName, or None.
++
++    The annotation comes either from an enclosing AnnAssign, or from the
++    annotation of the function argument whose value is being assigned.
++    """
++    parent = node.parent
++    if isinstance(parent, astroid.AnnAssign) and parent.target is node:
++        return parent.annotation
++    if not isinstance(parent, astroid.Assign):
++        return None
++    value = parent.value
++    if not isinstance(value, astroid.Name):
++        return None
++    func = node.scope()
++    if not isinstance(func, astroid.FunctionDef):
++        return None
++    args = func.args
++    groups = (
++        (
++            getattr(args, "posonlyargs", None) or [],
++            getattr(args, "posonlyargs_annotations", None) or [],
++        ),
++        (args.args or [], args.annotations or []),
++        (args.kwonlyargs or [], args.kwonlyargs_annotations or []),
++    )
++    for arguments, annotations in groups:
++        for arg, annotation in zip(arguments, annotations):
++            if arg.name == value.name:
++                return annotation
++    return None
++
++
++def infer_node(node):
++    """Return the set of types of node: its annotation if any, else inferred values."""
++    annotation = get_annotation(node)
++    if annotation is not None:
++        return {annotation}
++    try:
++        return set(node.infer())
++    except astroid.InferenceError:
++        return set()
+diff --git a/tests/unittest_pyreverse_inspector.py b/tests/unittest_pyreverse_inspector.py
+index e1ff6378..0afee91a 100644
+--- a/tests/unittest_pyreverse_inspector.py
++++ b/tests/unittest_pyreverse_inspector.py
+@@ -20,6 +20,8 @@ import pytest
+ from unittest_pyreverse_writer import get_project
+ 
+ from pylint.pyreverse import inspector
++from pylint.pyreverse.diagrams import ClassDiagram
++from pylint.pyreverse.utils import get_annotation, infer_node
+ 
+ 
+ @pytest.fixture
+@@ -128,3 +130,43 @@ def test_from_directory(project):
+ def test_project_node(project):
+     expected = ["data", "data.clientmodule_test", "data.suppliermodule_test"]
+     assert sorted(project.keys()) == expected
++
++
++
++def test_get_annotation_and_infer_node():
++    func = astroid.extract_node(
++        """
++    class C:
++        def __init__(self, a: str = None, *, k: List[int] = None):  #@
++            self.a = a
++            self.k = k
++            self.x: int = None
++            self.n = None
++    """
++    )
++    attrs = [n.targets[0] if hasattr(n, "targets") else n.target for n in func.body]
++    assert get_annotation(attrs[0]).as_string() == "str"
++    assert get_annotation(attrs[1]).as_string() == "List[int]"
++    assert get_annotation(attrs[2]).as_string() == "int"
++    assert get_annotation(attrs[3]) is None
++    assert {n.as_string() for n in infer_node(attrs[0])} == {"str"}
++    assert [n.value for n in infer_node(attrs[3])] == [None]
++
++
++def test_class_diagram_uses_type_hints():
++    module = astroid.parse(
++        """
++    class C(object):
++        def __init__(self, a: str = None):
++            self.a = a
++
++    class D:
++        b: int = None
++    """
++    )
++    project = inspector.Project("p")
++    project.add_module(module)
++    inspector.Linker(project).visit(project)
++    diagram = ClassDiagram("t", "ALL")
++    assert diagram.get_attrs(module["C"]) == ["a : str"]
++    assert diagram.get_attrs(module["D"]) == ["b : int"]

@@ -1,0 +1,63 @@
+diff --git a/rich/text.py b/rich/text.py
+index f6b349d..e095fec 100644
+--- a/rich/text.py
++++ b/rich/text.py
+@@ -141,7 +141,8 @@ class Text(JupyterMixin):
+         tab_size: Optional[int] = 8,
+         spans: Optional[List[Span]] = None,
+     ) -> None:
+-        self._text = [strip_control_codes(text)]
++        sanitized_text = strip_control_codes(text)
++        self._text = [sanitized_text]
+         self.style = style
+         self.justify: Optional["JustifyMethod"] = justify
+         self.overflow: Optional["OverflowMethod"] = overflow
+@@ -149,7 +150,7 @@ class Text(JupyterMixin):
+         self.end = end
+         self.tab_size = tab_size
+         self._spans: List[Span] = spans or []
+-        self._length: int = len(text)
++        self._length: int = len(sanitized_text)
+ 
+     def __len__(self) -> int:
+         return self._length
+diff --git a/tests/test_inspect.py b/tests/test_inspect.py
+index b4c1d2a..400b682 100644
+--- a/tests/test_inspect.py
++++ b/tests/test_inspect.py
+@@ -299,3 +299,17 @@ def test_inspect_module_with_class():
+         "╰──────────────────────────────────────────╯\n"
+     )
+     assert render(module, methods=True) == expected
++
++
++def test_inspect_methods_docstring_control_codes():
++    class Thing:
++        def method(self):
++            """Docstring with ``\x08`` control code.
++
++            More text here.
++            """
++
++    console = Console(width=100, file=io.StringIO(), color_system=None)
++    inspect(Thing, console=console, all=True)
++    inspect(Thing, console=console, methods=True, help=True)
++    assert "control code" in console.file.getvalue()
+diff --git a/tests/test_text.py b/tests/test_text.py
+index 4f02fd4..3327185 100644
+--- a/tests/test_text.py
++++ b/tests/test_text.py
+@@ -747,3 +747,13 @@ def test_markup_property():
+         == "[bold]foo [italic]bar[/bold] baz[/italic]"
+     )
+     assert Text("[bold]foo").markup == "\\[bold]foo"
++
++
++def test_text_init_control_codes_length():
++    text = Text("foo\x08bar")
++    assert text.plain == "foobar"
++    assert len(text) == 6
++    text.append(Text("baz", "bold"))
++    assert text.spans[-1] == Span(6, 9, "bold")
++    assert len(text.split("\n")) == 1
++    assert [t.plain for t in text.divide([3])] == ["foo", "barbaz"]

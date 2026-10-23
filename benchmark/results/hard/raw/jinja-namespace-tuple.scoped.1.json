@@ -1,0 +1,132 @@
+{
+ "task": "jinja-namespace-tuple",
+ "arm": "scoped",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 107196,
+  "stop_reason": "end_turn",
+  "session_id": "6785f25b-d017-4f7a-bfb1-4ea852ace882",
+  "total_cost_usd": 0.4190205999999999,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 18737,
+   "cache_read_input_tokens": 116279,
+   "output_tokens": 4510,
+   "output_tokens_details": {
+    "thinking_tokens": 1298
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 18737,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 958,
+     "cache_read_input_tokens": 30692,
+     "cache_creation_input_tokens": 941,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 941
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 4510,
+    "cacheReadInputTokens": 116279,
+    "cacheCreationInputTokens": 18737,
+    "webSearchRequests": 0,
+    "costUSD": 0.26339179999999995,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1298,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 28,
+    "outputTokens": 8055,
+    "cacheReadInputTokens": 225478,
+    "cacheCreationInputTokens": 20990,
+    "webSearchRequests": 0,
+    "costUSD": 0.15562879999999998,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1682,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`{% set ns.a, ns.b = ... %}` now works, including mixed targets like `{% set ns.a, x = 1, 2 %}`. The template from the issue renders correctly inside a loop. All 910 tests pass and nothing is committed.\n\n**Root cause:** the parser only recognized `ns.attr` when it was the whole target of `set`, never as one item of a comma-separated target. There was a second problem in the compiler. It wrote the \"is this really a namespace?\" check as separate statements while producing the target itself. That only works for a single target and would have broken the generated code inside a tuple.\n\n**Fix:**\n- **Parser** (`src/jinja2/parser.py`): a new helper, `parse_namespace_ref_or_primary`, reads one target item and accepts `ns.attr`. It is used both for a single target and for each item of a comma-separated target (`parse_tuple` gained a `with_namespace` option). Only `set` turns this on, so `for` targets behave as before.\n- **Compiler** (`src/jinja2/compiler.py`): the namespace check moved into a new `check_namespace_targets`, which runs before the assignment once per namespace name. Both `{% set %}` forms (inline and block) call it. Assigning to an attribute of something that isn't a namespace still raises the same `cannot assign attribute on non-namespace object` error.\n- **Docs:** I added a `CHANGES.rst` entry and a sentence in `docs/templates.rst`.\n- **Tests** (`tests/test_core_tags.py`, class `TestSet`): four new tests cover swapping two namespace attributes, mixing namespace attributes with plain names, the loop pattern from the issue, and the error for a non-namespace object.\n\nA worker agent wrote the change. I read the full diff and the compiled output for tuple and block assignments, and replaced a `writeline(\"\")` with `self.newline()`. Then I re-ran `.venv/bin/python -m pytest tests -q`.\n\n**Still not supported:** the bracketed form `{% set (ns.a, ns.b) = 1, 2 %}` still fails with `can't assign to 'tuple'`. That's because a bracketed group goes through the normal expression parser. Plain names already work in brackets (`{% set (a, b) = 1, 2 %}`), so it's a small inconsistency. The issue doesn't use brackets, so I left it alone.",
+  "ttft_ms": 2638,
+  "type": "result",
+  "duration_ms": 121234,
+  "uuid": "9ba4eb12-e2fe-4625-8dba-f93b5830a52b",
+  "ttft_stream_ms": 1554,
+  "time_to_request_ms": 343,
+  "first_content_frame_ms": 1555,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

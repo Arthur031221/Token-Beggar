@@ -1,0 +1,132 @@
+{
+ "task": "md-footnote-order",
+ "arm": "scoped",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 125050,
+  "stop_reason": "end_turn",
+  "session_id": "7550bd56-4c16-485e-955a-ef4875b42c31",
+  "total_cost_usd": 0.4333999,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 17001,
+   "cache_read_input_tokens": 111856,
+   "output_tokens": 4330,
+   "output_tokens_details": {
+    "thinking_tokens": 1018
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 17001,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 833,
+     "cache_read_input_tokens": 28674,
+     "cache_creation_input_tokens": 1223,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1223
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 4330,
+    "cacheReadInputTokens": 111856,
+    "cacheCreationInputTokens": 17001,
+    "webSearchRequests": 0,
+    "costUSD": 0.2450192,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1018,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 20,
+    "outputTokens": 10168,
+    "cacheReadInputTokens": 211982,
+    "cacheCreationInputTokens": 26185,
+    "webSearchRequests": 0,
+    "costUSD": 0.18838069999999998,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2440,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Footnotes are now numbered and listed in the order they are first referenced, so the issue's example now comes out as 1 then 2. A new option, `USE_DEFINITION_ORDER` (default `False`), brings back the old behaviour when set to `True`. Nothing is committed.\n\n**Cause:** both the footnote list and the reference numbers used each footnote's position in the definitions (`list(self.footnotes.keys()).index(id)`). The footnote list is also built before the inline references are processed, so the reference order wasn't known at that point.\n\n**Fix (`markdown/extensions/footnotes.py`):** once the whole document has been processed, an existing cleanup step at the end of the extension now:\n- collects the references in the body in document order;\n- adds footnotes that are referenced only from inside other footnotes;\n- adds footnotes that are never referenced at the end, in definition order, so none are dropped;\n- puts the footnote list in that order and renumbers the references and the \"Jump back to footnote N\" titles to match.\n\n**Docs:** the new option is described in `docs/extensions/footnotes.md`, and `docs/changelog.md` has a \"Changed\" entry under Unreleased. This is a change in default behaviour, and the issue itself raised the risk of breaking things. The option keeps the old output available, but you may prefer definition order as the default.\n\n**Tests:** I added five tests to `tests/test_syntax/extensions/test_footnotes.py`: the issue's case, the old behaviour with the option on, a reference inside a footnote, an unreferenced footnote, and a footnote referenced more than once. No existing test expectations changed. I also checked footnotes referenced from a list and a table with the placement marker, and the numbering was correct.\n- `.venv/bin/python -m pytest tests/test_syntax/extensions/test_footnotes.py`: 17 passed.\n- `.venv/bin/python -m pytest tests --continue-on-collection-errors`: 1065 passed, 110 skipped, 1 error. The error is in `tests/test_syntax/extensions/test_md_in_html.py`, which fails to load (a warning about a class named `TestSuite`). It fails the same way without my changes, and that file passes (303 tests) when run on its own.",
+  "ttft_ms": 4886,
+  "type": "result",
+  "duration_ms": 141505,
+  "uuid": "1f12fa9c-f8e7-47fb-9748-d9ab912bada6",
+  "ttft_stream_ms": 2575,
+  "time_to_request_ms": 1087,
+  "first_content_frame_ms": 2575,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

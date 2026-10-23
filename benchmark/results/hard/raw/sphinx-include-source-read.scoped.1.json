@@ -1,0 +1,132 @@
+{
+ "task": "sphinx-include-source-read",
+ "arm": "scoped",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 79206,
+  "stop_reason": "end_turn",
+  "session_id": "de4c3fc7-0bf5-4b9b-9cce-ac7b1b7fb534",
+  "total_cost_usd": 0.3450186,
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 17260,
+   "cache_read_input_tokens": 146426,
+   "output_tokens": 5353,
+   "output_tokens_details": {
+    "thinking_tokens": 2136
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 17260,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 784,
+     "cache_read_input_tokens": 29610,
+     "cache_creation_input_tokens": 546,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 546
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 5353,
+    "cacheReadInputTokens": 146426,
+    "cacheCreationInputTokens": 17260,
+    "webSearchRequests": 0,
+    "costUSD": 0.27447320000000003,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2136,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 3887,
+    "cacheReadInputTokens": 61789,
+    "cacheCreationInputTokens": 10189,
+    "webSearchRequests": 0,
+    "costUSD": 0.07054540000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 178,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Content pulled in with `.. include::` now goes through `source-read` handlers, so the issue's example renders `REPLACED` in both places. The new test fails on the original code and passes with the fix. Nothing is committed.\n\n**Cause:** docutils' `include` directive reads the included file from disk again and inserts that raw text into the including document. Your handler did run for `something-to-include.rst`, but only when that file was built as its own page. The copy pasted into `index.html` never went through it.\n\n**Fix** (`sphinx/directives/other.py`, `Include.run`): when any `source-read` handler is connected, the directive now passes the included text through `source-read` before inserting it. The docname given is the included file's own (e.g. `baz/baz`). Includes inside included files are covered too. If nothing listens to `source-read`, behaviour is unchanged.\n\n**Tests:** a new test root `tests/roots/test-directive-include/` and `test_include_source_read_event` in `tests/test_directive_other.py`. The test checks the main document, an included file, and a file included from inside that one.\n\n**Also changed:**\n- `CHANGES`: a bug-fix entry. A worker I delegated part of this to made up the issue number, so I replaced it with #10678, which I believe is the upstream issue \u2014 please check it.\n- `doc/extdev/appapi.rst`: notes that `source-read` now also runs for `include` content.\n\n**Test results:** `tests/test_directive_other.py` and `tests/test_environment.py` pass (12 tests). `tests/test_directive_code.py` has 2 failures, `test_literal_include_linenos` and `test_linenothreshold`, which fail the same way on the unmodified code.\n\n**Not changed or caveats:**\n- **`literalinclude`:** it still bypasses `source-read`, on purpose, since its content is shown verbatim rather than parsed. Your Yocto extension edits literal blocks, but this fix doesn't stop it working on `::` blocks or `code-block` directives inside included files. Those are part of the included text and are now processed.\n- **Unusual file extensions:** if the included file's extension isn't a configured source suffix (e.g. `.txt`), it has no docname, so handlers receive `docname=None`. Handlers that use the docname should allow for that.",
+  "ttft_ms": 11203,
+  "type": "result",
+  "duration_ms": 103167,
+  "uuid": "290249d1-2dd2-4907-bf8b-5b4ef0b6e4eb",
+  "ttft_stream_ms": 819,
+  "time_to_request_ms": 121,
+  "first_content_frame_ms": 819,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

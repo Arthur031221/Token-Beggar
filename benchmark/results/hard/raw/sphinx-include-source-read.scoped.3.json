@@ -1,0 +1,132 @@
+{
+ "task": "sphinx-include-source-read",
+ "arm": "scoped",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 87886,
+  "stop_reason": "end_turn",
+  "session_id": "c55ea8f2-ab93-43ae-b06c-c732a66a68f4",
+  "total_cost_usd": 0.36671329999999996,
+  "usage": {
+   "input_tokens": 16,
+   "cache_creation_input_tokens": 17253,
+   "cache_read_input_tokens": 203248,
+   "output_tokens": 5056,
+   "output_tokens_details": {
+    "thinking_tokens": 1250
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 17253,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 806,
+     "cache_read_input_tokens": 29687,
+     "cache_creation_input_tokens": 462,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 462
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 5056,
+    "cacheReadInputTokens": 203248,
+    "cacheCreationInputTokens": 17253,
+    "webSearchRequests": 0,
+    "costUSD": 0.2798576,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1250,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 18,
+    "outputTokens": 4728,
+    "cacheReadInputTokens": 108572,
+    "cacheCreationInputTokens": 11473,
+    "webSearchRequests": 0,
+    "costUSD": 0.08685570000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 600,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 9,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Text pulled in with `.. include::` is now passed through `source-read` handlers, so the `&REPLACE_ME;` example from the issue gets replaced in the included file too. The new tests fail on the old code and pass with the fix. Nothing is committed.\n\n**Cause:** the `include` directive in docutils reads the file itself and inserts its lines straight into the parser. Your handler did run on `something-to-include.rst`, but only when that file was read as a page of its own. That edited copy is never what gets inserted into `index.rst`.\n\n**Fix** (`sphinx/directives/other.py`, `Include.run`): when any `source-read` handler is registered, the directive now hands the included text to those handlers (with the included file's docname) before inserting it. Docutils adds two marker lines at the end of included text; these are kept out of what handlers see and put back afterwards. Every supported docutils version (0.18.1 and up) adds these lines. `literalinclude` and any other uses of these internals are unchanged: `literalinclude` produces a literal block rather than reST to parse.\n\n**Tests:** a new test project `tests/roots/test-directive-include/` has an index page that includes `baz/baz.rst`, which itself includes `baz/inner.rst`. Two tests are added in `tests/test_directive_other.py`:\n- One checks that replacements reach the HTML, including through the nested include.\n- One counts the docnames handlers receive. `baz/baz` is seen twice (on its own, and once included) and `baz/inner` three times. I changed this test to count calls; the first version passed even without the fix, because those files are also read as pages of their own.\n\n**Docs:** I added a note to the `source-read` event docs (`doc/extdev/appapi.rst`) and a `CHANGES` entry. The entry cites #10678, which I believe is the upstream issue number but haven't checked.\n\n**Test run:** `tests/test_directive_other.py`, `tests/test_directive_code.py`, `tests/test_util_docutils.py` and `tests/test_environment.py` give 55 passed, 2 failed. The failures are `test_literal_include_linenos` and `test_linenothreshold` in `test_directive_code.py`, and they fail the same way on the unmodified code.\n\nOne behaviour change: a handler that edits a file both as its own page and when included runs on that text once for each. For plain search-and-replace like the one in the issue this makes no difference.",
+  "ttft_ms": 9200,
+  "type": "result",
+  "duration_ms": 120077,
+  "uuid": "78b13f66-a683-4bdb-8ee9-a8dd4f4ff379",
+  "ttft_stream_ms": 1060,
+  "time_to_request_ms": 436,
+  "first_content_frame_ms": 1061,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

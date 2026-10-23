@@ -1,0 +1,132 @@
+{
+ "task": "sphinx-property-type",
+ "arm": "scoped",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 171367,
+  "stop_reason": "end_turn",
+  "session_id": "f0b6e7f4-1c4e-4b5c-a905-60b2ce71257e",
+  "total_cost_usd": 0.7122870000000001,
+  "usage": {
+   "input_tokens": 24,
+   "cache_creation_input_tokens": 30177,
+   "cache_read_input_tokens": 370860,
+   "output_tokens": 11056,
+   "output_tokens_details": {
+    "thinking_tokens": 2689
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 30177,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1127,
+     "cache_read_input_tokens": 40273,
+     "cache_creation_input_tokens": 2800,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2800
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 24,
+    "outputTokens": 11056,
+    "cacheReadInputTokens": 370860,
+    "cacheCreationInputTokens": 30177,
+    "webSearchRequests": 0,
+    "costUSD": 0.536804,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2689,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 28,
+    "outputTokens": 9457,
+    "cacheReadInputTokens": 245345,
+    "cacheCreationInputTokens": 22529,
+    "webSearchRequests": 0,
+    "costUSD": 0.17548299999999997,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1584,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 19,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Autodoc now documents members that stack `@classmethod` on `@property`. The related tests pass on Python 3.9.25, apart from one unrelated failure explained below. Nothing is committed.\n\n**Root cause:** on a class, `getattr(cls, name)` runs the class property and returns its result rather than a `property` object. So autodoc never saw a property. When the member list was built the value was usually `None`, and the member was dropped as having no docstring. `PropertyDocumenter` didn't recognise it either.\n\n**Fix:**\n- **New helper:** `getclassproperty(cls, name)` in `sphinx/util/inspect.py` searches the class and its base classes for a `classmethod` wrapping a property, and returns the property. Inherited class properties are therefore found too.\n- **Member listing** (`sphinx/ext/autodoc/importer.py`): `get_class_members` now uses the property object instead of the evaluated value. That makes the docstring visible and covers autosummary, which builds its member lists with the same function.\n- **`PropertyDocumenter`** (`sphinx/ext/autodoc/__init__.py`): it accepts class properties, uses the property itself as the object to document, and adds `:classmethod:` to the directive. `:abstractmethod:` and type hints still work. An `.. autoproperty::` aimed at something that isn't a property behaves as it did before.\n- **`py:property` directive** (`sphinx/domains/python.py`): new `:classmethod:` option, which renders as \"class property\".\n- **Docs:** the new option is described in `doc/usage/restructuredtext/domains.rst`, and there is a CHANGES entry for #9445.\n\n**Tests:**\n- A `prop2` class property was added to `tests/roots/test-ext-autodoc/target/properties.py`, only defined on Python 3.9+.\n- New tests: `test_class_properties` (autoproperty), `test_pyproperty_classmethod` (domain) and `test_getclassproperty` (inspect). `test_getclassproperty` covers inherited, overridden, plain-property and plain-classmethod cases.\n- The expected output of the autoclass `test_properties` was updated.\n- Ran the autodoc test files (main, autoproperty, autoclass, autoattribute, automodule), plus the domain, autosummary and inspect tests: 215 passed, 1 failed.\n\n**The one failure:** `tests/test_util_inspect.py` imports `_testcapi`, which isn't installed in `.venv`, so I ran that file against a temporary empty stand-in. `test_isattributedescriptor` needs things from the real module, so it fails there; it fails the same way without these changes.\n\n**End-to-end check:** I built a small project modelled on the issue's demo. The metaclass, base-class, subclass, inherited and abstract class properties all rendered, with the abstract one shown as \"abstract class property\".\n\nI changed some of the subagent's first pass myself:\n- It only checked the class's own `__dict__`, which missed inherited class properties.\n- It made `autoproperty` give up silently on anything that isn't a property.\n- It extended `isclassmethod` in a way nothing used, so I took that out.",
+  "ttft_ms": 5266,
+  "type": "result",
+  "duration_ms": 218937,
+  "uuid": "b1895770-b148-4218-9115-e37dfc647a80",
+  "ttft_stream_ms": 1538,
+  "time_to_request_ms": 363,
+  "first_content_frame_ms": 1539,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

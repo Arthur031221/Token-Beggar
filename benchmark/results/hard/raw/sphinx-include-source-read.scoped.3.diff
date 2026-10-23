@@ -1,0 +1,142 @@
+diff --git a/CHANGES b/CHANGES
+index ce1185c76..c06ddf10d 100644
+--- a/CHANGES
++++ b/CHANGES
+@@ -52,6 +52,8 @@ Features added
+ Bugs fixed
+ ----------
+ 
++* #10678: Emit the ``source-read`` event for files read via the ``include``
++  directive, so listeners can modify included sources.
+ * #11077: graphviz: Fix relative links from within the graph.
+   Patch by Ralf Grubenmann.
+ * #11529: Line Block in LaTeX builder outputs spurious empty token.
+diff --git a/doc/extdev/appapi.rst b/doc/extdev/appapi.rst
+index 78e88b063..74019605c 100644
+--- a/doc/extdev/appapi.rst
++++ b/doc/extdev/appapi.rst
+@@ -253,6 +253,8 @@ Here is a more detailed list of these events.
+    Emitted when a source file has been read.  The *source* argument is a list
+    whose single element is the contents of the source file.  You can process the
+    contents and replace this item to implement source-level transformations.
++   The event is also emitted for files read by the :rst:dir:`include`
++   directive, with *docname* being that of the included file.
+ 
+    For example, if you want to use ``$`` signs to delimit inline math, like in
+    LaTeX, you can use a regular expression to replace ``$...$`` by
+diff --git a/sphinx/directives/other.py b/sphinx/directives/other.py
+index 19f7c0a8d..f32eed613 100644
+--- a/sphinx/directives/other.py
++++ b/sphinx/directives/other.py
+@@ -1,6 +1,7 @@
+ from __future__ import annotations
+ 
+ import re
++from os.path import abspath, relpath
+ from typing import TYPE_CHECKING, Any, cast
+ 
+ from docutils import nodes
+@@ -8,6 +9,7 @@ from docutils.parsers.rst import directives
+ from docutils.parsers.rst.directives.admonitions import BaseAdmonition
+ from docutils.parsers.rst.directives.misc import Class
+ from docutils.parsers.rst.directives.misc import Include as BaseInclude
++from docutils.statemachine import StateMachine
+ 
+ from sphinx import addnodes
+ from sphinx.domains.changeset import VersionChange  # noqa: F401  # for compatibility
+@@ -376,6 +378,21 @@ class Include(BaseInclude, SphinxDirective):
+         rel_filename, filename = self.env.relfn2path(self.arguments[0])
+         self.arguments[0] = filename
+         self.env.note_included(filename)
++
++        # Make 'source-read' listeners apply to the included file as well.
++        # docutils appends two marker lines ('' and '.. end of inclusion ...')
++        # to the included lines; keep them out of the emitted source.
++        if self.env.app.events.listeners.get('source-read'):
++            def _insert_input(include_lines: list[str], source: str) -> None:
++                text = "\n".join(include_lines[:-2])
++                docname = self.env.path2doc(relpath(abspath(source), start=self.env.srcdir))
++                arg = [text]
++                self.env.app.events.emit('source-read', docname, arg)
++                text = arg[0]
++                include_lines = text.splitlines() + include_lines[-2:]
++                StateMachine.insert_input(self.state_machine, include_lines, source)
++
++            self.state_machine.insert_input = _insert_input  # type: ignore[method-assign]
+         return super().run()
+ 
+ 
+diff --git a/tests/roots/test-directive-include/baz/baz.rst b/tests/roots/test-directive-include/baz/baz.rst
+new file mode 100644
+index 000000000..e3a953820
+--- /dev/null
++++ b/tests/roots/test-directive-include/baz/baz.rst
+@@ -0,0 +1,6 @@
++Baz
++===
++
++&REPLACE_ME; in baz
++
++.. include:: /baz/inner.rst
+diff --git a/tests/roots/test-directive-include/baz/inner.rst b/tests/roots/test-directive-include/baz/inner.rst
+new file mode 100644
+index 000000000..0b6e58371
+--- /dev/null
++++ b/tests/roots/test-directive-include/baz/inner.rst
+@@ -0,0 +1 @@
++&REPLACE_ME; in inner
+diff --git a/tests/roots/test-directive-include/conf.py b/tests/roots/test-directive-include/conf.py
+new file mode 100644
+index 000000000..9b6a55417
+--- /dev/null
++++ b/tests/roots/test-directive-include/conf.py
+@@ -0,0 +1 @@
++project = 'test'
+diff --git a/tests/roots/test-directive-include/index.rst b/tests/roots/test-directive-include/index.rst
+new file mode 100644
+index 000000000..ecbb0fc50
+--- /dev/null
++++ b/tests/roots/test-directive-include/index.rst
+@@ -0,0 +1,6 @@
++Include
++=======
++
++&REPLACE_ME;
++
++.. include:: baz/baz.rst
+diff --git a/tests/test_directive_other.py b/tests/test_directive_other.py
+index f221db075..fbb5f5de5 100644
+--- a/tests/test_directive_other.py
++++ b/tests/test_directive_other.py
+@@ -148,3 +148,31 @@ def test_toctree_twice(app):
+     assert_node(doctree[0][0],
+                 entries=[(None, 'foo'), (None, 'foo')],
+                 includefiles=['foo', 'foo'])
++
++
++@pytest.mark.sphinx('html', testroot='directive-include', freshenv=True)
++def test_include_source_read_event(app):
++    def source_read(app, docname, source):
++        source[0] = source[0].replace('&REPLACE_ME;', 'REPLACED')
++
++    app.connect('source-read', source_read)
++    app.build(force_all=True)
++    html = (app.outdir / 'index.html').read_text(encoding='utf8')
++    assert '&amp;REPLACE_ME;' not in html
++    assert 'REPLACED in baz' in html
++    assert 'REPLACED in inner' in html
++
++
++@pytest.mark.sphinx('html', testroot='directive-include', freshenv=True)
++def test_include_source_read_docname(app):
++    docnames = []
++
++    def source_read(app, docname, source):
++        docnames.append(docname)
++
++    app.connect('source-read', source_read)
++    app.build(force_all=True)
++    # read as standalone documents, plus once per include
++    assert docnames.count('index') == 1
++    assert docnames.count('baz/baz') == 2  # itself, included by index
++    assert docnames.count('baz/inner') == 3  # itself, included by baz/baz and by index

@@ -1,0 +1,134 @@
+diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py
+index 86a3a92f07..c0aa7c9c1b 100644
+--- a/django/db/models/expressions.py
++++ b/django/db/models/expressions.py
+@@ -200,6 +200,13 @@ class BaseExpression:
+     def set_source_expressions(self, exprs):
+         assert not exprs
+ 
++    def get_refs(self):
++        refs = set()
++        for expr in self.get_source_expressions():
++            if expr is not None:
++                refs |= expr.get_refs()
++        return refs
++
+     def _parse_expressions(self, *expressions):
+         return [
+             arg
+@@ -1160,6 +1167,9 @@ class Ref(Expression):
+     def set_source_expressions(self, exprs):
+         (self.source,) = exprs
+ 
++    def get_refs(self):
++        return {self.refs}
++
+     def resolve_expression(
+         self, query=None, allow_joins=True, reuse=None, summarize=False, for_save=False
+     ):
+diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py
+index 9735ce10c8..7b8d5ec1fe 100644
+--- a/django/db/models/sql/query.py
++++ b/django/db/models/sql/query.py
+@@ -492,6 +492,22 @@ class Query(BaseExpression):
+                         self.model._meta.pk.get_col(inner_query.get_initial_alias()),
+                     )
+                 inner_query.default_cols = False
++                # Mask existing annotations that aren't referenced by the
++                # aggregates pushed to the outer query.
++                annotation_mask = set()
++                used_expression_ids = set()
++                for alias, annotation in inner_query.annotation_select.items():
++                    if annotation.is_summary:
++                        annotation_mask.add(alias)
++                        annotation_mask |= annotation.get_refs()
++                        used_expression_ids.update(map(id, annotation.flatten()))
++                # Annotations used directly (not through a Ref) inside the
++                # aggregates, e.g. in a filter, must be kept so that
++                # rewrite_cols() can reuse them.
++                for alias, annotation in inner_query.annotation_select.items():
++                    if id(annotation) in used_expression_ids:
++                        annotation_mask.add(alias)
++                inner_query.set_annotation_mask(annotation_mask)
+ 
+             relabels = {t: "subquery" for t in inner_query.alias_map}
+             relabels[None] = "subquery"
+diff --git a/django/db/models/sql/where.py b/django/db/models/sql/where.py
+index 1928ba91b8..a7c5196f1f 100644
+--- a/django/db/models/sql/where.py
++++ b/django/db/models/sql/where.py
+@@ -190,6 +190,25 @@ class WhereNode(tree.Node):
+     def get_source_expressions(self):
+         return self.children[:]
+ 
++    def get_refs(self):
++        refs = set()
++        for child in self.children:
++            if hasattr(child, "get_refs"):
++                refs |= child.get_refs()
++        return refs
++
++    def flatten(self):
++        """
++        Recursively yield this node and all of its children, in depth-first
++        order.
++        """
++        yield self
++        for child in self.children:
++            if hasattr(child, "flatten"):
++                yield from child.flatten()
++            else:
++                yield child
++
+     def set_source_expressions(self, children):
+         assert len(children) == len(self.children)
+         self.children = children
+diff --git a/tests/aggregation/tests.py b/tests/aggregation/tests.py
+index 39c8a45707..a04011319a 100644
+--- a/tests/aggregation/tests.py
++++ b/tests/aggregation/tests.py
+@@ -1044,6 +1044,44 @@ class AggregateTestCase(TestCase):
+                 self.assertNotIn("order by", qstr)
+             self.assertEqual(qstr.count(" join "), 0)
+ 
++    def test_unused_aggregate_removed_from_count(self):
++        qs = Book.objects.annotate(authors_count=Count("authors"))
++        with CaptureQueriesContext(connection) as ctx:
++            result = qs.count()
++        self.assertEqual(result, Book.objects.count())
++        sql = ctx[0]["sql"].lower()
++        self.assertNotIn("authors_count", sql)
++        self.assertNotIn("count(", sql.replace("count(*)", ""))
++
++    def test_unused_aggregate_removed_from_aggregate(self):
++        qs = Book.objects.annotate(authors_count=Count("authors"))
++        with CaptureQueriesContext(connection) as ctx:
++            result = qs.aggregate(total=Sum("pages"))
++        self.assertEqual(result, Book.objects.aggregate(total=Sum("pages")))
++        self.assertNotIn("authors_count", ctx[0]["sql"].lower())
++
++    def test_referenced_annotation_kept(self):
++        qs = Book.objects.annotate(authors_count=Count("authors"))
++        with CaptureQueriesContext(connection) as ctx:
++            result = qs.aggregate(total=Sum("authors_count"))
++        self.assertIn("authors_count", ctx[0]["sql"].lower())
++        self.assertEqual(
++            result["total"],
++            sum(b.authors_count for b in qs),
++        )
++
++    def test_unused_aggregate_with_values_and_count(self):
++        qs = (
++            Book.objects.values("publisher")
++            .annotate(authors_count=Count("authors"))
++            .order_by("publisher")
++        )
++        self.assertEqual(qs.count(), len(list(qs)))
++        self.assertEqual(
++            qs.aggregate(total=Sum("authors_count"))["total"],
++            sum(r["authors_count"] for r in qs),
++        )
++
+     def test_decimal_max_digits_has_no_effect(self):
+         Book.objects.all().delete()
+         a1 = Author.objects.first()

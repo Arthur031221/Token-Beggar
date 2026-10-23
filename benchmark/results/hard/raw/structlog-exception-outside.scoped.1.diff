@@ -1,0 +1,83 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index cc53c62..6c0df3b 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -47,6 +47,8 @@ You can find our backwards-compatibility policy [here](https://github.com/hynek/
+ 
+   [#675](https://github.com/hynek/structlog/pull/675)
+ 
++- `structlog.tracebacks.extract()` now returns a `Trace` without stacks instead of raising an `AttributeError` if there is no exception – for example, when `exception()` is called outside of an exception handler.
++
+ 
+ ## [24.4.0](https://github.com/hynek/structlog/compare/24.3.0...24.4.0) - 2024-07-17
+ 
+diff --git a/src/structlog/tracebacks.py b/src/structlog/tracebacks.py
+index b5c4b43..0fbf156 100644
+--- a/src/structlog/tracebacks.py
++++ b/src/structlog/tracebacks.py
+@@ -218,14 +218,21 @@ def extract(
+ 
+     Returns:
+         A Trace instance with structured information about all exceptions.
++        If there is no exception (*exc_type* is ``None``), the trace has no
++        stacks.
+ 
+     .. versionadded:: 22.1.0
+     .. versionchanged:: 24.3.0
+        Added *locals_max_length*, *locals_hide_sunder*, *locals_hide_dunder*
+        and *use_rich* arguments.
++    .. versionchanged:: 25.1.0
++       Missing exceptions -- ``(None, None, None)`` -- are handled.
+     """
+ 
+     stacks: list[Stack] = []
++
++    if exc_type is None:
++        return Trace(stacks=stacks)
+     is_cause = False
+ 
+     while True:
+diff --git a/tests/processors/test_renderers.py b/tests/processors/test_renderers.py
+index 8f225c8..00e9042 100644
+--- a/tests/processors/test_renderers.py
++++ b/tests/processors/test_renderers.py
+@@ -21,6 +21,7 @@ from structlog.processors import (
+     MaybeTimeStamper,
+     TimeStamper,
+     _json_fallback_handler,
++    dict_tracebacks,
+     format_exc_info,
+ )
+ from structlog.threadlocal import wrap_dict
+@@ -583,3 +584,12 @@ class TestFormatExcInfo:
+         assert {"exception": "MISSING"} == format_exc_info(
+             None, None, {"exc_info": ei}
+         )
++
++    @pytest.mark.parametrize("ei", [True, (None, None, None)])
++    def test_no_exception_dict_tracebacks(self, ei):
++        """
++        dict_tracebacks doesn't blow up if there's no active exception.
++        """
++        assert {"exception": []} == dict_tracebacks(
++            None, None, {"exc_info": ei}
++        )
+diff --git a/tests/test_tracebacks.py b/tests/test_tracebacks.py
+index f8d0f1e..2703f8a 100644
+--- a/tests/test_tracebacks.py
++++ b/tests/test_tracebacks.py
+@@ -781,3 +781,14 @@ def test_exception_dict_transformer_missing_exc_info():
+     result = transformer(exc_info=(None, None, None))
+ 
+     assert [] == result
++
++
++def test_extract_missing_exc_info():
++    """
++    extract returns a trace without stacks if exc_info is missing, e.g. when
++    logging an exception outside of an exception handler.
++    """
++    assert tracebacks.Trace(stacks=[]) == tracebacks.extract(
++        *sys.exc_info()
++    )
++    assert tracebacks.Trace(stacks=[]) == tracebacks.extract(None, None, None)

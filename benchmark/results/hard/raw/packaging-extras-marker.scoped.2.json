@@ -1,0 +1,132 @@
+{
+ "task": "packaging-extras-marker",
+ "arm": "scoped",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 116896,
+  "stop_reason": "end_turn",
+  "session_id": "17099f8d-1a38-460e-9083-41761faecf92",
+  "total_cost_usd": 0.4387499000000001,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 17727,
+   "cache_read_input_tokens": 116069,
+   "output_tokens": 5346,
+   "output_tokens_details": {
+    "thinking_tokens": 2368
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 17727,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 793,
+     "cache_read_input_tokens": 30238,
+     "cache_creation_input_tokens": 385,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 385
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 5346,
+    "cacheReadInputTokens": 116069,
+    "cacheCreationInputTokens": 17727,
+    "webSearchRequests": 0,
+    "costUSD": 0.2719898,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2368,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 22,
+    "outputTokens": 9123,
+    "cacheReadInputTokens": 205136,
+    "cacheCreationInputTokens": 21989,
+    "webSearchRequests": 0,
+    "costUSD": 0.1667601,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 422,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Markers now support the PEP 751 variables `extras` and `dependency_groups`, used like `\"dev\" in dependency_groups` or `\"foo\" not in extras`. The full test suite passes (27,180 tests). I couldn't run a type check because mypy isn't installed in `.venv`. Nothing is committed.\n\n**What changed**\n- **Parsing** (`src/packaging/_tokenizer.py`): `extras` and `dependency_groups` are now accepted as marker variables. They're listed before `extra` so the shorter name doesn't swallow the longer one.\n- **Evaluation** (`src/packaging/markers.py`):\n  - **New `context` argument:** `Marker.evaluate(environment=None, context=\"metadata\")` takes one of three values:\n    - `\"metadata\"` is the default and behaves exactly as before (`extra` defaults to `\"\"`).\n    - `\"lock_file\"` makes `extras` and `dependency_groups` default to empty sets, and `extra` has no default.\n    - `\"requirement\"` gives none of the three a default.\n  - **Name normalization:** values for the two new variables are sets of names, and both sides of the comparison are normalized the same way `extra` already is, so `\"Foo_Bar\" in extras` matches `{\"foo-bar\"}`.\n  - **Version comparison:** it's skipped when the right-hand side is a set, so these markers just use `in` / `not in`.\n  - **Old `extra=None`:** still treated as `\"\"`.\n- **Docs:** `docs/markers.rst` and `CHANGELOG.rst` are updated.\n- **Tests** (`tests/test_markers.py`): a new `TestPep751Markers` class covers parsing and printing back, lock-file defaults, passing sets in, name normalization, missing variables in each context, the `extra` default being unchanged, unsupported operators, and use through `Requirement`. The new variables are also added to the existing list of variables the tests loop over.\n\n**Decision for you:** the first draft also changed what happens when a marker uses a variable that isn't in the environment. It raised `UndefinedEnvironmentName` instead of `KeyError`. I undid that because it's outside this issue and would break code that catches `KeyError`. So a missing variable still raises `KeyError`, for example `extras` under the default `\"metadata\"` context. If you'd rather move to the dedicated exception, it's a small follow-up.",
+  "ttft_ms": 16371,
+  "type": "result",
+  "duration_ms": 189147,
+  "uuid": "1b6bf074-49c3-4884-8f90-9a57b0447295",
+  "ttft_stream_ms": 1997,
+  "time_to_request_ms": 306,
+  "first_content_frame_ms": 1997,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 20,
+  "f2p_total": 20,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

@@ -1,0 +1,132 @@
+{
+ "task": "pytest-mark-mro",
+ "arm": "scoped",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 57231,
+  "stop_reason": "end_turn",
+  "session_id": "ef776926-4bdc-438f-b71b-1346771be8dc",
+  "total_cost_usd": 0.2750218,
+  "usage": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 15049,
+   "cache_read_input_tokens": 112854,
+   "output_tokens": 3879,
+   "output_tokens_details": {
+    "thinking_tokens": 910
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 15049,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 918,
+     "cache_read_input_tokens": 27399,
+     "cache_creation_input_tokens": 546,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 546
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 3879,
+    "cacheReadInputTokens": 112854,
+    "cacheCreationInputTokens": 15049,
+    "webSearchRequests": 0,
+    "costUSD": 0.22058280000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 910,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 10,
+    "outputTokens": 3183,
+    "cacheReadInputTokens": 41715,
+    "cacheCreationInputTokens": 7367,
+    "webSearchRequests": 0,
+    "costUSD": 0.054438999999999994,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 41,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 5,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I fixed it: a test class that inherits from several marked base classes now gets the marks of all of them. Your `Foo`/`Bar`/`TestDings` example now shows both `foo` and `bar` on `test_dings`.\n\n**Cause:** pytest read class marks with `getattr(obj, \"pytestmark\")`. Python's normal attribute lookup stops at the first class in the inheritance order that defines `pytestmark`, so the other base class's marks were never seen.\n\n**Fix** (`src/_pytest/mark/structures.py`):\n- **`get_unpacked_marks()`** has a new keyword argument, `consider_mro` (on by default). For a class, it now collects the marks defined on every class in its inheritance order: the class's own marks first, then each base's. Functions and modules work as before.\n- **`store_mark()`**, which runs when you decorate a class, now records only that class's own marks plus the new one (`consider_mro=False`). Otherwise the base classes' marks would be copied into the subclass and counted twice.\n\nDuplicate mark names are not merged. If two base classes both apply `foo`, the test sees `foo` twice, in inheritance order. The issue mentioned merging duplicates only as a possibility, and I left it out.\n\n**Tests** (`testing/test_mark.py`, in `TestFunctional`):\n- `test_mark_mro` checks that a class `C(A, B)` gets its marks in the order `c, a, b`, and that only `c` is returned when the base classes are excluded.\n- `test_mark_mro_multiple_bases` runs the scenario from the issue and checks that the test has both `foo` and `bar`.\n\nI also added `changelog/7792.bugfix.rst`. The issue text didn't include its number; I used 7792, which I believe is the upstream issue. Please check it and rename the file if that's wrong.\n\n**Test results:** both new tests pass. `testing/test_mark.py`, `testing/python/`, `testing/test_skipping.py` and `testing/test_unittest.py` give 621 passed, 30 skipped, 2 xfailed, with `testing/python/metafunc.py` left out. That file can't be loaded at all (`_pytest.fixtures has no attribute 'FixtureFunctionDefinition'`), and it fails the same way with my changes stashed, so the problem is in the environment, not this change.\n\nNothing is committed.",
+  "ttft_ms": 5365,
+  "type": "result",
+  "duration_ms": 109658,
+  "uuid": "c03ad4c1-f22d-41e6-a682-bba76ad6bf65",
+  "ttft_stream_ms": 1077,
+  "time_to_request_ms": 437,
+  "first_content_frame_ms": 1078,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

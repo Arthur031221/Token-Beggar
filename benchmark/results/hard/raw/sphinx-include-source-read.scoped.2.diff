@@ -1,0 +1,153 @@
+diff --git a/CHANGES b/CHANGES
+index ce1185c76..4b6846c8f 100644
+--- a/CHANGES
++++ b/CHANGES
+@@ -52,6 +52,8 @@ Features added
+ Bugs fixed
+ ----------
+ 
++* #10678: Emit :event:`source-read` events for files read via
++  the :dudir:`include` directive.
+ * #11077: graphviz: Fix relative links from within the graph.
+   Patch by Ralf Grubenmann.
+ * #11529: Line Block in LaTeX builder outputs spurious empty token.
+diff --git a/doc/extdev/appapi.rst b/doc/extdev/appapi.rst
+index 78e88b063..f2ee209cf 100644
+--- a/doc/extdev/appapi.rst
++++ b/doc/extdev/appapi.rst
+@@ -253,6 +253,12 @@ Here is a more detailed list of these events.
+    Emitted when a source file has been read.  The *source* argument is a list
+    whose single element is the contents of the source file.  You can process the
+    contents and replace this item to implement source-level transformations.
++   The event is also emitted for the contents of files pulled in via the
++   :dudir:`include` directive.  If an included file is not a source document,
++   *docname* is its path.
++
++   .. versionchanged:: 7.2
++      Emitted for the contents of included files.
+ 
+    For example, if you want to use ``$`` signs to delimit inline math, like in
+    LaTeX, you can use a regular expression to replace ``$...$`` by
+diff --git a/sphinx/directives/other.py b/sphinx/directives/other.py
+index 19f7c0a8d..fbd6411cb 100644
+--- a/sphinx/directives/other.py
++++ b/sphinx/directives/other.py
+@@ -8,6 +8,7 @@ from docutils.parsers.rst import directives
+ from docutils.parsers.rst.directives.admonitions import BaseAdmonition
+ from docutils.parsers.rst.directives.misc import Class
+ from docutils.parsers.rst.directives.misc import Include as BaseInclude
++from docutils.statemachine import StateMachine
+ 
+ from sphinx import addnodes
+ from sphinx.domains.changeset import VersionChange  # noqa: F401  # for compatibility
+@@ -376,7 +377,35 @@ class Include(BaseInclude, SphinxDirective):
+         rel_filename, filename = self.env.relfn2path(self.arguments[0])
+         self.arguments[0] = filename
+         self.env.note_included(filename)
+-        return super().run()
++
++        if not self.env.app.events.listeners.get('source-read'):
++            return super().run()
++
++        # docutils re-reads the included file and inserts its raw lines via
++        # ``StateMachine.insert_input()``, so emit "source-read" for the
++        # included text here to let extensions modify it.
++        def _insert_input(include_lines: list[str], source: str) -> None:
++            # keep the end-of-inclusion marker appended by docutils
++            # out of the text passed to the event
++            marker: list[str] = []
++            if (len(include_lines) >= 2 and
++                    include_lines[-1].startswith('.. end of inclusion from')):
++                marker = include_lines[-2:]
++                include_lines = include_lines[:-2]
++
++            # included files that are not source documents (e.g. ``*.txt``)
++            # have no docname; use their path instead
++            docname = self.env.path2doc(source) or source
++            arg = ['\n'.join(include_lines)]
++            self.env.events.emit('source-read', docname, arg)
++            include_lines = arg[0].splitlines() + marker
++            StateMachine.insert_input(self.state_machine, include_lines, source)
++
++        self.state_machine.insert_input = _insert_input  # type: ignore[method-assign]
++        try:
++            return super().run()
++        finally:
++            del self.state_machine.insert_input
+ 
+ 
+ def setup(app: Sphinx) -> dict[str, Any]:
+diff --git a/tests/roots/test-directive-include/conf.py b/tests/roots/test-directive-include/conf.py
+new file mode 100644
+index 000000000..62fd1331c
+--- /dev/null
++++ b/tests/roots/test-directive-include/conf.py
+@@ -0,0 +1,5 @@
++import os
++import sys
++
++sys.path.insert(0, os.path.abspath('.'))
++extensions = ['extension']
+diff --git a/tests/roots/test-directive-include/extension.py b/tests/roots/test-directive-include/extension.py
+new file mode 100644
+index 000000000..6a07cee96
+--- /dev/null
++++ b/tests/roots/test-directive-include/extension.py
+@@ -0,0 +1,9 @@
++
++
++def subst_vars_replace(app, docname, source):
++    source[0] = source[0].replace("&REPLACE_ME;", "REPLACED")
++
++
++def setup(app):
++    app.connect('source-read', subst_vars_replace)
++    return {'version': '1.0', 'parallel_read_safe': True}
+diff --git a/tests/roots/test-directive-include/include.rst b/tests/roots/test-directive-include/include.rst
+new file mode 100644
+index 000000000..aa362e08c
+--- /dev/null
++++ b/tests/roots/test-directive-include/include.rst
+@@ -0,0 +1,5 @@
++included
++
++&REPLACE_ME;
++
++.. include:: nested.rst
+diff --git a/tests/roots/test-directive-include/index.rst b/tests/roots/test-directive-include/index.rst
+new file mode 100644
+index 000000000..3865cc51e
+--- /dev/null
++++ b/tests/roots/test-directive-include/index.rst
+@@ -0,0 +1,6 @@
++test-directive-include
++======================
++
++.. include:: include.rst
++
++&REPLACE_ME;
+diff --git a/tests/roots/test-directive-include/nested.rst b/tests/roots/test-directive-include/nested.rst
+new file mode 100644
+index 000000000..571e8b98b
+--- /dev/null
++++ b/tests/roots/test-directive-include/nested.rst
+@@ -0,0 +1 @@
++nested &REPLACE_ME;
+diff --git a/tests/test_directive_other.py b/tests/test_directive_other.py
+index f221db075..d8ccc5b19 100644
+--- a/tests/test_directive_other.py
++++ b/tests/test_directive_other.py
+@@ -148,3 +148,13 @@ def test_toctree_twice(app):
+     assert_node(doctree[0][0],
+                 entries=[(None, 'foo'), (None, 'foo')],
+                 includefiles=['foo', 'foo'])
++
++
++@pytest.mark.sphinx('html', testroot='directive-include')
++def test_include_source_read_event(app):
++    app.builder.build_all()
++    text = (app.outdir / 'index.html').read_text(encoding='utf8')
++    assert 'REPLACE_ME' not in text
++    assert '<p>included</p>\n<p>REPLACED</p>' in text  # include.rst
++    assert '<p>nested REPLACED</p>' in text  # nested.rst (included by include.rst)
++    assert text.count('REPLACED') == 3  # index.rst, include.rst, nested.rst

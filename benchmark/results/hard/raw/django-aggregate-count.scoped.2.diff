@@ -1,0 +1,191 @@
+diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py
+index 86a3a92f07..075c5b966f 100644
+--- a/django/db/models/expressions.py
++++ b/django/db/models/expressions.py
+@@ -428,6 +428,13 @@ class BaseExpression:
+             cols.extend(source.get_group_by_cols())
+         return cols
+ 
++    def get_refs(self):
++        refs = set()
++        for expr in self.get_source_expressions():
++            if expr is not None:
++                refs |= expr.get_refs()
++        return refs
++
+     def get_source_fields(self):
+         """Return the underlying field types used by this aggregate."""
+         return [e._output_field_or_none for e in self.get_source_expressions()]
+@@ -1173,6 +1180,9 @@ class Ref(Expression):
+     def as_sql(self, compiler, connection):
+         return connection.ops.quote_name(self.refs), []
+ 
++    def get_refs(self):
++        return {self.refs}
++
+     def get_group_by_cols(self):
+         return [self]
+ 
+diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py
+index 9735ce10c8..caa212360f 100644
+--- a/django/db/models/sql/query.py
++++ b/django/db/models/sql/query.py
+@@ -441,6 +441,7 @@ class Query(BaseExpression):
+         """
+         if not self.annotation_select:
+             return {}
++        _, having, qualify = self.where.split_having_qualify()
+         existing_annotations = [
+             annotation
+             for alias, annotation in self.annotations.items()
+@@ -482,10 +483,13 @@ class Query(BaseExpression):
+                 # query is grouped by the main model's primary key. However,
+                 # clearing the select clause can alter results if distinct is
+                 # used.
+-                has_existing_aggregate_annotations = any(
+-                    annotation
+-                    for annotation in existing_annotations
+-                    if getattr(annotation, "contains_aggregate", True)
++                has_existing_aggregate_annotations = (
++                    any(
++                        annotation
++                        for annotation in existing_annotations
++                        if getattr(annotation, "contains_aggregate", True)
++                    )
++                    or having is not None
+                 )
+                 if inner_query.default_cols and has_existing_aggregate_annotations:
+                     inner_query.group_by = (
+@@ -509,6 +513,25 @@ class Query(BaseExpression):
+                     annotation_select_mask.remove(alias)
+                 # Make sure the annotation_select wont use cached results.
+                 inner_query.set_annotation_mask(inner_query.annotation_select_mask)
++            if (
++                qualify is None
++                and (
++                    self.group_by is None
++                    # Grouping was reduced to the primary key above.
++                    or (self.group_by is True and inner_query.group_by is not True)
++                )
++                and not inner_query.distinct
++                and not inner_query.combinator
++            ):
++                # Only keep the annotations referenced by the aggregates
++                # moved to the outer query; the others only add useless
++                # work to the subquery.
++                refs = set()
++                for expression in outer_query.annotations.values():
++                    refs |= expression.get_refs()
++                inner_query.set_annotation_mask(
++                    [alias for alias in inner_query.annotation_select if alias in refs]
++                )
+             if (
+                 inner_query.select == ()
+                 and not inner_query.default_cols
+diff --git a/django/db/models/sql/where.py b/django/db/models/sql/where.py
+index 1928ba91b8..12f689195d 100644
+--- a/django/db/models/sql/where.py
++++ b/django/db/models/sql/where.py
+@@ -190,6 +190,12 @@ class WhereNode(tree.Node):
+     def get_source_expressions(self):
+         return self.children[:]
+ 
++    def get_refs(self):
++        refs = set()
++        for child in self.children:
++            refs |= child.get_refs()
++        return refs
++
+     def set_source_expressions(self, children):
+         assert len(children) == len(self.children)
+         self.children = children
+diff --git a/docs/releases/4.2.txt b/docs/releases/4.2.txt
+index 39cf05f23b..6cc816f322 100644
+--- a/docs/releases/4.2.txt
++++ b/docs/releases/4.2.txt
+@@ -219,6 +219,9 @@ Models
+   :ref:`window-functions` with the exception of disjunctive filter lookups
+   against window functions when performing aggregation.
+ 
++* ``QuerySet.count()`` and ``aggregate()`` now strip annotations that aren't
++  referenced by the computed aggregates from the generated query.
++
+ * :meth:`~.QuerySet.prefetch_related` now supports
+   :class:`~django.db.models.Prefetch` objects with sliced querysets.
+ 
+diff --git a/tests/aggregation/tests.py b/tests/aggregation/tests.py
+index 39c8a45707..7fe878763b 100644
+--- a/tests/aggregation/tests.py
++++ b/tests/aggregation/tests.py
+@@ -28,6 +28,7 @@ from django.db.models import (
+     Value,
+     Variance,
+     When,
++    Window,
+ )
+ from django.db.models.expressions import Func, RawSQL
+ from django.db.models.functions import (
+@@ -36,6 +37,7 @@ from django.db.models.functions import (
+     Greatest,
+     Now,
+     Pi,
++    Rank,
+     TruncDate,
+     TruncHour,
+ )
+@@ -2084,3 +2086,55 @@ class AggregateTestCase(TestCase):
+             exists=Exists(Author.objects.extra(where=["1=0"])),
+         )
+         self.assertEqual(len(qs), 6)
++
++    def test_unused_annotation_pruned_from_count(self):
++        with CaptureQueriesContext(connection) as ctx:
++            cnt = Book.objects.annotate(Count("authors")).count()
++        self.assertEqual(cnt, Book.objects.count())
++        sql = ctx.captured_queries[0]["sql"].lower()
++        self.assertEqual(sql.count("count("), 1)
++        self.assertNotIn("authors__count", sql)
++
++    def test_unused_multivalued_annotation_pruned_from_count(self):
++        qs = Book.objects.annotate(author_name=F("authors__name"))
++        with CaptureQueriesContext(connection) as ctx:
++            cnt = qs.count()
++        self.assertEqual(cnt, len(qs))
++        sql = ctx.captured_queries[0]["sql"].lower()
++        self.assertNotIn("author_name", sql)
++
++    def test_unused_annotation_pruned_from_aggregate(self):
++        with CaptureQueriesContext(connection) as ctx:
++            result = Book.objects.annotate(
++                authors_count=Count("authors"),
++            ).aggregate(Sum("pages"))
++        self.assertEqual(result, Book.objects.aggregate(Sum("pages")))
++        sql = ctx.captured_queries[0]["sql"].lower()
++        self.assertNotIn("authors_count", sql)
++
++    def test_referenced_annotation_kept_in_aggregate(self):
++        with CaptureQueriesContext(connection) as ctx:
++            result = Book.objects.annotate(
++                authors_count=Count("authors", distinct=True),
++                stores_count=Count("store", distinct=True),
++            ).aggregate(Sum("authors_count"))
++        expected = sum(book.authors.count() for book in Book.objects.all())
++        self.assertEqual(result, {"authors_count__sum": expected})
++        sql = ctx.captured_queries[0]["sql"].lower()
++        self.assertIn("authors_count", sql)
++        self.assertNotIn("stores_count", sql)
++
++    def test_referenced_aggregate_annotation_kept_in_count_filter(self):
++        qs = Book.objects.annotate(authors_count=Count("authors")).filter(
++            authors_count__gt=1
++        )
++        expected = sum(1 for book in Book.objects.all() if book.authors.count() > 1)
++        self.assertGreater(expected, 0)
++        self.assertEqual(qs.count(), expected)
++
++    @skipUnlessDBFeature("supports_over_clause")
++    def test_referenced_window_annotation_kept_in_count_filter(self):
++        qs = Book.objects.annotate(
++            rank=Window(Rank(), order_by=F("pages").asc()),
++        ).filter(rank__lte=2)
++        self.assertEqual(qs.count(), len(qs))

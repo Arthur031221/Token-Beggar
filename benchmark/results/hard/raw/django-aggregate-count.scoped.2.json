@@ -1,0 +1,132 @@
+{
+ "task": "django-aggregate-count",
+ "arm": "scoped",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 172303,
+  "stop_reason": "end_turn",
+  "session_id": "7c104640-9697-4bdb-8eda-afd3862296cd",
+  "total_cost_usd": 0.6554753000000001,
+  "usage": {
+   "input_tokens": 24,
+   "cache_creation_input_tokens": 26314,
+   "cache_read_input_tokens": 357121,
+   "output_tokens": 9916,
+   "output_tokens_details": {
+    "thinking_tokens": 3963
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 26314,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 814,
+     "cache_read_input_tokens": 37620,
+     "cache_creation_input_tokens": 1590,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1590
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 24,
+    "outputTokens": 9916,
+    "cacheReadInputTokens": 357121,
+    "cacheCreationInputTokens": 26314,
+    "webSearchRequests": 0,
+    "costUSD": 0.4803522,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3963,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 30,
+    "outputTokens": 9919,
+    "cacheReadInputTokens": 242381,
+    "cacheCreationInputTokens": 20654,
+    "webSearchRequests": 0,
+    "costUSD": 0.1751231,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3760,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 12,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "`count()` and `aggregate()` now leave out annotations that the aggregate doesn't use, so `Book.objects.annotate(Count('chapters')).count()` no longer computes the `Count`. The new tests pass, and so do the related test modules (aggregation, aggregation_regress, annotations, expressions, expressions_window, queries, ordering, backends, db_functions, lookup). That run used SQLite only. Nothing is committed.\n\n**Why it happened:** when existing annotations force `get_aggregation()` (in `django/db/models/sql/query.py`) to wrap the query in a subquery, the inner query kept every annotation in its SELECT. That includes annotations the outer `COUNT(*)` or aggregate never reads.\n\n**What changed:**\n- **`django/db/models/sql/query.py`:** after the aggregates move to the outer query, the inner query only selects annotations those aggregates actually refer to.\n  - Annotations used in filters still work. A filter on an aggregate goes into the inner `HAVING` and reads the expression itself rather than the selected column. The subquery is also grouped by primary key whenever there is a `HAVING`.\n  - Joins from removed annotations stay in place, so counts over multi-valued relations don't change.\n  - Pruning is deliberately skipped when the inner query uses `distinct()`, set operations (`union()` etc.), `values()`-style grouping, or a filter on a window function. In those cases the selected columns can affect the result.\n- **`django/db/models/expressions.py` and `django/db/models/sql/where.py`:** added a small `get_refs()` method that collects the annotation names an expression refers to.\n- **`docs/releases/4.2.txt`:** added a release note.\n\n**Tests:** six new tests in `tests/aggregation/tests.py`:\n- an unused aggregate annotation is removed from `count()`;\n- an unused annotation that spans a multi-valued relation is removed and the count is unchanged;\n- an unused annotation is removed from `aggregate()`;\n- a referenced annotation is kept while an unused one beside it is removed;\n- filtering on an aggregate annotation gives the correct count;\n- filtering on a window function gives the correct count (runs only on databases that support window functions).\n\nThe first four fail without the fix.\n\nRun them with:\n```\n.venv/bin/python tests/runtests.py --parallel 1 aggregation\n```",
+  "ttft_ms": 14446,
+  "type": "result",
+  "duration_ms": 193991,
+  "uuid": "c6cddee5-e839-4a0e-b0e8-ecdd32eac55d",
+  "ttft_stream_ms": 825,
+  "time_to_request_ms": 206,
+  "first_content_frame_ms": 825,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 3,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}

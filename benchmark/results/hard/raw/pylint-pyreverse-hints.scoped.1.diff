@@ -1,0 +1,231 @@
+diff --git a/ChangeLog b/ChangeLog
+index 2ee8bc0a..2dc234d0 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -11,6 +11,11 @@ Release date: TBA
+ 
+ * astroid has been upgraded to 2.6.0
+ 
++* Pyreverse now uses PEP 484 type hints (argument and variable annotations) to
++  determine the type of attributes, and shows annotations in method signatures.
++
++  Closes #1548
++
+ * Fix false positive ``useless-type-doc`` on ignored argument using ``pylint.extensions.docparams``
+   when a function was typed using pep484 but not inside the docstring.
+ 
+diff --git a/doc/whatsnew/2.9.rst b/doc/whatsnew/2.9.rst
+index ec89eb51..e7b11782 100644
+--- a/doc/whatsnew/2.9.rst
++++ b/doc/whatsnew/2.9.rst
+@@ -75,3 +75,5 @@ Other Changes
+ 
+ * Fix false positive ``useless-type-doc`` on ignored argument using ``pylint.extensions.docparams`` when a function
+   was typed using pep484 but not inside the docstring.
++
++* Pyreverse now uses PEP 484 type hints to determine attribute types and shows annotations in method signatures.
+diff --git a/pylint/pyreverse/diagrams.py b/pylint/pyreverse/diagrams.py
+index bf9f67af..b9585b15 100644
+--- a/pylint/pyreverse/diagrams.py
++++ b/pylint/pyreverse/diagrams.py
+@@ -121,6 +121,11 @@ class ClassDiagram(Figure, FilterMixIn):
+         for node in nodes:
+             if isinstance(node, astroid.Instance):
+                 node = node._proxied
++            if isinstance(node, astroid.Subscript):
++                node_name = node.as_string()
++                if node_name not in names:
++                    names.append(node_name)
++                continue
+             if (
+                 isinstance(node, astroid.ClassDef)
+                 and hasattr(node, "name")
+diff --git a/pylint/pyreverse/inspector.py b/pylint/pyreverse/inspector.py
+index 8fa12202..19c39d4f 100644
+--- a/pylint/pyreverse/inspector.py
++++ b/pylint/pyreverse/inspector.py
+@@ -218,7 +218,7 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
+                     self.visit_module(frame)
+ 
+             current = frame.locals_type[node.name]
+-            values = set(node.infer())
++            values = utils.infer_node(node)
+             frame.locals_type[node.name] = list(set(current) | values)
+         except astroid.InferenceError:
+             pass
+@@ -230,7 +230,7 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
+         handle instance_attrs_type
+         """
+         try:
+-            values = set(node.infer())
++            values = utils.infer_node(node)
+             current = set(parent.instance_attrs_type[node.attrname])
+             parent.instance_attrs_type[node.attrname] = list(current | values)
+         except astroid.InferenceError:
+diff --git a/pylint/pyreverse/utils.py b/pylint/pyreverse/utils.py
+index a24d227e..c26d8752 100644
+--- a/pylint/pyreverse/utils.py
++++ b/pylint/pyreverse/utils.py
+@@ -20,6 +20,8 @@ import os
+ import re
+ import sys
+ 
++import astroid
++
+ RCFILE = ".pyreverserc"
+ 
+ 
+@@ -213,3 +215,55 @@ class LocalsVisitor(ASTWalker):
+         if methods[1] is not None:
+             return methods[1](node)
+         return None
++
++
++def get_annotation(node):
++    """Return the annotation node of an AssignAttr/AssignName, if any.
++
++    The annotation comes from an annotated assignment, or from the annotation
++    of the function argument the assigned value is taken from.
++    """
++    parent = node.parent
++    if isinstance(parent, astroid.AnnAssign) and parent.target is node:
++        return parent.annotation
++    if not isinstance(parent, astroid.Assign):
++        return None
++    value = parent.value
++    if not isinstance(value, astroid.Name):
++        return None
++    try:
++        assignments = value.lookup(value.name)[1]
++    except (astroid.NotFoundError, IndexError):
++        return None
++    for assignment in assignments:
++        if not isinstance(assignment, astroid.AssignName):
++            continue
++        arguments = assignment.parent
++        if not isinstance(arguments, astroid.Arguments):
++            continue
++        for args, annotations in (
++            (arguments.args, arguments.annotations),
++            (arguments.kwonlyargs, arguments.kwonlyargs_annotations),
++            (arguments.posonlyargs, arguments.posonlyargs_annotations),
++        ):
++            for arg, ann in zip(args or [], annotations or []):
++                if arg is assignment and ann is not None:
++                    return ann
++    return None
++
++
++def infer_node(node):
++    """Return a set of inferred values for node, preferring its type annotation."""
++    ann = get_annotation(node)
++    if isinstance(ann, astroid.Subscript):
++        # e.g. Optional[int] or List[str]: keep the annotation itself so that
++        # it can be displayed as written
++        return {ann}
++    try:
++        if ann is not None:
++            values = {val for val in ann.infer() if val is not astroid.Uninferable}
++            if values:
++                return values
++        return set(node.infer())
++    except astroid.InferenceError:
++        return set()
+diff --git a/pylint/pyreverse/writer.py b/pylint/pyreverse/writer.py
+index 0d80bb9c..ce8b5ccd 100644
+--- a/pylint/pyreverse/writer.py
++++ b/pylint/pyreverse/writer.py
+@@ -135,7 +135,17 @@ class DotWriter(DiagramWriter):
+             label = r"{}|{}\l|".format(label, r"\l".join(obj.attrs))
+             for func in obj.methods:
+                 if func.args.args:
+-                    args = [arg.name for arg in func.args.args if arg.name != "self"]
++                    args = []
++                    annotations = func.args.annotations or []
++                    for i, arg in enumerate(func.args.args):
++                        if arg.name == "self":
++                            continue
++                        ann = annotations[i] if i < len(annotations) else None
++                        args.append(
++                            arg.name
++                            if ann is None
++                            else "{}: {}".format(arg.name, ann.as_string())
++                        )
+                 else:
+                     args = []
+                 label = r"{}{}({})\l".format(label, func.name, ", ".join(args))
+diff --git a/tests/unittest_pyreverse_inspector.py b/tests/unittest_pyreverse_inspector.py
+index e1ff6378..1bed65e5 100644
+--- a/tests/unittest_pyreverse_inspector.py
++++ b/tests/unittest_pyreverse_inspector.py
+@@ -128,3 +128,32 @@ def test_from_directory(project):
+ def test_project_node(project):
+     expected = ["data", "data.clientmodule_test", "data.suppliermodule_test"]
+     assert sorted(project.keys()) == expected
++
++
++def test_type_hints_used_for_attributes():
++    from pylint.pyreverse.diagrams import ClassDiagram
++    from pylint.pyreverse.utils import infer_node
++
++    module = astroid.parse(
++        """
++    from typing import Optional
++    class C(object):
++        x: int = 3
++        def __init__(self, a: str = None, b=None, c: Optional[int] = None):
++            self.a = a
++            self.b = b
++            self.c = c
++            self.d: float = None
++    """
++    )
++    klass = module["C"]
++    linker = inspector.Linker(inspector.Project("test"))
++    linker.visit(module)
++    diagram = ClassDiagram("test", mode="PUB_ONLY")
++    attrs = diagram.get_attrs(klass)
++    assert "a : str" in attrs
++    assert "b : NoneType" in attrs
++    assert "c : Optional[int]" in attrs
++    assert "d : float" in attrs
++    assert "x : int" in attrs
++    assert {v.name for v in infer_node(klass.instance_attrs["a"][0])} == {"str"}
+diff --git a/tests/unittest_pyreverse_writer.py b/tests/unittest_pyreverse_writer.py
+index 98bb0148..731b5347 100644
+--- a/tests/unittest_pyreverse_writer.py
++++ b/tests/unittest_pyreverse_writer.py
+@@ -23,9 +23,11 @@ import codecs
+ import os
+ from difflib import unified_diff
+ 
++import astroid
+ import pytest
+ 
+ from pylint.pyreverse.diadefslib import DefaultDiadefGenerator, DiadefsHandler
++from pylint.pyreverse.diagrams import DiagramEntity
+ from pylint.pyreverse.inspector import Linker, project_from_files
+ from pylint.pyreverse.utils import get_visibility
+ from pylint.pyreverse.writer import DotWriter
+@@ -132,3 +134,21 @@ def test_get_visibility(names, expected):
+     for name in names:
+         got = get_visibility(name)
+         assert got == expected, f"got {got} instead of {expected} for value {name}"
++
++
++def test_dot_writer_shows_argument_annotations():
++    module = astroid.parse(
++        """
++    class C(object):
++        def __init__(self, a: str = None, b=None):
++            self.a = a
++    """
++    )
++    klass = module["C"]
++    obj = DiagramEntity("C", klass)
++    obj.shape = "class"
++    obj.attrs = ["a : str"]
++    obj.methods = [klass["__init__"]]
++    writer = DotWriter(Config())
++    label = writer.get_values(obj)["label"]
++    assert r"__init__(a: str, b)\l" in label

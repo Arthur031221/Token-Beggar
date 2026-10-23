@@ -1,0 +1,132 @@
+{
+ "task": "pytest-mark-mro",
+ "arm": "scoped",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 84682,
+  "stop_reason": "end_turn",
+  "session_id": "481db43c-d5a4-4514-ac0a-aef9c0d57371",
+  "total_cost_usd": 0.3273203,
+  "usage": {
+   "input_tokens": 16,
+   "cache_creation_input_tokens": 16243,
+   "cache_read_input_tokens": 196491,
+   "output_tokens": 4361,
+   "output_tokens_details": {
+    "thinking_tokens": 392
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 16243,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 827,
+     "cache_read_input_tokens": 28583,
+     "cache_creation_input_tokens": 556,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 556
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 16,
+    "outputTokens": 4361,
+    "cacheReadInputTokens": 196491,
+    "cacheCreationInputTokens": 16243,
+    "webSearchRequests": 0,
+    "costUSD": 0.25652620000000004,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 392,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 14,
+    "outputTokens": 3866,
+    "cacheReadInputTokens": 74636,
+    "cacheCreationInputTokens": 9857,
+    "webSearchRequests": 0,
+    "costUSD": 0.0707941,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 205,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "A test class that inherits from several marked base classes now gets the marks of all of them. In the issue's example, `test_dings` now has both `foo` and `bar`. The new test passes, and the full suite fails on exactly the same tests with or without the change, so nothing new breaks.\n\n**Cause:** pytest read a class's marks with `getattr(cls, \"pytestmark\")`. Normal attribute lookup stops at the first class that defines `pytestmark`, so marks on any other base were dropped.\n\n**Fix** (`src/_pytest/mark/structures.py`):\n- `get_unpacked_marks()` now takes `consider_mro=True`. For a class, it collects the marks each class in the MRO defines itself and puts them together. A subclass's own marks come first, then its bases' marks in MRO order (`baz, foo, bar` in the test). For functions and other objects it works as before.\n- `store_mark()` calls it with `consider_mro=False`, so a decorated class's `pytestmark` holds only the marks applied to that class. Otherwise inherited marks would be copied into the subclass and counted twice.\n\n**Behaviour changes, described in `changelog/7792.bugfix.rst`:**\n- Inherited marks are now ordered subclass first; before, it was the reverse.\n- `cls.pytestmark` no longer includes marks from base classes. Code should use `iter_markers()` rather than reading that attribute directly.\n\n**Tests:** I added `TestFunctional.test_mark_mro` to `testing/test_mark.py`. It checks the marks on the collected test item, what `get_unpacked_marks` returns with and without the MRO, and that `pytestmark` holds only the class's own marks.\n- `testing/test_mark.py`, `testing/test_mark_expression.py` and `testing/python`: 548 passed.\n- Full suite: 41 failures and errors (mostly terminal colour and code-highlighting tests), and the same 41 without my change.\n- Two modules can't be loaded in this venv, so they didn't run: `testing/python/metafunc.py` (a hypothesis import error) and `testing/test_junitxml.py` (`xmlschema` isn't installed).\n\nThe other places that read `pytestmark` apply it to functions, not classes, so they don't have this problem. I didn't add an entry to `AUTHORS`, and nothing is committed.",
+  "ttft_ms": 4035,
+  "type": "result",
+  "duration_ms": 662213,
+  "uuid": "3d29ee78-942b-425e-84e4-ba38f6a17716",
+  "ttft_stream_ms": 2843,
+  "time_to_request_ms": 526,
+  "first_content_frame_ms": 2844,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 1,
+  "f2p_total": 1,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

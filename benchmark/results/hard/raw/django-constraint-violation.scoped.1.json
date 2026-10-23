@@ -1,0 +1,132 @@
+{
+ "task": "django-constraint-violation",
+ "arm": "scoped",
+ "rep": 1,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 128401,
+  "stop_reason": "end_turn",
+  "session_id": "64ec16b2-dbf1-4a0c-bff8-bbe5b7807c79",
+  "total_cost_usd": 0.5532406999999999,
+  "usage": {
+   "input_tokens": 20,
+   "cache_creation_input_tokens": 24550,
+   "cache_read_input_tokens": 299908,
+   "output_tokens": 7095,
+   "output_tokens_details": {
+    "thinking_tokens": 1044
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 24550,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 799,
+     "cache_read_input_tokens": 36863,
+     "cache_creation_input_tokens": 583,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 583
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 20,
+    "outputTokens": 7095,
+    "cacheReadInputTokens": 299908,
+    "cacheCreationInputTokens": 24550,
+    "webSearchRequests": 0,
+    "costUSD": 0.3983615999999999,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 1044,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 22,
+    "outputTokens": 7825,
+    "cacheReadInputTokens": 192801,
+    "cacheCreationInputTokens": 22922,
+    "webSearchRequests": 0,
+    "costUSD": 0.1548791,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 221,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 16,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Constraints now take a new `violation_error_code` argument (keyword-only), and the `ValidationError` raised by `validate()` uses it as its `code`. The issue text says `violation_error_message`, but it clearly means a new `violation_error_code`, so that's what I added. The default is `None`, so existing behaviour doesn't change. Nothing is committed.\n\n**Tests:** `constraints`, `validation`, `model_forms`, `postgres_tests.test_constraints`, `migrations.test_autodetector` and `migrations.test_operations` all pass. The Postgres tests were skipped because there's no Postgres database here, so the `ExclusionConstraint` changes and their new tests haven't actually run. flake8 and black aren't installed in the venv; I only checked line lengths by hand.\n\n**Code changes:**\n- **`django/db/models/constraints.py`:**\n  - `BaseConstraint` stores the code and includes it in `deconstruct()`, so migrations keep it.\n  - `CheckConstraint` and `UniqueConstraint` accept the argument and pass `code=` when they raise the error. They also include it in equality checks and in `__repr__`.\n  - I didn't add it to the old, deprecated positional-argument form.\n- **`django/contrib/postgres/constraints.py`:** the same changes for `ExclusionConstraint`, at both places it raises the error.\n\n**Limitation:** a `UniqueConstraint` with `fields=` and no `condition` still raises Django's standard unique-field error. That error ignores the custom code, just as it already ignores a custom `violation_error_message`. I documented this.\n\n**Docs:** I added the parameter and attribute to `docs/ref/models/constraints.txt` and `docs/ref/contrib/postgres/constraints.txt`, marked as new in 5.0, and added a release note to `docs/releases/5.0.txt`.\n\n**Tests added:**\n- In `tests/constraints/tests.py`:\n  - The code defaults to `None` and is kept by `deconstruct()` and `clone()`.\n  - Equality and `__repr__` reflect it.\n  - `validate()` raises with the custom code for `CheckConstraint`, and for `UniqueConstraint` built from expressions or with a condition.\n- In `tests/postgres_tests/test_constraints.py`: the same checks for `ExclusionConstraint`.",
+  "ttft_ms": 5953,
+  "type": "result",
+  "duration_ms": 139741,
+  "uuid": "1771848b-d699-4a2f-9a00-63f7cf37b7bd",
+  "ttft_stream_ms": 4291,
+  "time_to_request_ms": 209,
+  "first_content_frame_ms": 4291,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 8,
+  "f2p_total": 8,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

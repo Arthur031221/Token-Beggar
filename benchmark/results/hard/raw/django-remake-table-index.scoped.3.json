@@ -1,0 +1,132 @@
+{
+ "task": "django-remake-table-index",
+ "arm": "scoped",
+ "rep": 3,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 171826,
+  "stop_reason": "end_turn",
+  "session_id": "2fb8ff18-4093-45a3-92a7-0ed72bf1e2c3",
+  "total_cost_usd": 0.65023,
+  "usage": {
+   "input_tokens": 22,
+   "cache_creation_input_tokens": 24011,
+   "cache_read_input_tokens": 320734,
+   "output_tokens": 7137,
+   "output_tokens_details": {
+    "thinking_tokens": 2331
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 24011,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 911,
+     "cache_read_input_tokens": 35997,
+     "cache_creation_input_tokens": 910,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 910
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 22,
+    "outputTokens": 7137,
+    "cacheReadInputTokens": 320734,
+    "cacheCreationInputTokens": 24011,
+    "webSearchRequests": 0,
+    "costUSD": 0.3990628,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2331,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 46,
+    "outputTokens": 11566,
+    "cacheReadInputTokens": 563177,
+    "cacheCreationInputTokens": 31639,
+    "webSearchRequests": 0,
+    "costUSD": 0.25116720000000003,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 3604,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 13,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "Foreign key and one-to-one columns now get the same collation as the primary key they point to. This applies both when the table is created and when a migration changes the primary key's collation. On MySQL the migration from the issue should now generate `MODIFY account_id varchar(22) NOT NULL COLLATE utf8_bin` for each referencing column, and the foreign key constraints are added back afterwards. I couldn't check that: only SQLite was available, so the MySQL, PostgreSQL and Oracle code paths haven't been run.\n\n**Root cause:** a foreign key's description of its database column (`ForeignKey.db_parameters()`) never included a collation. So referencing columns never got a `COLLATE`, and changing the primary key's collation didn't update the columns referencing it. Only a change of column type did.\n\n**Changes**\n- `django/db/models/fields/related.py`: `ForeignKey.db_parameters()` now copies the collation from the field it points to. `OneToOneField` inherits this.\n- `django/db/backends/base/schema.py` (`_alter_field`): a collation change on a primary key or unique field now has the same effect as a type change:\n  - the foreign keys pointing to it are dropped;\n  - the referencing columns are altered using the collation-aware SQL;\n  - the foreign keys are then re-created.\n- `django/db/backends/mysql/schema.py`: the collation `MODIFY` statement now keeps `NULL`/`NOT NULL`. Without this, MySQL would quietly make an existing `NOT NULL` column nullable.\n- `django/db/backends/sqlite3/schema.py`: tables referencing the field are now rebuilt on a collation change, not only on a type change.\n\n**Tests**\n- `tests/schema/tests.py`: one test checks that a new foreign key or one-to-one column gets the target's collation. The other changes a primary key's collation and checks that the referencing columns follow it and their constraints still exist. It then removes the collation and checks they follow back.\n- `tests/model_fields/test_foreignkey.py`: unit tests for the collation `db_parameters()` reports, with and without a collated target. These don't depend on the database backend.\n\nThe `schema`, `migrations`, `model_fields`, `invalid_models_tests`, `inspectdb` and `backends` suites pass: 1844 tests, OK (198 skipped). With the library changes removed, all the new tests fail, so they do catch the bug.\n\nOn SQLite the schema tests take the table-rebuild route, so the MySQL-style `ALTER` path for referencing columns in the base schema editor is untested. It would need a MySQL database to check. I didn't add a release note, and nothing is committed.",
+  "ttft_ms": 8785,
+  "type": "result",
+  "duration_ms": 223895,
+  "uuid": "99cc542b-935b-42d5-ae01-c51fa826c5af",
+  "ttft_stream_ms": 1658,
+  "time_to_request_ms": 119,
+  "first_content_frame_ms": 1658,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 2,
+  "f2p_total": 2,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": true,
+  "suite_ran": true
+ }
+}

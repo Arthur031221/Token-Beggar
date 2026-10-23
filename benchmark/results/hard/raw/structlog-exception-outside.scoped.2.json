@@ -1,0 +1,132 @@
+{
+ "task": "structlog-exception-outside",
+ "arm": "scoped",
+ "rep": 2,
+ "top": "opus",
+ "effort": "high",
+ "result": {
+  "duration_api_ms": 152528,
+  "stop_reason": "end_turn",
+  "session_id": "924df490-afc6-49eb-94bf-5fadf78aaf2e",
+  "total_cost_usd": 0.7343582000000002,
+  "usage": {
+   "input_tokens": 44,
+   "cache_creation_input_tokens": 34959,
+   "cache_read_input_tokens": 748551,
+   "output_tokens": 13120,
+   "output_tokens_details": {
+    "thinking_tokens": 2746
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 34959,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1084,
+     "cache_read_input_tokens": 45717,
+     "cache_creation_input_tokens": 2138,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 2138
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "modelUsage": {
+   "claude-opus-5-5": {
+    "inputTokens": 44,
+    "outputTokens": 13120,
+    "cacheReadInputTokens": 748551,
+    "cacheCreationInputTokens": 34959,
+    "webSearchRequests": 0,
+    "costUSD": 0.6919582000000001,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 2746,
+    "canonicalModel": "claude-opus-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   },
+   "claude-sonnet-5-5": {
+    "inputTokens": 12,
+    "outputTokens": 1795,
+    "cacheReadInputTokens": 53560,
+    "cacheCreationInputTokens": 7628,
+    "webSearchRequests": 0,
+    "costUSD": 0.0424,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 113,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+   "spawned": 1,
+   "requested": {
+    "background": 0,
+    "foreground": 1,
+    "unset": 0
+   },
+   "started_in_background": 0,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 1,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "token-beggar:beggar-worker": 1
+   }
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 35,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've fixed it: logging an exception when there isn't one no longer adds an `exception` field at all. The full suite passes (859 passed, 16 skipped). Nothing is committed.\n\n**What I found:** the crash in the issue's snippet was already fixed in this checkout by #657, which made `ExceptionDictTransformer` return `[]` for a missing exception. But the cause was one level up, and still showed in the output:\n- `dict_tracebacks` produced `{\"event\": \"oh no\", \"exception\": []}`.\n- `format_exc_info` produced `\"exception\": \"MISSING\"`.\n- `ExceptionPrettyPrinter` printed `MISSING`.\n\nAll three got there the same way. `_figure_out_exc_info` passed the \"no exception\" value `(None, None, None)` straight through, and since that value counts as true in Python, every formatter got called with it.\n\n**The fix:**\n- **`src/structlog/processors.py`:** `_figure_out_exc_info` now returns `None` when there is no exception, whether it gets `True` with no active exception or an explicit `(None, None, None)`. `ExceptionRenderer` normalises the value first and only adds `exception` if there's something to render. That covers `format_exc_info`, `dict_tracebacks`, any custom formatter, and `ExceptionPrettyPrinter`. I updated the docstring and added a `versionchanged:: 25.1.0` note, matching the other unreleased entry.\n- **`src/structlog/dev.py`:** `ConsoleRenderer` now just checks whether the value is set, instead of comparing against `(None, None, None)`. This also clears a mypy error that was already there; mypy is now down to two existing errors in `stdlib.py`, which I didn't touch.\n- The checks for a missing exception in `_format_exception` and `ExceptionDictTransformer` stay in place as a safety net.\n\n**Behaviour change:** `format_exc_info` no longer adds `\"exception\": \"MISSING\"` in this case. Anyone matching on that string will see a difference, so I've noted it in the changelog. I think leaving the field out is the right result, but say if you'd rather keep the placeholder.\n\n**Tests:**\n- `tests/processors/test_renderers.py`: the existing \"MISSING\" test now expects no key, plus a new `dict_tracebacks` test for both `True` and `(None, None, None)`.\n- `tests/processors/test_processors.py`: cases for `_figure_out_exc_info` returning `None`, and `ExceptionPrettyPrinter` printing nothing.\n- `tests/test_stdlib.py`: an end-to-end test matching the issue's setup, with `ProcessorFormatter`, `dict_tracebacks` and `JSONRenderer`, calling `logging.getLogger().exception(\"oh no\")` outside a handler. It outputs `{\"event\": \"oh no\"}`.\n\nI added a changelog entry under Unreleased \u2192 Fixed without a link, because I don't know the issue or PR number. Add it once there is one.\n\nruff isn't installed in `.venv`, so I couldn't run lint.",
+  "ttft_ms": 4061,
+  "type": "result",
+  "duration_ms": 176479,
+  "uuid": "433a64cc-5b65-458d-887e-b788f990f936",
+  "ttft_stream_ms": 3176,
+  "time_to_request_ms": 249,
+  "first_content_frame_ms": 3176,
+  "queued_turn_count": 0,
+  "result_index": 0
+ },
+ "stderr": "",
+ "ledger": [],
+ "score": {
+  "f2p_passed": 3,
+  "f2p_total": 4,
+  "regressions": 0,
+  "regressed_tests": [],
+  "resolved": false,
+  "suite_ran": true
+ }
+}
